@@ -19,7 +19,7 @@ export interface ChatContext {
  * Numbers the retrieved chunks with short labels per request. The model cites labels, never real
  * IDs, so it cannot invent or mistype an ID and a real ID it was never shown cannot be cited.
  */
-export function buildContext(chunks: readonly ContextChunk[]): ChatContext {
+export function buildChatContext(chunks: readonly ContextChunk[]): ChatContext {
   const labels = chunks.map((_, index) => `c${index + 1}`);
   const idByLabel = new Map(chunks.map((chunk, index) => [`c${index + 1}`, chunk.id]));
   const promptText = chunks.map((chunk, index) => `[c${index + 1}]\n${chunk.text}`).join('\n\n');

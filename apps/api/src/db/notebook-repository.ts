@@ -1,4 +1,10 @@
-import { type Notebook, SOURCE_FAILURE, type SourceFailure, type SourceSummary } from '@nlm/shared';
+import {
+  type Notebook,
+  SOURCE_FAILURE,
+  SOURCE_STATUS,
+  type SourceFailure,
+  type SourceSummary,
+} from '@nlm/shared';
 import { and, asc, count, desc, eq, gte, sql } from 'drizzle-orm';
 
 import type { Database } from './client';
@@ -88,6 +94,31 @@ export async function listNotebookSources(
     selected: row.selected,
     createdAt: row.createdAt.toISOString(),
   }));
+}
+
+/** Sources the user selected in this notebook that are ready to answer from. */
+export async function selectedReadySourceIds(
+  db: Database,
+  userId: string,
+  notebookId: string
+): Promise<string[]> {
+  if (!UUID.test(notebookId)) return [];
+  const rows = await db
+    .select({ id: sources.id })
+    .from(notebookSources)
+    .innerJoin(notebooks, eq(notebooks.id, notebookSources.notebookId))
+    .innerJoin(sources, eq(sources.id, notebookSources.sourceId))
+    .where(
+      and(
+        eq(notebookSources.notebookId, notebookId),
+        eq(notebookSources.selected, true),
+        eq(notebooks.userId, userId),
+        eq(sources.userId, userId),
+        eq(sources.status, SOURCE_STATUS.READY)
+      )
+    )
+    .orderBy(asc(notebookSources.addedAt), asc(sources.id));
+  return rows.map((row) => row.id);
 }
 
 /** Links a source to a notebook. False when the notebook or the source is not the user's. */

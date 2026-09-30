@@ -8,6 +8,7 @@ import {
   linkSource,
   listNotebooks,
   listNotebookSources,
+  selectedReadySourceIds,
   setSourceSelected,
   unlinkSource,
 } from './notebook-repository';
@@ -167,5 +168,41 @@ describe('countSourcesSince', () => {
     ]);
 
     expect(await countSourcesSince(db, USER, 24)).toBe(2);
+  });
+});
+
+describe('selectedReadySourceIds', () => {
+  it('returns only sources that are ready and selected in this notebook', async () => {
+    const notebook = await createNotebook(db, USER, 'N');
+    const ready = await addSource(USER, 'ready', { status: SOURCE_STATUS.READY });
+    const unselected = await addSource(USER, 'unselected', { status: SOURCE_STATUS.READY });
+    const pending = await addSource(USER, 'pending', { status: SOURCE_STATUS.PENDING });
+    const failed = await addSource(USER, 'failed', { status: SOURCE_STATUS.FAILED });
+    for (const source of [ready, unselected, pending, failed]) {
+      await linkSource(db, USER, notebook.id, source.id);
+    }
+    await setSourceSelected(db, USER, notebook.id, unselected.id, false);
+
+    expect(await selectedReadySourceIds(db, USER, notebook.id)).toEqual([ready.id]);
+  });
+
+  it("returns nothing for another user's notebook", async () => {
+    const theirs = await createNotebook(db, OTHER, 'F');
+    const source = await addSource(OTHER, 'x', { status: SOURCE_STATUS.READY });
+    await linkSource(db, OTHER, theirs.id, source.id);
+
+    expect(await selectedReadySourceIds(db, USER, theirs.id)).toEqual([]);
+  });
+
+  it('does not depend on the selection in another notebook', async () => {
+    const one = await createNotebook(db, USER, 'Eins');
+    const two = await createNotebook(db, USER, 'Zwei');
+    const source = await addSource(USER, 'a', { status: SOURCE_STATUS.READY });
+    await linkSource(db, USER, one.id, source.id);
+    await linkSource(db, USER, two.id, source.id);
+    await setSourceSelected(db, USER, one.id, source.id, false);
+
+    expect(await selectedReadySourceIds(db, USER, one.id)).toEqual([]);
+    expect(await selectedReadySourceIds(db, USER, two.id)).toEqual([source.id]);
   });
 });

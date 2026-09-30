@@ -16,6 +16,8 @@ export const LIMITS = {
   /** Quota: new sources one user may add within the window below. Re-uploading known content is free. */
   SOURCES_PER_USER_PER_WINDOW: 10,
   QUOTA_WINDOW_HOURS: 24,
+  /** Chat: passages handed to the model per question. */
+  CHAT_CONTEXT_CHUNKS: 8,
   /** Ingestion: chunks per embedding request. */
   EMBED_BATCH_SIZE: 16,
 } as const;

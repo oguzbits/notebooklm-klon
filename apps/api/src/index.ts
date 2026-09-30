@@ -1,5 +1,6 @@
 import { serve } from '@hono/node-server';
 
+import { createGeminiChat } from './ai/gemini-chat';
 import { createGeminiEmbedder } from './ai/gemini-embedder';
 import { createGeminiPdfParser } from './ai/gemini-pdf-parser';
 import { RateLimiter, systemClock } from './ai/rate-limiter';
@@ -48,6 +49,13 @@ const embedder = createGeminiEmbedder({
   limiter: new RateLimiter(PROVIDER_LIMITS.EMBED),
 });
 
+const chat = createGeminiChat({
+  ...provider,
+  model: env.AI_MODEL,
+  limiter: new RateLimiter(PROVIDER_LIMITS.CHAT),
+  onUsage: (usage) => log({ level: 'info', msg: 'chat usage', ...usage }),
+});
+
 const ingest: SubmitPorts = {
   sources: createSourceStorage(db),
   uploads: createUploadStorage(db),
@@ -75,7 +83,22 @@ await queue.work(async (payload) => {
   log({ level: 'info', msg: 'ingestion job done', durationMs: Date.now() - started });
 });
 
-const app = createApp({ auth, db, ingest, fetch: systemDeps });
+const app = createApp({
+  auth,
+  db,
+  ingest,
+  fetch: systemDeps,
+  chat: {
+    embedQuery: (text) => embedder.embedQuery(text),
+    stream: (input) => chat.stream(input),
+    onError: (error) =>
+      log({
+        level: 'error',
+        msg: 'chat failed',
+        name: error instanceof Error ? error.name : 'unknown',
+      }),
+  },
+});
 
 serve({ fetch: app.fetch, port: env.PORT }, (info) => {
   log({ level: 'info', msg: 'listening', port: info.port });

@@ -34,15 +34,15 @@ function waitFor(response: Response, attempt: number): number {
 }
 
 /**
- * POSTs to a Gemini endpoint and returns the JSON body. A 429 or 503 is retried twice with the
- * wait the provider asks for; every other error status, and the last failed retry, throws.
+ * POSTs to a Gemini endpoint and returns the response. A 429 or 503 is retried twice with the wait
+ * the provider asks for; every other error status, and the last failed retry, throws.
  */
-export async function postGemini(
+export async function requestGemini(
   http: GeminiHttp,
   path: string,
   body: unknown,
   signal?: AbortSignal
-): Promise<unknown> {
+): Promise<Response> {
   for (let attempt = 0; ; attempt += 1) {
     const response = await fetch(`${BASE_URL}/${path}`, {
       method: 'POST',
@@ -50,7 +50,7 @@ export async function postGemini(
       body: JSON.stringify(body),
       signal,
     });
-    if (response.ok) return response.json();
+    if (response.ok) return response;
     if (RETRY_STATUSES.has(response.status) && attempt < MAX_RETRIES) {
       await http.sleep(waitFor(response, attempt));
       continue;
@@ -60,4 +60,15 @@ export async function postGemini(
       `Gemini request failed with status ${response.status}: ${await reasonOf(response)}`
     );
   }
+}
+
+/** Like {@link requestGemini}, for calls that answer with one JSON body. */
+export async function postGemini(
+  http: GeminiHttp,
+  path: string,
+  body: unknown,
+  signal?: AbortSignal
+): Promise<unknown> {
+  const response = await requestGemini(http, path, body, signal);
+  return response.json();
 }

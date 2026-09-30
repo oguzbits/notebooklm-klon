@@ -2,11 +2,13 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import { API_ERROR, type ApiError, HealthSchema } from '@nlm/shared';
 import { HTTPException } from 'hono/http-exception';
 
+import { GeminiError } from './ai/gemini-error';
 import type { AppDeps } from './app-deps';
 import { type AuthVariables, requireUser } from './auth/session';
 import { ImportError } from './import/fetch-url';
 import { QuotaExceededError } from './ingestion/ingest';
 import { log } from './logger';
+import { chatRoutes } from './routes/chat';
 import { notebookRoutes } from './routes/notebooks';
 import { sourceRoutes } from './routes/sources';
 
@@ -36,6 +38,9 @@ export function createApp(deps: AppDeps) {
     if (error instanceof ImportError) {
       return c.json(errorBody(API_ERROR.INVALID_URL, error.code), BAD_REQUEST);
     }
+    if (error instanceof GeminiError && error.status === TOO_MANY_REQUESTS) {
+      return c.json(errorBody(API_ERROR.CHAT_LIMIT_REACHED), TOO_MANY_REQUESTS);
+    }
     if (error instanceof HTTPException) return error.getResponse();
     // Log the kind of error and the route, never the message: it could carry document content.
     log({
@@ -55,7 +60,8 @@ export function createApp(deps: AppDeps) {
 
   return app
     .route('/api/notebooks', notebookRoutes(deps))
-    .route('/api/notebooks', sourceRoutes(deps));
+    .route('/api/notebooks', sourceRoutes(deps))
+    .route('/api/notebooks', chatRoutes(deps));
 }
 
 export type AppType = ReturnType<typeof createApp>;

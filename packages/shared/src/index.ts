@@ -5,6 +5,13 @@ export {
   ApiErrorCodeSchema,
   ApiErrorSchema,
 } from './api-error';
+export {
+  CHAT_EVENT,
+  type ChatEvent,
+  ChatEventSchema,
+  type ChatRequest,
+  ChatRequestSchema,
+} from './chat';
 export { type Answer, AnswerSchema, type AnswerStatement, AnswerStatementSchema } from './citation';
 export { type Health, HealthSchema } from './health';
 export {
