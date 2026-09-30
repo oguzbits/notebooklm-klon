@@ -112,7 +112,7 @@ export function NotebookPage() {
       />
       <nav
         aria-label="Bereiche"
-        className="mx-4 mb-3 flex shrink-0 gap-0 rounded-full bg-secondary p-0.5 wide:hidden"
+        className="mx-4 mt-3 mb-3 flex shrink-0 gap-0 rounded-full bg-secondary p-0.5 wide:hidden"
       >
         {COLUMN_TAB.map(({ column: own, label }) => (
           <button

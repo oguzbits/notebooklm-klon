@@ -107,8 +107,8 @@ function EmptyLibrary() {
         Hier wird die Ausgabe von Studio gespeichert.
       </p>
       <p className="text-[0.875rem] leading-6 text-muted-foreground">
-        Wähle Quellen aus und erstelle Berichte, Karteikarten, Quizze oder Mindmaps. Gespeicherte
-        Antworten aus dem Chat erscheinen hier als Notizen.
+        Nachdem du Quellen hinzugefügt hast, klicke oben, um Berichte, Karteikarten, Quizze und
+        Mindmaps zu erstellen.
       </p>
     </div>
   );
