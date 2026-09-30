@@ -21,7 +21,7 @@ export function AnswerView({ notebookId, statements, finished, onOpenCitation }:
     return finished ? <p className="text-muted-foreground">{NO_ANSWER}</p> : null;
   }
   return (
-    <p className="leading-relaxed">
+    <p className="text-read">
       {numberCitations(statements).map((statement, index) => (
         <span key={index}>
           {statement.text}
@@ -43,7 +43,7 @@ export function AnswerView({ notebookId, statements, finished, onOpenCitation }:
 export function QuestionBubble({ text }: { text: string }) {
   return (
     <div className="flex justify-end">
-      <p className="max-w-[85%] rounded-3xl rounded-br-lg bg-accent px-5 py-3 text-accent-foreground">
+      <p className="text-read ml-8 w-full max-w-[700px] rounded-bubble bg-secondary px-7 py-5">
         {text}
       </p>
     </div>
@@ -61,7 +61,7 @@ export function MessageView({
 }) {
   if (message.role === CHAT_ROLE.USER) return <QuestionBubble text={message.text} />;
   return (
-    <div className="max-w-[92%]">
+    <div className="pr-8">
       <AnswerView
         notebookId={notebookId}
         statements={message.statements}
@@ -69,7 +69,7 @@ export function MessageView({
         onOpenCitation={onOpenCitation}
       />
       {message.statements.length > 0 && (
-        <div className="mt-1 flex flex-wrap items-center gap-1">
+        <div className="mt-3 flex flex-wrap items-center gap-1">
           <CopyAnswerButton statements={message.statements} />
           <SaveNoteButton notebookId={notebookId} messageId={message.id} />
         </div>

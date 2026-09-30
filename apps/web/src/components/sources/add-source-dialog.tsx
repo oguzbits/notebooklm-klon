@@ -18,13 +18,13 @@ export function AddSourceDialog({ notebookId }: { notebookId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="w-full">
+        <Button variant="secondary" className="w-full">
           <Plus />
           Quelle hinzufügen
         </Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[700px]">
+        <DialogHeader className="items-center text-center sm:px-10">
           <DialogTitle>Quellen hinzufügen</DialogTitle>
           <DialogDescription>
             Fragen werden nur aus den Quellen beantwortet, die du hier hinzufügst.

@@ -1,5 +1,5 @@
 import type { Flashcards } from '@nlm/shared';
-import { ChevronLeft, ChevronRight, RotateCw } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useState } from 'react';
 
 import { CitedBy } from '@/components/studio/cited-by';
@@ -32,41 +32,41 @@ export function FlashcardsView({
         type="button"
         onClick={() => setTurned((value) => !value)}
         aria-label={turned ? 'Karte zur Frage umdrehen' : 'Karte zur Antwort umdrehen'}
-        className="flex min-h-56 flex-col items-center justify-center gap-3 rounded-3xl bg-secondary p-6 text-center transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+        className="flex min-h-72 flex-col rounded-3xl bg-flashcard p-6 text-left text-flashcard-foreground"
       >
-        <span className="text-xs tracking-wide text-muted-foreground uppercase">
-          {turned ? 'Antwort' : 'Frage'}
+        <span className="text-small text-flashcard-foreground/60" aria-live="polite">
+          Karte {index + 1} von {cards.length}
         </span>
-        <span className="text-lg leading-snug font-medium">{turned ? card.back : card.front}</span>
-        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-          <RotateCw className="size-3" aria-hidden />
-          Zum Umdrehen tippen
+        <span className="flex flex-1 items-center py-4 text-2xl leading-10 font-[450]">
+          {turned ? card.back : card.front}
+        </span>
+        <span className="self-center text-small text-flashcard-foreground/60">
+          {turned ? 'Frage ansehen' : 'Antwort ansehen'}
         </span>
       </button>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-center gap-4">
         <Button
-          variant="ghost"
-          size="icon"
+          variant="outline"
+          size="icon-lg"
+          className="size-14"
           aria-label="Vorherige Karte"
           onClick={() => go(-1)}
           disabled={index === 0}
         >
-          <ChevronLeft />
+          <ArrowLeft />
         </Button>
-        <p className="text-sm text-muted-foreground" aria-live="polite">
-          Karte {index + 1} von {cards.length}
-        </p>
         <Button
-          variant="ghost"
-          size="icon"
+          variant="outline"
+          size="icon-lg"
+          className="size-14 border-action text-action"
           aria-label="Nächste Karte"
           onClick={() => go(1)}
           disabled={index === cards.length - 1}
         >
-          <ChevronRight />
+          <ArrowRight />
         </Button>
       </div>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-ui text-muted-foreground">
         Belegt durch:{' '}
         <CitedBy notebookId={notebookId} chunkIds={card.chunkIds} onOpen={onOpenCitation} />
       </p>

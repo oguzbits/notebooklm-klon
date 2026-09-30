@@ -31,7 +31,7 @@ export function SourcesPanel({
   };
 
   return (
-    <div className="flex h-full flex-col gap-3 overflow-y-auto px-4 pb-4">
+    <div className="flex h-full flex-col gap-3 overflow-y-auto pt-3 pb-2">
       <AddSourceDialog notebookId={notebookId} />
       <QueryBoundary
         query={sources}
@@ -39,8 +39,8 @@ export function SourcesPanel({
         empty={
           <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
             <FileQuestion className="size-10 text-muted-foreground" aria-hidden />
-            <p className="text-sm font-medium">Noch keine Quellen</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-ui font-title">Noch keine Quellen</p>
+            <p className="text-small text-muted-foreground">
               Lade eine Datei hoch, füge eine Webseite oder einen Text hinzu, um Fragen zu stellen.
             </p>
           </div>
@@ -49,7 +49,7 @@ export function SourcesPanel({
         {(list) => (
           <>
             {ready.length > 0 && (
-              <label className="flex items-center justify-between gap-3 rounded-full px-3 py-1.5 text-sm text-muted-foreground hover:bg-secondary">
+              <label className="flex h-10 items-center justify-end gap-3 px-2 text-[0.875rem] leading-6">
                 Alle Quellen auswählen
                 <Checkbox
                   checked={allSelected}
@@ -59,7 +59,7 @@ export function SourcesPanel({
                 />
               </label>
             )}
-            <ul className="flex flex-col">
+            <ul className="flex flex-col gap-0.5">
               {list.map((source) => (
                 <SourceRow
                   key={source.id}

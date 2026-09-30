@@ -1,6 +1,5 @@
 import { useState } from 'react';
 
-import { Button } from '@/components/ui/button';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -28,37 +27,38 @@ export function CitationChip({ notebookId, chunkId, number, onOpen }: CitationCh
           type="button"
           onClick={() => onOpen(chunkId)}
           aria-label={`Quelle ${number} anzeigen`}
-          className="mx-0.5 inline-flex h-5 min-w-5 -translate-y-px items-center justify-center rounded-full bg-accent px-1.5 align-middle text-xs font-medium text-accent-foreground hover:bg-primary hover:text-primary-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className="veil ml-1 inline-flex size-[22px] items-center justify-center rounded-full bg-secondary align-middle text-[0.6875rem] leading-4 font-[500] text-muted-foreground"
         >
           {number}
         </button>
       </HoverCardTrigger>
-      <HoverCardContent className="w-96 max-w-[90vw]">
+      <HoverCardContent className="w-[420px] max-w-[90vw]">
         {chunk.isPending && (
-          <div className="flex flex-col gap-2" role="status" aria-label="Wird geladen">
+          <div className="flex flex-col gap-2 p-4" role="status" aria-label="Wird geladen">
             <Skeleton className="h-4 w-1/2" />
             <Skeleton className="h-16 w-full" />
           </div>
         )}
         {chunk.isError && (
-          <p className="text-sm text-muted-foreground">
+          <p className="p-4 text-[0.875rem] leading-6 text-muted-foreground">
             Diese Quelle ist nicht mehr in deinem Notizbuch.
           </p>
         )}
         {chunk.data && (
-          <div className="flex flex-col gap-2">
-            <p className="truncate text-sm font-medium">{chunk.data.sourceTitle}</p>
-            <ScrollArea className="h-40 rounded-md border bg-muted/40 p-2">
-              <p className="text-sm whitespace-pre-wrap">{chunk.data.text}</p>
+          <div className="flex flex-col text-[0.875rem] leading-6">
+            <p className="truncate px-4 py-3 font-[500]">{chunk.data.sourceTitle}</p>
+            <ScrollArea className="h-64 border-t border-border">
+              <p className="p-4 whitespace-pre-wrap">{chunk.data.text}</p>
             </ScrollArea>
-            <Button
-              variant="link"
-              size="sm"
-              className="self-start px-0"
-              onClick={() => onOpen(chunkId)}
-            >
-              Quelle anzeigen
-            </Button>
+            <div className="border-t border-border px-4 py-4">
+              <button
+                type="button"
+                className="rounded-sm text-link hover:underline"
+                onClick={() => onOpen(chunkId)}
+              >
+                Quelle anzeigen
+              </button>
+            </div>
           </div>
         )}
       </HoverCardContent>

@@ -23,3 +23,5 @@ spikes/corpus/*
 
 # spike results: raw parser output contains third-party text
 spikes/results/
+# Screenshots and captures of NotebookLM for design measurements: Google's, never committed.
+spikes/reference/

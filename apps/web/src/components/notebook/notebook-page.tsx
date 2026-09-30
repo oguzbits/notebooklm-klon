@@ -1,4 +1,3 @@
-import { FileText, MessageSquare, Shapes } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 
@@ -18,20 +17,23 @@ import { cn } from '@/lib/utils';
 const COLUMN = { SOURCES: 'SOURCES', CHAT: 'CHAT', STUDIO: 'STUDIO' } as const;
 type Column = (typeof COLUMN)[keyof typeof COLUMN];
 
-const COLUMN_TAB: { column: Column; label: string; icon: typeof FileText }[] = [
-  { column: COLUMN.SOURCES, label: 'Quellen', icon: FileText },
-  { column: COLUMN.CHAT, label: 'Chat', icon: MessageSquare },
-  { column: COLUMN.STUDIO, label: 'Studio', icon: Shapes },
+const COLUMN_TAB: { column: Column; label: string }[] = [
+  { column: COLUMN.SOURCES, label: 'Quellen' },
+  { column: COLUMN.CHAT, label: 'Chat' },
+  { column: COLUMN.STUDIO, label: 'Studio' },
 ];
 
-const SIDE_WIDTH = '21rem';
-const STUDIO_WIDTH = '23rem';
+// Shares of the window width, measured on the original: the side columns are a quarter each; with
+// a Studio output open the Studio grows to 37.5 % and the sources give way to 20.6 %.
+const SIDE_WIDTH = '24.58vw';
+const SOURCES_WHILE_VIEWING = '20.6vw';
+const STUDIO_WHILE_VIEWING = '37.5vw';
 const RAIL_WIDTH = '3.5rem';
 
 /**
  * One notebook in three columns like NotebookLM: sources (or the source text) on the left, the
  * conversation in the middle, the Studio and the notes on the right. Below the wide layout one
- * column shows at a time, switched from a bar at the bottom.
+ * column shows at a time, switched from a bar under the header.
  */
 export function NotebookPage() {
   const { notebookId = '' } = useParams();
@@ -40,6 +42,7 @@ export function NotebookPage() {
   const [sourcesOpen, setSourcesOpen] = useState(true);
   const [studioOpen, setStudioOpen] = useState(true);
   const [column, setColumn] = useState<Column>(COLUMN.CHAT);
+  const [viewingOutput, setViewingOutput] = useState(false);
 
   if (notebook.isPending) {
     return (
@@ -88,20 +91,47 @@ export function NotebookPage() {
     setSourcesOpen(true);
     setColumn(COLUMN.SOURCES);
   };
-  const hiddenBelowWide = (own: Column) => (column === own ? '' : 'max-lg:hidden');
+  const hiddenBelowWide = (own: Column) => (column === own ? '' : 'max-wide:hidden');
 
   return (
     <>
       <AppHeader
-        title={<h1 className="truncate text-lg font-medium sm:text-xl">{title}</h1>}
+        title={<h1 className="truncate text-xl">{title}</h1>}
         actions={<ChatSettingsDialog notebookId={id} />}
       />
+      <nav
+        aria-label="Bereiche"
+        className="mx-4 mb-3 flex shrink-0 gap-0 rounded-full bg-secondary p-0.5 wide:hidden"
+      >
+        {COLUMN_TAB.map(({ column: own, label }) => (
+          <button
+            key={own}
+            type="button"
+            aria-current={column === own ? 'page' : undefined}
+            onClick={() => setColumn(own)}
+            className={cn(
+              'h-7 flex-1 rounded-full text-ui font-title text-muted-foreground transition-colors',
+              column === own && 'bg-card text-foreground'
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
       <div
-        className="grid min-h-0 flex-1 gap-3 px-3 pb-3 max-lg:grid-cols-1 sm:px-4 sm:pb-4 lg:[grid-template-columns:var(--sources)_minmax(0,1fr)_var(--studio)]"
+        className="grid min-h-0 flex-1 grid-cols-1 gap-2 px-4 pb-3 wide:px-3 wide:[grid-template-columns:var(--sources)_minmax(0,1fr)_var(--studio)]"
         style={
           {
-            '--sources': sourcesOpen ? SIDE_WIDTH : RAIL_WIDTH,
-            '--studio': studioOpen ? STUDIO_WIDTH : RAIL_WIDTH,
+            '--sources': sourcesOpen
+              ? viewingOutput
+                ? SOURCES_WHILE_VIEWING
+                : SIDE_WIDTH
+              : RAIL_WIDTH,
+            '--studio': studioOpen
+              ? viewingOutput
+                ? STUDIO_WHILE_VIEWING
+                : SIDE_WIDTH
+              : RAIL_WIDTH,
           } as React.CSSProperties
         }
       >
@@ -118,39 +148,24 @@ export function NotebookPage() {
             <SourcesPanel notebookId={id} onOpenSource={(sourceId) => openReader({ sourceId })} />
           )}
         </Panel>
-        <Panel title="Chat" className={hiddenBelowWide(COLUMN.CHAT)}>
+        <Panel title="Chat" bare className={hiddenBelowWide(COLUMN.CHAT)}>
           <ChatPanel notebookId={id} onOpenCitation={(chunkId) => openReader({ chunkId })} />
         </Panel>
         <Panel
           title="Studio"
           side="right"
+          titleHidden={viewingOutput}
           collapsed={!studioOpen}
           onToggle={() => setStudioOpen((value) => !value)}
           className={hiddenBelowWide(COLUMN.STUDIO)}
         >
-          <StudioPanel notebookId={id} onOpenCitation={(chunkId) => openReader({ chunkId })} />
+          <StudioPanel
+            notebookId={id}
+            onOpenCitation={(chunkId) => openReader({ chunkId })}
+            onViewingChange={setViewingOutput}
+          />
         </Panel>
       </div>
-      <nav
-        aria-label="Bereiche"
-        className="flex shrink-0 justify-around gap-1 bg-card px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] lg:hidden"
-      >
-        {COLUMN_TAB.map(({ column: own, label, icon: Icon }) => (
-          <button
-            key={own}
-            type="button"
-            aria-current={column === own ? 'page' : undefined}
-            onClick={() => setColumn(own)}
-            className={cn(
-              'flex flex-1 flex-col items-center gap-1 rounded-2xl px-3 py-1.5 text-xs font-medium text-muted-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none',
-              column === own && 'bg-accent text-accent-foreground'
-            )}
-          >
-            <Icon className="size-5" aria-hidden />
-            {label}
-          </button>
-        ))}
-      </nav>
     </>
   );
 }

@@ -1,5 +1,5 @@
-import { ClipboardPaste, FileUp, Link2 } from 'lucide-react';
-import { type FormEvent, useRef } from 'react';
+import { ArrowLeft, ClipboardPaste, Link2, Upload } from 'lucide-react';
+import { type DragEvent, type FormEvent, useRef, useState } from 'react';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,13 @@ const ACCEPTED_FILES = '.pdf,.docx,.txt,.md';
 const PASTED_TEXT_TITLE = 'Eingefügter Text';
 const TEXT_FILE_EXTENSION = '.txt';
 
-/** The three ways to add a source: a file from the computer, a web page, or pasted text. */
+const VIEW = { CHOOSE: 'CHOOSE', WEB_PAGE: 'WEB_PAGE', TEXT: 'TEXT' } as const;
+type View = (typeof VIEW)[keyof typeof VIEW];
+
+/**
+ * The ways to add a source, as in NotebookLM: pills for a file, a web page or pasted text, and a
+ * drop zone. A web page and pasted text open their own view with a way back.
+ */
 export function AddSource({
   notebookId,
   onAdded,
@@ -25,6 +31,18 @@ export function AddSource({
   const upload = useUploadFile(notebookId);
   const addUrl = useAddUrl(notebookId);
   const fileInput = useRef<HTMLInputElement>(null);
+  const [view, setView] = useState<View>(VIEW.CHOOSE);
+  const [dragging, setDragging] = useState(false);
+
+  const sendFile = (file: File | undefined) => {
+    if (file) upload.mutate(file, { onSuccess: () => onAdded?.() });
+  };
+
+  const drop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setDragging(false);
+    sendFile(event.dataTransfer.files[0]);
+  };
 
   const submitUrl = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -59,69 +77,137 @@ export function AddSource({
   const error = upload.error ?? addUrl.error;
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col items-start gap-2">
-        <input
-          ref={fileInput}
-          type="file"
-          accept={ACCEPTED_FILES}
-          className="hidden"
-          aria-label="Datei auswählen"
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (file) upload.mutate(file, { onSuccess: () => onAdded?.() });
-            event.target.value = '';
-          }}
-        />
-        <Button
-          variant="outline"
-          className="h-auto w-full flex-col gap-2 rounded-3xl border-dashed py-8"
-          disabled={upload.isPending}
-          onClick={() => fileInput.current?.click()}
-        >
-          <FileUp className="size-6" />
-          {upload.isPending ? 'Wird hochgeladen …' : 'Datei hochladen'}
-        </Button>
-        <p className="px-2 text-xs text-muted-foreground">PDF, DOCX, TXT oder MD, bis 10 MB.</p>
-      </div>
+    <div className="flex flex-col gap-5">
+      <input
+        ref={fileInput}
+        type="file"
+        accept={ACCEPTED_FILES}
+        className="hidden"
+        aria-label="Datei auswählen"
+        onChange={(event) => {
+          sendFile(event.target.files?.[0]);
+          event.target.value = '';
+        }}
+      />
 
-      <form onSubmit={submitUrl} className="flex flex-col gap-2">
-        <Label htmlFor="source-url">Oder eine Webseite</Label>
-        <div className="flex gap-2">
-          <Input id="source-url" name="url" type="url" placeholder="https://…" required />
+      {view === VIEW.CHOOSE && (
+        <>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button
+              variant="outline"
+              size="lg"
+              className="text-[1.0625rem]"
+              disabled={upload.isPending}
+              onClick={() => fileInput.current?.click()}
+            >
+              <Upload />
+              {upload.isPending ? 'Wird hochgeladen …' : 'Datei hochladen'}
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="text-[1.0625rem]"
+              onClick={() => setView(VIEW.WEB_PAGE)}
+            >
+              <Link2 />
+              Webseite
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="text-[1.0625rem]"
+              onClick={() => setView(VIEW.TEXT)}
+            >
+              <ClipboardPaste />
+              Kopierter Text
+            </Button>
+          </div>
+          <div
+            onClick={() => fileInput.current?.click()}
+            onDragOver={(event) => {
+              event.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={drop}
+            className={`flex flex-col items-center gap-3 rounded-2xl border border-dashed border-input px-6 py-10 text-center text-small text-muted-foreground ${dragging ? 'bg-accent' : ''}`}
+          >
+            <Upload className="size-6" aria-hidden />
+            <p>
+              Dateien zum Hochladen per Drag-and-drop hierher ziehen.
+              <br />
+              PDF, DOCX, TXT oder MD, bis 10 MB.
+            </p>
+          </div>
+        </>
+      )}
+
+      {view === VIEW.WEB_PAGE && (
+        <form onSubmit={submitUrl} className="flex flex-col gap-4">
+          <BackHeader title="Webseite hinzufügen" onBack={() => setView(VIEW.CHOOSE)} />
+          <p className="text-read text-muted-foreground">
+            Füge die Adresse einer Webseite ein. Es wird der sichtbare Text importiert.
+          </p>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="source-url">Webadresse</Label>
+            <Input id="source-url" name="url" type="url" placeholder="https://…" required />
+          </div>
           <Button
             type="submit"
             variant="secondary"
+            size="lg"
+            className="self-end"
             disabled={addUrl.isPending}
             aria-label="Link hinzufügen"
           >
-            <Link2 />
-            {addUrl.isPending ? 'Lädt …' : 'Hinzufügen'}
+            {addUrl.isPending ? 'Lädt …' : 'Einfügen'}
           </Button>
-        </div>
-      </form>
+        </form>
+      )}
 
-      <form onSubmit={submitText} className="flex flex-col gap-2">
-        <Label htmlFor="source-text">Oder kopierter Text</Label>
-        <Input name="title" aria-label="Titel des Textes" placeholder="Titel (optional)" />
-        <Textarea
-          id="source-text"
-          name="text"
-          placeholder="Text hier einfügen …"
-          rows={4}
-          required
-        />
-        <Button type="submit" variant="secondary" className="self-end" disabled={upload.isPending}>
-          <ClipboardPaste />
-          Text hinzufügen
-        </Button>
-      </form>
+      {view === VIEW.TEXT && (
+        <form onSubmit={submitText} className="flex flex-col gap-4">
+          <BackHeader title="Kopierten Text einfügen" onBack={() => setView(VIEW.CHOOSE)} />
+          <Input name="title" aria-label="Titel des Textes" placeholder="Titel (optional)" />
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="source-text">Kopierter Text</Label>
+            <Textarea
+              id="source-text"
+              name="text"
+              placeholder="Text hier einfügen …"
+              rows={8}
+              required
+            />
+          </div>
+          <Button
+            type="submit"
+            variant="secondary"
+            size="lg"
+            className="self-end"
+            disabled={upload.isPending}
+            aria-label="Text hinzufügen"
+          >
+            Einfügen
+          </Button>
+        </form>
+      )}
 
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{describeError(error)}</AlertDescription>
         </Alert>
       )}
+    </div>
+  );
+}
+
+function BackHeader({ title, onBack }: { title: string; onBack: () => void }) {
+  return (
+    <div className="flex items-center gap-2">
+      <Button variant="ghost" size="icon-lg" aria-label="Zurück" onClick={onBack}>
+        <ArrowLeft />
+      </Button>
+      <h3 className="text-[1.375rem] leading-9">{title}</h3>
     </div>
   );
 }

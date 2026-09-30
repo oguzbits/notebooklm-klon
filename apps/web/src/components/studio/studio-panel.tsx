@@ -1,12 +1,12 @@
 import {
   type CreateStudioBody,
-  REPORT_FORMAT,
   SOURCE_STATUS,
   STUDIO_KIND,
   type StudioKind,
   type StudioOutput,
 } from '@nlm/shared';
 import {
+  EllipsisVertical,
   FileText,
   Layers,
   ListChecks,
@@ -16,12 +16,13 @@ import {
   RotateCw,
   Trash2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { NotesSection } from '@/components/notes/notes-panel';
 import { QueryBoundary } from '@/components/query-boundary';
 import { OutputViewer } from '@/components/studio/output-viewer';
-import { describeOutput, FORMAT_LABEL, KIND_LABEL } from '@/components/studio/studio-labels';
+import { ReportDialog } from '@/components/studio/report-dialog';
+import { describeOutput, KIND_LABEL } from '@/components/studio/studio-labels';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,6 +34,7 @@ import {
 import { useSources } from '@/hooks/use-sources';
 import { useCreateStudioOutput, useDeleteStudioOutput, useStudioOutputs } from '@/hooks/use-studio';
 import { describeError } from '@/lib/messages';
+import { relativeTime } from '@/lib/relative-time';
 import { cn } from '@/lib/utils';
 
 const KIND_ICON: Record<StudioKind, LucideIcon> = {
@@ -42,14 +44,24 @@ const KIND_ICON: Record<StudioKind, LucideIcon> = {
   [STUDIO_KIND.MINDMAP]: Network,
 };
 
+/** Each format has its own icon color, like in the original. */
+const KIND_COLOR: Record<StudioKind, string> = {
+  [STUDIO_KIND.REPORT]: 'text-studio-pink',
+  [STUDIO_KIND.FLASHCARDS]: 'text-studio-warm',
+  [STUDIO_KIND.QUIZ]: 'text-studio-teal',
+  [STUDIO_KIND.MINDMAP]: 'text-studio-purple',
+};
+
 const TILE =
-  'group flex h-auto min-h-20 flex-col items-start justify-between gap-3 rounded-2xl bg-secondary p-4 text-left text-sm font-medium text-secondary-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50';
+  'flex h-12 items-center gap-1 rounded-xl bg-tile pr-3 pl-2 text-left text-small ring-1 ring-inset ring-[var(--tile-ring)] transition-transform duration-200 ease-[cubic-bezier(0.05,0.7,0.1,1)] hover:scale-[0.985] active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50';
 
 function Tile({ kind, children, ...props }: { kind: StudioKind } & React.ComponentProps<'button'>) {
   const Icon = KIND_ICON[kind];
   return (
     <button type="button" className={TILE} {...props}>
-      <Icon className="size-5 text-primary group-hover:text-accent-foreground" aria-hidden />
+      <span className="flex size-10 shrink-0 items-center justify-center">
+        <Icon className={cn('size-6', KIND_COLOR[kind])} aria-hidden />
+      </span>
       {children ?? KIND_LABEL[kind]}
     </button>
   );
@@ -59,9 +71,12 @@ function Tile({ kind, children, ...props }: { kind: StudioKind } & React.Compone
 export function StudioPanel({
   notebookId,
   onOpenCitation,
+  onViewingChange,
 }: {
   notebookId: string;
   onOpenCitation: (chunkId: string) => void;
+  /** Tells the page whether an output is open, because the Studio grows while one is. */
+  onViewingChange?: (viewing: boolean) => void;
 }) {
   const outputs = useStudioOutputs(notebookId);
   const sources = useSources(notebookId);
@@ -69,10 +84,15 @@ export function StudioPanel({
   const remove = useDeleteStudioOutput(notebookId);
   const [openId, setOpenId] = useState<string | null>(null);
 
-  const usable = (sources.data ?? []).some(
+  const usableCount = (sources.data ?? []).filter(
     (source) => source.selected && source.status === SOURCE_STATUS.READY
-  );
+  ).length;
+  const usable = usableCount > 0;
   const opened = outputs.data?.find((output) => output.id === openId);
+  const viewing = opened !== undefined;
+  useEffect(() => {
+    onViewingChange?.(viewing);
+  }, [viewing, onViewingChange]);
 
   const make = (body: CreateStudioBody) =>
     create.mutate(body, { onSuccess: (output) => setOpenId(output.id) });
@@ -92,23 +112,11 @@ export function StudioPanel({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-5 overflow-y-auto px-5 pb-5">
+    <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto pb-2">
       <div className="grid grid-cols-2 gap-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Tile kind={STUDIO_KIND.REPORT} disabled={blocked} />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            {Object.values(REPORT_FORMAT).map((format) => (
-              <DropdownMenuItem
-                key={format}
-                onSelect={() => make({ kind: STUDIO_KIND.REPORT, format })}
-              >
-                {FORMAT_LABEL[format]}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <ReportDialog onCreate={(format) => make({ kind: STUDIO_KIND.REPORT, format })}>
+          <Tile kind={STUDIO_KIND.REPORT} disabled={blocked} />
+        </ReportDialog>
         <Tile
           kind={STUDIO_KIND.FLASHCARDS}
           disabled={blocked}
@@ -126,7 +134,7 @@ export function StudioPanel({
         />
       </div>
       {!usable && sources.isSuccess && (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-small text-muted-foreground">
           Wähle mindestens eine fertig gelesene Quelle aus, um etwas zu erstellen.
         </p>
       )}
@@ -152,27 +160,36 @@ export function StudioPanel({
 
       <section aria-label="Erstellte Ausgaben" className="flex flex-col gap-1">
         {create.isPending && (
-          <p
+          <div
             role="status"
-            className="flex items-center gap-3 rounded-2xl bg-secondary px-4 py-3 text-sm"
+            className="flex h-[60px] animate-pulse items-center gap-2 rounded-xl bg-secondary p-2"
           >
-            <LoaderCircle className="size-5 animate-spin text-primary" aria-hidden />
-            {create.variables ? KIND_LABEL[create.variables.kind] : 'Ausgabe'} wird erstellt …
-          </p>
+            <span className="flex size-8 shrink-0 items-center justify-center">
+              <LoaderCircle className="size-5 animate-spin" aria-hidden />
+            </span>
+            <span className="min-w-0 text-small">
+              <span className="block truncate">
+                {create.variables ? KIND_LABEL[create.variables.kind] : 'Ausgabe'} wird erstellt …
+              </span>
+              <span className="block truncate text-muted-foreground">
+                basierend auf {usableCount} {usableCount === 1 ? 'Quelle' : 'Quellen'}
+              </span>
+            </span>
+          </div>
         )}
         <QueryBoundary
           query={outputs}
           isEmpty={(list) => list.length === 0}
           empty={
             !create.isPending && (
-              <p className="px-1 text-sm text-muted-foreground">
+              <p className="px-1 text-ui text-muted-foreground">
                 Hier erscheinen deine Berichte, Karteikarten, Quizze und Mindmaps.
               </p>
             )
           }
         >
           {(list) => (
-            <ul className="flex flex-col">
+            <ul className="flex flex-col gap-1">
               {list.map((output) => (
                 <OutputRow
                   key={output.id}
@@ -210,36 +227,41 @@ function OutputRow({
 }) {
   const Icon = KIND_ICON[output.kind];
   return (
-    <li
-      className={cn(
-        'flex items-center gap-1 rounded-2xl hover:bg-secondary',
-        deleting && 'opacity-50'
-      )}
-    >
+    <li className={cn('veil flex items-center rounded-xl', deleting && 'opacity-50')}>
       <button
         type="button"
         onClick={onOpen}
-        className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl px-3 py-2.5 text-left focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+        className="flex h-[60px] min-w-0 flex-1 items-center gap-2 rounded-xl p-2 text-left"
       >
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
-          <Icon className="size-5" aria-hidden />
+        <span className="flex size-8 shrink-0 items-center justify-center">
+          <Icon className={cn('size-6', KIND_COLOR[output.kind])} aria-hidden />
         </span>
-        <span className="min-w-0">
-          <span className="block truncate text-sm font-medium">{output.title}</span>
-          <span className="block truncate text-xs text-muted-foreground">
-            {describeOutput(output)}
+        <span className="min-w-0 text-small">
+          <span className="block truncate">{output.title}</span>
+          <span className="block truncate text-[0.75rem] leading-4 text-muted-foreground">
+            {describeOutput(output)} · {relativeTime(output.createdAt)}
           </span>
         </span>
       </button>
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        aria-label={`„${output.title}“ löschen`}
-        disabled={deleting}
-        onClick={onDelete}
-      >
-        <Trash2 />
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="mr-1"
+            aria-label={`Weitere Aktionen für „${output.title}“`}
+            disabled={deleting}
+          >
+            <EllipsisVertical />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem disabled={deleting} onSelect={onDelete}>
+            <Trash2 aria-hidden />
+            Löschen
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </li>
   );
 }

@@ -49,7 +49,8 @@ Wenige Funktionen in hoher Qualität schlagen viele halbfertige. Der Kern ist de
 - Notizen aus Antworten speichern.
 
 **Runde 2: Nachbau (Stand 2026-09-30).** Die Oberfläche folgt NotebookLM so genau wie möglich, dreispaltig
-(Quellen | Chat | Studio), mit Google Sans Flex (OFL), Material-3-Farben und Rundungen, hell und dunkel.
+(Quellen | Chat | Studio), mit Google Sans Flex (OFL) und den am Original gemessenen Farben, Rundungen und
+Abständen (neutrales Grau, Blau nur als Akzent), hell und dunkel.
 Logo und Name sind ausdrücklich erlaubt (Entscheidung des Nutzers); im Live-Demo steht ein Hinweis, dass es
 ein Nachbau für eine Bewerbung ist. Dazu:
 

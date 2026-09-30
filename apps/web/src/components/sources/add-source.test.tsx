@@ -47,13 +47,12 @@ describe('AddSource', () => {
     renderWithProviders(<AddSource notebookId={NOTEBOOK_ID} />);
     const user = userEvent.setup();
 
-    await user.type(screen.getByLabelText('Oder eine Webseite'), 'https://example.test/artikel');
+    await user.click(screen.getByRole('button', { name: 'Webseite' }));
+    await user.type(screen.getByLabelText('Webadresse'), 'https://example.test/artikel');
     await user.click(screen.getByRole('button', { name: 'Link hinzufügen' }));
 
     await vi.waitFor(() => expect(body).toEqual({ url: 'https://example.test/artikel' }));
-    await vi.waitFor(() =>
-      expect(screen.getByLabelText('Oder eine Webseite')).toHaveProperty('value', '')
-    );
+    await vi.waitFor(() => expect(screen.getByLabelText('Webadresse')).toHaveProperty('value', ''));
   });
 
   it('sends pasted text as a text file with its title', async () => {
@@ -72,13 +71,26 @@ describe('AddSource', () => {
     renderWithProviders(<AddSource notebookId={NOTEBOOK_ID} onAdded={onAdded} />);
     const user = userEvent.setup();
 
+    await user.click(screen.getByRole('button', { name: 'Kopierter Text' }));
     await user.type(screen.getByLabelText('Titel des Textes'), 'Protokoll');
-    await user.type(screen.getByLabelText('Oder kopierter Text'), 'Dr. Brandt leitet es.');
+    await user.type(screen.getByLabelText('Kopierter Text'), 'Dr. Brandt leitet es.');
     await user.click(screen.getByRole('button', { name: 'Text hinzufügen' }));
 
     await vi.waitFor(() => expect(onAdded).toHaveBeenCalled());
     expect(uploads[0]?.name).toBe('Protokoll.txt');
     expect(await uploads[0]?.text()).toBe('Dr. Brandt leitet es.');
+  });
+
+  it('goes back from a view to the choice of ways', async () => {
+    renderWithProviders(<AddSource notebookId={NOTEBOOK_ID} />);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole('button', { name: 'Webseite' }));
+    expect(screen.getByLabelText('Webadresse')).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Zurück' }));
+
+    expect(screen.getByRole('button', { name: 'Datei hochladen' })).toBeTruthy();
+    expect(screen.queryByLabelText('Webadresse')).toBeNull();
   });
 
   it('shows why an address was refused', async () => {
@@ -90,7 +102,8 @@ describe('AddSource', () => {
     renderWithProviders(<AddSource notebookId={NOTEBOOK_ID} />);
     const user = userEvent.setup();
 
-    await user.type(screen.getByLabelText('Oder eine Webseite'), 'http://intern.example/');
+    await user.click(screen.getByRole('button', { name: 'Webseite' }));
+    await user.type(screen.getByLabelText('Webadresse'), 'http://intern.example/');
     await user.click(screen.getByRole('button', { name: 'Link hinzufügen' }));
 
     expect(await screen.findByText(/Diese Adresse kann nicht geladen werden/)).toBeTruthy();

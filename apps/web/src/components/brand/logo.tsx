@@ -1,25 +1,23 @@
 import { cn } from '@/lib/utils';
 
 /**
- * The mark of the app: an open notebook with a spark. Drawn for this project in the colors of the
- * theme; it stands in for NotebookLM's own logo, which can replace this file.
+ * The mark of the app: three nested arches in the accent color, fading outward, like the rainbow
+ * arch of NotebookLM. Drawn for this project in the colors of the theme.
  */
 export function Logo({ className }: { className?: string }) {
   return (
     <svg
-      viewBox="0 0 32 32"
+      viewBox="0 0 36 36"
       role="img"
       aria-label="NotebookLM"
-      className={cn('size-8 shrink-0', className)}
+      fill="none"
+      strokeWidth="3.4"
+      strokeLinecap="round"
+      className={cn('size-9 shrink-0 stroke-link', className)}
     >
-      <rect x="3" y="4" width="22" height="24" rx="6" className="fill-primary" />
-      <rect x="7.5" y="9" width="9" height="2.4" rx="1.2" className="fill-primary-foreground" />
-      <rect x="7.5" y="14" width="13" height="2.4" rx="1.2" className="fill-primary-foreground" />
-      <rect x="7.5" y="19" width="7" height="2.4" rx="1.2" className="fill-primary-foreground" />
-      <path
-        d="M25 2.5c.4 2.6 1.9 4.1 4.5 4.5-2.6.4-4.1 1.9-4.5 4.5-.4-2.6-1.9-4.1-4.5-4.5 2.6-.4 4.1-1.9 4.5-4.5Z"
-        className="fill-primary"
-      />
+      <path d="M4.5 27V21a13.5 13.5 0 0 1 27 0v6" strokeOpacity="0.45" />
+      <path d="M10.5 27V21a7.5 7.5 0 0 1 15 0v6" strokeOpacity="0.75" />
+      <path d="M16.5 27V21a1.5 1.5 0 0 1 3 0v6" />
     </svg>
   );
 }

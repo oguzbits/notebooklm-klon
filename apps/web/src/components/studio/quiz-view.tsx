@@ -25,7 +25,7 @@ export function QuizView({
   if (!question) {
     return (
       <div className="flex flex-col items-start gap-3">
-        <h3 className="text-xl font-medium">
+        <h3 className="text-xl font-title">
           {correct} von {questions.length} richtig
         </h3>
         <Button
@@ -51,10 +51,10 @@ export function QuizView({
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-ui text-muted-foreground">
         Frage {index + 1} von {questions.length}
       </p>
-      <h3 className="text-lg leading-snug font-medium">{question.question}</h3>
+      <h3 className="text-read text-lg leading-7 font-title">{question.question}</h3>
       <ul className="flex flex-col gap-2">
         {question.options.map((option, optionIndex) => {
           const isRight = answered && optionIndex === question.correctIndex;
@@ -67,10 +67,10 @@ export function QuizView({
                 onClick={() => choose(optionIndex)}
                 aria-disabled={answered}
                 className={cn(
-                  'flex w-full items-center gap-3 rounded-2xl border border-input px-4 py-3 text-left text-sm transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none',
-                  !answered && 'hover:bg-accent/60',
-                  isRight && 'border-success bg-success/10',
-                  isWrong && 'border-destructive bg-destructive/10'
+                  'flex w-full items-center gap-3 rounded-2xl bg-secondary px-4 py-3 text-left text-ui',
+                  !answered && 'veil',
+                  isRight && 'outline-2 outline-success',
+                  isWrong && 'outline-2 outline-destructive'
                 )}
               >
                 <span className="flex-1">{option}</span>
@@ -82,14 +82,15 @@ export function QuizView({
         })}
       </ul>
       {answered && (
-        <div className="flex flex-col gap-3 rounded-2xl bg-secondary p-4 text-sm" role="status">
+        <div className="flex flex-col gap-3 rounded-2xl bg-secondary p-4 text-ui" role="status">
           <p>{question.explanation}</p>
           <p className="text-muted-foreground">
             Belegt durch:{' '}
             <CitedBy notebookId={notebookId} chunkIds={question.chunkIds} onOpen={onOpenCitation} />
           </p>
           <Button
-            className="self-start"
+            className="self-start bg-action text-action-foreground hover:opacity-90"
+            size="lg"
             onClick={() => {
               setIndex((value) => value + 1);
               setPicked(null);

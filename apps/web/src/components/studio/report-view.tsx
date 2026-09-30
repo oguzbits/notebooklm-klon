@@ -13,12 +13,12 @@ export function ReportView({
   onOpenCitation: (chunkId: string) => void;
 }) {
   return (
-    <article className="flex flex-col gap-5">
-      <h3 className="text-xl leading-tight font-medium">{report.title}</h3>
+    <article className="text-read flex flex-col gap-5">
+      <h3 className="text-2xl leading-[30px] font-[350]">{report.title}</h3>
       {report.sections.map((section, index) => (
         <section key={index} className="flex flex-col gap-1.5">
-          <h4 className="text-base font-medium">{section.heading}</h4>
-          <div className="text-sm">
+          <h4 className="text-xl leading-[26px] font-[380]">{section.heading}</h4>
+          <div>
             <AnswerView
               notebookId={notebookId}
               statements={section.statements}

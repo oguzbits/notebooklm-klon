@@ -1,83 +1,132 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
-@import '@fontsource-variable/google-sans-flex';
+@import '@fontsource-variable/google-sans-flex/wdth.css';
 
 @custom-variant dark (&:is(.dark *));
 
-/* Semantic tokens only: components use bg-primary, text-muted-foreground and so on, never a raw
-   palette color. Light and dark differ here and nowhere else. */
+/* Semantic tokens only: components use bg-card, text-muted-foreground and so on, never a raw
+   palette color. Light and dark differ here and nowhere else. The values were measured on the real
+   NotebookLM (computed styles of its tokens), not guessed: the look is neutral grey, and color comes
+   only from focus, links, the selected state and the icons of the Studio. */
 :root {
   --radius: 1rem;
-  /* The page and, on it, the white panels. Values follow Google's Material 3 palette (the blues of
-     Gmail and Gemini); they are an approximation of NotebookLM, not taken from its source. */
-  --background: #f0f4f9;
-  --foreground: #1f1f1f;
+  /* The page, and on it the panels, the prompt bar and the dialogs. */
+  --background: #faf9f9;
+  --foreground: #1b1b1c;
   --card: #ffffff;
-  --card-foreground: #1f1f1f;
+  --card-foreground: #1b1b1c;
   --popover: #ffffff;
-  --popover-foreground: #1f1f1f;
-  --primary: #0b57d0;
+  --popover-foreground: #1b1b1c;
+  /* The strong action is neutral: black on light, white on dark. */
+  --primary: #000000;
   --primary-foreground: #ffffff;
-  --secondary: #e9eef6;
-  --secondary-foreground: #1f1f1f;
-  --muted: #f0f4f9;
-  --muted-foreground: #444746;
-  --accent: #d3e3fd;
-  --accent-foreground: #041e49;
+  /* Fields and pills that sit on a panel. */
+  --secondary: #f2f0f0;
+  --secondary-foreground: #1b1b1c;
+  --muted: #f2f0f0;
+  --muted-foreground: rgb(0 0 0 / 0.55);
+  /* Hover and focus are a veil of the text color, like the state layers of Material 3. */
+  --accent: rgb(0 0 0 / 0.08);
+  --accent-foreground: #1b1b1c;
   --destructive: #b3261e;
-  --border: #e1e3e1;
-  --input: #747775;
-  --ring: #0b57d0;
-  /* Highlight of a cited passage in the reader, and the status colors of a source. */
-  --highlight: #fde293;
-  --highlight-foreground: #3c2f00;
-  --success: #146c2e;
+  --border: rgb(0 0 0 / 0.08);
+  --input: #c4c7c5;
+  --ring: #4259ff;
+  /* The one color for links and the keyboard focus. */
+  --link: #4259ff;
+  /* A chosen card and the cited passage in the reader. */
+  --selected: #dcf1ff;
+  --selected-foreground: #1b1b1c;
+  --highlight: #edeffa;
+  --highlight-foreground: #1b1b1c;
+  /* The one soft blue action ("Neues Notizbuch"). */
+  --prominent: #9dd2ff;
+  --prominent-foreground: #1b1b1c;
+  --success: #008052;
   --warning: #8c5000;
-  /* Soft backgrounds for the notebook cards. */
-  --tone-1: #d3e3fd;
-  --tone-2: #c4eed0;
-  --tone-3: #ffe7a0;
-  --tone-4: #fad2e1;
+  /* The icon colors of the Studio formats. */
+  --studio-pink: #c43d92;
+  --studio-warm: #ff8104;
+  --studio-teal: #167f9b;
+  --studio-purple: #6858c7;
+  --studio-blue: #2e64de;
+  --studio-green: #0aac6e;
+  /* A Studio tile: white with a hairline on light, the inner grey on dark. */
+  --tile: #ffffff;
+  --tile-ring: rgb(0 0 0 / 0.08);
+  /* The flashcard stays dark in both themes, like in the original. */
+  --flashcard: #303030;
+  --flashcard-foreground: #f2f2f2;
+  /* The one colored action of the Studio viewers ("Weiter"), and the nodes of the mind map. */
+  --action: #5d5cf4;
+  --action-foreground: #ffffff;
+  --node-root: #c8cafa;
+  --node-branch: #c5d2eb;
+  /* Hover and press: a veil of the text color over whatever fill is there. */
+  --veil-hover: color-mix(in srgb, var(--foreground) 8%, transparent);
+  --veil-press: color-mix(in srgb, var(--foreground) 12%, transparent);
+  /* The soft glow under floating surfaces. */
+  --glow: 0 0 20px rgb(0 0 0 / 0.04);
+  /* The notification card while the Studio works. */
+  --callout: linear-gradient(268deg, rgb(169 168 255 / 0.15), rgb(49 134 255 / 0.15));
 }
 
 .dark {
-  --background: #131314;
-  --foreground: #e3e3e3;
-  --card: #1e1f20;
-  --card-foreground: #e3e3e3;
-  --popover: #282a2c;
-  --popover-foreground: #e3e3e3;
-  --primary: #a8c7fa;
-  --primary-foreground: #062e6f;
-  --secondary: #282a2c;
-  --secondary-foreground: #e3e3e3;
-  --muted: #282a2c;
-  --muted-foreground: #c4c7c5;
-  --accent: #0842a0;
-  --accent-foreground: #d3e3fd;
+  --background: #0f0f0f;
+  --foreground: #e6e6e6;
+  --card: #1f1f1f;
+  --card-foreground: #e6e6e6;
+  --popover: #1f1f1f;
+  --popover-foreground: #e6e6e6;
+  --primary: #e6e6e6;
+  --primary-foreground: #0f0f0f;
+  --secondary: #171717;
+  --secondary-foreground: #e6e6e6;
+  --muted: #171717;
+  --muted-foreground: rgb(255 255 255 / 0.55);
+  --accent: rgb(230 230 230 / 0.08);
+  --accent-foreground: #e6e6e6;
   --destructive: #f2b8b5;
-  --border: #444746;
-  --input: #8e918f;
-  --ring: #a8c7fa;
-  --highlight: #5b4a00;
-  --highlight-foreground: #fde293;
-  --success: #81c995;
+  --border: rgb(255 255 255 / 0.12);
+  --input: #444746;
+  --ring: #a1c9ff;
+  --link: #a1c9ff;
+  --selected: #14204f;
+  --selected-foreground: #e6e6e6;
+  --highlight: #14204f;
+  --highlight-foreground: #e6e6e6;
+  --prominent: #1f3b9b;
+  --prominent-foreground: #e6e6e6;
+  --success: #0ebc5f;
   --warning: #fdd663;
-  --tone-1: #1b3a6b;
-  --tone-2: #1d4a2c;
-  --tone-3: #53420a;
-  --tone-4: #5a2a42;
+  --studio-pink: #f872b9;
+  --studio-warm: #ecdf77;
+  --studio-teal: #4dd2e1;
+  --studio-purple: #a47dff;
+  --studio-blue: #76a0ff;
+  --studio-green: #3fdda0;
+  --glow: 0 0 20px rgb(0 0 0 / 0.28);
+  --tile: #171717;
+  --tile-ring: transparent;
+  --action: #8b8aff;
+  --action-foreground: #0f0f0f;
+  --node-root: #3a3f99;
+  --node-branch: #2b3a5c;
+  --callout: linear-gradient(268deg, rgb(169 168 255 / 0.12), rgb(49 134 255 / 0.12));
 }
 
 @theme inline {
   --font-sans:
     'Google Sans Flex Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-3xl: 28px;
+  /* Named like what they carry: the panels, the menus, the bubble of a question. */
+  --radius-panel: 32px;
+  --radius-bubble: 40px;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -96,35 +145,95 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-link: var(--link);
+  --color-selected: var(--selected);
+  --color-selected-foreground: var(--selected-foreground);
   --color-highlight: var(--highlight);
   --color-highlight-foreground: var(--highlight-foreground);
+  --color-prominent: var(--prominent);
+  --color-prominent-foreground: var(--prominent-foreground);
   --color-success: var(--success);
   --color-warning: var(--warning);
-  --color-tone-1: var(--tone-1);
-  --color-tone-2: var(--tone-2);
-  --color-tone-3: var(--tone-3);
-  --color-tone-4: var(--tone-4);
+  --color-studio-pink: var(--studio-pink);
+  --color-studio-warm: var(--studio-warm);
+  --color-studio-teal: var(--studio-teal);
+  --color-studio-purple: var(--studio-purple);
+  --color-studio-blue: var(--studio-blue);
+  --color-studio-green: var(--studio-green);
+  --color-tile: var(--tile);
+  --color-flashcard: var(--flashcard);
+  --color-flashcard-foreground: var(--flashcard-foreground);
+  --color-action: var(--action);
+  --color-action-foreground: var(--action-foreground);
+  --color-node-root: var(--node-root);
+  --color-node-branch: var(--node-branch);
+  --shadow-glow: var(--glow);
+  /* Three columns from here; below it one column at a time. Measured on the original. */
+  --breakpoint-wide: 66rem;
+  /* The type scale of the original: 15/20 for the interface, 13/17 for small print. */
+  --text-ui: 0.9375rem;
+  --text-ui--line-height: 1.25rem;
+  --text-small: 0.8125rem;
+  --text-small--line-height: 1.0625rem;
+  /* Variable weights between the usual steps. */
+  --font-weight-label: 370;
+  --font-weight-title: 470;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground antialiased;
+  html {
+    /* The interface is set a little narrower than reading text (the width axis of the font). */
+    font-stretch: 92%;
   }
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+    font-size: 0.9375rem;
+    line-height: 1.25rem;
+  }
+  /* The keyboard focus of every control: a 3px ring that follows its shape. */
+  :where(button, a, [role='button'], input, textarea, select, [tabindex]):focus-visible {
+    outline: 3px solid var(--ring);
+    outline-offset: 0;
+  }
+}
+
+@utility veil {
+  &:hover:not(:disabled, [aria-disabled='true']) {
+    background-image: linear-gradient(var(--veil-hover), var(--veil-hover));
+  }
+  &:active:not(:disabled, [aria-disabled='true']) {
+    background-image: linear-gradient(var(--veil-press), var(--veil-press));
+  }
+}
+
+/* Reading text (answers, sources, reports) is set 16/24 at normal width. */
+.text-read {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-stretch: 100%;
 }
 
 /* Browser surfaces that belong to the design too: selection, scrollbars, the caret. */
 ::selection {
-  background: var(--accent);
-  color: var(--accent-foreground);
+  background: var(--selected);
+  color: var(--selected-foreground);
 }
 input,
 textarea {
-  caret-color: var(--primary);
+  caret-color: var(--foreground);
 }
 * {
   scrollbar-width: thin;
   scrollbar-color: color-mix(in oklab, var(--muted-foreground) 35%, transparent) transparent;
+}
+
+/* Users who ask for less motion get none. */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

@@ -39,8 +39,8 @@ function Branch({
     <div className="flex items-center">
       <div
         className={cn(
-          'max-w-56 shrink-0 rounded-2xl px-4 py-2 text-sm',
-          root ? 'bg-primary font-medium text-primary-foreground' : 'bg-secondary'
+          'max-w-56 shrink-0 rounded-lg px-4 py-2 text-ui',
+          root ? 'bg-node-root' : 'bg-node-branch'
         )}
       >
         {node.label}

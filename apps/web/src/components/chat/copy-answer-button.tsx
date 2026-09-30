@@ -26,12 +26,12 @@ export function CopyAnswerButton({ statements }: { statements: AnswerStatement[]
 
   return (
     <>
-      <Button variant="ghost" size="xs" onClick={() => void copy()}>
+      <Button variant="ghost" size="sm" onClick={() => void copy()}>
         {copied ? <Check /> : <Copy />}
         {copied ? 'Kopiert' : 'Kopieren'}
       </Button>
       {failure !== null && (
-        <span className="text-xs text-destructive" role="alert">
+        <span className="text-small text-destructive" role="alert">
           Kopieren hat nicht geklappt.
         </span>
       )}

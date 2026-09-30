@@ -161,7 +161,8 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
 - **Chat-Einstellungen pro Notizbuch** (`notebooks.chat_config`, null = Standard): Stil, Länge, Sprache.
   Die eigene Anweisung des Nutzers steht im Systemprompt hinter den Regeln, die die Zitate sichern. Sie kann
   sie nicht aufheben, denn der Server prüft jedes Zitat unabhängig vom Prompt.
-- **Nachbau-Oberfläche:** Dreispaltig (Quellen | Chat | Studio) auf hellblauem Grund mit weißen, stark
+- **Nachbau-Oberfläche (erste Fassung, die Farben und Breiten sind überholt, siehe den Eintrag
+  „Nachbau-Oberfläche an NotebookLM gemessen“):** Dreispaltig (Quellen | Chat | Studio) auf hellblauem Grund mit weißen, stark
   gerundeten Flächen, Pillen-Buttons, Google Sans Flex (OFL, über Fontsource) und den Blautönen von Material 3.
   Hell und Dunkel folgen dem System (`lib/theme.ts`). Die Werte sind aus dem Gedächtnis der Google-Palette
   übernommen, nicht aus NotebookLM ausgelesen (belegt ist nur der dreispaltige Aufbau). Unter der Breite von
@@ -174,3 +175,27 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   drei Demo-Texten kamen Bericht, Karteikarten, Quiz und Mindmap in 4 bis 6 s zurück. Der Anbieter nahm
   alle vier Schemas an, der Server verwarf keinen Teil. Das Beispiel ist klein (6 Abschnitte Kontext); wie
   sich große Quellen verhalten, ist nicht gemessen.
+- **Nachbau-Oberfläche an NotebookLM gemessen (2026-09-30):** Die Werte stammen jetzt aus dem echten Produkt
+  (berechnete Stile und Token des offenen Test-Notizbuchs bei 1440x900 und 390x844, hell und dunkel; Rohdaten
+  und Screenshots liegen lokal in `spikes/reference/`, sie sind nicht im Repo). Wichtigste Folgen:
+  die Palette ist neutral grau statt blau (Seite #faf9f9 / #0f0f0f, Flächen #fff / #1f1f1f, innen #f2f0f0 /
+  #171717), Blau nur als Akzent für Fokus und Links (#4259ff / #a1c9ff); Panels haben 32 px Radius, Dialoge 28,
+  Menüs 20, die Sprechblase 40; UI-Text ist 15/20 mit Schriftbreite 92 %, Lesetext 16/24 (`font-stretch`,
+  Gewichte 370 und 470); Hover ist eine 8-%-Schicht der Textfarbe (`veil`), der Fokus ein 3-px-Ring.
+  Spalten sind 24,58 % / Rest / 24,58 % der Fensterbreite, ab 1056 px (`wide`) dreispaltig, darunter ein
+  Segment-Schalter oben (nicht mehr unten). Öffnet man eine Studio-Ausgabe, wächst das Studio auf 37,5 % und
+  die Quellen schrumpfen auf 20,6 %. Der Chat hat keine Karte mehr.
+- **Was bewusst vom Original abweicht:** (1) Der Name bleibt „NotebookLM (Nachbau)“, obwohl das Produkt heute
+  „Gemini Notebook“ heißt; die Freigabe des Nutzers nannte NotebookLM, und ein Nachbau mit dem alten Namen
+  ist für die Bewerbung eindeutiger. (2) Die Spaltenbreite ist nicht ziehbar (kein Trenner), das wäre Aufwand
+  für wenig Wirkung. (3) Kein Dialog für Karteikarten, Quiz und Mindmap: das Backend kennt dafür keine
+  Parameter (Anzahl, Schwierigkeit, Thema); nur der Bericht fragt nach der Vorlage. (4) Keine „Notiz
+  hinzufügen“-Pille mit freiem Text: Notizen sind bei uns gespeicherte Antworten und bleiben ein Abschnitt im
+  Studio. (5) Kein „ungelesen“-Punkt an Ausgaben (würde einen Lesestatus pro Ausgabe brauchen). (6) Die
+  Notizbuchliste zeigt auf dem Handy Karten statt Zeilen. (7) Die Tabs der Mobilansicht heißen deutsch
+  „Quellen | Chat | Studio“; das Original hat dort englische Reste. (8) Die Farben der Mindmap-Knoten im
+  Dunkelmodus sind geschätzt (die Mindmap läuft im Original in einem Iframe und ließ sich nicht messen).
+- **Startseite des Originals:** Auf Wunsch des Nutzers zusätzlich gemessen. Die Liste folgt ihr: Karten
+  272x185 mit Radius 40 und 32 px Innenabstand, Abschnittstitel 24/32, die blaue Pille „Neues Notizbuch“
+  (hell #9dd2ff, dunkel #1f3b9b) öffnet einen Dialog für den Titel, statt ein Formular auf der Seite zu zeigen.
+  Löschen sitzt im ⋮-Menü der Karte. Die „Empfohlenen Notebooks“ sind Googles eigene Inhalte und fehlen.

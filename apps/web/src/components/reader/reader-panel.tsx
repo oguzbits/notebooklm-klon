@@ -42,13 +42,13 @@ export function ReaderPanel({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2 px-3 pb-2">
+      <div className="flex items-center gap-2 pb-2">
         <Button variant="ghost" size="sm" onClick={onClose}>
           <ArrowLeft />
           Zurück zu den Quellen
         </Button>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto p-4">
+      <div className="min-h-0 flex-1 overflow-y-auto pt-2 pr-1">
         {failed && (
           <Alert>
             <AlertDescription>
@@ -69,25 +69,25 @@ export function ReaderPanel({
         {source.data && (
           <article className="flex flex-col gap-3">
             <header>
-              <h3 className="text-lg font-medium">{source.data.title}</h3>
+              <h3 className="text-[1.375rem] leading-9">{source.data.title}</h3>
               {source.data.sourceUrl && (
                 <a
                   href={source.data.sourceUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-primary underline-offset-4 hover:underline"
+                  className="inline-flex items-center gap-1 text-small text-link underline-offset-4 hover:underline"
                 >
                   <ExternalLink className="size-3" aria-hidden />
                   Originalseite öffnen
                 </a>
               )}
             </header>
-            <p className="text-sm leading-relaxed whitespace-pre-wrap">
+            <p className="text-read whitespace-pre-wrap">
               {parts.before}
               {parts.highlight && (
                 <mark
                   ref={mark}
-                  className="rounded-md bg-highlight px-0.5 text-highlight-foreground"
+                  className="rounded-sm bg-highlight px-0.5 text-highlight-foreground"
                 >
                   {parts.highlight}
                 </mark>

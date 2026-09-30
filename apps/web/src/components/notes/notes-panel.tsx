@@ -49,7 +49,7 @@ export function NotesSection({
 
   return (
     <section aria-labelledby="notes-heading" className="flex flex-col gap-3">
-      <h3 id="notes-heading" className="text-base font-medium">
+      <h3 id="notes-heading" className="px-1 text-ui font-title">
         Notizen
       </h3>
       <QueryBoundary
@@ -58,8 +58,8 @@ export function NotesSection({
         empty={
           <div className="flex flex-col items-center gap-2 py-6 text-center">
             <NotebookText className="size-8 text-muted-foreground" aria-hidden />
-            <p className="text-sm font-medium">Noch keine Notizen</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-ui font-title">Noch keine Notizen</p>
+            <p className="text-small text-muted-foreground">
               Speichere eine Antwort mit „Als Notiz speichern“, um sie hier zu behalten.
             </p>
           </div>
@@ -68,7 +68,7 @@ export function NotesSection({
         {(list) => (
           <ul className="flex flex-col gap-3">
             {list.map((note) => (
-              <li key={note.id} className="rounded-2xl bg-secondary p-4 text-sm">
+              <li key={note.id} className="rounded-xl bg-secondary p-4 text-ui">
                 <AnswerView
                   notebookId={notebookId}
                   statements={note.statements}
@@ -76,12 +76,14 @@ export function NotesSection({
                   onOpenCitation={onOpenCitation}
                 />
                 <div className="mt-2 flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-small text-muted-foreground">
                     {dateFormat.format(new Date(note.createdAt))}
                   </span>
                   <div className="flex items-center gap-1">
                     {added.has(note.id) ? (
-                      <span className="text-xs text-muted-foreground">Als Quelle hinzugefügt</span>
+                      <span className="text-small text-muted-foreground">
+                        Als Quelle hinzugefügt
+                      </span>
                     ) : (
                       <Button
                         variant="ghost"

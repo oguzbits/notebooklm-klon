@@ -1,4 +1,4 @@
-import { BookmarkCheck, BookmarkPlus } from 'lucide-react';
+import { Check, Pin } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useCreateNote, useNotes } from '@/hooks/use-notes';
@@ -17,25 +17,25 @@ export function SaveNoteButton({
 
   if (notes.data?.some((note) => note.messageId === messageId)) {
     return (
-      <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-        <BookmarkCheck className="size-3.5" aria-hidden />
+      <p className="flex h-8 items-center gap-1.5 px-3 text-ui text-muted-foreground">
+        <Check className="size-4" aria-hidden />
         Als Notiz gespeichert
       </p>
     );
   }
   return (
-    <div className="mt-1 flex items-center gap-2">
+    <div className="flex items-center gap-2">
       <Button
         variant="ghost"
-        size="xs"
+        size="sm"
         disabled={create.isPending || notes.isPending}
         onClick={() => create.mutate(messageId)}
       >
-        <BookmarkPlus />
+        <Pin />
         Als Notiz speichern
       </Button>
       {create.isError && (
-        <span className="text-xs text-destructive" role="alert">
+        <span className="text-small text-destructive" role="alert">
           {describeError(create.error)}
         </span>
       )}

@@ -20,6 +20,13 @@ export const FORMAT_LABEL: Record<ReportFormat, string> = {
   [REPORT_FORMAT.STUDY_GUIDE]: 'Lernleitfaden',
 };
 
+/** One line under each template in the dialog of a report. */
+export const FORMAT_DESCRIPTION: Record<ReportFormat, string> = {
+  [REPORT_FORMAT.BRIEFING]: 'Überblick über die Quellen mit den wichtigsten Informationen',
+  [REPORT_FORMAT.FAQ]: 'Die häufigsten Fragen, beantwortet aus den Quellen',
+  [REPORT_FORMAT.STUDY_GUIDE]: 'Kernbegriffe und Fragen, um den Stoff zu lernen',
+};
+
 const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
 
 /** The line under the title of an output in the list. */

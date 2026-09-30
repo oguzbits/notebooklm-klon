@@ -1,5 +1,5 @@
 import { SOURCE_STATUS } from '@nlm/shared';
-import { LoaderCircle, MessageCircleQuestion, SendHorizontal } from 'lucide-react';
+import { ArrowUp, FileText, LoaderCircle, MessageCircleQuestion } from 'lucide-react';
 import { type FormEvent, type KeyboardEvent, useEffect, useRef } from 'react';
 
 import { AnswerView, MessageView, QuestionBubble } from '@/components/chat/message-view';
@@ -60,26 +60,26 @@ export function ChatPanel({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
-        <div className="mx-auto flex max-w-3xl flex-col gap-4">
+      <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-5">
+        <div className="mx-auto flex max-w-[756px] flex-col gap-3 px-6 pt-2">
           <QueryBoundary
             query={history}
             isEmpty={(messages) => messages.length === 0 && !ask.live}
             empty={
               <div className="flex flex-col items-center gap-2 py-16 text-center">
-                <MessageCircleQuestion className="size-12 text-primary" aria-hidden />
-                <p className="font-medium">Stelle deine erste Frage</p>
-                <p className="max-w-sm text-sm text-muted-foreground">
+                <MessageCircleQuestion className="size-12 text-muted-foreground" aria-hidden />
+                <p className="text-xl font-title">Stelle deine erste Frage</p>
+                <p className="max-w-sm text-read text-muted-foreground">
                   Die Antwort stützt sich nur auf deine ausgewählten Quellen. Jede Aussage hat eine
                   Nummer, die zur Textstelle führt.
                 </p>
                 {suggestions.loading && (
-                  <p className="text-sm text-muted-foreground" role="status">
+                  <p className="text-ui text-muted-foreground" role="status">
                     Vorschläge werden erstellt …
                   </p>
                 )}
                 {suggestions.failed && (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-ui text-muted-foreground">
                     Vorschläge konnten nicht erstellt werden. Du kannst trotzdem fragen.
                   </p>
                 )}
@@ -89,8 +89,7 @@ export function ChatPanel({
                       <li key={suggestion}>
                         <Button
                           variant="outline"
-                          className="h-auto min-h-8 whitespace-normal py-1.5"
-                          size="sm"
+                          className="h-auto min-h-9 whitespace-normal py-2 text-left"
                           disabled={!canAsk}
                           onClick={() => ask.mutate(suggestion)}
                         >
@@ -116,7 +115,7 @@ export function ChatPanel({
                 {ask.live && (
                   <>
                     <QuestionBubble text={ask.live.question} />
-                    <div className="max-w-[92%]">
+                    <div className="pr-8">
                       <AnswerView
                         notebookId={notebookId}
                         statements={ask.live.statements}
@@ -124,7 +123,7 @@ export function ChatPanel({
                         onOpenCitation={onOpenCitation}
                       />
                       <p
-                        className="mt-2 flex items-center gap-2 text-sm text-muted-foreground"
+                        className="mt-2 flex items-center gap-2 text-ui text-muted-foreground"
                         role="status"
                       >
                         <LoaderCircle className="size-4 animate-spin" aria-hidden />
@@ -147,9 +146,9 @@ export function ChatPanel({
         </div>
       </div>
 
-      <div className="px-4 pb-4">
-        <form onSubmit={submit} className="mx-auto flex max-w-3xl flex-col gap-2">
-          <div className="flex items-end gap-2 rounded-[28px] border border-input bg-card py-2 pr-2 pl-5 focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/30">
+      <div className="px-4">
+        <form onSubmit={submit} className="mx-auto flex max-w-[660px] flex-col">
+          <div className="flex min-h-16 items-center gap-2 rounded-panel bg-card py-3 pr-3 pl-7 shadow-glow">
             <Textarea
               name="question"
               aria-label="Deine Frage"
@@ -158,16 +157,28 @@ export function ChatPanel({
               maxLength={2000}
               disabled={ask.isPending}
               onKeyDown={submitOnEnter}
-              className="max-h-40 min-h-0 flex-1 resize-none self-center rounded-none border-0 bg-transparent px-0 py-1.5 shadow-none focus-visible:border-0 focus-visible:ring-0"
+              className="text-read max-h-40 min-h-0 flex-1 resize-none self-center rounded-none border-0 bg-transparent px-0 py-0.5 shadow-none focus-visible:border-0 focus-visible:outline-0"
             />
-            <span className="mb-2.5 hidden shrink-0 rounded-full bg-secondary px-3 py-0.5 text-xs text-muted-foreground sm:inline">
+            <span className="hidden shrink-0 text-[0.875rem] leading-6 text-muted-foreground sm:inline">
               {usable} {usable === 1 ? 'Quelle' : 'Quellen'}
             </span>
-            <Button type="submit" size="icon" aria-label="Frage senden" disabled={!canAsk}>
-              <SendHorizontal />
+            <span
+              className="flex shrink-0 items-center gap-1 text-[0.875rem] leading-6 text-muted-foreground sm:hidden"
+              aria-hidden
+            >
+              <FileText className="size-5" />({usable})
+            </span>
+            <Button
+              type="submit"
+              size="icon"
+              variant={canAsk ? 'default' : 'secondary'}
+              aria-label="Frage senden"
+              disabled={!canAsk}
+            >
+              <ArrowUp />
             </Button>
           </div>
-          <p className="px-4 text-center text-xs text-muted-foreground">
+          <p className="px-4 py-3 text-center text-small text-muted-foreground">
             {hint ? `${hint} ` : ''}
             Antworten können Fehler enthalten. Prüfe wichtige Angaben an der Quelle.
           </p>

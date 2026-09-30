@@ -63,7 +63,8 @@ describe('NotebookListPage', () => {
     await screen.findByText('Noch kein Notizbuch');
 
     const user = userEvent.setup();
-    await user.type(screen.getByLabelText('Neues Notizbuch'), '  Neu ');
+    await user.click(screen.getByRole('button', { name: 'Neues Notizbuch' }));
+    await user.type(await screen.findByLabelText('Titel des Notizbuchs'), '  Neu ');
     await user.click(screen.getByRole('button', { name: 'Anlegen' }));
 
     expect(await screen.findByText('Neu')).toBeTruthy();
@@ -84,7 +85,10 @@ describe('NotebookListPage', () => {
     renderWithProviders(<NotebookListPage />);
     const user = userEvent.setup();
 
-    await user.click(await screen.findByRole('button', { name: /„Weg damit“ löschen/ }));
+    await user.click(
+      await screen.findByRole('button', { name: /Weitere Aktionen für Notizbuch „Weg damit“/ })
+    );
+    await user.click(await screen.findByRole('menuitem', { name: 'Löschen' }));
     expect(deleted).toBe(false);
     const dialog = await screen.findByRole('alertdialog');
     await user.click(within(dialog).getByRole('button', { name: 'Löschen' }));

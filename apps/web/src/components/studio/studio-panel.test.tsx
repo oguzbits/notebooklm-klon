@@ -56,7 +56,7 @@ describe('StudioPanel', () => {
     serve({ outputs: [flashcardsOutput()] });
     renderPanel();
 
-    expect(await screen.findByText('Karteikarten · 2 Karten')).toBeTruthy();
+    expect(await screen.findByText(/Karteikarten · 2 Karten · /)).toBeTruthy();
   });
 
   it('makes flashcards, shows that it works and opens them when they are ready', async () => {
@@ -95,7 +95,8 @@ describe('StudioPanel', () => {
     const user = userEvent.setup();
 
     await user.click(await screen.findByRole('button', { name: 'Bericht' }));
-    await user.click(await screen.findByRole('menuitem', { name: 'Häufige Fragen' }));
+    await user.click(await screen.findByRole('radio', { name: /Häufige Fragen/ }));
+    await user.click(screen.getByRole('button', { name: 'Generieren' }));
 
     await screen.findByText('Frage 1 von 1');
     expect(body).toEqual({ kind: STUDIO_KIND.REPORT, format: REPORT_FORMAT.FAQ });
@@ -150,7 +151,10 @@ describe('StudioPanel', () => {
     await user.click(await screen.findByRole('button', { name: /Karteikarten · 2 Karten/ }));
     await user.click(await screen.findByRole('button', { name: 'Zurück zum Studio' }));
     const list = screen.getByRole('region', { name: 'Erstellte Ausgaben' });
-    await user.click(within(list).getByRole('button', { name: '„Karteikarten“ löschen' }));
+    await user.click(
+      within(list).getByRole('button', { name: 'Weitere Aktionen für „Karteikarten“' })
+    );
+    await user.click(await screen.findByRole('menuitem', { name: 'Löschen' }));
 
     expect(await screen.findByText(/Hier erscheinen deine Berichte/)).toBeTruthy();
   });

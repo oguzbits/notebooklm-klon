@@ -5,29 +5,29 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-full text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex shrink-0 items-center justify-center gap-2 rounded-full text-ui font-label whitespace-nowrap transition-colors disabled:pointer-events-none disabled:opacity-50 aria-invalid:outline-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-sm',
-        destructive:
-          'bg-destructive text-background hover:bg-destructive/90 focus-visible:ring-destructive/30',
-        outline:
-          'border border-input bg-transparent text-primary hover:bg-accent/60 hover:text-accent-foreground',
-        secondary:
-          'bg-secondary text-secondary-foreground hover:bg-accent hover:text-accent-foreground',
-        ghost: 'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
-        link: 'text-primary underline-offset-4 hover:underline',
+        default: 'bg-primary text-primary-foreground hover:opacity-90',
+        destructive: 'bg-destructive text-background hover:opacity-90',
+        outline: 'veil border border-border bg-transparent text-foreground',
+        secondary: 'veil bg-secondary text-secondary-foreground',
+        /** The soft blue action, used once per page. */
+        prominent: 'veil bg-prominent text-prominent-foreground',
+        ghost: 'veil',
+        link: 'text-link underline-offset-4 hover:underline',
       },
       size: {
-        default: 'h-10 px-6 py-2 has-[>svg]:px-4',
-        xs: "h-6 gap-1 px-2.5 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: 'h-8 gap-1.5 px-4 has-[>svg]:px-3',
-        lg: 'h-12 px-8 text-base has-[>svg]:px-6',
-        icon: 'size-10',
-        'icon-xs': "size-6 [&_svg:not([class*='size-'])]:size-3",
-        'icon-sm': 'size-9',
-        'icon-lg': 'size-12',
+        default: 'h-9 px-4 has-[>svg]:pr-4 has-[>svg]:pl-3',
+        xs: "h-7 gap-1 px-3 text-small has-[>svg]:px-2 [&_svg:not([class*='size-'])]:size-4",
+        sm: "h-8 gap-1.5 px-3 has-[>svg]:px-2.5 [&_svg:not([class*='size-'])]:size-4",
+        lg: 'h-10 px-6 has-[>svg]:px-5',
+        xl: 'h-12 px-6 has-[>svg]:px-5',
+        icon: 'size-9',
+        'icon-xs': "size-7 [&_svg:not([class*='size-'])]:size-4",
+        'icon-sm': "size-8 [&_svg:not([class*='size-'])]:size-5",
+        'icon-lg': 'size-10',
       },
     },
     defaultVariants: {

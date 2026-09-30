@@ -21,15 +21,17 @@ export function AppHeader({ title, actions }: { title?: ReactNode; actions?: Rea
   const email = session.data?.email ?? '';
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between gap-3 px-4 sm:px-6">
+    <header className="flex h-16 shrink-0 items-center justify-between gap-3 pr-3 pl-4 sm:pr-4 sm:pl-5">
       <div className="flex min-w-0 items-center gap-3">
         <Link
           to={ROUTES.HOME}
           aria-label="Zu deinen Notizbüchern"
-          className="flex shrink-0 items-center gap-2 rounded-full focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+          className="flex shrink-0 items-center gap-2 rounded-full"
         >
           <Logo />
-          {!title && <span className="text-xl font-medium">NotebookLM</span>}
+          {!title && (
+            <span className="text-[23px] leading-7 font-[475] tracking-[-0.027em]">NotebookLM</span>
+          )}
         </Link>
         {title}
       </div>
@@ -38,7 +40,7 @@ export function AppHeader({ title, actions }: { title?: ReactNode; actions?: Rea
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label="Konto"
-            className="inline-flex size-10 items-center justify-center rounded-full bg-accent text-base font-medium text-accent-foreground hover:bg-primary hover:text-primary-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+            className="veil ml-1 inline-flex size-10 items-center justify-center rounded-full bg-secondary text-base font-title text-foreground"
           >
             {email.charAt(0).toUpperCase() || '?'}
           </DropdownMenuTrigger>
