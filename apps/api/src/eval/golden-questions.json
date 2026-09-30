@@ -185,7 +185,7 @@
         "text": "RAG does not prevent hallucinations in LLMs."
       }
     ],
-    "requiredFacts": ["hallucinat"]
+    "requiredFacts": ["Halluzination"]
   },
   {
     "id": "nordlicht-umsatz-q3",
