@@ -1,0 +1,18 @@
+node_modules
+dist
+coverage
+*.tsbuildinfo
+.DS_Store
+
+# env files: only the template is tracked
+.env*
+!.env.example
+
+# tooling output
+reports/
+test-results/
+playwright-report/
+architecture.mmd
+
+# temporary working notes
+_temp_*.md
