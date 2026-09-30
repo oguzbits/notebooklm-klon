@@ -9,4 +9,6 @@ export const LIMITS = {
   URL_IMPORT_TIMEOUT_MS: 15_000,
   /** URL import: largest response body accepted. */
   URL_IMPORT_MAX_BYTES: 5 * 1024 * 1024,
+  /** Ingestion: chunks per embedding request. */
+  EMBED_BATCH_SIZE: 16,
 } as const;
