@@ -1,6 +1,7 @@
 /** @type {import('dependency-cruiser').IConfiguration} */
 const SERVER_ONLY_PACKAGES =
   'node_modules/(drizzle-orm|drizzle-kit|pg|pg-boss|ai|@ai-sdk|@hono/node-server|better-auth)/';
+const TEST_FILE = '\\.test\\.tsx?$';
 
 module.exports = {
   forbidden: [
@@ -13,9 +14,10 @@ module.exports = {
     },
     {
       name: 'shared-only-depends-on-zod',
-      comment: 'packages/shared holds contracts only: no Node core modules, npm only zod',
+      comment:
+        'packages/shared holds contracts only: no Node core modules, npm only zod (tests excepted)',
       severity: 'error',
-      from: { path: '^packages/shared/src' },
+      from: { path: '^packages/shared/src', pathNot: TEST_FILE },
       to: {
         dependencyTypes: ['core', 'npm', 'npm-dev', 'npm-optional', 'npm-peer', 'npm-no-pkg'],
         pathNot: ['node_modules/zod/', '^packages/shared/'],
@@ -46,7 +48,7 @@ module.exports = {
     {
       name: 'web-no-node-core',
       severity: 'error',
-      from: { path: '^apps/web/src' },
+      from: { path: '^apps/web/src', pathNot: TEST_FILE },
       to: { dependencyTypes: ['core'] },
     },
     {

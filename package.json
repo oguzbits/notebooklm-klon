@@ -17,7 +17,9 @@
     "depcruise:graph": "depcruise --config config/dependency-cruiser.cjs --output-type mermaid apps packages > architecture.mmd",
     "knip": "knip --include dependencies,unlisted,binaries,unresolved,files,cycles",
     "audit:duplication": "jscpd",
-    "audit:magic": "node scripts/audit/audit-magic-strings.mjs"
+    "audit:magic": "node scripts/audit/audit-magic-strings.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -31,9 +33,11 @@
     "jscpd": "^5.3.3",
     "knip": "^6.38.0",
     "lint-staged": "^17.6.0",
+    "msw": "^2.15.0",
     "prettier": "^3.9.9",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.71.0"
+    "typescript-eslint": "^8.71.0",
+    "vitest": "^5.0.2"
   },
   "lint-staged": {
     "*.{js,mjs,ts,tsx}": [
