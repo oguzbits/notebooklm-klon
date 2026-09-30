@@ -7,3 +7,4 @@ playwright-report
 pnpm-lock.yaml
 architecture.mmd
 docs/PLAN.md
+spikes/corpus

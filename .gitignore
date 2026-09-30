@@ -16,3 +16,7 @@ architecture.mmd
 
 # temporary working notes
 _temp_*.md
+
+# spike corpus: downloaded third-party documents stay local (licenses differ)
+spikes/corpus/*
+!spikes/corpus/README.md

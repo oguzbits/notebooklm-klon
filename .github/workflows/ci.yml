@@ -54,9 +54,6 @@ jobs:
   semgrep:
     name: Semgrep SAST
     runs-on: ubuntu-latest
-    # Not verified locally (semgrep is not installed here). Report-only until the first run
-    # shows the findings are actionable; then remove continue-on-error to make it blocking.
-    continue-on-error: true
     container:
       image: semgrep/semgrep:1.178.0
     steps:
