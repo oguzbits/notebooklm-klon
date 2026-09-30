@@ -1,38 +1,42 @@
 import {
   type CreateStudioBody,
+  type Note,
   SOURCE_STATUS,
   STUDIO_KIND,
   type StudioKind,
   type StudioOutput,
 } from '@nlm/shared';
 import {
-  EllipsisVertical,
   FileText,
   Layers,
   ListChecks,
   LoaderCircle,
   type LucideIcon,
   Network,
+  NotebookText,
   RotateCw,
-  Trash2,
+  WandSparkles,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import { NotesSection } from '@/components/notes/notes-panel';
 import { QueryBoundary } from '@/components/query-boundary';
 import { OutputRowsSkeleton } from '@/components/skeletons';
+import { LibraryRow } from '@/components/studio/library-row';
+import { NoteViewer } from '@/components/studio/note-viewer';
 import { OutputViewer } from '@/components/studio/output-viewer';
 import { ReportDialog } from '@/components/studio/report-dialog';
-import { describeOutput, KIND_LABEL } from '@/components/studio/studio-labels';
+import {
+  describeOutput,
+  KIND_LABEL,
+  noteTitle,
+  TILE_LABEL,
+} from '@/components/studio/studio-labels';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useDeleteNote, useNotes } from '@/hooks/use-notes';
 import { useSources } from '@/hooks/use-sources';
 import { useCreateStudioOutput, useDeleteStudioOutput, useStudioOutputs } from '@/hooks/use-studio';
 import { describeError } from '@/lib/messages';
@@ -76,12 +80,37 @@ function Tile({ kind, children, ...props }: { kind: StudioKind } & React.Compone
             <span className="flex size-10 shrink-0 items-center justify-center">
               <Icon className={cn('size-6', KIND_COLOR[kind])} aria-hidden />
             </span>
-            {children ?? KIND_LABEL[kind]}
+            {children ?? TILE_LABEL[kind]}
           </button>
         </span>
       </TooltipTrigger>
       <TooltipContent>{KIND_TIP[kind]}</TooltipContent>
     </Tooltip>
+  );
+}
+
+const ENTRY = { OUTPUT: 'OUTPUT', NOTE: 'NOTE' } as const;
+type OpenEntry = { type: (typeof ENTRY)[keyof typeof ENTRY]; id: string };
+/** A line of the list: something the Studio made, or a saved answer. */
+type LibraryEntry =
+  { type: typeof ENTRY.OUTPUT; output: StudioOutput } | { type: typeof ENTRY.NOTE; note: Note };
+
+const entryTime = (entry: LibraryEntry) =>
+  entry.type === ENTRY.OUTPUT ? entry.output.createdAt : entry.note.createdAt;
+
+/** What the list says while it is empty: the place where the Studio keeps what it makes. */
+function EmptyLibrary() {
+  return (
+    <div className="flex flex-col items-center gap-2 px-2 py-8 text-center">
+      <WandSparkles className="size-8 text-link" aria-hidden />
+      <p className="text-[0.875rem] leading-6 font-[500] text-link">
+        Hier wird die Ausgabe von Studio gespeichert.
+      </p>
+      <p className="text-[0.875rem] leading-6 text-muted-foreground">
+        Wähle Quellen aus und erstelle Berichte, Karteikarten, Quizze oder Mindmaps. Gespeicherte
+        Antworten aus dem Chat erscheinen hier als Notizen.
+      </p>
+    </div>
   );
 }
 
@@ -100,32 +129,77 @@ export function StudioPanel({
   const sources = useSources(notebookId);
   const create = useCreateStudioOutput(notebookId);
   const remove = useDeleteStudioOutput(notebookId);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const notes = useNotes(notebookId);
+  const removeNote = useDeleteNote(notebookId);
+  const [open, setOpen] = useState<OpenEntry | null>(null);
+  const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
 
   const usableCount = (sources.data ?? []).filter(
     (source) => source.selected && source.status === SOURCE_STATUS.READY
   ).length;
   const usable = usableCount > 0;
-  const opened = outputs.data?.find((output) => output.id === openId);
-  const viewing = opened !== undefined;
+  const openedOutput =
+    open?.type === ENTRY.OUTPUT ? outputs.data?.find((output) => output.id === open.id) : undefined;
+  const openedNote =
+    open?.type === ENTRY.NOTE ? notes.data?.find((note) => note.id === open.id) : undefined;
+  const viewing = openedOutput !== undefined || openedNote !== undefined;
   useEffect(() => {
     onViewingChange?.(viewing);
   }, [viewing, onViewingChange]);
 
   const make = (body: CreateStudioBody) =>
-    create.mutate(body, { onSuccess: (output) => setOpenId(output.id) });
+    create.mutate(body, { onSuccess: (output) => setOpen({ type: ENTRY.OUTPUT, id: output.id }) });
   const blocked = !usable || create.isPending;
 
-  if (opened) {
+  const entries: LibraryEntry[] = [
+    ...(outputs.data ?? []).map((output): LibraryEntry => ({ type: ENTRY.OUTPUT, output })),
+    ...(notes.data ?? []).map((note): LibraryEntry => ({ type: ENTRY.NOTE, note })),
+  ].sort((a, b) => entryTime(b).localeCompare(entryTime(a)));
+
+  const deleteNoteDialog = (
+    <ConfirmDialog
+      open={noteToDelete !== null}
+      onOpenChange={(isOpen) => !isOpen && setNoteToDelete(null)}
+      title="Notiz löschen?"
+      description="Die Notiz wird gelöscht. Die Antwort im Chat bleibt erhalten."
+      pending={removeNote.isPending}
+      onConfirm={() =>
+        noteToDelete &&
+        removeNote.mutate(noteToDelete, {
+          onSuccess: () => {
+            setNoteToDelete(null);
+            setOpen(null);
+          },
+        })
+      }
+    />
+  );
+
+  if (openedOutput) {
     return (
       <OutputViewer
         notebookId={notebookId}
-        output={opened}
+        output={openedOutput}
         deleting={remove.isPending}
-        onBack={() => setOpenId(null)}
-        onDelete={() => remove.mutate(opened.id, { onSuccess: () => setOpenId(null) })}
+        onBack={() => setOpen(null)}
+        onDelete={() => remove.mutate(openedOutput.id, { onSuccess: () => setOpen(null) })}
         onOpenCitation={onOpenCitation}
       />
+    );
+  }
+  if (openedNote) {
+    return (
+      <>
+        <NoteViewer
+          notebookId={notebookId}
+          note={openedNote}
+          deleting={removeNote.isPending}
+          onBack={() => setOpen(null)}
+          onDelete={() => setNoteToDelete(openedNote.id)}
+          onOpenCitation={onOpenCitation}
+        />
+        {deleteNoteDialog}
+      </>
     );
   }
 
@@ -179,9 +253,9 @@ export function StudioPanel({
 
         <section aria-label="Erstellte Ausgaben" className="flex flex-col gap-1">
           {create.isPending && (
-            <div
+            <Skeleton
               role="status"
-              className="flex h-[60px] animate-pulse items-center gap-2 rounded-xl bg-secondary p-2"
+              className="flex h-16 items-center gap-2 rounded-2xl p-3 [--shimmer-base:var(--source-guide)] [--shimmer-edge:color-mix(in_srgb,var(--source-guide),var(--card)_60%)]"
             >
               <span className="flex size-8 shrink-0 items-center justify-center">
                 <LoaderCircle className="size-5 animate-spin" aria-hidden />
@@ -194,106 +268,62 @@ export function StudioPanel({
                   basierend auf {usableCount} {usableCount === 1 ? 'Quelle' : 'Quellen'}
                 </span>
               </span>
-            </div>
+            </Skeleton>
           )}
           <QueryBoundary
             query={outputs}
             loading={<OutputRowsSkeleton />}
-            isEmpty={(list) => list.length === 0}
-            empty={
-              !create.isPending && (
-                <p className="px-1 text-ui text-muted-foreground">
-                  Hier erscheinen deine Berichte, Karteikarten, Quizze und Mindmaps.
-                </p>
-              )
-            }
+            isEmpty={() => entries.length === 0}
+            empty={!create.isPending && !notes.isPending && <EmptyLibrary />}
           >
-            {(list) => (
+            {() => (
               <ul className="flex flex-col gap-1">
-                {list.map((output) => (
-                  <OutputRow
-                    key={output.id}
-                    output={output}
-                    deleting={remove.isPending && remove.variables === output.id}
-                    onOpen={() => setOpenId(output.id)}
-                    onDelete={() => remove.mutate(output.id)}
-                  />
-                ))}
+                {entries.map((entry) =>
+                  entry.type === ENTRY.OUTPUT ? (
+                    <LibraryRow
+                      key={entry.output.id}
+                      icon={KIND_ICON[entry.output.kind]}
+                      iconClassName={KIND_COLOR[entry.output.kind]}
+                      title={entry.output.title}
+                      subtitle={`${describeOutput(entry.output)} · ${relativeTime(entry.output.createdAt)}`}
+                      deleting={remove.isPending && remove.variables === entry.output.id}
+                      onOpen={() => setOpen({ type: ENTRY.OUTPUT, id: entry.output.id })}
+                      onDelete={() => remove.mutate(entry.output.id)}
+                    />
+                  ) : (
+                    <LibraryRow
+                      key={entry.note.id}
+                      icon={NotebookText}
+                      iconClassName="text-foreground"
+                      title={noteTitle(entry.note)}
+                      subtitle={`Notiz · ${relativeTime(entry.note.createdAt)}`}
+                      deleting={removeNote.isPending && noteToDelete === entry.note.id}
+                      onOpen={() => setOpen({ type: ENTRY.NOTE, id: entry.note.id })}
+                      onDelete={() => setNoteToDelete(entry.note.id)}
+                    />
+                  )
+                )}
               </ul>
             )}
           </QueryBoundary>
-          {remove.isError && (
+          {notes.isError && (
             <Alert variant="destructive">
-              <AlertDescription>{describeError(remove.error)}</AlertDescription>
+              <AlertDescription>{describeError(notes.error)}</AlertDescription>
+            </Alert>
+          )}
+          {(remove.isError || removeNote.isError) && (
+            <Alert variant="destructive">
+              <AlertDescription>{describeError(remove.error ?? removeNote.error)}</AlertDescription>
             </Alert>
           )}
         </section>
-
-        <NotesSection notebookId={notebookId} onOpenCitation={onOpenCitation} />
       </div>
       {/* The list fades out above the lower edge of the panel, padding included. */}
       <div
         aria-hidden
         className="pointer-events-none absolute -right-2 -bottom-2 -left-2 h-7 rounded-b-panel bg-gradient-to-t from-card from-0% via-card/98 via-10% to-transparent"
       />
+      {deleteNoteDialog}
     </div>
-  );
-}
-
-function OutputRow({
-  output,
-  deleting,
-  onOpen,
-  onDelete,
-}: {
-  output: StudioOutput;
-  deleting: boolean;
-  onOpen: () => void;
-  onDelete: () => void;
-}) {
-  const Icon = KIND_ICON[output.kind];
-  return (
-    <li className={cn('veil flex items-center rounded-xl', deleting && 'opacity-50')}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            type="button"
-            onClick={onOpen}
-            className="flex h-[60px] min-w-0 flex-1 items-center gap-2 rounded-xl p-2 text-left"
-          >
-            <span className="flex size-8 shrink-0 items-center justify-center">
-              <Icon className={cn('size-6', KIND_COLOR[output.kind])} aria-hidden />
-            </span>
-            <span className="min-w-0 text-small">
-              <span className="block truncate">{output.title}</span>
-              <span className="block truncate text-[0.75rem] leading-4 text-muted-foreground">
-                {describeOutput(output)} · {relativeTime(output.createdAt)}
-              </span>
-            </span>
-          </button>
-        </TooltipTrigger>
-        <TooltipContent>{output.title}</TooltipContent>
-      </Tooltip>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="mr-1"
-            aria-label={`Weitere Aktionen für „${output.title}“`}
-            tooltip="Mehr"
-            disabled={deleting}
-          >
-            <EllipsisVertical />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem disabled={deleting} onSelect={onDelete}>
-            <Trash2 aria-hidden />
-            Löschen
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </li>
   );
 }

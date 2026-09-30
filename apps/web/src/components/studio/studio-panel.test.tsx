@@ -1,10 +1,25 @@
-import { API_ERROR, REPORT_FORMAT, STUDIO_KIND, type StudioOutput } from '@nlm/shared';
+import {
+  API_ERROR,
+  REPORT_FORMAT,
+  STUDIO_KIND,
+  type StudioOutput,
+  SUBMIT_ACTION,
+} from '@nlm/shared';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { flashcardsOutput, NOTEBOOK_ID, OUTPUT_ID, quizOutput, source } from '@/test/fixtures';
+import {
+  CHUNK_ID,
+  flashcardsOutput,
+  note,
+  NOTE_ID,
+  NOTEBOOK_ID,
+  OUTPUT_ID,
+  quizOutput,
+  source,
+} from '@/test/fixtures';
 import { renderWithProviders } from '@/test/render';
 
 import { server } from '../../../../../vitest.setup';
@@ -13,10 +28,10 @@ import { StudioPanel } from './studio-panel';
 const base = `*/api/notebooks/${NOTEBOOK_ID}`;
 
 /** The handlers every test needs: the sources, the notes and the list of outputs. */
-function serve(options: { outputs?: unknown[]; sources?: unknown[] } = {}) {
+function serve(options: { outputs?: unknown[]; sources?: unknown[]; notes?: unknown[] } = {}) {
   server.use(
     http.get(`${base}/sources`, () => HttpResponse.json(options.sources ?? [source()])),
-    http.get(`${base}/notes`, () => HttpResponse.json([])),
+    http.get(`${base}/notes`, () => HttpResponse.json(options.notes ?? [])),
     http.get(`${base}/studio`, () => HttpResponse.json(options.outputs ?? []))
   );
 }
@@ -48,8 +63,7 @@ describe('StudioPanel', () => {
     serve();
     renderPanel();
 
-    expect(await screen.findByText(/Hier erscheinen deine Berichte/)).toBeTruthy();
-    expect(screen.getByText('Noch keine Notizen')).toBeTruthy();
+    expect(await screen.findByText('Hier wird die Ausgabe von Studio gespeichert.')).toBeTruthy();
   });
 
   it('tells what a tile makes when the pointer rests on it', async () => {
@@ -120,7 +134,7 @@ describe('StudioPanel', () => {
     renderPanel();
     const user = userEvent.setup();
 
-    await user.click(await screen.findByRole('button', { name: 'Bericht' }));
+    await user.click(await screen.findByRole('button', { name: 'Berichte' }));
     await user.click(await screen.findByRole('radio', { name: /Häufige Fragen/ }));
     await user.click(screen.getByRole('button', { name: 'Generieren' }));
 
@@ -182,6 +196,98 @@ describe('StudioPanel', () => {
     );
     await user.click(await screen.findByRole('menuitem', { name: 'Löschen' }));
 
-    expect(await screen.findByText(/Hier erscheinen deine Berichte/)).toBeTruthy();
+    expect(await screen.findByText('Hier wird die Ausgabe von Studio gespeichert.')).toBeTruthy();
+  });
+
+  describe('notes', () => {
+    it('lists a saved answer between the outputs, newest first', async () => {
+      serve({
+        outputs: [flashcardsOutput()],
+        notes: [note({ createdAt: '2026-10-01T12:00:00.000Z' })],
+      });
+      renderPanel();
+
+      const rows = await screen.findAllByRole('listitem');
+
+      expect(rows).toHaveLength(2);
+      expect(rows[0]?.textContent).toContain('Dr. Brandt leitet es.');
+      expect(rows[1]?.textContent).toContain('Karteikarten');
+    });
+
+    it('opens a note with a chip that leads to the cited passage', async () => {
+      serve({ notes: [note()] });
+      const onOpen = vi.fn();
+      renderPanel(onOpen);
+      const user = userEvent.setup();
+
+      await user.click(await screen.findByRole('button', { name: /Notiz · / }));
+      await user.click(await screen.findByRole('button', { name: 'Quelle 1 anzeigen' }));
+
+      expect(onOpen).toHaveBeenCalledWith(CHUNK_ID);
+      await user.click(screen.getByRole('button', { name: 'Zurück zum Studio' }));
+      expect(await screen.findByRole('button', { name: /Notiz · / })).toBeTruthy();
+    });
+
+    it('puts the text of a note among the sources as a text file', async () => {
+      serve({ notes: [note()] });
+      const uploads: File[] = [];
+      const realFetch = globalThis.fetch;
+      // Only the upload is answered here (jsdom's FormData is no body for Node's fetch).
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (input: Parameters<typeof fetch>[0], init?: RequestInit) => {
+          if (!String(input).endsWith('/sources/file')) return realFetch(input, init);
+          uploads.push((init?.body as FormData).get('file') as File);
+          return Response.json(
+            { sourceId: '9b2c7d6e-1f43-4c8a-8a3b-5e7a8f0c1d22', action: SUBMIT_ACTION.CREATED },
+            { status: 202 }
+          );
+        })
+      );
+      renderPanel();
+      const user = userEvent.setup();
+
+      await user.click(await screen.findByRole('button', { name: /Notiz · / }));
+      await user.click(await screen.findByRole('button', { name: 'Als Quelle festlegen' }));
+
+      expect(await screen.findByText('Als Quelle hinzugefügt')).toBeTruthy();
+      expect(uploads[0]?.name).toMatch(/^Notiz vom .+\.txt$/);
+      expect(await uploads[0]?.text()).toBe('Dr. Brandt leitet es.');
+      vi.unstubAllGlobals();
+    });
+
+    it('deletes a note from the list after the confirmation', async () => {
+      let deleted = false;
+      serve();
+      server.use(
+        http.get(`${base}/notes`, () => HttpResponse.json(deleted ? [] : [note()])),
+        http.delete(`${base}/notes/${NOTE_ID}`, () => {
+          deleted = true;
+          return new HttpResponse(null, { status: 204 });
+        })
+      );
+      renderPanel();
+      const user = userEvent.setup();
+
+      await user.click(await screen.findByRole('button', { name: /Weitere Aktionen für/ }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Löschen' }));
+      const dialog = await screen.findByRole('alertdialog');
+      await user.click(within(dialog).getByRole('button', { name: 'Löschen' }));
+
+      expect(await screen.findByText('Hier wird die Ausgabe von Studio gespeichert.')).toBeTruthy();
+    });
+
+    it('says so when the notes cannot be loaded, and still lists the outputs', async () => {
+      serve({ outputs: [flashcardsOutput()] });
+      server.use(
+        http.get(`${base}/notes`, () =>
+          HttpResponse.json({ code: API_ERROR.INTERNAL }, { status: 500 })
+        )
+      );
+      renderPanel();
+
+      expect(await screen.findByRole('alert')).toBeTruthy();
+      expect(screen.getByRole('button', { name: /Karteikarten · 2 Karten/ })).toBeTruthy();
+    });
   });
 });

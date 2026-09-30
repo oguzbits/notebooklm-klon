@@ -44,16 +44,16 @@ test('from sign-up to a cited passage, a note and back out', async ({ page }) =>
   await chip.hover();
   await expect(page.getByText('nordlicht.txt').last()).toBeVisible();
   await chip.click();
-  await expect(page.getByRole('button', { name: /Zurück zu den Quellen/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Quellenansicht schließen' })).toBeVisible();
   await expect(page.locator('mark').first()).toContainText(
     'Dr. Brandt leitet das Projekt Nordlicht'
   );
 
   // Save the answer as a note and find it in the notes.
-  await page.getByRole('button', { name: 'Als Notiz speichern' }).click();
-  await expect(page.getByText('Als Notiz gespeichert')).toBeVisible();
-  await page.getByRole('button', { name: /Zurück zu den Quellen/ }).click();
-  await expect(page.getByRole('button', { name: 'Notiz löschen' })).toBeVisible();
+  await page.getByRole('button', { name: 'In Notiz speichern' }).click();
+  await expect(page.getByText('In Notiz gespeichert')).toBeVisible();
+  await page.getByRole('button', { name: 'Quellenansicht schließen' }).click();
+  await expect(page.getByRole('button', { name: /Notiz · / })).toBeVisible();
 
   // The Studio makes flashcards from the source; every card has a passage behind it.
   await page.getByRole('button', { name: 'Karteikarten', exact: true }).click();

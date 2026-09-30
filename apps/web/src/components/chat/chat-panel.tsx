@@ -1,6 +1,6 @@
 import { SOURCE_STATUS } from '@nlm/shared';
 import { ArrowUp, FileText, LoaderCircle, MessageCircleQuestion } from 'lucide-react';
-import { type FormEvent, type KeyboardEvent, useEffect, useRef } from 'react';
+import { type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react';
 
 import { AnswerView, MessageView, QuestionBubble } from '@/components/chat/message-view';
 import { ErrorNotice, QueryBoundary } from '@/components/query-boundary';
@@ -24,11 +24,13 @@ export function ChatPanel({
   const ask = useAskQuestion(notebookId);
   const suggestions = useSuggestedQuestions(notebookId, sources.data ?? []);
   const bottom = useRef<HTMLDivElement>(null);
+  const [question, setQuestion] = useState('');
 
   const usable = (sources.data ?? []).filter(
     (source) => source.selected && source.status === SOURCE_STATUS.READY
   ).length;
   const canAsk = usable > 0 && !ask.isPending;
+  const canSend = canAsk && question.trim() !== '';
 
   const liveCount = ask.live?.statements.length ?? 0;
   useEffect(() => {
@@ -36,10 +38,10 @@ export function ChatPanel({
   }, [history.data?.length, liveCount, ask.isPending]);
 
   const send = (form: HTMLFormElement) => {
-    const question = String(new FormData(form).get('question') ?? '').trim();
-    if (!question || !canAsk) return;
-    ask.mutate(question);
-    form.reset();
+    const text = String(new FormData(form).get('question') ?? '').trim();
+    if (!text || !canAsk) return;
+    ask.mutate(text);
+    setQuestion('');
   };
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -162,6 +164,8 @@ export function ChatPanel({
               placeholder="Stelle eine Frage zu deinen Quellen …"
               rows={1}
               maxLength={2000}
+              value={question}
+              onChange={(event) => setQuestion(event.target.value)}
               disabled={ask.isPending}
               onKeyDown={submitOnEnter}
               className="text-read max-h-40 min-h-0 flex-1 resize-none self-center rounded-none border-0 bg-transparent px-0 py-0.5 shadow-none focus-visible:border-0 focus-visible:outline-0"
@@ -178,9 +182,9 @@ export function ChatPanel({
             <Button
               type="submit"
               size="icon"
-              variant={canAsk ? 'default' : 'secondary'}
+              variant={canSend ? 'default' : 'secondary'}
               aria-label="Frage senden"
-              disabled={!canAsk}
+              disabled={!canSend}
             >
               <ArrowUp />
             </Button>

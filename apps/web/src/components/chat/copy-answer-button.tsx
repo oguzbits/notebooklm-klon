@@ -26,9 +26,14 @@ export function CopyAnswerButton({ statements }: { statements: AnswerStatement[]
 
   return (
     <>
-      <Button variant="ghost" size="sm" onClick={() => void copy()}>
-        {copied ? <Check /> : <Copy />}
-        {copied ? 'Kopiert' : 'Kopieren'}
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label="Kopieren"
+        tooltip={copied ? 'Kopiert' : 'Kopieren'}
+        onClick={() => void copy()}
+      >
+        {copied ? <Check className="size-6" /> : <Copy className="size-6" />}
       </Button>
       {failure !== null && (
         <span className="text-small text-destructive" role="alert">

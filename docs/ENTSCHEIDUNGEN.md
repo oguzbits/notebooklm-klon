@@ -233,3 +233,12 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   auf den eigenen Nutzer begrenzt. Bewusst nicht übernommen: „Freigeben“, „PRO“, Apps-Raster, „Notebook
   anpassen/kopieren“, „Analysen“, Hilfe, Discord, Abo, Wasserzeichen, Lizenzen (Google-Kontext oder keine Funktion
   bei uns). Menüs öffnen ohne Abstand unter dem Auslöser (im Original y = Unterkante des Buttons).
+- **Studio-Liste wie im Original (2026-10-01):** Gespeicherte Antworten sind Zeilen derselben Liste wie die Ausgaben
+  (nach Zeit sortiert, neueste oben) und öffnen sich in derselben Art von Ansicht („Studio › Notiz“ mit
+  Löschen-Knopf und „Als Quelle festlegen“ unten); der Abschnitt „Notizen“ mit Karten entfällt. Ansichten für
+  Ausgaben und Notizen teilen sich den Rahmen (`ViewerFrame`). Während etwas erzeugt wird, zeigt die Liste eine
+  schimmernde Zeile mit Spinner und „basierend auf n Quellen“. Die leere Liste sagt „Hier wird die Ausgabe von
+  Studio gespeichert.“ Der Senden-Pfeil ist bei leerem Feld deaktiviert und grau; unter der Antwort stehen
+  „In Notiz speichern“ und Kopieren als Icon; die Kachel heißt „Berichte“; Quellen haben ein Symbol nach Dateityp
+  (PDF rot). Nicht übernommen: „Notiz hinzufügen“ (freie Notizen; unsere Notizen sind gespeicherte Antworten mit
+  Belegen, ein freier Text hätte keine).

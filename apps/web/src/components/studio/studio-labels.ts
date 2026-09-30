@@ -1,4 +1,5 @@
 import {
+  type Note,
   REPORT_FORMAT,
   type ReportFormat,
   STUDIO_KIND,
@@ -12,6 +13,12 @@ export const KIND_LABEL: Record<StudioKind, string> = {
   [STUDIO_KIND.FLASHCARDS]: 'Karteikarten',
   [STUDIO_KIND.QUIZ]: 'Quiz',
   [STUDIO_KIND.MINDMAP]: 'Mindmap',
+};
+
+/** The label on a tile of the Studio: the format in the plural, like the original. */
+export const TILE_LABEL: Record<StudioKind, string> = {
+  ...KIND_LABEL,
+  [STUDIO_KIND.REPORT]: 'Berichte',
 };
 
 export const FORMAT_LABEL: Record<ReportFormat, string> = {
@@ -41,4 +48,14 @@ export function describeOutput(output: StudioOutput): string {
     case STUDIO_KIND.MINDMAP:
       return `Mindmap · ${plural(output.content.branches.length, 'Ast', 'Äste')}`;
   }
+}
+
+/** What a note is called in the list: the start of its text, since a note has no title of its own. */
+export function noteTitle(note: Note): string {
+  const text = note.statements
+    .map((statement) => statement.text)
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return text === '' ? 'Notiz' : text;
 }

@@ -245,9 +245,9 @@ describe('ChatPanel', () => {
     renderChat();
     const user = userEvent.setup();
 
-    await user.click(await screen.findByRole('button', { name: 'Als Notiz speichern' }));
+    await user.click(await screen.findByRole('button', { name: 'In Notiz speichern' }));
 
-    expect(await screen.findByText('Als Notiz gespeichert')).toBeTruthy();
+    expect(await screen.findByText('In Notiz gespeichert')).toBeTruthy();
     expect(body).toEqual({ messageId: ANSWER_ID });
   });
 
@@ -259,7 +259,7 @@ describe('ChatPanel', () => {
     );
     renderChat();
 
-    expect(await screen.findByText('Als Notiz gespeichert')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Als Notiz speichern' })).toBeNull();
+    expect(await screen.findByText('In Notiz gespeichert')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'In Notiz speichern' })).toBeNull();
   });
 });

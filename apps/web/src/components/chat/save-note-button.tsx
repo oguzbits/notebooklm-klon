@@ -17,9 +17,9 @@ export function SaveNoteButton({
 
   if (notes.data?.some((note) => note.messageId === messageId)) {
     return (
-      <p className="flex h-8 items-center gap-1.5 px-3 text-ui text-muted-foreground">
+      <p className="flex h-9 items-center gap-1.5 px-3 text-ui text-muted-foreground">
         <Check className="size-4" aria-hidden />
-        Als Notiz gespeichert
+        In Notiz gespeichert
       </p>
     );
   }
@@ -27,12 +27,13 @@ export function SaveNoteButton({
     <div className="flex items-center gap-2">
       <Button
         variant="ghost"
-        size="sm"
+        className="pr-3 pl-2"
+        tooltip="In Notiz speichern"
         disabled={create.isPending || notes.isPending}
         onClick={() => create.mutate(messageId)}
       >
         <Pin />
-        Als Notiz speichern
+        In Notiz speichern
       </Button>
       {create.isError && (
         <span className="text-small text-destructive" role="alert">

@@ -1,13 +1,7 @@
-import { SOURCE_KIND, SOURCE_STATUS, type SourceKind, type SourceSummary } from '@nlm/shared';
-import {
-  EllipsisVertical,
-  FileText,
-  Globe,
-  LoaderCircle,
-  Trash2,
-  TriangleAlert,
-} from 'lucide-react';
+import { SOURCE_STATUS, type SourceSummary } from '@nlm/shared';
+import { EllipsisVertical, LoaderCircle, Trash2, TriangleAlert } from 'lucide-react';
 
+import { SourceKindIcon } from '@/components/sources/kind-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -31,11 +25,6 @@ interface SourceRowProps {
   onRemove: () => void;
 }
 
-function KindIcon({ kind }: { kind: SourceKind }) {
-  const Icon = kind === SOURCE_KIND.URL ? Globe : FileText;
-  return <Icon className="size-6 shrink-0 text-muted-foreground" aria-hidden />;
-}
-
 /**
  * One source, 36px high like in NotebookLM: its kind, the title (opens the text), a menu that
  * shows while the row is hovered or focused, and the checkbox to use it for answers.
@@ -56,7 +45,7 @@ export function SourceRow({ source, busy, onToggle, onOpen, onRemove }: SourceRo
               disabled={!ready}
               onClick={onOpen}
             >
-              <KindIcon kind={source.kind} />
+              <SourceKindIcon kind={source.kind} />
               <span className="truncate">{source.title}</span>
             </button>
           </TooltipTrigger>
