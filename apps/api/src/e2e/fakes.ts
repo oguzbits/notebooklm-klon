@@ -90,3 +90,60 @@ export function fakeOverview(userMessage: string): string {
     ],
   });
 }
+
+const STUDIO_TITLE_WORDS = 3;
+
+function firstWords(text: string, count: number): string {
+  return text.split(/\s+/).slice(0, count).join(' ');
+}
+
+/**
+ * A stand-in for the Studio: the first sentence of each passage as the content, cited with its
+ * label. The kind is read from the schema the real model would get, like the real model does.
+ */
+export function fakeStudio(schema: Record<string, unknown>, userMessage: string): string {
+  const passages = [...userMessage.matchAll(PASSAGE)].map(([, label, text]) => ({
+    label: label ?? '',
+    sentence: (text ?? '').trim().split(SENTENCE_END)[0] ?? '',
+  }));
+  const properties = Object.keys((schema.properties ?? {}) as Record<string, unknown>);
+  const title = firstWords(passages[0]?.sentence ?? 'Zusammenfassung', STUDIO_TITLE_WORDS);
+
+  if (properties.includes('cards')) {
+    return JSON.stringify({
+      cards: passages.map((p) => ({
+        front: `Was steht hier: ${firstWords(p.sentence, STUDIO_TITLE_WORDS)} …?`,
+        back: p.sentence,
+        chunkIds: [p.label],
+      })),
+    });
+  }
+  if (properties.includes('questions')) {
+    return JSON.stringify({
+      questions: passages.map((p) => ({
+        question: `Welche Aussage passt zur Quelle (${p.label})?`,
+        options: [p.sentence, 'Das steht nirgends.', 'Keine der Antworten.', 'Das ist offen.'],
+        correctIndex: 0,
+        explanation: p.sentence,
+        chunkIds: [p.label],
+      })),
+    });
+  }
+  if (properties.includes('branches')) {
+    return JSON.stringify({
+      title,
+      branches: passages.map((p) => ({
+        label: firstWords(p.sentence, STUDIO_TITLE_WORDS),
+        chunkIds: [p.label],
+        children: [{ label: p.sentence, chunkIds: [p.label], children: [] }],
+      })),
+    });
+  }
+  return JSON.stringify({
+    title,
+    sections: passages.map((p) => ({
+      heading: firstWords(p.sentence, STUDIO_TITLE_WORDS),
+      statements: [{ text: p.sentence, chunkIds: [p.label] }],
+    })),
+  });
+}

@@ -12,6 +12,8 @@ export const API_ERROR = {
   CHAT_LIMIT_REACHED: 'CHAT_LIMIT_REACHED',
   INVALID_URL: 'INVALID_URL',
   UPLOAD_LIMIT_REACHED: 'UPLOAD_LIMIT_REACHED',
+  /** The Studio could not support any part of its output with the sources. */
+  STUDIO_EMPTY: 'STUDIO_EMPTY',
   INTERNAL: 'INTERNAL',
 } as const;
 

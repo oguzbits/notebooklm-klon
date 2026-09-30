@@ -12,6 +12,18 @@ export {
   type ChatRequest,
   ChatRequestSchema,
 } from './chat';
+export {
+  CHAT_LANGUAGE,
+  CHAT_LENGTH,
+  CHAT_STYLE,
+  type ChatConfig,
+  ChatConfigSchema,
+  type ChatLanguage,
+  type ChatLength,
+  type ChatStyle,
+  DEFAULT_CHAT_CONFIG,
+  MAX_CUSTOM_INSTRUCTION_CHARS,
+} from './chat-config';
 export { type Answer, AnswerSchema, type AnswerStatement, AnswerStatementSchema } from './citation';
 export { type Health, HealthSchema } from './health';
 export { CreateNoteBodySchema, type Note, NoteListSchema, NoteSchema } from './note';
@@ -55,3 +67,25 @@ export {
   type SourceStatus,
   SourceStatusSchema,
 } from './source';
+export {
+  type CreateStudioBody,
+  CreateStudioBodySchema,
+  type Flashcards,
+  FlashcardsSchema,
+  type Mindmap,
+  MindmapSchema,
+  type NewStudioOutput,
+  type Quiz,
+  QuizSchema,
+  type Report,
+  REPORT_FORMAT,
+  type ReportFormat,
+  ReportFormatSchema,
+  ReportSchema,
+  STUDIO_KIND,
+  type StudioKind,
+  StudioKindSchema,
+  type StudioOutput,
+  StudioOutputListSchema,
+  StudioOutputSchema,
+} from './studio';

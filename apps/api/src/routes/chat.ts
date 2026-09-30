@@ -10,6 +10,7 @@ import {
   NoSourcesSelectedError,
   prepareAnswer,
 } from '../chat/answer';
+import { getChatConfig } from '../db/chat-config-repository';
 import { findNotebook, selectedReadySourceIds } from '../db/notebook-repository';
 import { saveAssistantMessage, saveUserMessage } from '../db/reader-repository';
 import { searchChunks } from '../db/retrieval';
@@ -42,7 +43,15 @@ export function chatRoutes(deps: AppDeps) {
 
     let prepared;
     try {
-      prepared = await prepareAnswer({ userId, notebookId, question: parsed.data.question }, ports);
+      prepared = await prepareAnswer(
+        {
+          userId,
+          notebookId,
+          question: parsed.data.question,
+          config: (await getChatConfig(deps.db, userId, notebookId)) ?? undefined,
+        },
+        ports
+      );
     } catch (caught) {
       if (caught instanceof NoSourcesSelectedError) {
         return c.json(error(API_ERROR.NO_SOURCES_SELECTED), CONFLICT);

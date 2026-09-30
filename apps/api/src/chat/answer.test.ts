@@ -1,4 +1,10 @@
-import { API_ERROR, CHAT_EVENT, type ChatEvent } from '@nlm/shared';
+import {
+  API_ERROR,
+  CHAT_EVENT,
+  CHAT_STYLE,
+  type ChatEvent,
+  DEFAULT_CHAT_CONFIG,
+} from '@nlm/shared';
 import { describe, expect, it } from 'vitest';
 
 import { GeminiError } from '../ai/gemini-error';
@@ -93,6 +99,22 @@ describe('prepareAnswer', () => {
         limit: LIMITS.CHAT_CONTEXT_CHUNKS,
       },
     ]);
+  });
+
+  it('sends the model the system prompt of the notebook config', async () => {
+    const { ports, calls } = fakePorts();
+    const config = {
+      ...DEFAULT_CHAT_CONFIG,
+      style: CHAT_STYLE.CUSTOM,
+      customInstruction: 'Antworte kurz und sachlich.',
+    };
+
+    const prepared = await prepareAnswer({ ...INPUT, config }, ports);
+    for await (const _event of answerQuestion(prepared, ports)) {
+      // Only the request to the model matters here.
+    }
+
+    expect(calls.modelInput?.system).toContain('Antworte kurz und sachlich.');
   });
 
   it('fails before any provider call when no source is selected', async () => {

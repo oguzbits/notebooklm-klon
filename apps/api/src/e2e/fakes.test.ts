@@ -1,7 +1,18 @@
-import { AnswerSchema, SourceOverviewSchema } from '@nlm/shared';
+import {
+  AnswerSchema,
+  CHAT_LANGUAGE,
+  FlashcardsSchema,
+  MindmapSchema,
+  QuizSchema,
+  REPORT_FORMAT,
+  ReportSchema,
+  SourceOverviewSchema,
+  STUDIO_KIND,
+} from '@nlm/shared';
 import { describe, expect, it } from 'vitest';
 
-import { extractiveAnswer, fakeOverview, hashEmbedding } from './fakes';
+import { studioRequest } from '../core/studio-prompt';
+import { extractiveAnswer, fakeOverview, fakeStudio, hashEmbedding } from './fakes';
 
 const DIMENSIONS = 16;
 
@@ -72,4 +83,29 @@ describe('fakeOverview', () => {
 
     expect(overview.summary.length).toBeGreaterThan(0);
   });
+});
+
+describe('fakeStudio', () => {
+  const chunks = [
+    { id: 'id-1', text: 'Dr. Brandt leitet das Projekt. Es startete 2024.' },
+    { id: 'id-2', text: 'Das Budget beträgt 1,25 Mio. Euro.' },
+  ];
+  const kinds = [
+    [{ kind: STUDIO_KIND.REPORT, format: REPORT_FORMAT.BRIEFING }, ReportSchema],
+    [{ kind: STUDIO_KIND.FLASHCARDS }, FlashcardsSchema],
+    [{ kind: STUDIO_KIND.QUIZ }, QuizSchema],
+    [{ kind: STUDIO_KIND.MINDMAP }, MindmapSchema],
+  ] as const;
+
+  it.each(kinds)(
+    'makes %j in the shape the real model must deliver, citing the labels',
+    (body, schema) => {
+      const request = studioRequest(body, chunks, CHAT_LANGUAGE.AUTO);
+
+      const made = schema.parse(JSON.parse(fakeStudio(request.schema, request.user)));
+
+      expect(JSON.stringify(made)).toContain('c1');
+      expect(JSON.stringify(made)).toContain('Dr. Brandt leitet das Projekt.');
+    }
+  );
 });

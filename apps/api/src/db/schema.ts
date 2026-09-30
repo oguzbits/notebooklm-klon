@@ -1,4 +1,10 @@
-import { CHAT_ROLE, EMBEDDING_DIMENSIONS, SOURCE_KIND, SOURCE_STATUS } from '@nlm/shared';
+import {
+  CHAT_ROLE,
+  EMBEDDING_DIMENSIONS,
+  SOURCE_KIND,
+  SOURCE_STATUS,
+  STUDIO_KIND,
+} from '@nlm/shared';
 import { type SQL, sql } from 'drizzle-orm';
 import {
   bigint,
@@ -32,6 +38,7 @@ const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull(
 export const sourceKind = pgEnum('source_kind', SOURCE_KIND);
 export const sourceStatus = pgEnum('source_status', SOURCE_STATUS);
 export const chatRole = pgEnum('chat_role', CHAT_ROLE);
+export const studioKind = pgEnum('studio_kind', STUDIO_KIND);
 
 // user_id is the Better Auth user id. Deleting a user deletes their notebooks and sources. Every
 // query still filters by user_id: the foreign key is integrity, not authorization (see AGENTS.md).
@@ -43,6 +50,8 @@ export const notebooks = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
     title: text('title').notNull(),
+    // How the assistant talks in this notebook (ChatConfigSchema). Null: the default.
+    chatConfig: jsonb('chat_config'),
     createdAt: createdAt(),
   },
   (table) => [index('notebooks_user_id_idx').on(table.userId)]
@@ -167,4 +176,26 @@ export const notes = pgTable(
     createdAt: createdAt(),
   },
   (table) => [index('notes_notebook_idx').on(table.notebookId, table.createdAt)]
+);
+
+// What the Studio made from the selected sources: a report, flashcards, a quiz or a mind map. The
+// content is validated with StudioOutputSchema when read and holds only citations the server
+// checked. format is set for reports only.
+export const studioOutputs = pgTable(
+  'studio_outputs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    notebookId: uuid('notebook_id')
+      .notNull()
+      .references(() => notebooks.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    kind: studioKind('kind').notNull(),
+    format: text('format'),
+    title: text('title').notNull(),
+    content: jsonb('content').notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [index('studio_outputs_notebook_idx').on(table.notebookId, table.createdAt)]
 );

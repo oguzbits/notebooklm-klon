@@ -9,6 +9,7 @@
 import { serve } from '@hono/node-server';
 import { EMBEDDING_DIMENSIONS } from '@nlm/shared';
 
+import type { ChatInput } from '../ai/gemini-chat';
 import { createApp } from '../app';
 import { createAuth } from '../auth/auth';
 import { parseOfflineServerEnv } from '../config/env';
@@ -22,7 +23,19 @@ import { runIngestJob, type SubmitPorts } from '../ingestion/submit';
 import { log } from '../logger';
 import { createParseSource } from '../parsing/parse-source';
 import { serveWeb } from '../web/serve-web';
-import { extractiveAnswer, fakeOverview, hashEmbedding, trickle } from './fakes';
+import { extractiveAnswer, fakeOverview, fakeStudio, hashEmbedding, trickle } from './fakes';
+
+const STUDIO_PROPERTIES = ['sections', 'cards', 'questions', 'branches'];
+
+/** Picks the stand-in by what is asked: the overview, a Studio output or a chat answer. */
+function fakeReply(input: ChatInput): string {
+  if (input.system === OVERVIEW_SYSTEM_PROMPT) return fakeOverview(input.user);
+  const properties = Object.keys((input.schema.properties ?? {}) as Record<string, unknown>);
+  if (STUDIO_PROPERTIES.some((name) => properties.includes(name))) {
+    return fakeStudio(input.schema, input.user);
+  }
+  return extractiveAnswer(input.user);
+}
 
 const env = parseOfflineServerEnv(process.env);
 await runMigrations(env.DATABASE_URL);
@@ -63,12 +76,7 @@ const app = createApp({
   fetch: systemDeps,
   chat: {
     embedQuery: async (text) => hashEmbedding(text, EMBEDDING_DIMENSIONS),
-    stream: (input) =>
-      trickle(
-        input.system === OVERVIEW_SYSTEM_PROMPT
-          ? fakeOverview(input.user)
-          : extractiveAnswer(input.user)
-      ),
+    stream: (input) => trickle(fakeReply(input)),
     onError: (error) =>
       log({
         level: 'error',

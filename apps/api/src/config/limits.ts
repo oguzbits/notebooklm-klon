@@ -20,6 +20,8 @@ export const LIMITS = {
   CHAT_CONTEXT_CHUNKS: 8,
   /** Parsing: longest wait for one model to read a PDF. Without it a stalled call hangs for 5 min. */
   PARSE_TIMEOUT_MS: 120_000,
+  /** Studio: characters of source text handed to the model per output (about 30k tokens). */
+  STUDIO_MAX_CHARS: 120_000,
   /** Ingestion: chunks per embedding request. */
   EMBED_BATCH_SIZE: 16,
 } as const;

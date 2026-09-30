@@ -150,3 +150,14 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
 - **Gleichwertige Schreibweisen bei Pflichtfakten der Auswertung:** Ein Eintrag in `requiredFacts` darf eine
   Liste sein, von der eine Schreibweise genügt. Anlass: Die Quelle nennt "46,2 Millionen" im Text und
   "46 185" (Tausend) in der Tabelle, die richtige Antwort "46,185 Millionen" wurde mit 0 % bewertet.
+- **Studio: ein Modellaufruf je Ausgabe, Zitate wie im Chat.** Bericht (Briefing, FAQ, Lernleitfaden),
+  Karteikarten, Quiz und Mindmap stehen in `packages/shared/src/studio.ts`. Der Server gibt dem Modell die
+  Abschnitte der gewählten, fertigen Quellen in Lesereihenfolge (höchstens `LIMITS.STUDIO_MAX_CHARS`, das
+  Budget teilen sich die Quellen gleich, der Anfang jeder Quelle bleibt) mit Kurznamen `c1`, `c2`, …
+  Ausgabeteile ohne gültiges Zitat fallen weg, bleibt nichts übrig, antwortet die API mit 422
+  (`STUDIO_EMPTY`). Die Mindmap hat feste drei Ebenen statt eines rekursiven Typs, weil die Anbieter
+  keine rekursiven Schemas annehmen. Die Ausgaben stehen in `studio_outputs`; Erzeugen ist ein normaler
+  Aufruf (5 bis 20 s), kein Stream.
+- **Chat-Einstellungen pro Notizbuch** (`notebooks.chat_config`, null = Standard): Stil, Länge, Sprache.
+  Die eigene Anweisung des Nutzers steht im Systemprompt hinter den Regeln, die die Zitate sichern. Sie kann
+  sie nicht aufheben, denn der Server prüft jedes Zitat unabhängig vom Prompt.

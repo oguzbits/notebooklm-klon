@@ -43,22 +43,34 @@ Wenige Funktionen in hoher Qualität schlagen viele halbfertige. Der Kern ist de
 5. Quellenübersicht pro Quelle (Zusammenfassung und Schlüsselthemen).
 6. Live-Deployment, README und ein Demo-Zugang mit vorbefülltem Beispiel-Notebook.
 
-**Should**
+**Should** (umgesetzt: Vorschlagsfragen, Notizen)
 
 - Vorschlagsfragen beim Hinzufügen einer Quelle.
 - Notizen aus Antworten speichern.
-- Chat-Konfiguration pro Notebook (Ziel, Ton, Ausgabesprache; Standard ist die Sprache der Frage).
-- Studio: Bericht (Briefing, FAQ, Study Guide), Karteikarten, Quiz. Alles strukturierte Ausgaben auf den vollständigen Quellen.
+
+**Runde 2: Nachbau (Stand 2026-09-30).** Die Oberfläche folgt NotebookLM so genau wie möglich, dreispaltig
+(Quellen | Chat | Studio), mit Google Sans Flex (OFL), Material-3-Farben und Rundungen, hell und dunkel.
+Logo und Name sind ausdrücklich erlaubt (Entscheidung des Nutzers); im Live-Demo steht ein Hinweis, dass es
+ein Nachbau für eine Bewerbung ist. Dazu:
+
+- **Studio-Spalte:** Bericht (Briefing, FAQ, Lernleitfaden), Karteikarten, Quiz, Mindmap. Alle Ausgaben
+  sind strukturiert, stützen sich auf die ausgewählten Quellen und folgen dem Zitat-Vertrag: Jeder
+  Abschnitt, jede Karte, jede Frage und jeder Ast verweist auf echte Passagen, der Server verwirft, was
+  nicht belegt ist. Notizen wohnen wie bei NotebookLM in der Studio-Spalte.
+- **Chat-Einstellungen pro Notizbuch:** Stil (Standard, Lernbegleiter, eigene Anweisung), Antwortlänge,
+  Ausgabesprache (Standard: Sprache der Frage).
+- **Kleine NotebookLM-Funktionen:** Text einfügen als Quelle, Notiz in Quelle umwandeln, Antwort kopieren.
+- **Modelle:** Im Dev laufen alle Aufrufe auf den Lite-Modellen (Kontingent). Größere Modelle für das
+  Studio sind später eine Umgebungsvariable, keine Codeänderung.
 
 **Stretch**
 
-- Mindmap (JSON-Baum, Klick auf einen Ast öffnet einen Chat).
 - PPTX als Quelle.
-- Agentische Suche im Chat, nur wenn nach Tag 4 Zeit bleibt.
+- Agentische Suche im Chat, nur wenn Zeit bleibt.
 
 **Bewusst nicht**
 
-- Audio- und Video-Overview, Infografik, Präsentation, Deep Research.
+- Audio- und Video-Overview, Infografik, Präsentation, Datentabelle, Deep Research.
 - Sharing und Kollaboration, YouTube- oder Audio-Transkription, Drive-Anbindung, Mobile.
 - Originaldateien speichern (nur extrahierter Text plus Metadaten).
 

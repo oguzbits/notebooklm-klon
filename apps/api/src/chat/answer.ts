@@ -1,10 +1,16 @@
-import { API_ERROR, CHAT_EVENT, type ChatEvent } from '@nlm/shared';
+import {
+  API_ERROR,
+  CHAT_EVENT,
+  type ChatConfig,
+  type ChatEvent,
+  DEFAULT_CHAT_CONFIG,
+} from '@nlm/shared';
 
 import type { ChatInput } from '../ai/gemini-chat';
 import { GeminiError } from '../ai/gemini-error';
 import { LIMITS } from '../config/limits';
 import { buildChatContext, type ChatContext, resolveCitations } from '../core/chat-context';
-import { ANSWER_JSON_SCHEMA, buildUserMessage, CHAT_SYSTEM_PROMPT } from '../core/chat-prompt';
+import { ANSWER_JSON_SCHEMA, buildUserMessage, chatSystemPrompt } from '../core/chat-prompt';
 import { StatementStream } from '../core/statement-stream';
 
 const QUOTA_STATUS = 429;
@@ -40,6 +46,7 @@ export interface ChatPorts {
 export interface PreparedAnswer {
   question: string;
   context: ChatContext;
+  config: ChatConfig;
 }
 
 /**
@@ -47,7 +54,7 @@ export interface PreparedAnswer {
  * search. Kept apart from streaming so the route can still answer with an HTTP status.
  */
 export async function prepareAnswer(
-  input: { userId: string; notebookId: string; question: string },
+  input: { userId: string; notebookId: string; question: string; config?: ChatConfig },
   ports: ChatPorts
 ): Promise<PreparedAnswer> {
   const sourceIds = await ports.selectedSourceIds(input.userId, input.notebookId);
@@ -62,7 +69,11 @@ export async function prepareAnswer(
     queryText: input.question,
     limit: LIMITS.CHAT_CONTEXT_CHUNKS,
   });
-  return { question: input.question, context: buildChatContext(chunks) };
+  return {
+    question: input.question,
+    context: buildChatContext(chunks),
+    config: input.config ?? DEFAULT_CHAT_CONFIG,
+  };
 }
 
 /**
@@ -74,7 +85,7 @@ export async function* answerQuestion(
   prepared: PreparedAnswer,
   ports: ChatPorts
 ): AsyncGenerator<ChatEvent> {
-  const { context, question } = prepared;
+  const { context, question, config } = prepared;
   let statements = 0;
   let droppedStatements = 0;
   let strippedCitations = 0;
@@ -95,7 +106,7 @@ export async function* answerQuestion(
     try {
       const parser = new StatementStream();
       const input: ChatInput = {
-        system: CHAT_SYSTEM_PROMPT,
+        system: chatSystemPrompt(config),
         user: buildUserMessage(context, question),
         schema: ANSWER_JSON_SCHEMA,
       };

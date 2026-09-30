@@ -9,11 +9,13 @@ import { ImportError } from './import/fetch-url';
 import { QuotaExceededError } from './ingestion/ingest';
 import { log } from './logger';
 import { chatRoutes } from './routes/chat';
+import { chatConfigRoutes } from './routes/chat-config';
 import { notebookRoutes } from './routes/notebooks';
 import { noteRoutes } from './routes/notes';
 import { overviewRoutes } from './routes/overview';
 import { readerRoutes } from './routes/reader';
 import { sourceRoutes } from './routes/sources';
+import { studioRoutes } from './routes/studio';
 
 const BAD_REQUEST = 400;
 const TOO_MANY_REQUESTS = 429;
@@ -67,7 +69,9 @@ export function createApp(deps: AppDeps) {
     .route('/api/notebooks', chatRoutes(deps))
     .route('/api/notebooks', readerRoutes(deps))
     .route('/api/notebooks', overviewRoutes(deps))
-    .route('/api/notebooks', noteRoutes(deps));
+    .route('/api/notebooks', noteRoutes(deps))
+    .route('/api/notebooks', chatConfigRoutes(deps))
+    .route('/api/notebooks', studioRoutes(deps));
 }
 
 export type AppType = ReturnType<typeof createApp>;
