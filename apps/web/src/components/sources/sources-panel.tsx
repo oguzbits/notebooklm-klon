@@ -2,6 +2,7 @@ import { SOURCE_STATUS } from '@nlm/shared';
 import { FileQuestion } from 'lucide-react';
 
 import { QueryBoundary } from '@/components/query-boundary';
+import { SourceRowsSkeleton } from '@/components/skeletons';
 import { AddSourceDialog } from '@/components/sources/add-source-dialog';
 import { SourceRow } from '@/components/sources/source-row';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -35,6 +36,7 @@ export function SourcesPanel({
       <AddSourceDialog notebookId={notebookId} />
       <QueryBoundary
         query={sources}
+        loading={<SourceRowsSkeleton />}
         isEmpty={(list) => list.length === 0}
         empty={
           <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">

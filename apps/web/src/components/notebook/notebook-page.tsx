@@ -5,7 +5,7 @@ import { ChatPanel } from '@/components/chat/chat-panel';
 import { ChatSettingsDialog } from '@/components/chat/chat-settings-dialog';
 import { AppHeader } from '@/components/layout/app-header';
 import { Panel } from '@/components/notebook/panel';
-import { ErrorNotice, ListSkeleton } from '@/components/query-boundary';
+import { ErrorNotice } from '@/components/query-boundary';
 import {
   CloseReaderButton,
   ReaderPanel,
@@ -14,6 +14,7 @@ import {
 import { SourcesPanel } from '@/components/sources/sources-panel';
 import { StudioPanel } from '@/components/studio/studio-panel';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useNotebook } from '@/hooks/use-notebooks';
 import { ROUTES } from '@/lib/routes';
 import { cn } from '@/lib/utils';
@@ -56,16 +57,6 @@ export function NotebookPage() {
   const [column, setColumn] = useState<Column>(COLUMN.CHAT);
   const [viewingOutput, setViewingOutput] = useState(false);
 
-  if (notebook.isPending) {
-    return (
-      <>
-        <AppHeader />
-        <div className="mx-auto w-full max-w-xl p-6">
-          <ListSkeleton />
-        </div>
-      </>
-    );
-  }
   if (notebook.isError) {
     return (
       <>
@@ -80,7 +71,7 @@ export function NotebookPage() {
       </>
     );
   }
-  if (!notebook.data) {
+  if (!notebook.isPending && !notebook.data) {
     return (
       <>
         <AppHeader />
@@ -97,7 +88,9 @@ export function NotebookPage() {
     );
   }
 
-  const { id, title } = notebook.data;
+  // While the notebook loads, the layout already stands and each column shows its own placeholder.
+  const pending = notebook.isPending;
+  const id = notebook.data?.id ?? notebookId;
   const openReader = (target: ReaderTarget) => {
     setReading(target);
     setSourcesOpen(true);
@@ -108,8 +101,14 @@ export function NotebookPage() {
   return (
     <>
       <AppHeader
-        title={<h1 className="truncate text-xl">{title}</h1>}
-        actions={<ChatSettingsDialog notebookId={id} />}
+        title={
+          pending ? (
+            <Skeleton className="h-7 w-64 max-w-[40vw]" aria-hidden />
+          ) : (
+            <h1 className="truncate text-xl">{notebook.data?.title}</h1>
+          )
+        }
+        actions={pending ? undefined : <ChatSettingsDialog notebookId={id} />}
       />
       <nav
         aria-label="Bereiche"

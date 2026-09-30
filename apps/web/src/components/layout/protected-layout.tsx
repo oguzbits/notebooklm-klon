@@ -1,6 +1,7 @@
 import { Navigate, Outlet } from 'react-router';
 
-import { ErrorNotice, ListSkeleton } from '@/components/query-boundary';
+import { ErrorNotice } from '@/components/query-boundary';
+import { PageSpinner } from '@/components/skeletons';
 import { useSession } from '@/hooks/use-session';
 import { ROUTES } from '@/lib/routes';
 
@@ -9,11 +10,7 @@ export function ProtectedLayout() {
   const session = useSession();
 
   if (session.isPending) {
-    return (
-      <div className="mx-auto max-w-xl p-6">
-        <ListSkeleton />
-      </div>
-    );
+    return <PageSpinner />;
   }
   if (session.isError) {
     return (

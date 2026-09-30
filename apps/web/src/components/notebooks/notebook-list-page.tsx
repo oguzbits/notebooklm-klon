@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 
 import { AppHeader } from '@/components/layout/app-header';
 import { QueryBoundary } from '@/components/query-boundary';
+import { NotebookCardsSkeleton } from '@/components/skeletons';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   AlertDialog,
@@ -121,6 +122,7 @@ export function NotebookListPage() {
 
           <QueryBoundary
             query={notebooks}
+            loading={<NotebookCardsSkeleton />}
             isEmpty={(list) => list.length === 0}
             empty={
               <div className="mt-4 flex flex-col items-center gap-2 rounded-panel bg-secondary p-10 text-center">

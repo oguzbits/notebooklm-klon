@@ -20,6 +20,7 @@ import { useEffect, useState } from 'react';
 
 import { NotesSection } from '@/components/notes/notes-panel';
 import { QueryBoundary } from '@/components/query-boundary';
+import { OutputRowsSkeleton } from '@/components/skeletons';
 import { OutputViewer } from '@/components/studio/output-viewer';
 import { ReportDialog } from '@/components/studio/report-dialog';
 import { describeOutput, KIND_LABEL } from '@/components/studio/studio-labels';
@@ -197,6 +198,7 @@ export function StudioPanel({
           )}
           <QueryBoundary
             query={outputs}
+            loading={<OutputRowsSkeleton />}
             isEmpty={(list) => list.length === 0}
             empty={
               !create.isPending && (

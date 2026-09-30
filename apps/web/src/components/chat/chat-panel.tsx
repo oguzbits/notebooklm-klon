@@ -4,6 +4,7 @@ import { type FormEvent, type KeyboardEvent, useEffect, useRef } from 'react';
 
 import { AnswerView, MessageView, QuestionBubble } from '@/components/chat/message-view';
 import { ErrorNotice, QueryBoundary } from '@/components/query-boundary';
+import { ChatSkeleton } from '@/components/skeletons';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAskQuestion, useChatHistory } from '@/hooks/use-chat';
@@ -69,6 +70,7 @@ export function ChatPanel({
         <div className="mx-auto flex max-w-[756px] flex-col gap-3 px-6 pt-2">
           <QueryBoundary
             query={history}
+            loading={<ChatSkeleton />}
             isEmpty={(messages) => messages.length === 0 && !ask.live}
             empty={
               <div className="flex flex-col items-center gap-2 py-16 text-center">

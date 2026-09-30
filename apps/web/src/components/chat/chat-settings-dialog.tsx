@@ -10,6 +10,7 @@ import { Settings2 } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
 
 import { QueryBoundary } from '@/components/query-boundary';
+import { DialogSpinner } from '@/components/skeletons';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -186,7 +187,7 @@ export function ChatSettingsDialog({ notebookId }: { notebookId: string }) {
             einstellst.
           </DialogDescription>
         </DialogHeader>
-        <QueryBoundary query={config} empty={null}>
+        <QueryBoundary query={config} loading={<DialogSpinner />} empty={null}>
           {(loaded) => (
             <SettingsForm
               notebookId={notebookId}

@@ -4,20 +4,7 @@ import type { ReactNode } from 'react';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import { describeError } from '@/lib/messages';
-
-const SKELETON_ROWS = 3;
-
-export function ListSkeleton({ rows = SKELETON_ROWS }: { rows?: number }) {
-  return (
-    <div className="flex flex-col gap-2" role="status" aria-label="Wird geladen">
-      {Array.from({ length: rows }, (_, index) => (
-        <Skeleton key={index} className="h-12 w-full" />
-      ))}
-    </div>
-  );
-}
 
 export function ErrorNotice({
   error,
@@ -45,8 +32,8 @@ export function ErrorNotice({
 
 interface QueryBoundaryProps<T> {
   query: UseQueryResult<T>;
-  /** What to show while the first load runs. */
-  loading?: ReactNode;
+  /** What to show while the first load runs: a placeholder in the shape of the content. */
+  loading: ReactNode;
   /** When this returns true the empty state is shown instead of the content. */
   isEmpty?: (data: T) => boolean;
   empty: ReactNode;
@@ -59,7 +46,7 @@ interface QueryBoundaryProps<T> {
  */
 export function QueryBoundary<T>({
   query,
-  loading = <ListSkeleton />,
+  loading,
   isEmpty,
   empty,
   children,

@@ -217,3 +217,10 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   wird das ganze Textstück markiert statt eines falschen Teils. (5) **Quellenübersicht** wohnt wie im Original im
   Reader (Karte mit Einklapp-Pfeil), nicht mehr als Ausklapper in jeder Zeile. Das Chunk-Detail trägt die
   Quellenart, damit das Popup TXT als Klartext zeigt.
+- **Ladezustände wie im Original (2026-10-01):** Platzhalter schimmern (Verlauf 90°, Band bei 25 / 37 / 63 %,
+  400 % breit, 1,4 s; bei „weniger Bewegung“ stehen sie still) statt zu pulsieren, und sie haben die Form des späteren
+  Inhalts: Quellenzeilen, sieben Chat-Balken mit Spinner, fünf Studio-Zeilen auf dem Blau der Quellenkarte,
+  Kartenraster auf der Startseite. Die Notizbuchseite bleibt dreispaltig, nur der Titel zeigt einen Balken. Die
+  Farben im Dunkelmodus sind eigene Werte: das Original nutzt dort eine grelle Lichtkante (#d4d7db), die auf
+  dunklem Grund störte. `QueryBoundary` verlangt jetzt eine `loading`-Angabe, damit keine Stelle einen
+  unpassenden Standard-Platzhalter bekommt.

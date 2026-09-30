@@ -73,6 +73,9 @@
   --veil-press: color-mix(in srgb, var(--foreground) 12%, transparent);
   /* The soft glow under floating surfaces. */
   --glow: 0 0 20px rgb(0 0 0 / 0.04);
+  /* The placeholder that shimmers while something loads: a base and a lighter band that sweeps over it. */
+  --skeleton: #eff3f7;
+  --skeleton-edge: #f9fafb;
   /* A tooltip is the inverse of the page: dark on light, light on dark. */
   --tooltip: #303030;
   --tooltip-foreground: #f2f2f2;
@@ -119,6 +122,8 @@
   --studio-blue: #76a0ff;
   --studio-green: #3fdda0;
   --glow: 0 0 20px rgb(0 0 0 / 0.28);
+  --skeleton: #262626;
+  --skeleton-edge: #323232;
   --tooltip: #e3e3e3;
   --tooltip-foreground: #303030;
   --tile: #171717;
@@ -393,6 +398,36 @@ textarea {
 * {
   scrollbar-width: thin;
   scrollbar-color: color-mix(in oklab, var(--muted-foreground) 35%, transparent) transparent;
+}
+
+/* The placeholder of something that loads: the measured gradient of the original (a band at 25 / 37 /
+   63 %, four times as wide as the box, 1.4s), in the colors of `--skeleton`. A box can change its two
+   colors by setting `--shimmer-base` and `--shimmer-edge`. */
+.shimmer {
+  --shimmer-base: var(--skeleton);
+  --shimmer-edge: var(--skeleton-edge);
+  background: linear-gradient(
+      90deg,
+      var(--shimmer-base) 25%,
+      var(--shimmer-edge) 37%,
+      var(--shimmer-base) 63%
+    )
+    0 0 / 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+@keyframes shimmer {
+  from {
+    background-position: 100% 50%;
+  }
+  to {
+    background-position: 0 50%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shimmer {
+    animation: none;
+    background: var(--shimmer-base);
+  }
 }
 
 /* Users who ask for less motion get none. */

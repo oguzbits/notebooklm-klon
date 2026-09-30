@@ -1,0 +1,102 @@
+import { LoaderCircle } from 'lucide-react';
+
+import { Skeleton } from '@/components/ui/skeleton';
+
+/** Each placeholder keeps the size and place of what it stands for, measured on the original. */
+
+const STATUS = { role: 'status', 'aria-label': 'Wird geladen' } as const;
+
+/** The rows of the sources: a symbol, a title and the box to tick. */
+export function SourceRowsSkeleton({ rows = 3 }: { rows?: number }) {
+  return (
+    <div className="flex flex-col" {...STATUS}>
+      {Array.from({ length: rows }, (_, index) => (
+        <div key={index} className="flex h-9 items-center gap-3 px-2">
+          <Skeleton className="size-6 shrink-0 rounded-full" />
+          <Skeleton className="h-4 flex-1" />
+          <Skeleton className="size-[18px] shrink-0 rounded-[3px]" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** How much of the line each bar of a loading answer fills. */
+const BAR_WIDTHS = [
+  'w-[85%]',
+  'w-[95%]',
+  'w-full',
+  'w-[95%]',
+  'w-[98%]',
+  'w-[95%]',
+  'w-full',
+] as const;
+
+/** The chat while its history loads: a spinner over seven bars of text. */
+export function ChatSkeleton() {
+  return (
+    <div className="flex flex-col gap-2 pt-2" {...STATUS}>
+      <div className="mx-auto mb-4 flex size-10 items-center justify-center rounded-full bg-card shadow-glow">
+        <LoaderCircle className="size-7 animate-spin text-muted-foreground" aria-hidden />
+      </div>
+      {BAR_WIDTHS.map((width, index) => (
+        <Skeleton key={index} className={`h-[46px] ${width}`} />
+      ))}
+    </div>
+  );
+}
+
+/** The list of what the Studio made: rows on the soft blue of the source card, a disc and two lines. */
+export function OutputRowsSkeleton({ rows = 5 }: { rows?: number }) {
+  return (
+    <div className="flex flex-col gap-2" {...STATUS}>
+      {Array.from({ length: rows }, (_, index) => (
+        <Skeleton
+          key={index}
+          className="flex h-16 items-center gap-3 rounded-2xl p-3 [--shimmer-base:var(--source-guide)] [--shimmer-edge:color-mix(in_srgb,var(--source-guide),var(--card)_60%)]"
+        >
+          <span className="size-8 shrink-0 rounded-full bg-card/60" />
+          <span className="flex flex-1 flex-col gap-1.5">
+            <span className="h-3 w-[70%] rounded-[4px] bg-card/60" />
+            <span className="h-3 w-[42%] rounded-[4px] bg-card/60" />
+          </span>
+        </Skeleton>
+      ))}
+    </div>
+  );
+}
+
+/** The notebooks on the start page: cards as big as the real ones, with the stronger sweep. */
+export function NotebookCardsSkeleton({ cards = 6 }: { cards?: number }) {
+  return (
+    <ul className="mt-4 grid gap-2 sm:[grid-template-columns:repeat(auto-fill,272px)]" {...STATUS}>
+      {Array.from({ length: cards }, (_, index) => (
+        <li key={index}>
+          <Skeleton className="h-[185px] rounded-bubble [--shimmer-base:var(--secondary)] [--shimmer-edge:color-mix(in_srgb,var(--foreground)_12%,var(--secondary))]" />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** The whole page, while it cannot yet know what to show: nothing but a thin spinner. */
+export function PageSpinner() {
+  return (
+    <div className="flex h-dvh items-center justify-center" {...STATUS}>
+      <LoaderCircle className="size-8 animate-spin text-muted-foreground" aria-hidden />
+    </div>
+  );
+}
+
+/** A dialog that waits for its content: the spinner and the words, like the original ("Wird geladen…"). */
+export function DialogSpinner() {
+  return (
+    <div
+      className="flex items-center justify-center gap-3 py-10 text-ui text-muted-foreground"
+      {...STATUS}
+    >
+      <LoaderCircle className="size-6 animate-spin" aria-hidden />
+      Wird geladen …
+    </div>
+  );
+}

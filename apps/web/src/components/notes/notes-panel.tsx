@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { AnswerView } from '@/components/chat/message-view';
 import { QueryBoundary } from '@/components/query-boundary';
+import { OutputRowsSkeleton } from '@/components/skeletons';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   AlertDialog,
@@ -54,6 +55,7 @@ export function NotesSection({
       </h3>
       <QueryBoundary
         query={notes}
+        loading={<OutputRowsSkeleton rows={1} />}
         isEmpty={(list) => list.length === 0}
         empty={
           <div className="flex flex-col items-center gap-2 py-6 text-center">
