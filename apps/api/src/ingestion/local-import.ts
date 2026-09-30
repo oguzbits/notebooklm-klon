@@ -1,4 +1,4 @@
-import type { SourceKind } from '@nlm/shared';
+import { type SourceKind, SUBMIT_ACTION } from '@nlm/shared';
 
 import { runIngestJob, type SubmitPorts, submitSource } from './submit';
 
@@ -39,7 +39,7 @@ export async function importLocalFiles(
 
   const sourceIds = new Map<string, string>();
   for (const file of input.files) {
-    const { sourceId } = await submitSource(
+    const { sourceId, action } = await submitSource(
       {
         userId: input.userId,
         kind: file.kind,
@@ -53,6 +53,11 @@ export async function importLocalFiles(
       throw new Error(`The source "${file.name}" could not be put into the notebook.`);
     }
     sourceIds.set(file.name, sourceId);
+    // An upload that is still stored belongs to a source no job has finished, e.g. because an
+    // earlier run of the script was aborted. Nobody else will pick it up, so do it here.
+    if (action === SUBMIT_ACTION.REUSED && (await ports.uploads.load(sourceId))) {
+      queued.push(sourceId);
+    }
   }
 
   for (const sourceId of queued) await runIngestJob({ sourceId }, ports);

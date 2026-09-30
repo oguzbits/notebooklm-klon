@@ -87,6 +87,30 @@ describe('importLocalFiles', () => {
     expect(ids.size).toBe(12);
   });
 
+  it('finishes the files an earlier, aborted run left unread', async () => {
+    const notebook = await createNotebook(db, USER, 'N');
+    const failingOnce = {
+      ...deps,
+      ports: {
+        ...deps.ports,
+        parse: async () => {
+          throw new Error('kaputt');
+        },
+      },
+    };
+    await expect(
+      importLocalFiles({ userId: USER, notebookId: notebook.id, files }, failingOnce)
+    ).rejects.toThrow();
+
+    await importLocalFiles({ userId: USER, notebookId: notebook.id, files }, deps);
+
+    const sources = await listNotebookSources(db, USER, notebook.id);
+    expect(sources.map((source) => source.status)).toEqual([
+      SOURCE_STATUS.READY,
+      SOURCE_STATUS.READY,
+    ]);
+  });
+
   it('throws when a file cannot be read, so a broken seed is noticed', async () => {
     const notebook = await createNotebook(db, USER, 'N');
     const failing = {

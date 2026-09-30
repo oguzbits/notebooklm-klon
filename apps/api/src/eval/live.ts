@@ -78,6 +78,10 @@ try {
     notebookId: notebook.id,
     sourceIds: await selectedReadySourceIds(db, EVAL_USER_ID, notebook.id),
   };
+  // A source that is not ready would silently lower every score that depends on it.
+  if (scope.sourceIds.length !== files.length) {
+    throw new Error(`Only ${scope.sourceIds.length} of ${files.length} corpus files are ready.`);
+  }
   const ports = {
     embedQuery: providers.embedQuery,
     search: (request: Parameters<typeof searchChunks>[1]) => searchChunks(db, request),
