@@ -15,6 +15,10 @@ go into the corpus: on the Gemini free tier inputs may be used by Google.
 | 06-bdsg-auszug-de.txt              | gesetze-im-internet.de, BDSG, pages 5-9 as text                | direct TXT import                  | statutes (official works), § 5 UrhG           |
 | 07-wikipedia-rag-en.html           | en.wikipedia.org REST HTML of "Retrieval-augmented generation" | URL import (Readability)           | CC BY-SA                                      |
 
+The reference text for the golden questions (`apps/api/src/eval/golden-questions.json`) is written by
+`spikes/extract-corpus-text.py` to `_text/`; the anchor test reads it. For the scan (`05`) the text
+of the original pages in `_raw/nist.pdf` is the reference, not OCR.
+
 `03` contains facts with known answers (project lead, budget 1,25 Mio. Euro, spent 780.000 Euro,
 go-live 14 February 2026, table Q1 to Q3, supplier Helmholz Systems). The chart image carries no
 text, so the DOCX parser cannot lose facts there.

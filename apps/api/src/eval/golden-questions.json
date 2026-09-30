@@ -1,0 +1,226 @@
+[
+  {
+    "id": "nordlicht-lead",
+    "question": "Wer leitet das Projekt Nordlicht?",
+    "language": "de",
+    "expectedAnchors": [
+      {
+        "sourceFile": "03-projekt-nordlicht-de.docx",
+        "text": "Das Projekt Nordlicht wird von Dr. Katharina Brandt geleitet."
+      }
+    ],
+    "requiredFacts": ["Katharina Brandt"]
+  },
+  {
+    "id": "nordlicht-budget",
+    "question": "Wie hoch ist das Gesamtbudget von Projekt Nordlicht und wie viel davon ist bereits verbraucht?",
+    "language": "de",
+    "expectedAnchors": [
+      {
+        "sourceFile": "03-projekt-nordlicht-de.docx",
+        "text": "Das Gesamtbudget beträgt 1,25 Mio. Euro, davon wurden bis Ende September 780.000 Euro verbraucht."
+      }
+    ],
+    "requiredFacts": ["1,25 Mio. Euro", "780.000 Euro"]
+  },
+  {
+    "id": "nordlicht-golive-risk",
+    "question": "Wann ist der Go-live von Projekt Nordlicht geplant und was ist das größte Risiko?",
+    "language": "de",
+    "expectedAnchors": [
+      {
+        "sourceFile": "03-projekt-nordlicht-de.docx",
+        "text": "Der Go-live ist für den 14. Februar 2026 geplant."
+      },
+      {
+        "sourceFile": "03-projekt-nordlicht-de.docx",
+        "text": "Das größte Risiko ist die Verzögerung der Lieferung des Sensormoduls durch die Firma Helmholz Systems."
+      }
+    ],
+    "requiredFacts": ["14. Februar 2026", "Helmholz Systems"]
+  },
+  {
+    "id": "dpr-top5",
+    "question": "How much better is DPR than BM25 in top-5 accuracy?",
+    "language": "en",
+    "expectedAnchors": [
+      {
+        "sourceFile": "01-dpr-paper-en.pdf",
+        "text": "(65.2% vs. 42.9% in Top-5 accuracy)"
+      }
+    ],
+    "requiredFacts": ["65.2", "42.9"]
+  },
+  {
+    "id": "dpr-similarity",
+    "question": "How does DPR measure the similarity between a question and a passage?",
+    "language": "en",
+    "expectedAnchors": [
+      {
+        "sourceFile": "01-dpr-paper-en.pdf",
+        "text": "using the dot product of their vectors"
+      }
+    ],
+    "requiredFacts": ["dot product"]
+  },
+  {
+    "id": "dpr-orqa",
+    "question": "How does DPR compare to ORQA in end-to-end QA accuracy on Natural Questions?",
+    "language": "en",
+    "expectedAnchors": [
+      {
+        "sourceFile": "01-dpr-paper-en.pdf",
+        "text": "(41.5% vs. 33.3%)"
+      }
+    ],
+    "requiredFacts": ["41.5", "33.3"]
+  },
+  {
+    "id": "destatis-erwerbspersonen",
+    "question": "Wie viele Erwerbspersonen gab es 2018 in Deutschland?",
+    "language": "de",
+    "expectedAnchors": [
+      {
+        "sourceFile": "02-destatis-arbeitsmarkt-de.pdf",
+        "text": "Zahl der Erwerbspersonen erreicht mit 46,2 Millionen für 2018 einen neuen Höchststand"
+      }
+    ],
+    "requiredFacts": ["46,2"]
+  },
+  {
+    "id": "destatis-erwerbslosenquote",
+    "question": "Wie hoch war die Erwerbslosenquote 2018?",
+    "language": "de",
+    "expectedAnchors": [
+      {
+        "sourceFile": "02-destatis-arbeitsmarkt-de.pdf",
+        "text": "Die Erwerbslosenquote sinkt 2018 weiter auf 3,4 %"
+      }
+    ],
+    "requiredFacts": ["3,4"]
+  },
+  {
+    "id": "gg-menschenwuerde",
+    "question": "Was sagt das Grundgesetz zur Würde des Menschen?",
+    "language": "de",
+    "expectedAnchors": [
+      {
+        "sourceFile": "04-grundgesetz-auszug-de.pdf",
+        "text": "Die Würde des Menschen ist unantastbar."
+      }
+    ],
+    "requiredFacts": ["unantastbar"]
+  },
+  {
+    "id": "gg-briefgeheimnis",
+    "question": "Was ist nach dem Grundgesetz unverletzlich, wenn es um Post und Telefon geht?",
+    "language": "de",
+    "expectedAnchors": [
+      {
+        "sourceFile": "04-grundgesetz-auszug-de.pdf",
+        "text": "Das Briefgeheimnis sowie das Post- und Fernmeldegeheimnis sind unverletzlich."
+      }
+    ],
+    "requiredFacts": ["Briefgeheimnis"]
+  },
+  {
+    "id": "bdsg-video",
+    "question": "Unter welchen Voraussetzungen ist Videoüberwachung öffentlich zugänglicher Räume nach dem BDSG zulässig?",
+    "language": "de",
+    "expectedAnchors": [
+      {
+        "sourceFile": "06-bdsg-auszug-de.txt",
+        "text": "Die Beobachtung öffentlich zugänglicher Räume mit optisch-elektronischen Einrichtungen (Videoüberwachung)"
+      }
+    ],
+    "requiredFacts": ["Hausrecht"]
+  },
+  {
+    "id": "bdsg-loeschung",
+    "question": "Wann müssen Daten aus einer Videoüberwachung gelöscht werden?",
+    "language": "de",
+    "expectedAnchors": [
+      {
+        "sourceFile": "06-bdsg-auszug-de.txt",
+        "text": "Die Daten sind unverzüglich zu löschen, wenn sie zur Erreichung des Zwecks nicht mehr erforderlich sind"
+      }
+    ],
+    "requiredFacts": ["unverzüglich"]
+  },
+  {
+    "id": "nist-ai-system",
+    "question": "How does the AI RMF define an AI system?",
+    "language": "en",
+    "expectedAnchors": [
+      {
+        "sourceFile": "05-nist-ai-rmf-scan-en.pdf",
+        "text": "an engineered or machine-based system that can, for a given set of objectives, generate outputs such as predictions"
+      }
+    ],
+    "requiredFacts": ["predictions", "recommendations", "decisions"]
+  },
+  {
+    "id": "nist-voluntary",
+    "question": "Is the AI RMF mandatory or voluntary?",
+    "language": "en",
+    "expectedAnchors": [
+      {
+        "sourceFile": "05-nist-ai-rmf-scan-en.pdf",
+        "text": "voluntary, rights-preserving, non-sector-specific, and use-case agnostic"
+      }
+    ],
+    "requiredFacts": ["voluntary"]
+  },
+  {
+    "id": "rag-benefits-limits",
+    "question": "Welche Vorteile hat Retrieval-Augmented Generation und wo liegen ihre Grenzen?",
+    "language": "de",
+    "expectedAnchors": [
+      {
+        "sourceFile": "07-wikipedia-rag-en.html",
+        "text": "RAG also reduces the need to retrain LLMs with new data"
+      },
+      {
+        "sourceFile": "07-wikipedia-rag-en.html",
+        "text": "RAG does not prevent hallucinations in LLMs."
+      }
+    ],
+    "requiredFacts": ["hallucinat"]
+  },
+  {
+    "id": "nordlicht-umsatz-q3",
+    "question": "Wie hoch war der Umsatz von Projekt Nordlicht im dritten Quartal 2025 und wie viele Mitarbeitende gab es?",
+    "language": "de",
+    "expectedAnchors": [
+      {
+        "sourceFile": "03-projekt-nordlicht-de.docx",
+        "text": "Umsatz (T€)"
+      }
+    ],
+    "requiredFacts": ["455", "24"]
+  },
+  {
+    "id": "dpr-top5-de",
+    "question": "Wie viel Prozent Top-5-Genauigkeit erreicht DPR im Vergleich zu BM25?",
+    "language": "de",
+    "expectedAnchors": [
+      {
+        "sourceFile": "01-dpr-paper-en.pdf",
+        "text": "(65.2% vs. 42.9% in Top-5 accuracy)"
+      }
+    ],
+    "requiredFacts": ["65", "42"]
+  },
+  {
+    "id": "nist-ai-actors-de",
+    "question": "Wer sind laut dem NIST-Rahmenwerk die „AI actors“ und wer hat sie definiert?",
+    "language": "de",
+    "expectedAnchors": [
+      {
+        "sourceFile": "05-nist-ai-rmf-scan-en.pdf",
+        "text": "AI actors are defined by the Organisation for Economic Co-operation and Development"
+      }
+    ],
+    "requiredFacts": ["OECD"]
+  }
+]
