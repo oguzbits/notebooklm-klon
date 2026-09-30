@@ -1,0 +1,14 @@
+**/node_modules
+**/dist
+.git
+.github
+.claude
+.husky
+.env*
+!.env.example
+reports
+spikes
+docs
+**/test-results
+**/playwright-report
+architecture.mmd

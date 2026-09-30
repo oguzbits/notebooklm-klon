@@ -5,11 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch --env-file-if-exists=../../.env.local src/index.ts",
-    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --target=node24 --outfile=dist/index.js",
+    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --target=node24 --outfile=dist/index.js --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\"",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx --env-file-if-exists=../../.env.local src/db/migrate.ts",
+    "db:migrate": "tsx --env-file-if-exists=../../.env.local src/db/migrate-cli.ts",
     "dev:offline": "tsx src/e2e/server.ts",
     "eval:live": "tsx --env-file-if-exists=../../.env.local src/eval/live.ts",
     "seed:demo": "tsx --env-file-if-exists=../../.env.local src/seed/run.ts"
