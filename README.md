@@ -137,7 +137,7 @@ pnpm --filter @nlm/api dev        # API auf :3000
 pnpm --filter @nlm/web dev        # Web auf :5173, leitet /api an die API weiter
 ```
 
-In `.env.local` (Vorlage: [.env.example](.env.example)) sind nötig: `GEMINI_API_KEY`, die drei Modell-IDs `AI_MODEL`, `PARSE_MODEL`, `EMBEDDING_MODEL`, `DATABASE_URL`, `BETTER_AUTH_SECRET` (`openssl rand -base64 32`) und `BETTER_AUTH_URL` (`http://localhost:5173`). Die Modell-IDs stehen nie im Code, ein Wechsel ist eine Umgebungsvariable. Die im Spike gewählten Modelle stehen in [docs/SPIKE-ERGEBNISSE.md](docs/SPIKE-ERGEBNISSE.md).
+In `.env.local` (Vorlage: [.env.example](.env.example)) sind nötig: `GEMINI_API_KEY`, die drei Modell-IDs `AI_MODEL`, `PARSE_MODEL`, `EMBEDDING_MODEL`, `DATABASE_URL`, `BETTER_AUTH_SECRET` (`openssl rand -base64 32`) und `BETTER_AUTH_URL` (`http://localhost:5173`). Die Modell-IDs stehen nie im Code, ein Wechsel ist eine Umgebungsvariable. Optional ist `PARSE_FALLBACK_MODEL`: ein größeres Modell für PDFs, die `PARSE_MODEL` als Wiedergabe geschützten Textes ablehnt (`RECITATION`). Die im Spike gewählten Modelle stehen in [docs/SPIKE-ERGEBNISSE.md](docs/SPIKE-ERGEBNISSE.md).
 
 Ohne API-Schlüssel geht es mit dem Offline-Server: die echte App und Datenbank, aber ein Modell, das den ersten Satz der besten Textstellen zitiert (PDFs lassen sich dort nicht lesen).
 

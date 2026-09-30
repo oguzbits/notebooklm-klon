@@ -126,3 +126,14 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   ausliefern. Das ist der Weg, den auch der Container geht, und braucht nur einen Port. Der Server wird
   mit `exec node --import tsx` gestartet, damit Playwright ihn beim Beenden wirklich erreicht (mit
   `pnpm` und `tsx` dazwischen hing der Lauf).
+- **Zweites Lesemodell nur bei RECITATION:** Der erste Live-Lauf zeigte: `gemini-3.1-flash-lite` bricht
+  den gescannten NIST-Text (`05-nist-ai-rmf-scan-en.pdf`) sofort mit `finishReason: RECITATION` und 0
+  Zeichen ab, obwohl der Spike ihn noch gelesen hatte. Reproduzierbar (mehrere Läufe), unabhängig von
+  Prompt und Temperatur (vier Varianten geprüft). `gemini-3.5-flash` las denselben Scan vollständig
+  (8119 Zeichen, Referenz 7890), braucht aber 30 bis 60 s statt 7 s. Deshalb ist `PARSE_FALLBACK_MODEL`
+  eine optionale Umgebungsvariable: Nur bei RECITATION wird das PDF mit diesem Modell noch einmal gelesen,
+  jeder andere Abbruch bleibt ein Fehler. Ohne die Variable schlägt ein solches PDF wie bisher fehl.
+  Einmalige 503-Antworten der API fängt der vorhandene Wiederholungsmechanismus ab.
+- **Abgebrochene Skriptläufe werden fortgesetzt:** `importLocalFiles` verarbeitet eine vorhandene Quelle,
+  deren Upload noch gespeichert ist. Vorher blieb sie nach einem abgebrochenen Lauf für immer PENDING,
+  und `pnpm eval:live` maß mit fünf von sieben Dokumenten weniger (44 % Trefferquote).

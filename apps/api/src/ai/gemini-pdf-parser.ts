@@ -5,6 +5,7 @@ import { postGemini } from './gemini-http';
 import type { RateLimiter } from './rate-limiter';
 
 const FINISH_STOP = 'STOP';
+const FINISH_RECITATION = 'RECITATION';
 // Measured in the model spike: about 20 bytes of PDF per input token, plus the prompt.
 const BYTES_PER_TOKEN = 15;
 const PROMPT_TOKENS = 500;
@@ -33,6 +34,11 @@ export interface GeminiPdfParserConfig {
   apiKey: string;
   /** From the environment, never written in code. */
   model: string;
+  /**
+   * Read again with this model when the first one was blocked as recitation, which some scans of
+   * well-known documents trigger. Also from the environment. Unset: the block is an error.
+   */
+  fallbackModel?: string | undefined;
   limiter: RateLimiter;
   sleep: (ms: number) => Promise<void>;
 }
@@ -42,30 +48,37 @@ export interface GeminiPdfParserConfig {
  * blocked as recitation, filtered) is an error: partial text would silently lose content.
  */
 export function createGeminiPdfParser(config: GeminiPdfParserConfig) {
+  async function transcribe(model: string, bytes: Uint8Array) {
+    const estimatedTokens = Math.ceil(bytes.length / BYTES_PER_TOKEN) + PROMPT_TOKENS;
+    const json = await config.limiter.schedule(estimatedTokens, () =>
+      postGemini(config, `models/${model}:generateContent`, {
+        contents: [
+          {
+            parts: [
+              {
+                inlineData: {
+                  mimeType: 'application/pdf',
+                  data: Buffer.from(bytes).toString('base64'),
+                },
+              },
+              { text: PROMPT },
+            ],
+          },
+        ],
+        generationConfig: { temperature: 0 },
+      })
+    );
+    const [candidate] = ResponseSchema.parse(json).candidates ?? [];
+    if (!candidate) throw new Error('The model returned no candidate.');
+    return candidate;
+  }
+
   return {
     async parse(bytes: Uint8Array): Promise<ParsedDocument> {
-      const estimatedTokens = Math.ceil(bytes.length / BYTES_PER_TOKEN) + PROMPT_TOKENS;
-      const json = await config.limiter.schedule(estimatedTokens, () =>
-        postGemini(config, `models/${config.model}:generateContent`, {
-          contents: [
-            {
-              parts: [
-                {
-                  inlineData: {
-                    mimeType: 'application/pdf',
-                    data: Buffer.from(bytes).toString('base64'),
-                  },
-                },
-                { text: PROMPT },
-              ],
-            },
-          ],
-          generationConfig: { temperature: 0 },
-        })
-      );
-
-      const [candidate] = ResponseSchema.parse(json).candidates ?? [];
-      if (!candidate) throw new Error('The model returned no candidate.');
+      let candidate = await transcribe(config.model, bytes);
+      if (candidate.finishReason === FINISH_RECITATION && config.fallbackModel) {
+        candidate = await transcribe(config.fallbackModel, bytes);
+      }
       if (candidate.finishReason !== FINISH_STOP) {
         throw new Error(
           `The model did not finish normally: ${candidate.finishReason ?? 'unknown'}.`

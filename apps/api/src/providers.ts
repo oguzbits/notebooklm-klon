@@ -12,12 +12,16 @@ import { createParseSource } from './parsing/parse-source';
  * demo seed and the live eval all take their providers from here, so they cannot drift apart.
  */
 export function createProviders(
-  env: Pick<Env, 'GEMINI_API_KEY' | 'AI_MODEL' | 'PARSE_MODEL' | 'EMBEDDING_MODEL'>
+  env: Pick<
+    Env,
+    'GEMINI_API_KEY' | 'AI_MODEL' | 'PARSE_MODEL' | 'PARSE_FALLBACK_MODEL' | 'EMBEDDING_MODEL'
+  >
 ) {
   const provider = { apiKey: env.GEMINI_API_KEY, sleep: systemClock.sleep };
   const pdfParser = createGeminiPdfParser({
     ...provider,
     model: env.PARSE_MODEL,
+    fallbackModel: env.PARSE_FALLBACK_MODEL,
     limiter: new RateLimiter(PROVIDER_LIMITS.PARSE),
   });
   const embedder = createGeminiEmbedder({

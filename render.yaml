@@ -22,6 +22,8 @@ services:
         sync: false
       - key: PARSE_MODEL
         sync: false
+      - key: PARSE_FALLBACK_MODEL
+        sync: false
       - key: EMBEDDING_MODEL
         sync: false
       - key: BETTER_AUTH_SECRET

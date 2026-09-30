@@ -16,6 +16,8 @@ export const EnvSchema = DatabaseEnvSchema.extend({
   // Model IDs come from the environment only. Code never names a model.
   AI_MODEL: z.string().trim().min(1),
   PARSE_MODEL: z.string().trim().min(1),
+  // Optional. Reads a PDF again when PARSE_MODEL was blocked as recitation.
+  PARSE_FALLBACK_MODEL: z.string().trim().min(1).optional(),
   EMBEDDING_MODEL: z.string().trim().min(1),
   // Signs the session cookies. Generate one with `openssl rand -base64 32`.
   BETTER_AUTH_SECRET: z.string().trim().min(MIN_AUTH_SECRET_CHARS),

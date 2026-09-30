@@ -33,6 +33,14 @@ describe('parseEnv', () => {
     });
   });
 
+  it('has no fallback parse model unless one is set, and rejects a blank value', () => {
+    expect(parseEnv(VALID).PARSE_FALLBACK_MODEL).toBeUndefined();
+    expect(parseEnv({ ...VALID, PARSE_FALLBACK_MODEL: 'test-fallback-model' })).toMatchObject({
+      PARSE_FALLBACK_MODEL: 'test-fallback-model',
+    });
+    expect(() => parseEnv({ ...VALID, PARSE_FALLBACK_MODEL: ' ' })).toThrow(/PARSE_FALLBACK_MODEL/);
+  });
+
   it('serves no web app unless WEB_DIST_DIR is set, and rejects a blank value', () => {
     expect(parseEnv(VALID).WEB_DIST_DIR).toBeUndefined();
     expect(parseEnv({ ...VALID, WEB_DIST_DIR: 'apps/web/dist' }).WEB_DIST_DIR).toBe(

@@ -11,10 +11,14 @@ const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODE
 const KEY = 'test-key-not-real';
 const PDF = new TextEncoder().encode('%PDF-1.4 fake');
 
-function parser(sleeps: number[] = []) {
+const FALLBACK_MODEL = 'test-fallback-model';
+const FALLBACK_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${FALLBACK_MODEL}:generateContent`;
+
+function parser(sleeps: number[] = [], fallbackModel?: string) {
   return createGeminiPdfParser({
     apiKey: KEY,
     model: MODEL,
+    fallbackModel,
     limiter: new RateLimiter({ requestsPerMinute: 1000, tokensPerMinute: 1_000_000 }),
     sleep: async (ms) => {
       sleeps.push(ms);
@@ -74,6 +78,46 @@ describe('createGeminiPdfParser', () => {
       await expect(parser().parse(PDF)).rejects.toThrow(finishReason);
     }
   );
+
+  describe('with a fallback model', () => {
+    it('reads the document again with it when the first model was blocked as recitation', async () => {
+      server.use(
+        http.post(ENDPOINT, () =>
+          HttpResponse.json({ candidates: [{ finishReason: 'RECITATION' }] })
+        ),
+        http.post(FALLBACK_ENDPOINT, () => HttpResponse.json(answer('# Gelesen')))
+      );
+
+      const result = await parser([], FALLBACK_MODEL).parse(PDF);
+
+      expect(result.text).toBe('# Gelesen');
+    });
+
+    it('does not use it for other failures, which a second model would not fix', async () => {
+      let fallbackCalls = 0;
+      server.use(
+        http.post(ENDPOINT, () => HttpResponse.json(answer('halber Text', 'MAX_TOKENS'))),
+        http.post(FALLBACK_ENDPOINT, () => {
+          fallbackCalls += 1;
+          return HttpResponse.json(answer('x'));
+        })
+      );
+
+      await expect(parser([], FALLBACK_MODEL).parse(PDF)).rejects.toThrow('MAX_TOKENS');
+      expect(fallbackCalls).toBe(0);
+    });
+
+    it('fails with the reason when the fallback model does not finish either', async () => {
+      server.use(
+        http.post(ENDPOINT, () =>
+          HttpResponse.json({ candidates: [{ finishReason: 'RECITATION' }] })
+        ),
+        http.post(FALLBACK_ENDPOINT, () => HttpResponse.json(answer('', 'SAFETY')))
+      );
+
+      await expect(parser([], FALLBACK_MODEL).parse(PDF)).rejects.toThrow('SAFETY');
+    });
+  });
 
   it('names the finish reason when the answer has no text parts at all', async () => {
     server.use(
