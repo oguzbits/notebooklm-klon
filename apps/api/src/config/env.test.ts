@@ -5,7 +5,13 @@ import { parseDatabaseEnv, parseEnv, parseTestDatabaseEnv } from './env';
 const SECRET = 'test-secret-value-1234';
 const DB_PASSWORD = 'db-password-5678';
 const DATABASE_URL = `postgresql://user:${DB_PASSWORD}@localhost:5432/app`;
-const VALID = { GEMINI_API_KEY: SECRET, AI_MODEL: 'test-model', DATABASE_URL };
+const VALID = {
+  GEMINI_API_KEY: SECRET,
+  AI_MODEL: 'test-chat-model',
+  PARSE_MODEL: 'test-parse-model',
+  EMBEDDING_MODEL: 'test-embedding-model',
+  DATABASE_URL,
+};
 
 function messageOf(action: () => unknown): string {
   try {
@@ -30,7 +36,9 @@ describe('parseEnv', () => {
   });
 
   it('names every missing required variable', () => {
-    expect(() => parseEnv({})).toThrow(/DATABASE_URL[\s\S]*GEMINI_API_KEY[\s\S]*AI_MODEL/);
+    expect(() => parseEnv({})).toThrow(
+      /DATABASE_URL[\s\S]*GEMINI_API_KEY[\s\S]*AI_MODEL[\s\S]*PARSE_MODEL[\s\S]*EMBEDDING_MODEL/
+    );
   });
 
   it('rejects blank values, as copied from an empty .env.example', () => {

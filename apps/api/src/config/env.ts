@@ -13,6 +13,8 @@ export const EnvSchema = DatabaseEnvSchema.extend({
   GEMINI_API_KEY: z.string().trim().min(1),
   // Model IDs come from the environment only. Code never names a model.
   AI_MODEL: z.string().trim().min(1),
+  PARSE_MODEL: z.string().trim().min(1),
+  EMBEDDING_MODEL: z.string().trim().min(1),
 });
 
 // The database tests reset the whole schema, so they refuse any database not named *_test.

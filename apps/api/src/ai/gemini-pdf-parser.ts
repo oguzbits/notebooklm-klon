@@ -1,0 +1,75 @@
+import { z } from 'zod';
+
+import type { ParsedDocument } from '../ingestion/ingest';
+import { postGemini } from './gemini-http';
+import type { RateLimiter } from './rate-limiter';
+
+const FINISH_STOP = 'STOP';
+// Measured in the model spike: about 20 bytes of PDF per input token, plus the prompt.
+const BYTES_PER_TOKEN = 15;
+const PROMPT_TOKENS = 500;
+
+const PROMPT =
+  'Transcribe this document completely into Markdown. Keep the reading order (for two-column ' +
+  'pages read the left column first). Render tables as Markdown tables. Do not summarize, ' +
+  'translate, omit or add anything. If a page is a scan, read the text as printed. Output only ' +
+  'the transcription.';
+
+const ResponseSchema = z.object({
+  candidates: z
+    .array(
+      z.object({
+        content: z.object({ parts: z.array(z.object({ text: z.string().optional() })) }).optional(),
+        finishReason: z.string().optional(),
+      })
+    )
+    .optional(),
+});
+
+export interface GeminiPdfParserConfig {
+  apiKey: string;
+  /** From the environment, never written in code. */
+  model: string;
+  limiter: RateLimiter;
+  sleep: (ms: number) => Promise<void>;
+}
+
+/**
+ * Reads a PDF, scans included, with a Gemini model. An answer that did not end normally (cut off,
+ * blocked as recitation, filtered) is an error: partial text would silently lose content.
+ */
+export function createGeminiPdfParser(config: GeminiPdfParserConfig) {
+  return {
+    async parse(bytes: Uint8Array): Promise<ParsedDocument> {
+      const estimatedTokens = Math.ceil(bytes.length / BYTES_PER_TOKEN) + PROMPT_TOKENS;
+      const json = await config.limiter.schedule(estimatedTokens, () =>
+        postGemini(config, `models/${config.model}:generateContent`, {
+          contents: [
+            {
+              parts: [
+                {
+                  inlineData: {
+                    mimeType: 'application/pdf',
+                    data: Buffer.from(bytes).toString('base64'),
+                  },
+                },
+                { text: PROMPT },
+              ],
+            },
+          ],
+          generationConfig: { temperature: 0 },
+        })
+      );
+
+      const [candidate] = ResponseSchema.parse(json).candidates ?? [];
+      if (!candidate) throw new Error('The model returned no candidate.');
+      if (candidate.finishReason !== FINISH_STOP) {
+        throw new Error(
+          `The model did not finish normally: ${candidate.finishReason ?? 'unknown'}.`
+        );
+      }
+      const text = (candidate.content?.parts ?? []).map((part) => part.text ?? '').join('');
+      return { text, pageCount: null };
+    },
+  };
+}
