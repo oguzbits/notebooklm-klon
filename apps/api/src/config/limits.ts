@@ -9,6 +9,13 @@ export const LIMITS = {
   URL_IMPORT_TIMEOUT_MS: 15_000,
   /** URL import: largest response body accepted. */
   URL_IMPORT_MAX_BYTES: 5 * 1024 * 1024,
+  /** Upload: largest file accepted. */
+  UPLOAD_MAX_BYTES: 10 * 1024 * 1024,
+  /** Upload: most pages a PDF may have (each page costs provider quota). */
+  UPLOAD_MAX_PDF_PAGES: 50,
+  /** Quota: new sources one user may add within the window below. Re-uploading known content is free. */
+  SOURCES_PER_USER_PER_WINDOW: 10,
+  QUOTA_WINDOW_HOURS: 24,
   /** Ingestion: chunks per embedding request. */
   EMBED_BATCH_SIZE: 16,
 } as const;

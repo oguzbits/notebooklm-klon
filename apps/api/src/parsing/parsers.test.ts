@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { parseDocx } from './parse-docx';
 import { parseText } from './parse-text';
-import { parseWebPage } from './parse-web';
+import { pageTitle, parseWebPage } from './parse-web';
 
 const encode = (text: string) => new TextEncoder().encode(text);
 
@@ -84,5 +84,18 @@ describe('parseWebPage', () => {
 
   it('returns no page count for web pages', async () => {
     expect((await parseWebPage(encode(article))).pageCount).toBeNull();
+  });
+});
+
+describe('pageTitle', () => {
+  it('returns the trimmed title of a page', () => {
+    expect(pageTitle(encode('<html><head><title>  Mein Titel </title></head></html>'))).toBe(
+      'Mein Titel'
+    );
+  });
+
+  it('returns null for a page without a title', () => {
+    expect(pageTitle(encode('<html><body><p>Text</p></body></html>'))).toBeNull();
+    expect(pageTitle(encode('<html><head><title> </title></head></html>'))).toBeNull();
   });
 });

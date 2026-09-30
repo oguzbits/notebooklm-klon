@@ -4,10 +4,10 @@ import {
   SOURCE_KIND,
   SOURCE_STATUS,
   type SourceKind,
+  SUBMIT_ACTION,
 } from '@nlm/shared';
 import { describe, expect, it } from 'vitest';
 
-import { REGISTER_ACTION } from './ingest';
 import { runIngestJob, type SubmitPorts, submitSource } from './submit';
 
 const USER = 'user-a';
@@ -52,6 +52,7 @@ function fakePorts(overrides: Partial<SubmitPorts> = {}) {
         if (row) row.status = SOURCE_STATUS.FAILED;
       },
     },
+    assertCanCreate: async () => undefined,
     parse: async () => ({ text: 'Text', pageCount: null }),
     embed: async (texts) => texts.map(() => new Array<number>(EMBEDDING_DIMENSIONS).fill(0.1)),
     uploads: {
@@ -79,7 +80,7 @@ describe('submitSource', () => {
 
     const result = await submitSource(input, ports);
 
-    expect(result).toEqual({ sourceId: 's1', action: REGISTER_ACTION.CREATED });
+    expect(result).toEqual({ sourceId: 's1', action: SUBMIT_ACTION.CREATED });
     expect(log.uploads.get('s1')).toEqual({ kind: SOURCE_KIND.TXT, bytes: BYTES });
     expect(log.enqueued).toEqual(['s1']);
   });
@@ -92,7 +93,7 @@ describe('submitSource', () => {
 
     const again = await submitSource(input, ports);
 
-    expect(again.action).toBe(REGISTER_ACTION.REUSED);
+    expect(again.action).toBe(SUBMIT_ACTION.REUSED);
     expect(log.uploads.size).toBe(0);
     expect(log.enqueued).toEqual([]);
   });
@@ -106,7 +107,7 @@ describe('submitSource', () => {
 
     const again = await submitSource(input, ports);
 
-    expect(again.action).toBe(REGISTER_ACTION.RETRY);
+    expect(again.action).toBe(SUBMIT_ACTION.RETRY);
     expect(log.enqueued).toEqual(['s1']);
   });
 

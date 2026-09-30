@@ -4,23 +4,14 @@ import {
   SOURCE_STATUS,
   type SourceFailure,
   type SourceKind,
+  SUBMIT_ACTION,
+  type SubmitAction,
 } from '@nlm/shared';
 
 import { LIMITS } from '../config/limits';
 import { toCanonicalText } from '../core/canonical-text';
 import { chunkText, type TextChunk } from '../core/chunking';
 import { hashContent } from '../core/content-hash';
-
-export const REGISTER_ACTION = {
-  /** A new source row was created, it has to be processed. */
-  CREATED: 'CREATED',
-  /** The same content was already stored for this user, nothing to do. */
-  REUSED: 'REUSED',
-  /** The earlier attempt failed, the same row has to be processed again. */
-  RETRY: 'RETRY',
-} as const;
-
-export type RegisterAction = (typeof REGISTER_ACTION)[keyof typeof REGISTER_ACTION];
 
 export const INGEST_ERROR = {
   EMPTY_TEXT: 'EMPTY_TEXT_ERROR',
@@ -39,6 +30,14 @@ export class IngestError extends Error {
   ) {
     super(message, { cause });
     this.name = 'IngestError';
+  }
+}
+
+/** The user has added as many new sources as the quota allows for now. */
+export class QuotaExceededError extends Error {
+  constructor() {
+    super('The quota for new sources is used up.');
+    this.name = 'QuotaExceededError';
   }
 }
 
@@ -72,6 +71,8 @@ export interface IngestPorts {
     ) => Promise<void>;
     markFailed: (sourceId: string, failure: SourceFailure) => Promise<void>;
   };
+  /** Throws QuotaExceededError when the user may not add another new source. */
+  assertCanCreate: (userId: string) => Promise<void>;
   parse: (kind: SourceKind, bytes: Uint8Array) => Promise<ParsedDocument>;
   embed: (texts: string[]) => Promise<number[][]>;
 }
@@ -91,14 +92,15 @@ export interface RegisterInput {
 export async function registerSource(
   input: RegisterInput,
   ports: IngestPorts
-): Promise<{ sourceId: string; action: RegisterAction }> {
+): Promise<{ sourceId: string; action: SubmitAction }> {
   const contentHash = hashContent(input.bytes);
   const existing = await ports.sources.findByHash(input.userId, contentHash);
   if (existing) {
     const action =
-      existing.status === SOURCE_STATUS.FAILED ? REGISTER_ACTION.RETRY : REGISTER_ACTION.REUSED;
+      existing.status === SOURCE_STATUS.FAILED ? SUBMIT_ACTION.RETRY : SUBMIT_ACTION.REUSED;
     return { sourceId: existing.id, action };
   }
+  await ports.assertCanCreate(input.userId);
   const created = await ports.sources.create({
     userId: input.userId,
     contentHash,
@@ -106,7 +108,7 @@ export async function registerSource(
     title: input.title,
     sourceUrl: input.sourceUrl,
   });
-  return { sourceId: created.id, action: REGISTER_ACTION.CREATED };
+  return { sourceId: created.id, action: SUBMIT_ACTION.CREATED };
 }
 
 async function fail(

@@ -1,4 +1,10 @@
-import { EMBEDDING_DIMENSIONS, SOURCE_FAILURE, SOURCE_KIND, SOURCE_STATUS } from '@nlm/shared';
+import {
+  EMBEDDING_DIMENSIONS,
+  SOURCE_FAILURE,
+  SOURCE_KIND,
+  SOURCE_STATUS,
+  SUBMIT_ACTION,
+} from '@nlm/shared';
 import { describe, expect, it } from 'vitest';
 
 import { LIMITS } from '../config/limits';
@@ -8,7 +14,7 @@ import {
   IngestError,
   type IngestPorts,
   processSource,
-  REGISTER_ACTION,
+  QuotaExceededError,
   registerSource,
 } from './ingest';
 
@@ -56,6 +62,7 @@ function fakePorts(overrides: Partial<IngestPorts> = {}) {
         calls.failed.push(failure);
       },
     },
+    assertCanCreate: async () => undefined,
     parse: async () => {
       calls.parse += 1;
       return { text: 'Erster Satz.\n\nZweiter Satz.', pageCount: 2 };
@@ -83,7 +90,7 @@ describe('registerSource', () => {
 
     const result = await registerSource(input, ports);
 
-    expect(result).toEqual({ sourceId: 's1', action: REGISTER_ACTION.CREATED });
+    expect(result).toEqual({ sourceId: 's1', action: SUBMIT_ACTION.CREATED });
     expect(rows[0]).toMatchObject({
       userId: USER,
       hash: hashContent(BYTES),
@@ -97,7 +104,7 @@ describe('registerSource', () => {
 
     const again = await registerSource({ ...input, title: 'Anderer Titel' }, ports);
 
-    expect(again).toEqual({ sourceId: 's1', action: REGISTER_ACTION.REUSED });
+    expect(again).toEqual({ sourceId: 's1', action: SUBMIT_ACTION.REUSED });
     expect(rows).toHaveLength(1);
   });
 
@@ -107,7 +114,7 @@ describe('registerSource', () => {
 
     const other = await registerSource({ ...input, userId: 'user-b' }, ports);
 
-    expect(other.action).toBe(REGISTER_ACTION.CREATED);
+    expect(other.action).toBe(SUBMIT_ACTION.CREATED);
     expect(rows).toHaveLength(2);
   });
 
@@ -119,8 +126,48 @@ describe('registerSource', () => {
 
     const again = await registerSource(input, ports);
 
-    expect(again).toEqual({ sourceId: 's1', action: REGISTER_ACTION.RETRY });
+    expect(again).toEqual({ sourceId: 's1', action: SUBMIT_ACTION.RETRY });
     expect(rows).toHaveLength(1);
+  });
+});
+
+describe('registerSource quota', () => {
+  it('creates nothing when the quota for new sources is used up', async () => {
+    const { ports, rows } = fakePorts({
+      assertCanCreate: async () => {
+        throw new QuotaExceededError();
+      },
+    });
+
+    await expect(registerSource(input, ports)).rejects.toBeInstanceOf(QuotaExceededError);
+
+    expect(rows).toHaveLength(0);
+  });
+
+  it('does not count content the user already has against the quota', async () => {
+    const { ports } = fakePorts();
+    await registerSource(input, ports);
+    ports.assertCanCreate = async () => {
+      throw new QuotaExceededError();
+    };
+
+    const again = await registerSource(input, ports);
+
+    expect(again.action).toBe(SUBMIT_ACTION.REUSED);
+  });
+
+  it('does not count a retry of a failed source against the quota', async () => {
+    const { ports, rows } = fakePorts();
+    await registerSource(input, ports);
+    const [row] = rows;
+    if (row) row.status = SOURCE_STATUS.FAILED;
+    ports.assertCanCreate = async () => {
+      throw new QuotaExceededError();
+    };
+
+    const again = await registerSource(input, ports);
+
+    expect(again.action).toBe(SUBMIT_ACTION.RETRY);
   });
 });
 

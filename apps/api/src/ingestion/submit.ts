@@ -1,14 +1,7 @@
-import { SOURCE_FAILURE, type SourceKind } from '@nlm/shared';
+import { SOURCE_FAILURE, type SourceKind, SUBMIT_ACTION, type SubmitAction } from '@nlm/shared';
 import { z } from 'zod';
 
-import {
-  type IngestPorts,
-  processSource,
-  REGISTER_ACTION,
-  type RegisterAction,
-  type RegisterInput,
-  registerSource,
-} from './ingest';
+import { type IngestPorts, processSource, type RegisterInput, registerSource } from './ingest';
 
 export interface SubmitPorts extends IngestPorts {
   /** The raw bytes of an upload, kept only until its job has run. */
@@ -29,9 +22,9 @@ const JobPayloadSchema = z.object({ sourceId: z.string().min(1) });
 export async function submitSource(
   input: RegisterInput,
   ports: SubmitPorts
-): Promise<{ sourceId: string; action: RegisterAction }> {
+): Promise<{ sourceId: string; action: SubmitAction }> {
   const registered = await registerSource(input, ports);
-  if (registered.action === REGISTER_ACTION.REUSED) return registered;
+  if (registered.action === SUBMIT_ACTION.REUSED) return registered;
 
   await ports.uploads.put(registered.sourceId, input.bytes);
   try {

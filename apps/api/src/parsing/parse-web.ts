@@ -21,3 +21,10 @@ export async function parseWebPage(bytes: Uint8Array): Promise<ParsedDocument> {
   }
   return { text: htmlToText(html), pageCount: null };
 }
+
+/** The <title> of a page, or null when it has none. Used to name a URL source. */
+export function pageTitle(bytes: Uint8Array): string | null {
+  const { document } = parseHTML(new TextDecoder('utf-8').decode(bytes));
+  const title = document.title.trim();
+  return title === '' ? null : title;
+}
