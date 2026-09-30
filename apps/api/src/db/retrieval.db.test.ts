@@ -3,7 +3,7 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { searchChunks } from './retrieval';
 import { chunks, notebooks, notebookSources, sources } from './schema';
-import { axisVector, createTestDb } from './testing/test-db';
+import { axisVector, createTestDb, ensureUsers } from './testing/test-db';
 
 const { db, pool } = createTestDb();
 const USER = 'user-a';
@@ -57,6 +57,7 @@ const search = (
 
 beforeEach(async () => {
   await pool.query('TRUNCATE sources, notebooks CASCADE');
+  await ensureUsers(pool, ['user-a', 'user-b']);
 });
 
 afterAll(async () => {

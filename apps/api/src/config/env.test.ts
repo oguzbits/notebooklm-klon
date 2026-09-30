@@ -10,6 +10,8 @@ const VALID = {
   AI_MODEL: 'test-chat-model',
   PARSE_MODEL: 'test-parse-model',
   EMBEDDING_MODEL: 'test-embedding-model',
+  BETTER_AUTH_SECRET: 'a-test-secret-with-at-least-32-characters',
+  BETTER_AUTH_URL: 'http://localhost:3000',
   DATABASE_URL,
 };
 
@@ -37,7 +39,7 @@ describe('parseEnv', () => {
 
   it('names every missing required variable', () => {
     expect(() => parseEnv({})).toThrow(
-      /DATABASE_URL[\s\S]*GEMINI_API_KEY[\s\S]*AI_MODEL[\s\S]*PARSE_MODEL[\s\S]*EMBEDDING_MODEL/
+      /DATABASE_URL[\s\S]*GEMINI_API_KEY[\s\S]*AI_MODEL[\s\S]*PARSE_MODEL[\s\S]*EMBEDDING_MODEL[\s\S]*BETTER_AUTH_SECRET[\s\S]*BETTER_AUTH_URL/
     );
   });
 

@@ -15,6 +15,8 @@ import {
   vector,
 } from 'drizzle-orm/pg-core';
 
+import { user } from './auth-schema';
+
 const tsvector = customType<{ data: string }>({
   dataType: () => 'tsvector',
 });
@@ -28,13 +30,15 @@ const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull(
 export const sourceKind = pgEnum('source_kind', SOURCE_KIND);
 export const sourceStatus = pgEnum('source_status', SOURCE_STATUS);
 
-// user_id is the Better Auth user id. The foreign key to the auth tables is added with the auth
-// migration; until then every query must still filter by user_id (see AGENTS.md).
+// user_id is the Better Auth user id. Deleting a user deletes their notebooks and sources. Every
+// query still filters by user_id: the foreign key is integrity, not authorization (see AGENTS.md).
 export const notebooks = pgTable(
   'notebooks',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    userId: text('user_id').notNull(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
     title: text('title').notNull(),
     createdAt: createdAt(),
   },
@@ -46,7 +50,9 @@ export const sources = pgTable(
   'sources',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    userId: text('user_id').notNull(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
     contentHash: text('content_hash').notNull(),
     kind: sourceKind('kind').notNull(),
     title: text('title').notNull(),

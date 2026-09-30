@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 const DEFAULT_PORT = 3000;
 const MAX_PORT = 65535;
+const MIN_AUTH_SECRET_CHARS = 32;
 
 export const DatabaseEnvSchema = z.object({
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
@@ -15,6 +16,10 @@ export const EnvSchema = DatabaseEnvSchema.extend({
   AI_MODEL: z.string().trim().min(1),
   PARSE_MODEL: z.string().trim().min(1),
   EMBEDDING_MODEL: z.string().trim().min(1),
+  // Signs the session cookies. Generate one with `openssl rand -base64 32`.
+  BETTER_AUTH_SECRET: z.string().trim().min(MIN_AUTH_SECRET_CHARS),
+  // Public origin of the app, also the only origin allowed to send authenticated requests.
+  BETTER_AUTH_URL: z.url({ protocol: /^https?$/ }),
 });
 
 // The database tests reset the whole schema, so they refuse any database not named *_test.

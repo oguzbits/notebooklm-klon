@@ -4,7 +4,7 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { chunks, sources } from './schema';
 import { createSourceStorage, createUploadStorage } from './source-storage';
-import { axisVector, createTestDb } from './testing/test-db';
+import { axisVector, createTestDb, ensureUsers } from './testing/test-db';
 
 const { db, pool } = createTestDb();
 const storage = createSourceStorage(db);
@@ -42,6 +42,7 @@ const readyResult = () => ({
 
 beforeEach(async () => {
   await pool.query('TRUNCATE sources, notebooks CASCADE');
+  await ensureUsers(pool, ['user-a', 'user-b']);
 });
 
 afterAll(async () => {

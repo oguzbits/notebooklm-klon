@@ -3,7 +3,7 @@ import { asc, cosineDistance, eq, sql } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { chunks, notebooks, notebookSources, sources } from './schema';
-import { axisVector, createTestDb } from './testing/test-db';
+import { axisVector, createTestDb, ensureUsers } from './testing/test-db';
 
 const { db, pool } = createTestDb();
 const USER = 'user-a';
@@ -33,6 +33,7 @@ async function insertChunk(sourceId: string, ordinal: number, text: string, axis
 
 beforeEach(async () => {
   await pool.query('TRUNCATE sources, notebooks CASCADE');
+  await ensureUsers(pool, ['user-a', 'user-b']);
 });
 
 afterAll(async () => {
