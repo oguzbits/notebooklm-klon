@@ -11,7 +11,10 @@ const EventSchema = z.object({
   candidates: z
     .array(
       z.object({
-        content: z.object({ parts: z.array(z.object({ text: z.string().optional() })) }).optional(),
+        // Gemini leaves `parts` out when it produced no text, e.g. for MAX_TOKENS or RECITATION.
+        content: z
+          .object({ parts: z.array(z.object({ text: z.string().optional() })).optional() })
+          .optional(),
         finishReason: z.string().optional(),
       })
     )

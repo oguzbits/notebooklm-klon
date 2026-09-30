@@ -122,6 +122,18 @@ describe('createGeminiChat', () => {
     );
   });
 
+  it('names the finish reason when an event has no text parts', async () => {
+    server.use(
+      http.post(ENDPOINT, () =>
+        sse(event({ candidates: [{ content: { role: 'model' }, finishReason: 'MAX_TOKENS' }] }))
+      )
+    );
+
+    await expect(collect(chat().stream({ system: 's', user: 'u', schema: {} }))).rejects.toThrow(
+      /MAX_TOKENS/
+    );
+  });
+
   it('fails when the prompt was blocked and no candidate came back', async () => {
     server.use(http.post(ENDPOINT, () => sse(event({ promptFeedback: { blockReason: 'OTHER' } }))));
 

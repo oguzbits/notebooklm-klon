@@ -75,6 +75,18 @@ describe('createGeminiPdfParser', () => {
     }
   );
 
+  it('names the finish reason when the answer has no text parts at all', async () => {
+    server.use(
+      http.post(ENDPOINT, () =>
+        HttpResponse.json({
+          candidates: [{ content: { role: 'model' }, finishReason: 'MAX_TOKENS' }],
+        })
+      )
+    );
+
+    await expect(parser().parse(PDF)).rejects.toThrow('MAX_TOKENS');
+  });
+
   it('fails when the answer has no candidate at all', async () => {
     server.use(
       http.post(ENDPOINT, () => HttpResponse.json({ promptFeedback: { blockReason: 'OTHER' } }))
