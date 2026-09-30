@@ -100,3 +100,29 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   eindeutig). Freitext-Notizen gibt es bewusst nicht; sie wären ohne Zitate und ohne Prüfung.
 - **Notizen links neben den Quellen (Tabs „Quellen“ / „Notizen“):** Die Leseansicht ersetzt weiterhin das
   ganze linke Panel, damit ein Klick auf ein Zitat in einer Notiz dieselbe Ansicht öffnet wie im Chat.
+
+## 2026-09-30 (Auswertung, Seed, Deployment)
+
+- **`pnpm eval:live` nutzt den echten Weg:** Es liest das Spike-Korpus mit der echten Aufnahme in ein
+  Notizbuch eines Wegwerf-Nutzers (`eval-user`), stellt die Fragen über denselben Code wie der Chat und
+  bewertet mit den vorhandenen Scorern. Bekannter Inhalt wird wiederverwendet, nur der erste Lauf zahlt
+  für Parsing und Einbettung. Die Ergebnisse (auch die Antworten) landen in `reports/`, das Git ignoriert.
+  Weil der Server Aussagen ohne gültiges Zitat entfernt, ist die Zitat-Gültigkeit der Ausgabe immer
+  100 %. Aussagekräftig sind darum die Zahlen der verworfenen Aussagen und entfernten Zitate.
+- **Demo-Seed mit eigenen Texten:** Drei kurze Dokumente in `apps/api/seed/demo` (ein erfundener
+  Projektbericht, DSGVO-Grundlagen in eigenen Worten, eine englische RAG-Übersicht). Keine Fremdtexte,
+  damit das Repository sie mitliefern darf. Die Übersichten entstehen im Seed, sodass der erste Besuch
+  keine Modellaufrufe für sie braucht. Das Demo-Konto kommt aus `SEED_DEMO_EMAIL` und
+  `SEED_DEMO_PASSWORD`; Better Auth legt es an, das Skript kennt keine Passwort-Hashes.
+- **Ein Bundle, ein Container:** `esbuild` bündelt die API in eine Datei. Zwei Fehler, die erst der
+  Start des Bundles zeigte: ein `createRequire`-Banner fehlte (`pg` nutzt `require`), und der Pfad der
+  Migrationen war nur für `src/db` richtig (`migrations-folder.ts` sucht jetzt an beiden Orten). Der
+  CLI-Teil von `migrate.ts` lief im Bundle als Nebenwirkung mit und liegt jetzt in `migrate-cli.ts`.
+- **Render (Blueprint) und Neon:** `render.yaml` beschreibt einen kostenlosen Docker-Dienst in Frankfurt.
+  Die Schlüssel werden im Dashboard eingetragen (`sync: false`), `BETTER_AUTH_SECRET` erzeugt Render.
+  Das Image wurde lokal gebaut und gegen die Test-Datenbank gestartet (Health, Frontend, geschützte
+  API). Auf Render selbst wurde es noch nicht ausgeführt.
+- **Browser-Tests mit Offline-Server, nicht mit Vite:** `pnpm e2e` baut das Frontend und lässt die API es
+  ausliefern. Das ist der Weg, den auch der Container geht, und braucht nur einen Port. Der Server wird
+  mit `exec node --import tsx` gestartet, damit Playwright ihn beim Beenden wirklich erreicht (mit
+  `pnpm` und `tsx` dazwischen hing der Lauf).
