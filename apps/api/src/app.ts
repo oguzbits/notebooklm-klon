@@ -10,6 +10,7 @@ import { QuotaExceededError } from './ingestion/ingest';
 import { log } from './logger';
 import { chatRoutes } from './routes/chat';
 import { notebookRoutes } from './routes/notebooks';
+import { overviewRoutes } from './routes/overview';
 import { readerRoutes } from './routes/reader';
 import { sourceRoutes } from './routes/sources';
 
@@ -63,7 +64,8 @@ export function createApp(deps: AppDeps) {
     .route('/api/notebooks', notebookRoutes(deps))
     .route('/api/notebooks', sourceRoutes(deps))
     .route('/api/notebooks', chatRoutes(deps))
-    .route('/api/notebooks', readerRoutes(deps));
+    .route('/api/notebooks', readerRoutes(deps))
+    .route('/api/notebooks', overviewRoutes(deps));
 }
 
 export type AppType = ReturnType<typeof createApp>;

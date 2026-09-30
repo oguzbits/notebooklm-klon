@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 
-import { NOTEBOOK_ID, source, SOURCE_ID } from '@/test/fixtures';
+import { NOTEBOOK_ID, overview, source, SOURCE_ID } from '@/test/fixtures';
 import { renderWithProviders } from '@/test/render';
 
 import { server } from '../../../../../vitest.setup';
@@ -88,5 +88,41 @@ describe('SourcesPanel', () => {
     renderPanel();
 
     expect(await screen.findByRole('button', { name: /Erneut versuchen/ })).toBeTruthy();
+  });
+
+  it('shows the summary and key topics of a source when the overview is opened', async () => {
+    server.use(
+      list([source({ title: 'fertig.pdf' })]),
+      http.get(`${base}/${SOURCE_ID}/overview`, () => HttpResponse.json(overview()))
+    );
+    renderPanel();
+
+    await userEvent
+      .setup()
+      .click(await screen.findByRole('button', { name: /Übersicht.*fertig.pdf/ }));
+
+    expect(await screen.findByText(/erforscht Polarlicht über Norwegen/)).toBeTruthy();
+    expect(screen.getByText('Budget')).toBeTruthy();
+  });
+
+  it('shows a retry when the overview cannot be made', async () => {
+    let failing = true;
+    server.use(
+      list([source({ title: 'fertig.pdf' })]),
+      http.get(`${base}/${SOURCE_ID}/overview`, () =>
+        failing
+          ? HttpResponse.json({ code: API_ERROR.CHAT_LIMIT_REACHED }, { status: 429 })
+          : HttpResponse.json(overview())
+      )
+    );
+    renderPanel();
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole('button', { name: /Übersicht.*fertig.pdf/ }));
+    expect(await screen.findByText(/keine Antworten mehr möglich/)).toBeTruthy();
+    failing = false;
+    await user.click(screen.getByRole('button', { name: /Erneut versuchen/ }));
+
+    expect(await screen.findByText(/erforscht Polarlicht/)).toBeTruthy();
   });
 });

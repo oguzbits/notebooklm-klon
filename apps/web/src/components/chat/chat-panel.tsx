@@ -7,6 +7,7 @@ import { ErrorNotice, QueryBoundary } from '@/components/query-boundary';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAskQuestion, useChatHistory } from '@/hooks/use-chat';
+import { useSuggestedQuestions } from '@/hooks/use-overview';
 import { useSources } from '@/hooks/use-sources';
 
 /** The middle panel: the conversation, the field for a new question and the streamed answer. */
@@ -20,6 +21,7 @@ export function ChatPanel({
   const history = useChatHistory(notebookId);
   const sources = useSources(notebookId);
   const ask = useAskQuestion(notebookId);
+  const suggestions = useSuggestedQuestions(notebookId, sources.data ?? []);
   const bottom = useRef<HTMLDivElement>(null);
 
   const usable = (sources.data ?? []).filter(
@@ -71,6 +73,32 @@ export function ChatPanel({
                   Die Antwort stützt sich nur auf deine ausgewählten Quellen. Jede Aussage hat eine
                   Nummer, die zur Textstelle führt.
                 </p>
+                {suggestions.loading && (
+                  <p className="text-sm text-muted-foreground" role="status">
+                    Vorschläge werden erstellt …
+                  </p>
+                )}
+                {suggestions.failed && (
+                  <p className="text-sm text-muted-foreground">
+                    Vorschläge konnten nicht erstellt werden. Du kannst trotzdem fragen.
+                  </p>
+                )}
+                {suggestions.questions.length > 0 && (
+                  <ul className="mt-2 flex max-w-xl flex-wrap justify-center gap-2">
+                    {suggestions.questions.map((suggestion) => (
+                      <li key={suggestion}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={!canAsk}
+                          onClick={() => ask.mutate(suggestion)}
+                        >
+                          {suggestion}
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             }
           >

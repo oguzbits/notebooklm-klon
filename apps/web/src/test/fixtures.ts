@@ -4,6 +4,7 @@ import {
   type ChunkDetail,
   SOURCE_KIND,
   SOURCE_STATUS,
+  type SourceOverview,
   type SourceSummary,
 } from '@nlm/shared';
 
@@ -54,4 +55,11 @@ export const answer = (statements: { text: string; chunkIds: string[] }[]): Chat
   role: CHAT_ROLE.ASSISTANT,
   statements,
   createdAt: CREATED_AT,
+});
+
+export const overview = (overrides: Partial<SourceOverview> = {}): SourceOverview => ({
+  summary: 'Das Projekt Nordlicht erforscht Polarlicht über Norwegen.',
+  keyTopics: ['Polarlicht', 'Budget'],
+  suggestedQuestions: ['Wer leitet das Projekt?', 'Wie hoch ist das Budget?'],
+  ...overrides,
 });

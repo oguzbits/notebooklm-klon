@@ -1,7 +1,7 @@
 import { API_ERROR, CHAT_EVENT, type ChatEvent, SOURCE_STATUS } from '@nlm/shared';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
+import { http, HttpResponse, type JsonBodyType } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -10,8 +10,10 @@ import {
   chunkDetail,
   NOTEBOOK_ID,
   OTHER_CHUNK_ID,
+  overview,
   question,
   source,
+  SOURCE_ID,
 } from '@/test/fixtures';
 import { renderWithProviders } from '@/test/render';
 
@@ -30,6 +32,9 @@ function renderChat(onOpenCitation: (chunkId: string) => void = () => {}) {
     <ChatPanel notebookId={NOTEBOOK_ID} onOpenCitation={onOpenCitation} />
   );
 }
+
+const overviewOf = (sourceId: string, body: JsonBodyType, status = 200) =>
+  http.get(`${base}/sources/${sourceId}/overview`, () => HttpResponse.json(body, { status }));
 
 describe('ChatPanel', () => {
   it('invites the user to ask the first question when the history is empty', async () => {
@@ -169,5 +174,51 @@ describe('ChatPanel', () => {
 
     expect(await screen.findByText(/keine Antworten mehr möglich/)).toBeTruthy();
     expect(screen.getByRole('button', { name: /Erneut versuchen/ })).toBeTruthy();
+  });
+
+  it('offers the suggested questions of the selected sources and asks one on click', async () => {
+    let asked: unknown;
+    server.use(
+      sources(),
+      history([]),
+      overviewOf(SOURCE_ID, overview()),
+      http.post(`${base}/chat`, async ({ request }) => {
+        asked = await request.json();
+        return new HttpResponse('', { headers: { 'content-type': 'text/event-stream' } });
+      })
+    );
+    renderChat();
+
+    await userEvent
+      .setup()
+      .click(await screen.findByRole('button', { name: 'Wer leitet das Projekt?' }));
+
+    await waitFor(() => expect(asked).toEqual({ question: 'Wer leitet das Projekt?' }));
+  });
+
+  it('asks for the suggestions of ready, selected sources only', async () => {
+    const skipped = '7c3a0e4b-9d56-4b8f-9e27-4c0a8d3b5e69';
+    const requested: string[] = [];
+    server.use(
+      sources([source(), source({ id: skipped, selected: false })]),
+      history([]),
+      http.get(`${base}/sources/:sourceId/overview`, ({ params }) => {
+        requested.push(String(params.sourceId));
+        return HttpResponse.json(overview());
+      })
+    );
+    renderChat();
+
+    await screen.findByRole('button', { name: 'Wer leitet das Projekt?' });
+
+    expect(requested).toEqual([SOURCE_ID]);
+  });
+
+  it('says so when the suggestions cannot be made, and still lets the user ask', async () => {
+    server.use(sources(), history([]), overviewOf(SOURCE_ID, { code: API_ERROR.INTERNAL }, 500));
+    renderChat();
+
+    expect(await screen.findByText(/Vorschläge konnten nicht erstellt werden/)).toBeTruthy();
+    expect(screen.getByLabelText('Deine Frage').hasAttribute('disabled')).toBe(false);
   });
 });

@@ -60,3 +60,33 @@ export async function* trickle(text: string): AsyncGenerator<string> {
     yield text.slice(i, i + STREAM_PIECE_CHARS);
   }
 }
+
+const TITLE_LINE = /^Document title: (.*)\n\n/;
+const MAX_TOPICS = 4;
+const SUMMARY_SENTENCES = 2;
+const EMPTY_SUMMARY = 'Dieses Dokument enthält keinen lesbaren Text.';
+
+/** A stand-in for the overview: the first sentences as summary, the most frequent words as topics. */
+export function fakeOverview(userMessage: string): string {
+  const title = TITLE_LINE.exec(userMessage)?.[1] ?? 'dem Dokument';
+  const text = userMessage.replace(TITLE_LINE, '').trim();
+  const summary = text.split(SENTENCE_END).slice(0, SUMMARY_SENTENCES).join(' ') || EMPTY_SUMMARY;
+
+  const counts = new Map<string, number>();
+  for (const word of text.match(/\p{Lu}\p{L}{3,}/gu) ?? []) {
+    counts.set(word, (counts.get(word) ?? 0) + 1);
+  }
+  const keyTopics = [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, MAX_TOPICS)
+    .map(([word]) => word);
+
+  return JSON.stringify({
+    summary,
+    keyTopics,
+    suggestedQuestions: [
+      `Worum geht es in ${title}?`,
+      `Was sind die wichtigsten Punkte in ${title}?`,
+    ],
+  });
+}

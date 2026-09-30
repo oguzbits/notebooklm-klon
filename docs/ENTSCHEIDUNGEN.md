@@ -76,3 +76,17 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   Er lädt `.env.local` nicht, damit er nie an eine echte Datenbank gerät.
 - **`hono` im Web und in der API auf dieselbe Version gehoben:** Zwei Versionen machen den RPC-Typ
   unbrauchbar (`HandlerInterface` inkompatibel).
+
+## 2026-09-30 (Quellenübersicht und Vorschlagsfragen)
+
+- **Eine Übersicht pro Quelle, beim ersten Aufruf erzeugt und gespeichert:** Zusammenfassung,
+  Schlüsselthemen und Vorschlagsfragen kommen aus einem einzigen Modellaufruf
+  (`GET /api/notebooks/:id/sources/:sourceId/overview`, Spalte `sources.overview`). Das deckt Must 5 und
+  die Vorschlagsfragen ab. Lazy statt im Ingestion-Job: Der Job bleibt unverändert und kann nicht an der
+  Übersicht scheitern, und der Aufruf kostet nur Kontingent, wenn jemand das Notizbuch wirklich öffnet.
+  Nachteil: Die erste Ansicht wartet ein bis zwei Sekunden. Der Demo-Seed erzeugt die Übersichten vorab.
+- **Die Übersicht ist immer deutsch,** auch bei englischen Quellen (Oberfläche nur Deutsch, deutsche
+  Fragen auf englische Quellen sind im Spike gemessen). Der Text wird bei 45.000 Zeichen gekürzt
+  (etwa 15.000 Token) und das im Prompt vermerkt.
+- **Vorschläge im leeren Chat:** aus den ersten drei ausgewählten, fertigen Quellen je zwei Fragen,
+  höchstens vier. Schlägt die Erzeugung fehl, steht dort ein Hinweis und die Eingabe bleibt frei.

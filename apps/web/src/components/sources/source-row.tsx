@@ -1,14 +1,18 @@
 import { SOURCE_KIND, SOURCE_STATUS, type SourceKind, type SourceSummary } from '@nlm/shared';
-import { FileText, Globe, LoaderCircle, Trash2, TriangleAlert } from 'lucide-react';
+import { ChevronDown, FileText, Globe, LoaderCircle, Trash2, TriangleAlert } from 'lucide-react';
+import { useState } from 'react';
 
+import { SourceOverview } from '@/components/sources/source-overview';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { FAILURE_MESSAGE, STATUS_LABEL } from '@/lib/messages';
+import { cn } from '@/lib/utils';
 
 const FAILED_HINT = 'Entferne die Quelle und füge sie noch einmal hinzu.';
 
 interface SourceRowProps {
+  notebookId: string;
   source: SourceSummary;
   /** A change to this source is on its way. */
   busy: boolean;
@@ -23,7 +27,15 @@ function KindIcon({ kind }: { kind: SourceKind }) {
 }
 
 /** One source: a checkbox to use it for answers, its title (opens the text) and its status. */
-export function SourceRow({ source, busy, onToggle, onOpen, onRemove }: SourceRowProps) {
+export function SourceRow({
+  notebookId,
+  source,
+  busy,
+  onToggle,
+  onOpen,
+  onRemove,
+}: SourceRowProps) {
+  const [showOverview, setShowOverview] = useState(false);
   const ready = source.status === SOURCE_STATUS.READY;
   const failed = source.status === SOURCE_STATUS.FAILED;
   const working = !ready && !failed;
@@ -63,8 +75,24 @@ export function SourceRow({ source, busy, onToggle, onOpen, onRemove }: SourceRo
             </span>
           </p>
         )}
-        {ready && source.pageCount !== null && (
-          <p className="text-xs text-muted-foreground">{source.pageCount} Seiten</p>
+        {ready && (
+          <div className="mt-1 flex flex-col gap-2">
+            <button
+              type="button"
+              className="flex items-center gap-1 self-start text-xs text-muted-foreground hover:text-foreground"
+              aria-expanded={showOverview}
+              aria-label={`Übersicht von „${source.title}“ ${showOverview ? 'ausblenden' : 'anzeigen'}`}
+              onClick={() => setShowOverview((value) => !value)}
+            >
+              <ChevronDown
+                className={cn('size-3 transition-transform', showOverview && 'rotate-180')}
+                aria-hidden
+              />
+              Übersicht
+              {source.pageCount !== null && ` · ${source.pageCount} Seiten`}
+            </button>
+            {showOverview && <SourceOverview notebookId={notebookId} sourceId={source.id} />}
+          </div>
         )}
       </div>
       <Button

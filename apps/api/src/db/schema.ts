@@ -64,6 +64,8 @@ export const sources = pgTable(
     errorMessage: text('error_message'),
     canonicalText: text('canonical_text'),
     pageCount: integer('page_count'),
+    // Summary, key topics and suggested questions (SourceOverviewSchema). Made on first request.
+    overview: jsonb('overview'),
     createdAt: createdAt(),
   },
   (table) => [unique('sources_user_content_hash_unique').on(table.userId, table.contentHash)]

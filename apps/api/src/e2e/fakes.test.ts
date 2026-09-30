@@ -1,7 +1,7 @@
-import { AnswerSchema } from '@nlm/shared';
+import { AnswerSchema, SourceOverviewSchema } from '@nlm/shared';
 import { describe, expect, it } from 'vitest';
 
-import { extractiveAnswer, hashEmbedding } from './fakes';
+import { extractiveAnswer, fakeOverview, hashEmbedding } from './fakes';
 
 const DIMENSIONS = 16;
 
@@ -48,5 +48,28 @@ describe('extractiveAnswer', () => {
 
     expect(answer.statements).toHaveLength(1);
     expect(answer.statements[0]?.chunkIds).toEqual([]);
+  });
+});
+
+describe('fakeOverview', () => {
+  const message =
+    'Document title: nordlicht.txt\n\nDr. Brandt leitet das Projekt Nordlicht. Das Projekt untersucht Polarlicht. Das Budget beträgt viel.';
+
+  it('returns a valid overview made of the first sentences and the most frequent words', () => {
+    const overview = SourceOverviewSchema.parse(JSON.parse(fakeOverview(message)));
+
+    expect(overview.summary).toBe(
+      'Dr. Brandt leitet das Projekt Nordlicht. Das Projekt untersucht Polarlicht.'
+    );
+    expect(overview.keyTopics).toContain('Projekt');
+    expect(overview.suggestedQuestions[0]).toContain('nordlicht.txt');
+  });
+
+  it('copes with a document that has no text', () => {
+    const overview = SourceOverviewSchema.parse(
+      JSON.parse(fakeOverview('Document title: leer.txt\n\n'))
+    );
+
+    expect(overview.summary.length).toBeGreaterThan(0);
   });
 });

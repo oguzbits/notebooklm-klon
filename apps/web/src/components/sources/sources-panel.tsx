@@ -46,6 +46,7 @@ export function SourcesPanel({
             {list.map((source) => (
               <SourceRow
                 key={source.id}
+                notebookId={notebookId}
                 source={source}
                 busy={
                   (toggle.isPending && toggle.variables?.sourceId === source.id) ||

@@ -30,6 +30,7 @@ export {
   SubmitSourceResultSchema,
   UrlSourceBodySchema,
 } from './notebook';
+export { type SourceOverview, SourceOverviewSchema } from './overview';
 export {
   CHAT_ROLE,
   type ChatMessage,

@@ -12,6 +12,7 @@ import { EMBEDDING_DIMENSIONS } from '@nlm/shared';
 import { createApp } from '../app';
 import { createAuth } from '../auth/auth';
 import { parseOfflineServerEnv } from '../config/env';
+import { OVERVIEW_SYSTEM_PROMPT } from '../core/overview-prompt';
 import { createDb } from '../db/client';
 import { runMigrations } from '../db/migrate';
 import { createQuota } from '../db/quota';
@@ -20,7 +21,7 @@ import { systemDeps } from '../import/system-deps';
 import { runIngestJob, type SubmitPorts } from '../ingestion/submit';
 import { log } from '../logger';
 import { createParseSource } from '../parsing/parse-source';
-import { extractiveAnswer, hashEmbedding, trickle } from './fakes';
+import { extractiveAnswer, fakeOverview, hashEmbedding, trickle } from './fakes';
 
 const env = parseOfflineServerEnv(process.env);
 await runMigrations(env.DATABASE_URL);
@@ -61,7 +62,12 @@ const app = createApp({
   fetch: systemDeps,
   chat: {
     embedQuery: async (text) => hashEmbedding(text, EMBEDDING_DIMENSIONS),
-    stream: (input) => trickle(extractiveAnswer(input.user)),
+    stream: (input) =>
+      trickle(
+        input.system === OVERVIEW_SYSTEM_PROMPT
+          ? fakeOverview(input.user)
+          : extractiveAnswer(input.user)
+      ),
     onError: (error) =>
       log({
         level: 'error',
