@@ -97,17 +97,21 @@ React-Frontend und Node.js-Backend in einem Monorepo, ein Container, Postgres mi
 
 **Abgrenzung zu notar-agent:** Übernommen werden Zod, Drizzle, pgvector und das Hybrid-Retrieval mit RRF. Neu bzw. geändert sind Auth, Queue (pg-boss statt Eigenbau), Parsing (Gemini statt liteparse plus mammoth für alles) und der Verzicht auf Supabase.
 
-**Setup aus notar-agent, das mitgenommen wird** (Grundlage ist deine Übersicht; `package.json` Zeile 13 konnte ich nicht öffnen, der Inhalt von `check` stammt aus der Übersicht):
+**Setup aus notar-agent (übernommen und angepasst, Stand Tag 1):** Die Regeln stehen in `AGENTS.md`, die Prüfungen laufen mit `pnpm check` (rund 2 Sekunden) und `pnpm test`.
 
-- **Zentrales Gate `check`:** tsc, ESLint, dependency-cruiser, knip, jscpd (Schwelle 2 %), Magic-String-Audit und Health-Audit mit Mindestscore. Die dependency-cruiser-Regeln werden auf die neuen Schichten übertragen (`packages/shared` ohne Implementierung, `apps/api` und `apps/web` getrennt).
-- **TypeScript:** `strict` und `noUncheckedIndexedAccess`.
-- **`AGENTS.md`:** Pre-Flight Declaration, SSOT, YAGNI mit Rule of Three, SoC vor DRY, keine autonomen Commits, Definition-of-Done-Quittung. Die notariellen Regeln fallen weg, dafür kommen Invarianten für Zitate und Retrieval dazu.
-- **Hooks:** command-safety-guard, file-safety-guard, stop-verification-gate. Das Hook-Format muss an das eingesetzte Agenten-Tool angepasst werden.
-- **Skills und MCP:** software-craftsmanship, test-driven-development, context7 und chrome-devtools. Der notar-workflow-validator und der Supabase-MCP entfallen, ein Validator für den Zitat-Vertrag wäre die Entsprechung.
-- **Husky:** `check` und lint-staged beim Commit, Tests beim Push.
-- **Eval-Struktur:** Deine vier Ebenen passen auf Spike und Eval-Skript (Parser, Retrieval-Trefferquote, Antwort und Zitat-Abdeckung, Latenz, Token und Kosten), samt Golden-Dataset, Scorer und Fixture-Generatoren. Der Fact-Checker (Snippet muss wörtlich im Quelltext stehen) kann optional die Zitate prüfen.
+- **Gate `check`:** `tsc` je Paket, ESLint, dependency-cruiser, knip, jscpd (Schwelle 2 %) und Magic-String-Audit. Der Health-Score entfällt: Er startete jscpd, depcruise, knip und den Audit ein zweites Mal und ließ Abstürze der Tools als 100 Punkte durch. Die Einzeltools sind schon harte Gates.
+- **dependency-cruiser:** `packages/shared` ist ein Blatt ohne Implementierung (npm nur `zod`), `apps/api` und `apps/web` importieren sich nicht gegenseitig. Einzige Ausnahme ist `import type` des `AppType` für den Hono-RPC-Client. `core` ist rein (kein Hono, keine DB, keine AI-Anbieter).
+- **TypeScript:** `strict`, `noUncheckedIndexedAccess`, `noUnused*`, 6.0 (typescript-eslint unterstützt TypeScript 7 noch nicht).
+- **ESLint:** unter anderem keine Modell-ID-Literale außerhalb von `apps/api/src/config`, kein `console` in der API, keine Funktionen oder Klassen in `packages/shared`, kein `export *`, kein `as unknown as`.
+- **`AGENTS.md`:** Pre-Flight (kurz), SSOT, YAGNI mit Rule of Three, SoC vor DRY, keine autonomen Commits, Definition-of-Done-Quittung. Die notariellen Regeln fallen weg. Neu sind Invarianten für Zitat-Vertrag, idempotente Ingestion, Retrieval-Scope pro Nutzer, Modell-IDs nur aus der Umgebung, Tests ohne echte API-Aufrufe, SSRF-Schutz und keine Dokumentinhalte in Logs. `CLAUDE.md` importiert nur `@AGENTS.md`.
+- **Hooks und Rechte** (`.claude/settings.json`): `git commit` und `git push` sind gesperrt, `.env*` (außer `.env.example`) ist weder les- noch schreibbar, das Lockfile ist gesperrt, `AGENTS.md`, `.claude/` und neue Abhängigkeiten gehen nur mit Nachfrage. Zwei Hook-Skripte prüfen rekursives `rm`, `git`-Varianten und Geheimnisse (`guard-bash`) und lassen den Agenten erst enden, wenn `pnpm check` grün ist (`guard-stop`). Beides ist keine Sicherheitsgrenze, sondern eine statische Prüfung des Befehlstexts.
+- **Skills und MCP:** chrome-devtools läuft als MCP-Server auf Benutzerebene (nicht im Repo). `software-craftsmanship` wurde nicht übernommen, weil `AGENTS.md`, ESLint und die Audits dieselben Regeln schon erzwingen. `context7` entfällt. Ein Skill für den Zitat-Vertrag folgt, sobald der Vertrag steht.
+- **Husky:** Beim Commit erst lint-staged, dann `check`. Beim Push die Tests.
+- **CI:** GitHub Actions mit den Jobs quality, test, build und Semgrep (vorerst nur Bericht). Die Actions sind auf Commit-SHAs gepinnt.
+- **Neu gegenüber notar-agent:** Env-Validierung mit Zod (`apps/api/src/config/env.ts`, bricht beim Start ab und nennt nie Werte), Netzwerk-Riegel in Tests (MSW lehnt jede nicht abgefangene Anfrage ab), Tests für die Hook-Skripte selbst.
+- **Eval:** Übernommen ist die Idee, keine Zeile Code. Es gibt ein Dataset-Schema mit Textankern statt Chunk-IDs und vier reine Scorer (Trefferquote in den Top k, Zitat-Gültigkeit, Zitat-Abdeckung, Pflichtfakten). Promptfoo, der Jev-Judge und ein Mock-Modell aus der Ground Truth entfallen, weil das Mock-Modell nur die Verdrahtung prüfte, nicht die Qualität. Stattdessen sollen aufgezeichnete Modellantworten offline abgespielt werden. Latenz und Token werden im Spike aufgezeichnet, nicht bewertet. Der Fact-Checker (Snippet steht wörtlich im Quelltext) bleibt optional.
 
-**Nicht übernommen:** Supabase-RLS und -Repositories (Autorisierung liegt in der API), Next.js-Route-Handler, Audit-Trail mit Hash-Kette, Wissensdatenbank der Rechtsnormen, PII-Logging-Scan (§ 203 StGB) und der Supabase-N+1-Scan. **Risiko:** Das Übertragen darf Tag 1 nicht sprengen, und `check` muss schnell bleiben.
+**Nicht übernommen:** Supabase-RLS und -Repositories (Autorisierung liegt in der API), Next.js-Route-Handler, Audit-Trail mit Hash-Kette, Wissensdatenbank der Rechtsnormen, PII-Logging-Scan (§ 203 StGB), Supabase-N+1-Scan, Health-Score, promptfoo und die Fixture-Generatoren für Notar-Scans.
 
 ## Free-Tier-Limits und Kostenstrategie
 
@@ -172,7 +176,7 @@ Fünf Arbeitstage bis zur Abgabe, danach zwei Tage Puffer. Feature-Freeze ist am
 
 | Tag     | Ziel                 | Aufgaben                                                                                                                                                                | Ausgangskriterium                                   |
 | ------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| 1       | Spike und Fundament  | Modell-Spike (halber Tag). Monorepo, CI, `AGENTS.md`, Setup aus notar-agent übertragen, Config mit Limits, Schema und Migrationen, erstes Deployment (Hello World live) | Spike-Entscheidungen notiert, Deployment erreichbar |
+| 1       | Spike und Fundament  | Modell-Spike (halber Tag). Monorepo, CI, `AGENTS.md`, Setup aus notar-agent (erledigt, siehe oben), Config mit Limits, Schema und Migrationen, erstes Deployment (Hello World live) | Spike-Entscheidungen notiert, Deployment erreichbar |
 | 2       | Ingestion            | Auth, Notebooks, Upload, Parsing, kanonischer Text mit Segmenten, Chunking mit Offsets, Embeddings, pg-boss-Jobs, Status in der UI                                      | PDF, DOCX und URL werden verarbeitet                |
 | 3       | Chat und Zitate      | Hybrid-Retrieval mit RRF, Quellenauswahl, Streaming, Zitat-Chips, Hover-Popup, Quellenpanel mit Chunk-Hervorhebung                                                      | Frage stellen und per Klick zur Textstelle springen |
 | 4       | Umfang komplettieren | Quellenübersicht, Vorschlagsfragen, Notizen, Chat-Konfiguration, Studio (Bericht, Karteikarten, Quiz), Fehler-, Lade- und Leerzustände                                  | Feature-Freeze am Abend                             |
