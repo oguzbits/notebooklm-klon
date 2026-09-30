@@ -19,7 +19,8 @@
     "audit:duplication": "jscpd",
     "audit:magic": "node scripts/audit/audit-magic-strings.mjs",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -30,6 +31,7 @@
     "eslint-plugin-simple-import-sort": "^14.0.0",
     "eslint-plugin-unused-imports": "^4.4.1",
     "globals": "^17.12.0",
+    "husky": "^9.1.7",
     "jscpd": "^5.3.3",
     "knip": "^6.38.0",
     "lint-staged": "^17.6.0",
@@ -56,9 +58,6 @@
     "printWidth": 100
   },
   "knip": {
-    "ignoreDependencies": [
-      "lint-staged"
-    ],
     "workspaces": {
       ".": {
         "entry": [
