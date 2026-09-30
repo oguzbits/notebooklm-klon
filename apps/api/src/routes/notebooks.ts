@@ -13,6 +13,7 @@ import type { AppDeps } from '../app-deps';
 import type { AuthVariables } from '../auth/session';
 import {
   createNotebook,
+  deleteNotebook,
   findNotebook,
   listNotebooks,
   listNotebookSources,
@@ -47,6 +48,17 @@ const createRoute_ = createRoute({
     [CREATED]: json(NotebookSchema, 'The new notebook'),
     400: invalid,
     401: unauthenticated,
+  },
+});
+
+const deleteRoute = createRoute({
+  method: 'delete',
+  path: '/{notebookId}',
+  request: { params: notebookParams },
+  responses: {
+    [NO_CONTENT]: { description: 'The notebook and its chat history are deleted' },
+    401: unauthenticated,
+    [NOT_FOUND]: notFound,
   },
 });
 
@@ -99,6 +111,11 @@ export function notebookRoutes(deps: AppDeps) {
     .openapi(createRoute_, async (c) => {
       const { title } = c.req.valid('json');
       return c.json(await createNotebook(deps.db, c.var.userId, title), CREATED);
+    })
+    .openapi(deleteRoute, async (c) => {
+      const { notebookId } = c.req.valid('param');
+      const deleted = await deleteNotebook(deps.db, c.var.userId, notebookId);
+      return deleted ? c.body(null, NO_CONTENT) : c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
     })
     .openapi(listSourcesRoute, async (c) => {
       const { notebookId } = c.req.valid('param');

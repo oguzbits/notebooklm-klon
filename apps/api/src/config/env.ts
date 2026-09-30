@@ -34,6 +34,15 @@ export const TestDatabaseEnvSchema = z.object({
     .default(LOCAL_TEST_DATABASE_URL),
 });
 
+// The offline server (Playwright, manual UI checks) fakes the model and the embedding, so it needs
+// no API key and no model IDs.
+export const OfflineServerEnvSchema = EnvSchema.pick({
+  DATABASE_URL: true,
+  PORT: true,
+  BETTER_AUTH_SECRET: true,
+  BETTER_AUTH_URL: true,
+});
+
 export type Env = z.infer<typeof EnvSchema>;
 export type DatabaseEnv = z.infer<typeof DatabaseEnvSchema>;
 
@@ -67,4 +76,8 @@ export function parseDatabaseEnv(raw: Record<string, string | undefined>): Datab
 
 export function parseTestDatabaseEnv(raw: Record<string, string | undefined>) {
   return parse(TestDatabaseEnvSchema, raw);
+}
+
+export function parseOfflineServerEnv(raw: Record<string, string | undefined>) {
+  return parse(OfflineServerEnvSchema, raw);
 }

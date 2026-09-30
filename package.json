@@ -73,6 +73,10 @@
       "apps/web": {
         "ignoreDependencies": [
           "jsdom"
+        ],
+        "entry": [
+          "src/**/*.test.{ts,tsx}",
+          "src/test/setup.ts"
         ]
       }
     }

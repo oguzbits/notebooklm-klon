@@ -1,9 +1,10 @@
-import { SOURCE_FAILURE, SOURCE_KIND, SOURCE_STATUS } from '@nlm/shared';
+import { CHAT_ROLE, SOURCE_FAILURE, SOURCE_KIND, SOURCE_STATUS } from '@nlm/shared';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import {
   countSourcesSince,
   createNotebook,
+  deleteNotebook,
   findNotebook,
   linkSource,
   listNotebooks,
@@ -154,6 +155,33 @@ describe('sources of a notebook', () => {
 
     expect(await listNotebookSources(db, USER, notebook.id)).toEqual([]);
     expect((await pool.query('SELECT 1 FROM sources WHERE id = $1', [source.id])).rowCount).toBe(1);
+  });
+});
+
+describe('deleteNotebook', () => {
+  it('deletes the notebook with its links and history but keeps the sources', async () => {
+    const notebook = await createNotebook(db, USER, 'N');
+    const source = await addSource(USER, 'a');
+    await linkSource(db, USER, notebook.id, source.id);
+    await pool.query(
+      'INSERT INTO chat_messages (notebook_id, user_id, role, text) VALUES ($1, $2, $3, $4)',
+      [notebook.id, USER, CHAT_ROLE.USER, 'Frage']
+    );
+
+    expect(await deleteNotebook(db, USER, notebook.id)).toBe(true);
+
+    expect(await findNotebook(db, USER, notebook.id)).toBeNull();
+    expect((await pool.query('SELECT 1 FROM notebook_sources')).rowCount).toBe(0);
+    expect((await pool.query('SELECT 1 FROM chat_messages')).rowCount).toBe(0);
+    expect((await pool.query('SELECT 1 FROM sources WHERE id = $1', [source.id])).rowCount).toBe(1);
+  });
+
+  it("does not delete another user's notebook or answer for an unknown ID", async () => {
+    const theirs = await createNotebook(db, OTHER, 'Fremd');
+
+    expect(await deleteNotebook(db, USER, theirs.id)).toBe(false);
+    expect(await deleteNotebook(db, USER, 'kein-uuid')).toBe(false);
+    expect(await findNotebook(db, OTHER, theirs.id)).not.toBeNull();
   });
 });
 

@@ -43,3 +43,36 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   `ChatMessageSchema` geprüft; eine kaputte Zeile wirft, statt übersprungen zu werden.
 - **Zitat-Details und Quellentext gelten nur, solange die Quelle im Notizbuch liegt:** Wird die Quelle
   entfernt, liefern beide Endpunkte 404. Die Oberfläche zeigt dann „Quelle entfernt“ statt eines Popups.
+
+## 2026-09-30 (Frontend)
+
+- **Notizbuch löschen ergänzt (`DELETE /api/notebooks/:id`):** Must-Anforderung 1 verlangt Löschen, der
+  Endpunkt fehlte. Gelöscht werden das Notizbuch, die Verknüpfungen und der Chat-Verlauf; die Quellen
+  bleiben beim Nutzer (sie sind über den Inhalts-Hash dedupliziert und werden bei erneutem Hochladen
+  wiederverwendet). Die Oberfläche sagt trotzdem „mit allen Quellen gelöscht“, weil die Quellen ohne
+  Notizbuch nicht mehr sichtbar sind.
+- **shadcn per Hand eingerichtet:** `shadcn init` fragt interaktiv und hing im Agenten-Lauf. Es gibt
+  `components.json` (Stil `new-york`, Tailwind 4, Lucide), die Tokens stehen in `src/index.css`.
+  `shadcn add` schreibt `import { cn } from "cn"` und trägt dazu das fremde npm-Paket `cn` ein, weil
+  `lib/utils` fehlte. Das Paket wurde entfernt, `cn` liegt in `src/lib/utils.ts` (clsx + tailwind-merge).
+  Nach jedem `shadcn add` prüfen, ob `cn` wieder in `apps/web/package.json` auftaucht.
+- **Kein `@testing-library/jest-dom`:** Mit Vitest 5 passen die Typen nicht (`Assertion<T, Elem>`), und
+  der Import im Setup ließ `rejects.toThrow(/…/)` im Netzwerk-Riegel-Test ins Leere laufen. Die
+  Komponententests nutzen einfache Matcher (`toBeTruthy`, `toBeNull`, `toHaveProperty`).
+- **Web-Tests teilen die Vite-Konfiguration** (`extends` in `vitest.config.ts`), damit der Alias `@`
+  auch in Tests gilt. Knip bekommt die Testdateien von `apps/web` als Einstiegspunkte.
+- **`AppType` kommt über `@nlm/api/app`** (`exports` im Paket der API, `import type` im Web). Dafür
+  lädt der Typecheck des Webs die Node-Typen mit. Der Hono-Client wird nur zum Aufrufen der JSON-Routen
+  genutzt; Datei-Upload und Chat-Stream laufen über `fetch`, weil beide Routen keine JSON-Schemas haben.
+  Antworten werden zusätzlich mit den Schemas aus `packages/shared` geprüft.
+- **Oberflächenlogik:** Die Leseansicht ersetzt das Quellenpanel links (wie im Referenz-Screenshot), der
+  Chat bleibt rechts sichtbar. Zitat-Nummern zählen pro Antwort in der Reihenfolge des ersten
+  Auftretens; dieselbe Textstelle behält ihre Nummer. Kein Markdown-Rendering in Antworten (die Aussagen
+  sind Sätze); `react-markdown` kommt erst mit dem Studio.
+- **Offline-Server (`pnpm --filter @nlm/api dev:offline`):** Die echte App mit Postgres, Sitzungen,
+  Parsern, Suche und Zitatprüfung, aber mit Bag-of-Words-Vektoren statt Gemini-Embeddings und einem
+  Modell, das den ersten Satz der besten Textstellen zitiert. Dient der Browser-Prüfung und dem
+  Playwright-Smoke-Test ohne Kontingent. PDFs schlagen dort bewusst fehl (Parser braucht den Anbieter).
+  Er lädt `.env.local` nicht, damit er nie an eine echte Datenbank gerät.
+- **`hono` im Web und in der API auf dieselbe Version gehoben:** Zwei Versionen machen den RPC-Typ
+  unbrauchbar (`HandlerInterface` inkompatibel).

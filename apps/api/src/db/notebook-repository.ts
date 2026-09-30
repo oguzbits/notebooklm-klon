@@ -56,6 +56,20 @@ export async function findNotebook(
   return row ? { id: row.id, title: row.title, createdAt: row.createdAt.toISOString() } : null;
 }
 
+/** Deletes the notebook with its links and chat history. The sources stay: they are the user's. */
+export async function deleteNotebook(
+  db: Database,
+  userId: string,
+  notebookId: string
+): Promise<boolean> {
+  if (!UUID.test(notebookId)) return false;
+  const deleted = await db
+    .delete(notebooks)
+    .where(and(eq(notebooks.id, notebookId), eq(notebooks.userId, userId)))
+    .returning({ id: notebooks.id });
+  return deleted.length === 1;
+}
+
 export async function listNotebookSources(
   db: Database,
   userId: string,

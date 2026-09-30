@@ -124,6 +124,35 @@ describe('notebooks', () => {
     expect(ApiErrorSchema.parse(await response.json()).code).toBe(API_ERROR.INVALID_REQUEST);
   });
 
+  it('deletes an own notebook and answers 404 for the same one afterwards', async () => {
+    const own = await createNotebook(alice, 'Weg damit');
+
+    const first = await app.request(`/api/notebooks/${own}`, {
+      method: 'DELETE',
+      headers: { cookie: alice },
+    });
+    const second = await app.request(`/api/notebooks/${own}`, {
+      method: 'DELETE',
+      headers: { cookie: alice },
+    });
+
+    expect(first.status).toBe(204);
+    expect(second.status).toBe(404);
+  });
+
+  it("does not delete another user's notebook", async () => {
+    const bobs = await createNotebook(bob);
+
+    const response = await app.request(`/api/notebooks/${bobs}`, {
+      method: 'DELETE',
+      headers: { cookie: alice },
+    });
+
+    expect(response.status).toBe(404);
+    const stillThere = await app.request('/api/notebooks', { headers: { cookie: bob } });
+    expect(NotebookListSchema.parse(await stillThere.json())).toHaveLength(1);
+  });
+
   it("answers 404 for another user's notebook", async () => {
     const bobs = await createNotebook(bob);
 
