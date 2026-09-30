@@ -25,13 +25,3 @@ export function numberCitations(statements: AnswerStatement[]): NumberedStatemen
     }),
   }));
 }
-
-/** Cuts a source text into the part before a cited passage, the passage, and the rest. */
-export function splitAtHighlight(text: string, start: number | null, end: number | null) {
-  if (start === null || end === null || start >= text.length) {
-    return { before: text, highlight: '', after: '' };
-  }
-  const from = Math.max(0, start);
-  const to = Math.min(text.length, Math.max(from, end));
-  return { before: text.slice(0, from), highlight: text.slice(from, to), after: text.slice(to) };
-}

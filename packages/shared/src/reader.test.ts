@@ -19,6 +19,7 @@ describe('reader contract', () => {
       id: ID,
       sourceId: OTHER_ID,
       sourceTitle: 'projekt.pdf',
+      sourceKind: SOURCE_KIND.PDF,
       text: 'Dr. Brandt leitet das Projekt.',
       startOffset: 10,
       endOffset: 40,
@@ -28,7 +29,14 @@ describe('reader contract', () => {
   });
 
   it('rejects a chunk whose offsets are negative or not whole numbers', () => {
-    const chunk = { id: ID, sourceId: OTHER_ID, sourceTitle: 'a', text: 'b', endOffset: 1 };
+    const chunk = {
+      id: ID,
+      sourceId: OTHER_ID,
+      sourceTitle: 'a',
+      sourceKind: SOURCE_KIND.TXT,
+      text: 'b',
+      endOffset: 1,
+    };
 
     expect(ChunkDetailSchema.safeParse({ ...chunk, startOffset: -1 }).success).toBe(false);
     expect(ChunkDetailSchema.safeParse({ ...chunk, startOffset: 0.5 }).success).toBe(false);

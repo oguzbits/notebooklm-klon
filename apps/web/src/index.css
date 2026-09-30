@@ -38,6 +38,12 @@
   --selected: #dcf1ff;
   --selected-foreground: #1b1b1c;
   --highlight: #edeffa;
+  /* The card with the summary of a source on top of the reader. */
+  --source-guide: #edeffa;
+  /* Links and table lines inside the text of a source. */
+  --doc-link: #4259ff;
+  --table-line: #dde1eb;
+  --table-head-line: #919191;
   --highlight-foreground: #1b1b1c;
   /* The one soft blue action ("Neues Notizbuch"). */
   --prominent: #9dd2ff;
@@ -96,7 +102,11 @@
   --link: #a1c9ff;
   --selected: #14204f;
   --selected-foreground: #e6e6e6;
-  --highlight: #14204f;
+  --highlight: #32343e;
+  --source-guide: #2f334b;
+  --doc-link: #c3cafc;
+  --table-line: #37383b;
+  --table-head-line: #5e5e5e;
   --highlight-foreground: #e6e6e6;
   --prominent: #1f3b9b;
   --prominent-foreground: #e6e6e6;
@@ -154,6 +164,7 @@
   --color-selected: var(--selected);
   --color-selected-foreground: var(--selected-foreground);
   --color-highlight: var(--highlight);
+  --color-source-guide: var(--source-guide);
   --color-highlight-foreground: var(--highlight-foreground);
   --color-prominent: var(--prominent);
   --color-prominent-foreground: var(--prominent-foreground);
@@ -235,6 +246,139 @@
   font-size: 1rem;
   line-height: 1.5rem;
   font-stretch: 100%;
+}
+
+/* A source as formatted text. Every size is measured on the document view of the original: body
+   16/24 with 8px below, headings 24/30, 20/26 and 16/22, lists indented 36px with a ring or a number,
+   tables with a line under the head and under each row. */
+.source-text {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-stretch: 100%;
+  overflow-wrap: anywhere;
+}
+.source-text > :first-child {
+  margin-top: 0;
+}
+.source-text p {
+  margin: 0 0 8px;
+}
+.source-text h1 {
+  margin: 28px 0 8px;
+  font-size: 24px;
+  line-height: 30px;
+  font-weight: 350;
+}
+.source-text h2 {
+  margin: 28px 0 8px;
+  font-size: 20px;
+  line-height: 26px;
+  font-weight: 380;
+}
+.source-text h3,
+.source-text h4,
+.source-text h5,
+.source-text h6 {
+  margin: 24px 0 8px;
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 470;
+}
+.source-text strong {
+  font-weight: 700;
+}
+.source-text a {
+  color: var(--doc-link);
+  text-decoration: underline;
+}
+.source-text mark {
+  background: var(--highlight);
+  color: inherit;
+}
+.source-text ul,
+.source-text ol {
+  margin: 8px 0 12px;
+  padding: 0;
+  list-style: none;
+}
+.source-text li {
+  position: relative;
+  margin: 0 0 12px;
+  padding-left: 36px;
+}
+.source-text li > p {
+  margin: 0;
+}
+.source-text li > ul,
+.source-text li > ol {
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+.source-text ul > li::before {
+  content: '';
+  position: absolute;
+  top: 7.5px;
+  left: 0;
+  box-sizing: border-box;
+  width: 9px;
+  height: 9px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+}
+.source-text ol > li::before {
+  content: counter(list-item) '.';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 24px;
+}
+.source-text table {
+  width: 100%;
+  margin: 0 0 16px;
+  border-collapse: collapse;
+}
+.source-text th,
+.source-text td {
+  padding: 12px 12px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--table-line);
+}
+.source-text th {
+  font-weight: 700;
+  border-bottom-color: var(--table-head-line);
+}
+.source-text blockquote {
+  margin: 0 0 8px;
+  padding-left: 16px;
+  border-left: 3px solid var(--border);
+  color: var(--muted-foreground);
+}
+.source-text code {
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--secondary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.875em;
+}
+.source-text pre {
+  margin: 0 0 12px;
+  padding: 12px;
+  overflow-x: auto;
+  border-radius: 8px;
+  background: var(--secondary);
+  font-size: 14px;
+  line-height: 20px;
+}
+.source-text pre code {
+  padding: 0;
+  background: none;
+  font-size: inherit;
+}
+.source-text hr {
+  margin: 16px 0;
+  border: 0;
+  border-top: 1px solid var(--border);
 }
 
 /* Browser surfaces that belong to the design too: selection, scrollbars, the caret. */

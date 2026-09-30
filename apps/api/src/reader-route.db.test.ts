@@ -5,6 +5,7 @@ import {
   ChatMessageListSchema,
   ChunkDetailSchema,
   NotebookSchema,
+  SOURCE_KIND,
   SourceTextSchema,
   SubmitSourceResultSchema,
 } from '@nlm/shared';
@@ -158,6 +159,7 @@ describe('GET /api/notebooks/:id/chunks/:chunkId', () => {
       id: rows[0].id,
       sourceId,
       sourceTitle: 'projekt.txt',
+      sourceKind: SOURCE_KIND.TXT,
       text: 'Dr. Brandt leitet das Projekt Nordlicht.',
       startOffset: 0,
     });

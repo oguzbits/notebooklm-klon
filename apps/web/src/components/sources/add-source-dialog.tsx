@@ -18,9 +18,9 @@ export function AddSourceDialog({ notebookId }: { notebookId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="secondary" className="w-full">
+        <Button variant="secondary" className="w-full" tooltip="Quelle hinzufügen">
           <Plus />
-          Quelle hinzufügen
+          Quellen hinzufügen
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[700px]">

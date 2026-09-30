@@ -30,6 +30,7 @@ export async function findChunkDetail(
       id: chunks.id,
       sourceId: chunks.sourceId,
       sourceTitle: sources.title,
+      sourceKind: sources.kind,
       text: chunks.text,
       startOffset: chunks.startOffset,
       endOffset: chunks.endOffset,

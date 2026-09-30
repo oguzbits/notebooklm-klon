@@ -40,6 +40,7 @@ export const chunkDetail = (overrides: Partial<ChunkDetail> = {}): ChunkDetail =
   id: CHUNK_ID,
   sourceId: SOURCE_ID,
   sourceTitle: 'projekt.pdf',
+  sourceKind: SOURCE_KIND.PDF,
   text: 'Dr. Brandt leitet das Projekt Nordlicht.',
   startOffset: 8,
   endOffset: 48,

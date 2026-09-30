@@ -6,11 +6,18 @@ export interface DomNode {
   nodeName: string;
   data?: string;
   childNodes: ArrayLike<DomNode>;
+  getAttribute?: (name: string) => string | null;
+}
+
+/** What `documentBaseUrl` needs from a document. */
+interface QueryRoot {
+  querySelector: (selector: string) => { getAttribute: (name: string) => string | null } | null;
 }
 
 const ELEMENT_NODE = 1;
 const TEXT_NODE = 3;
 const LINE_BREAK_MARK = '\u0001';
+const HTTP_PROTOCOLS = new Set(['http:', 'https:']);
 
 const SKIPPED = new Set([
   'script',
@@ -36,7 +43,6 @@ const BLOCKS = new Set([
   'footer',
   'aside',
   'nav',
-  'blockquote',
   'figure',
   'figcaption',
   'form',
@@ -53,6 +59,13 @@ const BLOCKS = new Set([
 const HEADING = /^h([1-6])$/;
 const LIST = new Set(['ul', 'ol']);
 
+/** How a piece of text is read: which page its relative links belong to, and whether it may carry marks. */
+interface Context {
+  base: URL | null;
+  /** A heading is plain: no links and no emphasis inside it. */
+  plain: boolean;
+}
+
 /** Lower-case tag name, so the sets below do not depend on how the parser spells it. */
 function tag(node: DomNode): string {
   return node.nodeName.toLowerCase();
@@ -62,108 +75,250 @@ function children(node: DomNode): DomNode[] {
   return Array.from(node.childNodes);
 }
 
-/** Text of a node as one line: whitespace collapsed, `<br>` kept as a line break. */
-function inlineText(node: DomNode): string {
-  if (node.nodeType === TEXT_NODE) return node.data ?? '';
-  if (node.nodeType !== ELEMENT_NODE || SKIPPED.has(tag(node))) return '';
-  if (tag(node) === 'br') return LINE_BREAK_MARK;
-  const inner = children(node).map(inlineText).join('');
-  return BLOCKS.has(tag(node)) ? ` ${inner} ` : inner;
+/** Backslash-escapes what Markdown would read as formatting inside a line of text. */
+export function escapeMarkdownText(text: string): string {
+  return (
+    text
+      .replace(/\\/g, '\\\\')
+      .replace(/[*_`<]/g, '\\$&')
+      .replace(/&(?=#?\w+;)/g, '\\&')
+      // A bracket only matters in front of a parenthesis, where it would start a link.
+      .replace(/\](?=\()/g, '\\]')
+  );
 }
 
-function tidy(text: string): string {
+/** Escapes a line that would start a heading, a quote, a list or a rule once it stands alone. */
+function escapeLineStart(line: string): string {
+  return line
+    .replace(/^(\s*)([#>+-])(?=[\s#-]|$)/, '$1\\$2')
+    .replace(/^(\s*\d+)([.)])(?=\s|$)/, '$1\\$2');
+}
+
+/** Escapes each line of a block of text. */
+function escapeBlock(text: string): string {
+  return text.split('\n').map(escapeLineStart).join('\n');
+}
+
+function isUsableBase(value: string | null | undefined): URL | null {
+  if (!value || !URL.canParse(value)) return null;
+  const url = new URL(value);
+  return HTTP_PROTOCOLS.has(url.protocol) ? url : null;
+}
+
+/**
+ * The address a page says it has, to place its relative links: a `<base>`, else the canonical link,
+ * else `og:url`. Null when the page names none, so a relative link is then left as plain text.
+ */
+export function documentBaseUrl(document: QueryRoot): string | null {
+  const candidates: [string, string][] = [
+    ['base[href]', 'href'],
+    ['link[rel="canonical"]', 'href'],
+    ['meta[property="og:url"]', 'content'],
+  ];
+  for (const [selector, attribute] of candidates) {
+    const url = isUsableBase(document.querySelector(selector)?.getAttribute(attribute));
+    if (url) return url.href;
+  }
+  return null;
+}
+
+/** The address a link points to, or null when it must not be kept (no http, no place, same page). */
+function resolveLink(href: string | null, base: URL | null): string | null {
+  if (!href || href.startsWith('#') || !URL.canParse(href, base?.href)) return null;
+  const url = new URL(href, base?.href);
+  return HTTP_PROTOCOLS.has(url.protocol) ? url.href : null;
+}
+
+/** Keeps brackets and spaces of an address from ending the link early. */
+function encodeLinkTarget(url: string): string {
+  return url.replace(/[()<>\s]/g, (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`);
+}
+
+/** Marks around text; the spaces at its edges stay outside, where Markdown wants them. */
+function wrap(inner: string, mark: string): string {
+  const parts = /^(\s*)([\s\S]*?)(\s*)$/.exec(inner);
+  if (!parts || parts[2] === '') return inner;
+  return `${parts[1]}${mark}${parts[2]}${mark}${parts[3]}`;
+}
+
+function rawText(node: DomNode): string {
+  if (node.nodeType === TEXT_NODE) return node.data ?? '';
+  return children(node).map(rawText).join('');
+}
+
+function codeSpan(text: string): string {
+  const runs = text.match(/`+/g) ?? [];
+  const fence = '`'.repeat(Math.max(0, ...runs.map((run) => run.length)) + 1);
+  const pad = text.startsWith('`') || text.endsWith('`') ? ' ' : '';
+  return `${fence}${pad}${text}${pad}${fence}`;
+}
+
+function link(node: DomNode, inner: string, context: Context): string {
+  const target = resolveLink(node.getAttribute?.('href')?.trim() ?? null, context.base);
+  const label = inner.trim();
+  if (target === null || label === '') return inner;
+  return `[${label.replace(/[[\]]/g, '\\$&')}](${encodeLinkTarget(target)})`;
+}
+
+/** Text of a node as one line with its inline marks: bold, italic, code and links; `<br>` kept as a mark. */
+function inlineText(node: DomNode, context: Context): string {
+  if (node.nodeType === TEXT_NODE) return escapeMarkdownText(node.data ?? '');
+  if (node.nodeType !== ELEMENT_NODE || SKIPPED.has(tag(node))) return '';
+  const name = tag(node);
+  if (name === 'br') return LINE_BREAK_MARK;
+  const inner = children(node)
+    .map((child) => inlineText(child, context))
+    .join('');
+  if (BLOCKS.has(name)) return ` ${inner} `;
+  if (context.plain) return inner;
+  switch (name) {
+    case 'a':
+      return link(node, inner, context);
+    case 'b':
+    case 'strong':
+      return wrap(inner, '**');
+    case 'i':
+    case 'em':
+      return wrap(inner, '*');
+    case 'code':
+      return codeSpan(rawText(node).replace(/\s+/g, ' ').trim());
+    default:
+      return inner;
+  }
+}
+
+/**
+ * One line of text: whitespace collapsed. A `<br>` becomes a hard break (a backslash before the
+ * line end, which survives the trimming of line ends) in running text, and a space elsewhere.
+ */
+function tidy(text: string, hardBreaks: boolean): string {
+  const breaks = new RegExp(` ?${LINE_BREAK_MARK} ?`, 'g');
+  const edges = new RegExp(`^( ?${LINE_BREAK_MARK} ?)+|( ?${LINE_BREAK_MARK} ?)+$`, 'g');
   return text
     .replace(/\s+/g, ' ')
-    .replace(new RegExp(` ?${LINE_BREAK_MARK} ?`, 'g'), '\n')
+    .replace(edges, '')
+    .replace(breaks, hardBreaks ? '\\\n' : ' ')
     .trim();
 }
 
-function tableBlock(table: DomNode): string {
-  const rows: string[] = [];
+function tableBlock(table: DomNode, context: Context): string {
+  const rows: string[][] = [];
   const visit = (node: DomNode): void => {
     for (const child of children(node)) {
       if (tag(child) === 'tr') {
         const cells = children(child)
           .filter((cell) => tag(cell) === 'td' || tag(cell) === 'th')
-          .map((cell) => tidy(inlineText(cell)).replace(/\n/g, ' '));
-        if (cells.some((cell) => cell !== '')) rows.push(cells.join(' | '));
+          .map((cell) => tidy(inlineText(cell, context), false).replace(/\|/g, '\\|'));
+        if (cells.some((cell) => cell !== '')) rows.push(cells);
       } else if (child.nodeType === ELEMENT_NODE) {
         visit(child);
       }
     }
   };
   visit(table);
-  return rows.join('\n');
+  if (rows.length === 0) return '';
+
+  const width = Math.max(...rows.map((row) => row.length));
+  const line = (row: string[]) =>
+    `| ${Array.from({ length: width }, (_, index) => row[index] ?? '').join(' | ')} |`;
+  const [head = [], ...body] = rows;
+  return [line(head), line(Array.from({ length: width }, () => '---')), ...body.map(line)].join(
+    '\n'
+  );
 }
 
-function listBlock(list: DomNode, depth = 0): string {
+function listBlock(list: DomNode, context: Context, indent = ''): string {
+  const ordered = tag(list) === 'ol';
+  const first = Number.parseInt(list.getAttribute?.('start') ?? '', 10);
   const lines: string[] = [];
+  let number = Number.isNaN(first) ? 1 : first;
   for (const item of children(list).filter((child) => tag(child) === 'li')) {
     const nested = children(item).filter((child) => LIST.has(tag(child)));
     const own = children(item)
       .filter((child) => !LIST.has(tag(child)))
-      .map(inlineText)
+      .map((child) => inlineText(child, context))
       .join('');
-    const text = tidy(own).replace(/\n/g, ' ');
-    if (text !== '') lines.push(`${'  '.repeat(depth)}- ${text}`);
-    for (const inner of nested) lines.push(listBlock(inner, depth + 1));
+    const text = escapeBlock(tidy(own, false));
+    const marker = ordered ? `${number}. ` : '- ';
+    if (text !== '') {
+      lines.push(`${indent}${marker}${text}`);
+      number += 1;
+    }
+    for (const inner of nested)
+      lines.push(listBlock(inner, context, indent + ' '.repeat(marker.length)));
   }
   return lines.filter((line) => line !== '').join('\n');
 }
 
-function collectBlocks(node: DomNode, out: string[]): void {
+function codeBlock(pre: DomNode): string {
+  const code = rawText(pre).replace(/\r\n?/g, '\n').trim();
+  if (code === '') return '';
+  const runs = code.match(/`{3,}/g) ?? [];
+  const fence = '`'.repeat(Math.max(2, ...runs.map((run) => run.length)) + 1);
+  return `${fence}\n${code}\n${fence}`;
+}
+
+function collectBlocks(node: DomNode, out: string[], context: Context): void {
   let run = '';
   const flush = (): void => {
-    const text = tidy(run);
+    const text = escapeBlock(tidy(run, true));
     if (text !== '') out.push(text);
     run = '';
   };
 
   for (const child of children(node)) {
+    const name = child.nodeType === ELEMENT_NODE ? tag(child) : '';
     if (child.nodeType === TEXT_NODE) {
-      run += child.data ?? '';
-    } else if (child.nodeType !== ELEMENT_NODE || SKIPPED.has(tag(child))) {
+      run += escapeMarkdownText(child.data ?? '');
+    } else if (child.nodeType !== ELEMENT_NODE || SKIPPED.has(name)) {
       continue;
-    } else if (tag(child) === 'table') {
+    } else if (name === 'table') {
       flush();
-      const table = tableBlock(child);
+      const table = tableBlock(child, context);
       if (table !== '') out.push(table);
-    } else if (LIST.has(tag(child))) {
+    } else if (LIST.has(name)) {
       flush();
-      const list = listBlock(child);
+      const list = listBlock(child, context);
       if (list !== '') out.push(list);
-    } else if (tag(child) === 'pre') {
+    } else if (name === 'pre') {
       flush();
-      const text = children(child)
-        .map((part) => (part.nodeType === TEXT_NODE ? (part.data ?? '') : inlineText(part)))
-        .join('')
-        .replace(/\r\n?/g, '\n')
-        .trim();
-      if (text !== '') out.push(text);
-    } else if (HEADING.test(tag(child))) {
+      const code = codeBlock(child);
+      if (code !== '') out.push(code);
+    } else if (name === 'blockquote') {
       flush();
-      const level = Number(HEADING.exec(tag(child))?.[1]);
-      const text = tidy(inlineText(child)).replace(/\n/g, ' ');
+      const quoted: string[] = [];
+      collectBlocks(child, quoted, context);
+      if (quoted.length > 0) {
+        const lines = quoted.join('\n\n').split('\n');
+        out.push(lines.map((line) => (line === '' ? '>' : `> ${line}`)).join('\n'));
+      }
+    } else if (HEADING.test(name)) {
+      flush();
+      const level = Number(HEADING.exec(name)?.[1]);
+      const text = tidy(inlineText(child, { ...context, plain: true }), false);
       if (text !== '') out.push(`${'#'.repeat(level)} ${text}`);
-    } else if (BLOCKS.has(tag(child))) {
+    } else if (BLOCKS.has(name)) {
       flush();
-      collectBlocks(child, out);
+      collectBlocks(child, out, context);
     } else {
-      run += inlineText(child);
+      run += inlineText(child, context);
     }
   }
   flush();
 }
 
 /**
- * Plain text of an HTML document with its structure kept: Markdown headings, one line per table
- * row, bullet lists. Scripts, styles and images are dropped. This is what gets chunked and searched.
+ * An HTML document as Markdown with its structure kept: headings, paragraphs, bold and italic, links
+ * with an address that works, lists, tables with their head row, code and quotations. Scripts,
+ * styles and images are dropped. This is what gets chunked, searched and shown to the reader.
+ * `baseUrl` is the address of the page; without it the page is asked (see `documentBaseUrl`).
  */
-export function htmlToText(html: string): string {
+export function htmlToMarkdown(html: string, baseUrl: string | null = null): string {
   const source = /<html[\s>]/i.test(html) ? html : `<html><body>${html}</body></html>`;
   const { document } = parseHTML(source);
+  const base = isUsableBase(baseUrl ?? documentBaseUrl(document));
   const root: DomNode = document.body ?? document.documentElement;
   const blocks: string[] = [];
-  collectBlocks(root, blocks);
+  collectBlocks(root, blocks, { base, plain: false });
   return blocks.join('\n\n');
 }

@@ -31,7 +31,7 @@ export function SourcesPanel({
   };
 
   return (
-    <div className="flex h-full flex-col gap-3 overflow-y-auto pt-3 pb-2">
+    <div className="flex h-full flex-col gap-2 overflow-y-auto pt-4 pb-2">
       <AddSourceDialog notebookId={notebookId} />
       <QueryBoundary
         query={sources}
@@ -50,7 +50,7 @@ export function SourcesPanel({
           <>
             {ready.length > 0 && (
               <label className="flex h-10 items-center justify-end gap-3 px-2 text-[0.875rem] leading-6">
-                Alle Quellen auswählen
+                Alle auswählen
                 <Checkbox
                   checked={allSelected}
                   disabled={toggle.isPending}
@@ -63,7 +63,6 @@ export function SourcesPanel({
               {list.map((source) => (
                 <SourceRow
                   key={source.id}
-                  notebookId={notebookId}
                   source={source}
                   busy={
                     (toggle.isPending && toggle.variables?.sourceId === source.id) ||

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { numberCitations, splitAtHighlight } from './citations';
+import { numberCitations } from './citations';
 
 describe('numberCitations', () => {
   it('numbers each passage once, in the order it first appears', () => {
@@ -35,28 +35,5 @@ describe('numberCitations', () => {
 
   it('returns nothing for an answer without statements', () => {
     expect(numberCitations([])).toEqual([]);
-  });
-});
-
-describe('splitAtHighlight', () => {
-  it('splits the text into the part before, the highlight and the part after', () => {
-    expect(splitAtHighlight('Vorher Treffer Nachher', 7, 14)).toEqual({
-      before: 'Vorher ',
-      highlight: 'Treffer',
-      after: ' Nachher',
-    });
-  });
-
-  it('keeps the whole text when there is no highlight', () => {
-    expect(splitAtHighlight('Text', null, null)).toEqual({
-      before: 'Text',
-      highlight: '',
-      after: '',
-    });
-  });
-
-  it('clamps offsets that reach beyond the text', () => {
-    expect(splitAtHighlight('Kurz', 2, 99)).toEqual({ before: 'Ku', highlight: 'rz', after: '' });
-    expect(splitAtHighlight('Kurz', 50, 60)).toEqual({ before: 'Kurz', highlight: '', after: '' });
   });
 });

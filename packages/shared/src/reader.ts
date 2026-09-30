@@ -19,6 +19,8 @@ export const ChunkDetailSchema = z.object({
   id: z.uuid(),
   sourceId: z.uuid(),
   sourceTitle: z.string(),
+  /** How the text is read: a plain text source keeps its line breaks, the others are Markdown. */
+  sourceKind: SourceKindSchema,
   text: z.string(),
   startOffset: NonNegativeInt,
   endOffset: NonNegativeInt,

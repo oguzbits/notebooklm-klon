@@ -129,104 +129,111 @@ export function StudioPanel({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto pb-2">
-      <div className="grid grid-cols-2 gap-2">
-        <ReportDialog onCreate={(format) => make({ kind: STUDIO_KIND.REPORT, format })}>
-          <Tile kind={STUDIO_KIND.REPORT} disabled={blocked} />
-        </ReportDialog>
-        <Tile
-          kind={STUDIO_KIND.FLASHCARDS}
-          disabled={blocked}
-          onClick={() => make({ kind: STUDIO_KIND.FLASHCARDS })}
-        />
-        <Tile
-          kind={STUDIO_KIND.QUIZ}
-          disabled={blocked}
-          onClick={() => make({ kind: STUDIO_KIND.QUIZ })}
-        />
-        <Tile
-          kind={STUDIO_KIND.MINDMAP}
-          disabled={blocked}
-          onClick={() => make({ kind: STUDIO_KIND.MINDMAP })}
-        />
-      </div>
-      {!usable && sources.isSuccess && (
-        <p className="text-small text-muted-foreground">
-          Wähle mindestens eine fertig gelesene Quelle aus, um etwas zu erstellen.
-        </p>
-      )}
-
-      {create.isError && (
-        <Alert variant="destructive">
-          <AlertDescription className="flex flex-col items-start gap-2">
-            <p>{describeError(create.error)}</p>
-            {create.variables && (
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={create.isPending}
-                onClick={() => make(create.variables)}
-              >
-                <RotateCw />
-                Erneut versuchen
-              </Button>
-            )}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <section aria-label="Erstellte Ausgaben" className="flex flex-col gap-1">
-        {create.isPending && (
-          <div
-            role="status"
-            className="flex h-[60px] animate-pulse items-center gap-2 rounded-xl bg-secondary p-2"
-          >
-            <span className="flex size-8 shrink-0 items-center justify-center">
-              <LoaderCircle className="size-5 animate-spin" aria-hidden />
-            </span>
-            <span className="min-w-0 text-small">
-              <span className="block truncate">
-                {create.variables ? KIND_LABEL[create.variables.kind] : 'Ausgabe'} wird erstellt …
-              </span>
-              <span className="block truncate text-muted-foreground">
-                basierend auf {usableCount} {usableCount === 1 ? 'Quelle' : 'Quellen'}
-              </span>
-            </span>
-          </div>
+    <div className="relative h-full min-h-0">
+      <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto pb-2">
+        <div className="grid grid-cols-2 gap-2">
+          <ReportDialog onCreate={(format) => make({ kind: STUDIO_KIND.REPORT, format })}>
+            <Tile kind={STUDIO_KIND.REPORT} disabled={blocked} />
+          </ReportDialog>
+          <Tile
+            kind={STUDIO_KIND.FLASHCARDS}
+            disabled={blocked}
+            onClick={() => make({ kind: STUDIO_KIND.FLASHCARDS })}
+          />
+          <Tile
+            kind={STUDIO_KIND.QUIZ}
+            disabled={blocked}
+            onClick={() => make({ kind: STUDIO_KIND.QUIZ })}
+          />
+          <Tile
+            kind={STUDIO_KIND.MINDMAP}
+            disabled={blocked}
+            onClick={() => make({ kind: STUDIO_KIND.MINDMAP })}
+          />
+        </div>
+        {!usable && sources.isSuccess && (
+          <p className="text-small text-muted-foreground">
+            Wähle mindestens eine fertig gelesene Quelle aus, um etwas zu erstellen.
+          </p>
         )}
-        <QueryBoundary
-          query={outputs}
-          isEmpty={(list) => list.length === 0}
-          empty={
-            !create.isPending && (
-              <p className="px-1 text-ui text-muted-foreground">
-                Hier erscheinen deine Berichte, Karteikarten, Quizze und Mindmaps.
-              </p>
-            )
-          }
-        >
-          {(list) => (
-            <ul className="flex flex-col gap-1">
-              {list.map((output) => (
-                <OutputRow
-                  key={output.id}
-                  output={output}
-                  deleting={remove.isPending && remove.variables === output.id}
-                  onOpen={() => setOpenId(output.id)}
-                  onDelete={() => remove.mutate(output.id)}
-                />
-              ))}
-            </ul>
-          )}
-        </QueryBoundary>
-        {remove.isError && (
+
+        {create.isError && (
           <Alert variant="destructive">
-            <AlertDescription>{describeError(remove.error)}</AlertDescription>
+            <AlertDescription className="flex flex-col items-start gap-2">
+              <p>{describeError(create.error)}</p>
+              {create.variables && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={create.isPending}
+                  onClick={() => make(create.variables)}
+                >
+                  <RotateCw />
+                  Erneut versuchen
+                </Button>
+              )}
+            </AlertDescription>
           </Alert>
         )}
-      </section>
 
-      <NotesSection notebookId={notebookId} onOpenCitation={onOpenCitation} />
+        <section aria-label="Erstellte Ausgaben" className="flex flex-col gap-1">
+          {create.isPending && (
+            <div
+              role="status"
+              className="flex h-[60px] animate-pulse items-center gap-2 rounded-xl bg-secondary p-2"
+            >
+              <span className="flex size-8 shrink-0 items-center justify-center">
+                <LoaderCircle className="size-5 animate-spin" aria-hidden />
+              </span>
+              <span className="min-w-0 text-small">
+                <span className="block truncate">
+                  {create.variables ? KIND_LABEL[create.variables.kind] : 'Ausgabe'} wird erstellt …
+                </span>
+                <span className="block truncate text-muted-foreground">
+                  basierend auf {usableCount} {usableCount === 1 ? 'Quelle' : 'Quellen'}
+                </span>
+              </span>
+            </div>
+          )}
+          <QueryBoundary
+            query={outputs}
+            isEmpty={(list) => list.length === 0}
+            empty={
+              !create.isPending && (
+                <p className="px-1 text-ui text-muted-foreground">
+                  Hier erscheinen deine Berichte, Karteikarten, Quizze und Mindmaps.
+                </p>
+              )
+            }
+          >
+            {(list) => (
+              <ul className="flex flex-col gap-1">
+                {list.map((output) => (
+                  <OutputRow
+                    key={output.id}
+                    output={output}
+                    deleting={remove.isPending && remove.variables === output.id}
+                    onOpen={() => setOpenId(output.id)}
+                    onDelete={() => remove.mutate(output.id)}
+                  />
+                ))}
+              </ul>
+            )}
+          </QueryBoundary>
+          {remove.isError && (
+            <Alert variant="destructive">
+              <AlertDescription>{describeError(remove.error)}</AlertDescription>
+            </Alert>
+          )}
+        </section>
+
+        <NotesSection notebookId={notebookId} onOpenCitation={onOpenCitation} />
+      </div>
+      {/* The list fades out above the lower edge of the panel, padding included. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-2 -bottom-2 -left-2 h-7 rounded-b-panel bg-gradient-to-t from-card from-0% via-card/98 via-10% to-transparent"
+      />
     </div>
   );
 }

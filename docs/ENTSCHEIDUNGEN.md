@@ -199,3 +199,21 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   272x185 mit Radius 40 und 32 px Innenabstand, Abschnittstitel 24/32, die blaue Pille „Neues Notizbuch“
   (hell #9dd2ff, dunkel #1f3b9b) öffnet einen Dialog für den Titel, statt ein Formular auf der Seite zu zeigen.
   Löschen sitzt im ⋮-Menü der Karte. Die „Empfohlenen Notebooks“ sind Googles eigene Inhalte und fehlen.
+- **Abgleich mit dem Original, Runde 2 (2026-09-30):** Plan und Checkliste stehen in
+  [DESIGN-ABGLEICH.md](DESIGN-ABGLEICH.md). Erste Ergebnisse: (1) Die Spalten folgen der Regel des Originals
+  (`flex 0 1 25 % / 48 % / 25 %` in einem Container aus Fensterbreite minus 24 px, Trenner 8 px; der Rest von 2 %
+  bleibt rechts frei; mit offener Studio-Ausgabe 10 : 19 : 37,5 vw), Panels haben 1 px unsichtbaren Rahmen und
+  12 px Abstand unten, der Chat reicht bis zum Fensterrand, die Eingabe ist 628 px breit. Die Werte stimmen mit dem
+  Original auf die Nachkommastelle überein. (2) **Zeiger und Tooltips:** Tailwind v4 setzt Buttons auf den Pfeil;
+  eine Basisregel gibt allen nutzbaren Bedienelementen die Hand. Der Tooltip ist der des Originals (Inverse-Fläche,
+  ohne Verzögerung, 8 px unter dem Element). (3) **`cn()` kannte die eigenen Schriftgrößen nicht** und warf
+  `text-small` neben einer Textfarbe still weg; behoben, mit Test. (4) **Quellen werden formatiert gezeigt:** Der
+  Text einer Quelle ist Markdown (PDF vom Modell, Web und DOCX vom Wandler), nur TXT bleibt Klartext. Der Wandler
+  schreibt jetzt Links (nur http/https, relative über `<base>`, kanonischen Link oder `og:url` der Seite
+  aufgelöst, sonst nur Text), Fett, Kursiv, Code, Zitate und echte Tabellen. Dafür landen URLs im Chunk-Text
+  (bei linkreichen Seiten wenige Prozent mehr). **Bestehende Quellen werden nicht neu geparst**; sie zeigen, was
+  sie hatten (Überschriften, Listen), Links erst nach erneutem Hinzufügen. Die Zitat-Markierung nutzt die
+  Positionen des Markdown-Parsers und liegt auch in Fett und Links; wo Markdown Zeichen verändert hat (Escapes),
+  wird das ganze Textstück markiert statt eines falschen Teils. (5) **Quellenübersicht** wohnt wie im Original im
+  Reader (Karte mit Einklapp-Pfeil), nicht mehr als Ausklapper in jeder Zeile. Das Chunk-Detail trägt die
+  Quellenart, damit das Popup TXT als Klartext zeigt.

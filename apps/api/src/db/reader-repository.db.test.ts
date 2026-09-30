@@ -71,6 +71,7 @@ describe('findChunkDetail', () => {
       id: chunk.id,
       sourceId: source.id,
       sourceTitle: 'Quelle',
+      sourceKind: SOURCE_KIND.URL,
       text: 'Zweiter Absatz.',
       startOffset: 16,
       endOffset: 31,

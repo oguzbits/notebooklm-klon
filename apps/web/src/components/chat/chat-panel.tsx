@@ -59,8 +59,13 @@ export function ChatPanel({
       : null;
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-5">
+    <div className="relative flex h-full min-h-0 flex-col">
+      {/* The text fades out under the top edge instead of being cut off. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 z-10 h-7 bg-gradient-to-b from-background from-0% via-background/98 via-10% to-transparent"
+      />
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5">
         <div className="mx-auto flex max-w-[756px] flex-col gap-3 px-6 pt-2">
           <QueryBoundary
             query={history}
@@ -146,9 +151,9 @@ export function ChatPanel({
         </div>
       </div>
 
-      <div className="px-4">
-        <form onSubmit={submit} className="mx-auto flex max-w-[660px] flex-col">
-          <div className="flex min-h-16 items-center gap-2 rounded-panel bg-card py-3 pr-3 pl-7 shadow-glow">
+      <div>
+        <form onSubmit={submit} className="mx-auto flex max-w-[660px] flex-col px-4">
+          <div className="flex min-h-16 items-center gap-2 rounded-panel bg-card py-3 pr-3 pl-5 shadow-glow">
             <Textarea
               name="question"
               aria-label="Deine Frage"
@@ -159,11 +164,11 @@ export function ChatPanel({
               onKeyDown={submitOnEnter}
               className="text-read max-h-40 min-h-0 flex-1 resize-none self-center rounded-none border-0 bg-transparent px-0 py-0.5 shadow-none focus-visible:border-0 focus-visible:outline-0"
             />
-            <span className="hidden shrink-0 text-[0.875rem] leading-6 text-muted-foreground sm:inline">
+            <span className="hidden shrink-0 text-small text-muted-foreground sm:inline">
               {usable} {usable === 1 ? 'Quelle' : 'Quellen'}
             </span>
             <span
-              className="flex shrink-0 items-center gap-1 text-[0.875rem] leading-6 text-muted-foreground sm:hidden"
+              className="flex shrink-0 items-center gap-1 text-small text-muted-foreground sm:hidden"
               aria-hidden
             >
               <FileText className="size-5" />({usable})
@@ -178,7 +183,7 @@ export function ChatPanel({
               <ArrowUp />
             </Button>
           </div>
-          <p className="px-4 py-3 text-center text-small text-muted-foreground">
+          <p className="py-3 text-center text-small text-muted-foreground">
             {hint ? `${hint} ` : ''}
             Antworten können Fehler enthalten. Prüfe wichtige Angaben an der Quelle.
           </p>

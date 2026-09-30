@@ -6,7 +6,11 @@ import { ChatSettingsDialog } from '@/components/chat/chat-settings-dialog';
 import { AppHeader } from '@/components/layout/app-header';
 import { Panel } from '@/components/notebook/panel';
 import { ErrorNotice, ListSkeleton } from '@/components/query-boundary';
-import { ReaderPanel, type ReaderTarget } from '@/components/reader/reader-panel';
+import {
+  CloseReaderButton,
+  ReaderPanel,
+  type ReaderTarget,
+} from '@/components/reader/reader-panel';
 import { SourcesPanel } from '@/components/sources/sources-panel';
 import { StudioPanel } from '@/components/studio/studio-panel';
 import { Button } from '@/components/ui/button';
@@ -23,12 +27,20 @@ const COLUMN_TAB: { column: Column; label: string }[] = [
   { column: COLUMN.STUDIO, label: 'Studio' },
 ];
 
-// Shares of the window width, measured on the original: the side columns are a quarter each; with
-// a Studio output open the Studio grows to 37.5 % and the sources give way to 20.6 %.
-const SIDE_WIDTH = '24.58vw';
-const SOURCES_WHILE_VIEWING = '20.6vw';
-const STUDIO_WHILE_VIEWING = '37.5vw';
-const RAIL_WIDTH = '3.5rem';
+// The columns of the original are flex items in a container as wide as the window minus 12px each
+// side: 25 % / 48 % / 25 % of it with 8px between them (the 2 % that is left stays empty on the right).
+// While a Studio output is open the Studio takes 37.5 % of the window and the other two share the
+// rest 10 : 19. A column that is folded away becomes a rail of 56px.
+const FLEX = {
+  SOURCES: 'wide:[flex:0_1_25%]',
+  CHAT: 'wide:[flex:0_1_48%]',
+  STUDIO: 'wide:[flex:0_1_25%]',
+  SOURCES_WHILE_VIEWING: 'wide:[flex:10_1_0%]',
+  CHAT_WHILE_VIEWING: 'wide:[flex:19_1_0%]',
+  STUDIO_WHILE_VIEWING: 'wide:[flex:0_0_37.5vw]',
+  CHAT_FILLING: 'wide:[flex:1_1_0%]',
+  RAIL: 'wide:[flex:0_0_56px]',
+} as const;
 
 /**
  * One notebook in three columns like NotebookLM: sources (or the source text) on the left, the
@@ -118,37 +130,40 @@ export function NotebookPage() {
           </button>
         ))}
       </nav>
-      <div
-        className="grid min-h-0 flex-1 grid-cols-1 gap-2 px-4 pb-3 wide:px-3 wide:[grid-template-columns:var(--sources)_minmax(0,1fr)_var(--studio)]"
-        style={
-          {
-            '--sources': sourcesOpen
-              ? viewingOutput
-                ? SOURCES_WHILE_VIEWING
-                : SIDE_WIDTH
-              : RAIL_WIDTH,
-            '--studio': studioOpen
-              ? viewingOutput
-                ? STUDIO_WHILE_VIEWING
-                : SIDE_WIDTH
-              : RAIL_WIDTH,
-          } as React.CSSProperties
-        }
-      >
+      <div className="flex min-h-0 flex-1 px-4 wide:mx-3 wide:gap-2 wide:px-0">
         <Panel
           title="Quellen"
           side="left"
           collapsed={!sourcesOpen}
           onToggle={() => setSourcesOpen((value) => !value)}
-          className={hiddenBelowWide(COLUMN.SOURCES)}
+          action={reading ? <CloseReaderButton onClick={() => setReading(null)} /> : undefined}
+          className={cn(
+            hiddenBelowWide(COLUMN.SOURCES),
+            'w-full wide:w-auto wide:transition-[flex] wide:duration-200 wide:ease-in-out',
+            !sourcesOpen ? FLEX.RAIL : viewingOutput ? FLEX.SOURCES_WHILE_VIEWING : FLEX.SOURCES
+          )}
         >
           {reading ? (
-            <ReaderPanel notebookId={id} target={reading} onClose={() => setReading(null)} />
+            <ReaderPanel notebookId={id} target={reading} />
           ) : (
             <SourcesPanel notebookId={id} onOpenSource={(sourceId) => openReader({ sourceId })} />
           )}
         </Panel>
-        <Panel title="Chat" bare className={hiddenBelowWide(COLUMN.CHAT)}>
+        <Panel
+          title="Chat"
+          bare
+          className={cn(
+            hiddenBelowWide(COLUMN.CHAT),
+            'w-full wide:w-auto wide:transition-[flex] wide:duration-200 wide:ease-in-out',
+            !sourcesOpen || !studioOpen
+              ? FLEX.CHAT_FILLING
+              : viewingOutput
+                ? FLEX.CHAT_WHILE_VIEWING
+                : FLEX.CHAT,
+            !sourcesOpen && 'wide:ml-2',
+            !studioOpen && 'wide:mr-2'
+          )}
+        >
           <ChatPanel notebookId={id} onOpenCitation={(chunkId) => openReader({ chunkId })} />
         </Panel>
         <Panel
@@ -157,7 +172,11 @@ export function NotebookPage() {
           titleHidden={viewingOutput}
           collapsed={!studioOpen}
           onToggle={() => setStudioOpen((value) => !value)}
-          className={hiddenBelowWide(COLUMN.STUDIO)}
+          className={cn(
+            hiddenBelowWide(COLUMN.STUDIO),
+            'w-full wide:w-auto wide:transition-[flex] wide:duration-200 wide:ease-in-out',
+            !studioOpen ? FLEX.RAIL : viewingOutput ? FLEX.STUDIO_WHILE_VIEWING : FLEX.STUDIO
+          )}
         >
           <StudioPanel
             notebookId={id}

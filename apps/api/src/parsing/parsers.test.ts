@@ -34,11 +34,11 @@ describe('parseDocx', () => {
     expect(text).toContain('Helmholz Systems');
   });
 
-  it('keeps a table row on one line', async () => {
+  it('writes a table as a Markdown table, a row on one line', async () => {
     const { text } = await parseDocx(fixture);
 
-    expect(text).toContain('Quartal | Umsatz (T€) | Mitarbeitende');
-    expect(text).toContain('Q3 2025 | 455 | 24');
+    expect(text).toContain('| Quartal | Umsatz (T€) | Mitarbeitende |\n| --- | --- | --- |');
+    expect(text).toContain('| Q3 2025 | 455 | 24 |');
   });
 
   it('drops embedded images instead of putting their data into the text', async () => {
@@ -67,6 +67,31 @@ describe('parseWebPage', () => {
     expect(text.startsWith('# Ein Artikel')).toBe(true);
     expect(text).toContain('Dies ist ein längerer Absatz');
     expect(text).toContain('Der zweite Absatz erzählt');
+  });
+
+  it('keeps links with an address that works, bold and italic text', async () => {
+    const page = `<html><head><title>Jev</title>
+      <link rel="canonical" href="https://example.org/wiki/Jev"></head><body><article>
+      <h1>Jev</h1><p>${'Ein langer Absatz, der den Artikel erkennbar macht. '.repeat(8)}
+      <b>Jev</b> nutzt <a href="/wiki/Transformer">Transformer</a> und <i>synthetische Daten</i>.</p>
+      <p>${'Noch ein Absatz, damit genug Text vorhanden ist und er lesbar bleibt. '.repeat(6)}</p>
+      </article></body></html>`;
+
+    const { text } = await parseWebPage(encode(page));
+
+    expect(text).toContain('**Jev** nutzt [Transformer](https://example.org/wiki/Transformer)');
+    expect(text).toContain('*synthetische Daten*');
+  });
+
+  it('writes the title as a heading without letting its characters act as formatting', async () => {
+    const page = `<html><head><title>A * B</title></head><body><article>
+      <p>${'Ein langer Absatz, der den Artikel erkennbar macht. '.repeat(10)}</p>
+      <p>${'Noch ein Absatz, damit genug Text vorhanden ist und er lesbar bleibt. '.repeat(8)}</p>
+      </article></body></html>`;
+
+    const { text } = await parseWebPage(encode(page));
+
+    expect(text.startsWith('# A \\* B\n\n')).toBe(true);
   });
 
   it('leaves out navigation and footer', async () => {

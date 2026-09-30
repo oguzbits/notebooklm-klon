@@ -27,7 +27,7 @@ test('from sign-up to a cited passage, a note and back out', async ({ page }) =>
   await page.getByRole('link', { name: /Smoke-Test/ }).click();
 
   // A refused file explains itself; a text file is read.
-  await page.getByRole('button', { name: 'Quelle hinzufügen' }).click();
+  await page.getByRole('button', { name: 'Quellen hinzufügen' }).click();
   await page.locator('input[type=file]').setInputFiles(path.join(FIXTURES, 'unsupported.png'));
   await expect(page.getByText(/Dateiformat wird nicht unterstützt/)).toBeVisible();
   await page.locator('input[type=file]').setInputFiles(path.join(FIXTURES, 'nordlicht.txt'));

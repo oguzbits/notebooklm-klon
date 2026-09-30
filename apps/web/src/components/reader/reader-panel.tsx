@@ -1,24 +1,32 @@
-import { ArrowLeft, ExternalLink } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { ExternalLink, Minimize2 } from 'lucide-react';
 
-import { ErrorNotice, ListSkeleton } from '@/components/query-boundary';
+import { ErrorNotice } from '@/components/query-boundary';
+import { SourceText } from '@/components/reader/source-text';
+import { SourceOverviewCard } from '@/components/sources/source-overview';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useChunk, useSourceText } from '@/hooks/use-reader';
-import { splitAtHighlight } from '@/lib/citations';
 
 /** What the reader shows: a whole source, or a source with one cited passage marked. */
 export type ReaderTarget = { sourceId: string } | { chunkId: string };
 
-export function ReaderPanel({
-  notebookId,
-  target,
-  onClose,
-}: {
-  notebookId: string;
-  target: ReaderTarget;
-  onClose: () => void;
-}) {
+/** The button in the header of the sources that leaves the reader, like in the original. */
+export function CloseReaderButton({ onClick }: { onClick: () => void }) {
+  return (
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      aria-label="Quellenansicht schließen"
+      tooltip="Quellenansicht schließen"
+      onClick={onClick}
+    >
+      <Minimize2 />
+    </Button>
+  );
+}
+
+export function ReaderPanel({ notebookId, target }: { notebookId: string; target: ReaderTarget }) {
   const chunk = useChunk(
     notebookId,
     'chunkId' in target ? target.chunkId : '',
@@ -26,77 +34,60 @@ export function ReaderPanel({
   );
   const sourceId = 'sourceId' in target ? target.sourceId : (chunk.data?.sourceId ?? null);
   const source = useSourceText(notebookId, sourceId);
-  const mark = useRef<HTMLElement>(null);
-
   const passage = 'chunkId' in target ? chunk.data : undefined;
-  useEffect(() => {
-    mark.current?.scrollIntoView?.({ block: 'center' });
-  }, [source.data?.id, passage?.id]);
-
-  const parts = splitAtHighlight(
-    source.data?.text ?? '',
-    passage?.startOffset ?? null,
-    passage?.endOffset ?? null
-  );
+  const highlight = passage ? { start: passage.startOffset, end: passage.endOffset } : null;
   const failed = chunk.isError || source.isError;
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2 pb-2">
-        <Button variant="ghost" size="sm" onClick={onClose}>
-          <ArrowLeft />
-          Zurück zu den Quellen
-        </Button>
-      </div>
-      <div className="min-h-0 flex-1 overflow-y-auto pt-2 pr-1">
-        {failed && (
-          <Alert>
-            <AlertDescription>
-              {chunk.isError
-                ? 'Diese Quelle ist nicht mehr in deinem Notizbuch.'
-                : 'Der Text dieser Quelle ist noch nicht verfügbar.'}
-              {source.isError && (
-                <ErrorNotice
-                  error={source.error}
-                  onRetry={() => void source.refetch()}
-                  retrying={source.isFetching}
-                />
-              )}
-            </AlertDescription>
-          </Alert>
-        )}
-        {!failed && !source.data && <ListSkeleton rows={5} />}
-        {source.data && (
-          <article className="flex flex-col gap-3">
-            <header>
-              <h3 className="text-[1.375rem] leading-9">{source.data.title}</h3>
-              {source.data.sourceUrl && (
+    <div className="flex h-full min-h-0 flex-col">
+      {failed && (
+        <Alert>
+          <AlertDescription>
+            {chunk.isError
+              ? 'Diese Quelle ist nicht mehr in deinem Notizbuch.'
+              : 'Der Text dieser Quelle ist noch nicht verfügbar.'}
+            {source.isError && (
+              <ErrorNotice
+                error={source.error}
+                onRetry={() => void source.refetch()}
+                retrying={source.isFetching}
+              />
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+      {!failed && !source.data && (
+        <div className="flex flex-col gap-3" role="status" aria-label="Wird geladen">
+          <Skeleton className="h-9 w-2/3" />
+          <Skeleton className="h-40 w-full rounded-lg" />
+          <Skeleton className="h-6 w-full" />
+          <Skeleton className="h-6 w-11/12" />
+          <Skeleton className="h-6 w-4/5" />
+        </div>
+      )}
+      {source.data && (
+        <>
+          <header className="flex shrink-0 items-start justify-between gap-2 pb-4">
+            <h3 className="min-w-0 text-[1.375rem] leading-9">{source.data.title}</h3>
+            {source.data.sourceUrl && (
+              <Button variant="ghost" size="icon-sm" tooltip="Extern öffnen" asChild>
                 <a
                   href={source.data.sourceUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1 text-small text-link underline-offset-4 hover:underline"
+                  aria-label="Originalseite öffnen"
                 >
-                  <ExternalLink className="size-3" aria-hidden />
-                  Originalseite öffnen
+                  <ExternalLink />
                 </a>
-              )}
-            </header>
-            <p className="text-read whitespace-pre-wrap">
-              {parts.before}
-              {parts.highlight && (
-                <mark
-                  ref={mark}
-                  className="rounded-sm bg-highlight px-0.5 text-highlight-foreground"
-                >
-                  {parts.highlight}
-                </mark>
-              )}
-              {parts.after}
-            </p>
-          </article>
-        )}
-      </div>
+              </Button>
+            )}
+          </header>
+          <SourceOverviewCard notebookId={notebookId} sourceId={source.data.id} />
+          <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-2 pl-0.5">
+            <SourceText text={source.data.text} kind={source.data.kind} highlight={highlight} />
+          </div>
+        </>
+      )}
     </div>
   );
 }
