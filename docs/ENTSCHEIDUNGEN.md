@@ -242,3 +242,9 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   „In Notiz speichern“ und Kopieren als Icon; die Kachel heißt „Berichte“; Quellen haben ein Symbol nach Dateityp
   (PDF rot). Nicht übernommen: „Notiz hinzufügen“ (freie Notizen; unsere Notizen sind gespeicherte Antworten mit
   Belegen, ein freier Text hätte keine).
+- **Startseite wie im Original (2026-10-01):** Kopfzeile mit Wortmarke, Suchpille („Notizbücher durchsuchen“,
+  256x36, filtert die geladene Liste im Browser) und ⚙; die Karten tragen ein Emoji (aus der ID abgeleitet, damit es
+  je Notizbuch gleich bleibt; das Original wählt eines pro Notizbuch), das Datum als TT.MM.JJJJ und die Zahl der
+  Quellen. Die Zahl zählt die Datenbank (`sourceCount` im Vertrag, ein Unterabfrage-Zähler je Notizbuch). Der
+  Einleitungstext entfällt, er steht nicht im Original. Nicht übernommen: Filter-Tabs „Alle / Entdecken /
+  Sammlungen“, der Umschalter Raster/Liste, „Empfohlene Notebooks“ (Googles Inhalte).

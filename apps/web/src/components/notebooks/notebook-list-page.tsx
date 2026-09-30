@@ -1,9 +1,10 @@
-import { BookOpenText, EllipsisVertical, NotebookPen, Plus, Trash2 } from 'lucide-react';
+import { EllipsisVertical, NotebookPen, Plus, SearchX, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 
 import { AppHeader } from '@/components/layout/app-header';
 import { CreateNotebookDialog } from '@/components/notebooks/create-notebook-dialog';
+import { NotebookSearch } from '@/components/notebooks/notebook-search';
 import { QueryBoundary } from '@/components/query-boundary';
 import { NotebookCardsSkeleton } from '@/components/skeletons';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -17,20 +18,29 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useDeleteNotebook, useNotebooks } from '@/hooks/use-notebooks';
 import { describeError } from '@/lib/messages';
+import { notebookEmoji } from '@/lib/notebook-emoji';
 import { IMITATION_NOTICE } from '@/lib/notice';
 import { ROUTES } from '@/lib/routes';
 
-const dateFormat = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium' });
+const dateFormat = new Intl.DateTimeFormat('de-DE', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+});
+
+const sourcesLabel = (count: number) => `${count} ${count === 1 ? 'Quelle' : 'Quellen'}`;
 
 /** The signed-in user's notebooks: create, open, delete. */
 export function NotebookListPage() {
   const notebooks = useNotebooks();
   const remove = useDeleteNotebook();
   const [toDelete, setToDelete] = useState<{ id: string; title: string } | null>(null);
+  const [search, setSearch] = useState('');
+  const needle = search.trim().toLocaleLowerCase('de-DE');
 
   return (
     <>
-      <AppHeader />
+      <AppHeader actions={<NotebookSearch value={search} onChange={setSearch} />} />
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex flex-col gap-2 px-6 pb-10">
           <div className="flex flex-wrap items-center justify-between gap-3 pt-6">
@@ -44,11 +54,6 @@ export function NotebookListPage() {
               }
             />
           </div>
-          <p className="text-ui text-muted-foreground">
-            Ein Notizbuch sammelt Quellen zu einem Thema. Fragen werden nur aus diesen Quellen
-            beantwortet.
-          </p>
-
           <QueryBoundary
             query={notebooks}
             loading={<NotebookCardsSkeleton />}
@@ -61,49 +66,65 @@ export function NotebookListPage() {
               </div>
             }
           >
-            {(list) => (
-              <ul className="mt-4 grid gap-2 sm:[grid-template-columns:repeat(auto-fill,272px)]">
-                {list.map((notebook) => (
-                  <li key={notebook.id} className="group/card relative">
-                    <Link
-                      to={ROUTES.notebook(notebook.id)}
-                      className="veil flex h-[185px] flex-col justify-between rounded-bubble bg-secondary p-8"
-                    >
-                      <BookOpenText className="size-9 text-muted-foreground" aria-hidden />
-                      <span>
-                        <span className="line-clamp-2 block text-xl leading-6 font-title">
-                          {notebook.title}
+            {(all) => {
+              const list = all.filter((notebook) =>
+                notebook.title.toLocaleLowerCase('de-DE').includes(needle)
+              );
+              return list.length === 0 ? (
+                <div className="mt-4 flex flex-col items-center gap-2 py-16 text-center">
+                  <SearchX className="size-10 text-muted-foreground" aria-hidden />
+                  <p className="text-xl font-title">Kein Notizbuch gefunden</p>
+                  <p className="text-ui text-muted-foreground">
+                    Zu „{search.trim()}“ gibt es kein Notizbuch.
+                  </p>
+                </div>
+              ) : (
+                <ul className="mt-4 grid gap-2 sm:[grid-template-columns:repeat(auto-fill,272px)]">
+                  {list.map((notebook) => (
+                    <li key={notebook.id} className="group/card relative">
+                      <Link
+                        to={ROUTES.notebook(notebook.id)}
+                        className="veil flex h-[185px] flex-col justify-between rounded-bubble bg-secondary p-8"
+                      >
+                        <span className="text-4xl leading-9" aria-hidden>
+                          {notebookEmoji(notebook.id)}
                         </span>
-                        <span className="mt-1 block text-ui text-muted-foreground">
-                          {dateFormat.format(new Date(notebook.createdAt))}
+                        <span>
+                          <span className="line-clamp-2 block text-xl leading-6 font-title">
+                            {notebook.title}
+                          </span>
+                          <span className="mt-1 block text-ui text-muted-foreground">
+                            {dateFormat.format(new Date(notebook.createdAt))} ·{' '}
+                            {sourcesLabel(notebook.sourceCount)}
+                          </span>
                         </span>
-                      </span>
-                    </Link>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon-xs"
-                          className="absolute top-6 right-6"
-                          aria-label={`Weitere Aktionen für Notizbuch „${notebook.title}“`}
-                          tooltip="Mehr"
-                        >
-                          <EllipsisVertical />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onSelect={() => setToDelete({ id: notebook.id, title: notebook.title })}
-                        >
-                          <Trash2 aria-hidden />
-                          Löschen
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </li>
-                ))}
-              </ul>
-            )}
+                      </Link>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            className="absolute top-6 right-6"
+                            aria-label={`Weitere Aktionen für Notizbuch „${notebook.title}“`}
+                            tooltip="Mehr"
+                          >
+                            <EllipsisVertical />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onSelect={() => setToDelete({ id: notebook.id, title: notebook.title })}
+                          >
+                            <Trash2 aria-hidden />
+                            Löschen
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </li>
+                  ))}
+                </ul>
+              );
+            }}
           </QueryBoundary>
 
           {remove.isError && (

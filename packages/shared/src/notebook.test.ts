@@ -18,9 +18,18 @@ const DATE = '2026-09-30T12:00:00.000Z';
 
 describe('notebook contracts', () => {
   it('parses a notebook', () => {
-    expect(NotebookSchema.parse({ id: ID, title: 'Recherche', createdAt: DATE }).title).toBe(
-      'Recherche'
-    );
+    expect(
+      NotebookSchema.parse({ id: ID, title: 'Recherche', sourceCount: 3, createdAt: DATE })
+    ).toMatchObject({ title: 'Recherche', sourceCount: 3 });
+  });
+
+  it('needs a source count that is a whole number of zero or more', () => {
+    const base = { id: ID, title: 'Recherche', createdAt: DATE };
+
+    expect(NotebookSchema.safeParse(base).success).toBe(false);
+    expect(NotebookSchema.safeParse({ ...base, sourceCount: -1 }).success).toBe(false);
+    expect(NotebookSchema.safeParse({ ...base, sourceCount: 1.5 }).success).toBe(false);
+    expect(NotebookSchema.safeParse({ ...base, sourceCount: 0 }).success).toBe(true);
   });
 
   it('trims the title of a new notebook and rejects an empty or very long one', () => {

@@ -186,6 +186,30 @@ describe('deleteNotebook', () => {
   });
 });
 
+describe('the number of sources of a notebook', () => {
+  it('is counted by the database for the list and for one notebook', async () => {
+    const notebook = await createNotebook(db, USER, 'Mit Quellen');
+    const empty = await createNotebook(db, USER, 'Leer');
+    await linkSource(db, USER, notebook.id, (await addSource(USER, 'a')).id);
+    await linkSource(db, USER, notebook.id, (await addSource(USER, 'b')).id);
+
+    const list = await listNotebooks(db, USER);
+
+    expect(list.find((entry) => entry.id === notebook.id)?.sourceCount).toBe(2);
+    expect(list.find((entry) => entry.id === empty.id)?.sourceCount).toBe(0);
+    expect((await findNotebook(db, USER, notebook.id))?.sourceCount).toBe(2);
+    expect(empty.sourceCount).toBe(0);
+  });
+
+  it('does not count the sources of another notebook', async () => {
+    const first = await createNotebook(db, USER, 'Eins');
+    const second = await createNotebook(db, USER, 'Zwei');
+    await linkSource(db, USER, first.id, (await addSource(USER, 'a')).id);
+
+    expect((await findNotebook(db, USER, second.id))?.sourceCount).toBe(0);
+  });
+});
+
 describe('renameNotebook', () => {
   it('changes the title and returns the notebook', async () => {
     const notebook = await createNotebook(db, USER, 'Alt');

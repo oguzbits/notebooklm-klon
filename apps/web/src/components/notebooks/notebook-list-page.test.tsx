@@ -95,4 +95,41 @@ describe('NotebookListPage', () => {
 
     expect(await screen.findByText('Noch kein Notizbuch')).toBeTruthy();
   });
+
+  it('shows the date and the number of sources on each card', async () => {
+    server.use(
+      list([
+        notebook({ title: 'Mit zwei', sourceCount: 2 }),
+        notebook({
+          id: '22222222-2222-4222-8222-222222222222',
+          title: 'Mit einer',
+          sourceCount: 1,
+        }),
+      ])
+    );
+    renderWithProviders(<NotebookListPage />);
+
+    expect(await screen.findByText(/2 Quellen/)).toBeTruthy();
+    expect(screen.getByText(/· 1 Quelle$/)).toBeTruthy();
+    expect(screen.getAllByText(/^\d{2}\.\d{2}\.\d{4} ·/).length).toBe(2);
+  });
+
+  it('narrows the list as the user types in the search and says when nothing is left', async () => {
+    server.use(
+      list([
+        notebook({ title: 'Steuerrecht' }),
+        notebook({ id: '22222222-2222-4222-8222-222222222222', title: 'Forschung' }),
+      ])
+    );
+    renderWithProviders(<NotebookListPage />);
+    const user = userEvent.setup();
+    await screen.findByText('Steuerrecht');
+
+    await user.type(screen.getByRole('searchbox', { name: 'Notizbücher durchsuchen' }), 'forsch');
+    expect(screen.queryByText('Steuerrecht')).toBeNull();
+    expect(screen.getByText('Forschung')).toBeTruthy();
+
+    await user.type(screen.getByRole('searchbox'), 'xyz');
+    expect(await screen.findByText('Kein Notizbuch gefunden')).toBeTruthy();
+  });
 });

@@ -21,6 +21,8 @@ export const SubmitActionSchema = z.enum(SUBMIT_ACTION);
 export const NotebookSchema = z.object({
   id: z.uuid(),
   title: z.string(),
+  /** How many sources the notebook holds, whatever their state. */
+  sourceCount: z.number().int().nonnegative(),
   createdAt: z.iso.datetime(),
 });
 

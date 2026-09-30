@@ -20,6 +20,30 @@ function toFailure(message: string | null): SourceFailure | null {
 
 /** Every function below takes the user ID from the session and filters by it in SQL. */
 
+/** The number of sources linked to a notebook, counted by the database. */
+const sourceCountOf = sql<number>`(select count(*)::int from ${notebookSources} where ${notebookSources.notebookId} = ${notebooks.id})`;
+
+const notebookColumns = {
+  id: notebooks.id,
+  title: notebooks.title,
+  createdAt: notebooks.createdAt,
+  sourceCount: sourceCountOf,
+};
+
+function toNotebook(row: {
+  id: string;
+  title: string;
+  createdAt: Date;
+  sourceCount: number;
+}): Notebook {
+  return {
+    id: row.id,
+    title: row.title,
+    sourceCount: row.sourceCount,
+    createdAt: row.createdAt.toISOString(),
+  };
+}
+
 export async function createNotebook(
   db: Database,
   userId: string,
@@ -27,20 +51,16 @@ export async function createNotebook(
 ): Promise<Notebook> {
   const [row] = await db.insert(notebooks).values({ userId, title }).returning();
   if (!row) throw new Error('insert returned no row');
-  return { id: row.id, title: row.title, createdAt: row.createdAt.toISOString() };
+  return toNotebook({ ...row, sourceCount: 0 });
 }
 
 export async function listNotebooks(db: Database, userId: string): Promise<Notebook[]> {
   const rows = await db
-    .select()
+    .select(notebookColumns)
     .from(notebooks)
     .where(eq(notebooks.userId, userId))
     .orderBy(desc(notebooks.createdAt), desc(notebooks.id));
-  return rows.map((row) => ({
-    id: row.id,
-    title: row.title,
-    createdAt: row.createdAt.toISOString(),
-  }));
+  return rows.map(toNotebook);
 }
 
 export async function findNotebook(
@@ -50,10 +70,10 @@ export async function findNotebook(
 ): Promise<Notebook | null> {
   if (!UUID.test(notebookId)) return null;
   const [row] = await db
-    .select()
+    .select(notebookColumns)
     .from(notebooks)
     .where(and(eq(notebooks.id, notebookId), eq(notebooks.userId, userId)));
-  return row ? { id: row.id, title: row.title, createdAt: row.createdAt.toISOString() } : null;
+  return row ? toNotebook(row) : null;
 }
 
 /** Gives the notebook a new title. Null when it is not the user's or does not exist. */
@@ -64,12 +84,12 @@ export async function renameNotebook(
   title: string
 ): Promise<Notebook | null> {
   if (!UUID.test(notebookId)) return null;
-  const [row] = await db
+  const renamed = await db
     .update(notebooks)
     .set({ title })
     .where(and(eq(notebooks.id, notebookId), eq(notebooks.userId, userId)))
-    .returning();
-  return row ? { id: row.id, title: row.title, createdAt: row.createdAt.toISOString() } : null;
+    .returning({ id: notebooks.id });
+  return renamed.length === 1 ? findNotebook(db, userId, notebookId) : null;
 }
 
 /** Deletes the notebook with its links and chat history. The sources stay: they are the user's. */

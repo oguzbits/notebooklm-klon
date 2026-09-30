@@ -17,9 +17,12 @@ export const CHUNK_ID = '5d1e8c2a-7b34-4f6d-9c05-2a8e6b1f3c47';
 export const OTHER_CHUNK_ID = '6e2f9d3b-8c45-4a7e-8d16-3b9f7c2a4d58';
 const CREATED_AT = '2026-09-30T12:00:00.000Z';
 
-export const notebook = (overrides: Partial<{ id: string; title: string }> = {}) => ({
+export const notebook = (
+  overrides: Partial<{ id: string; title: string; sourceCount: number }> = {}
+) => ({
   id: NOTEBOOK_ID,
   title: 'Steuerrecht',
+  sourceCount: 2,
   createdAt: CREATED_AT,
   ...overrides,
 });
