@@ -19,6 +19,10 @@ const tsvector = customType<{ data: string }>({
   dataType: () => 'tsvector',
 });
 
+const bytea = customType<{ data: Uint8Array }>({
+  dataType: () => 'bytea',
+});
+
 const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
 
 export const sourceKind = pgEnum('source_kind', SOURCE_KIND);
@@ -55,6 +59,16 @@ export const sources = pgTable(
   },
   (table) => [unique('sources_user_content_hash_unique').on(table.userId, table.contentHash)]
 );
+
+// The raw bytes of an upload live here only until the ingestion job has processed them, then the
+// row is deleted: the product stores extracted text, not original files.
+export const sourceUploads = pgTable('source_uploads', {
+  sourceId: uuid('source_id')
+    .primaryKey()
+    .references(() => sources.id, { onDelete: 'cascade' }),
+  bytes: bytea('bytes').notNull(),
+  createdAt: createdAt(),
+});
 
 export const notebookSources = pgTable(
   'notebook_sources',

@@ -3,11 +3,12 @@ import { eq } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { chunks, sources } from './schema';
-import { createSourceStorage } from './source-storage';
+import { createSourceStorage, createUploadStorage } from './source-storage';
 import { axisVector, createTestDb } from './testing/test-db';
 
 const { db, pool } = createTestDb();
 const storage = createSourceStorage(db);
+const uploads = createUploadStorage(db);
 const USER = 'user-a';
 
 const newSource = (contentHash = 'hash-1', userId = USER) => ({
@@ -134,5 +135,43 @@ describe('source storage', () => {
     const [row] = await db.select().from(sources).where(eq(sources.id, id));
     expect(row?.status).toBe(SOURCE_STATUS.PENDING);
     expect(await db.select().from(chunks).where(eq(chunks.sourceId, id))).toHaveLength(0);
+  });
+});
+
+describe('upload storage', () => {
+  it('keeps the bytes and kind of a source until they are removed', async () => {
+    const { id } = await storage.create(newSource());
+    const bytes = new Uint8Array([0, 1, 2, 250, 255]);
+
+    await uploads.put(id, bytes);
+
+    expect(await uploads.load(id)).toEqual({ kind: SOURCE_KIND.PDF, bytes });
+    await uploads.remove(id);
+    expect(await uploads.load(id)).toBeNull();
+  });
+
+  it('replaces the bytes when a failed source is uploaded again', async () => {
+    const { id } = await storage.create(newSource());
+    await uploads.put(id, new Uint8Array([1]));
+
+    await uploads.put(id, new Uint8Array([2, 2]));
+
+    expect((await uploads.load(id))?.bytes).toEqual(new Uint8Array([2, 2]));
+  });
+
+  it('returns null for a source without an upload', async () => {
+    const { id } = await storage.create(newSource());
+
+    expect(await uploads.load(id)).toBeNull();
+  });
+
+  it('is removed together with its source', async () => {
+    const { id } = await storage.create(newSource());
+    await uploads.put(id, new Uint8Array([1]));
+
+    await db.delete(sources).where(eq(sources.id, id));
+
+    const rows = await pool.query('SELECT 1 FROM source_uploads WHERE source_id = $1', [id]);
+    expect(rows.rowCount).toBe(0);
   });
 });

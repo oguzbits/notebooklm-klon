@@ -2,8 +2,9 @@ import { SOURCE_STATUS } from '@nlm/shared';
 import { and, eq } from 'drizzle-orm';
 
 import type { IngestPorts } from '../ingestion/ingest';
+import type { SubmitPorts } from '../ingestion/submit';
 import type { Database } from './client';
-import { chunks, sources } from './schema';
+import { chunks, sources, sourceUploads } from './schema';
 
 /** PostgreSQL implementation of the storage half of the ingestion pipeline. */
 export function createSourceStorage(db: Database): IngestPorts['sources'] {
@@ -60,6 +61,31 @@ export function createSourceStorage(db: Database): IngestPorts['sources'] {
         .update(sources)
         .set({ status: SOURCE_STATUS.FAILED, errorMessage: failure })
         .where(eq(sources.id, sourceId));
+    },
+  };
+}
+
+/** Holds the raw bytes of an upload until its ingestion job has run. */
+export function createUploadStorage(db: Database): SubmitPorts['uploads'] {
+  return {
+    async put(sourceId, bytes) {
+      await db
+        .insert(sourceUploads)
+        .values({ sourceId, bytes })
+        .onConflictDoUpdate({ target: sourceUploads.sourceId, set: { bytes } });
+    },
+
+    async load(sourceId) {
+      const [row] = await db
+        .select({ bytes: sourceUploads.bytes, kind: sources.kind })
+        .from(sourceUploads)
+        .innerJoin(sources, eq(sources.id, sourceUploads.sourceId))
+        .where(eq(sourceUploads.sourceId, sourceId));
+      return row ? { kind: row.kind, bytes: new Uint8Array(row.bytes) } : null;
+    },
+
+    async remove(sourceId) {
+      await db.delete(sourceUploads).where(eq(sourceUploads.sourceId, sourceId));
     },
   };
 }

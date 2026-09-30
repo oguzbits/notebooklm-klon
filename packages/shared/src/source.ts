@@ -20,6 +20,7 @@ export const SOURCE_FAILURE = {
   EMPTY_TEXT: 'EMPTY_TEXT',
   PARSE_FAILED: 'PARSE_FAILED',
   EMBED_FAILED: 'EMBED_FAILED',
+  ENQUEUE_FAILED: 'ENQUEUE_FAILED',
 } as const;
 
 export const SourceKindSchema = z.enum(SOURCE_KIND);
