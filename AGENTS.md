@@ -43,8 +43,8 @@ Project context and stack: [docs/PLAN.md](docs/PLAN.md). Use `pnpm`, never `npm`
    link-local addresses (again after every redirect); cap redirects, time and size.
 7. **No document content in logs.** Log IDs, lengths, durations and token counts only. Structured
    JSON lines, no `console`.
-8. **Env only via `apps/api/src/config/env.ts`.** Never read `process.env` elsewhere. Never open,
-   print or edit `.env*` files; only `.env.example` is tracked. The one exception: a reviewed
+8. **Env only via `apps/api/src/config/env.ts`.** Never read `process.env` elsewhere. Never print or
+   edit `.env*` files and never commit them; only `.env.example` is tracked. The one exception: a reviewed
    spike script may run as `node --env-file=.env.local spikes/<name>.mjs`, so Node loads the key
    and the agent never sees it (see `.claude/hooks/bash-rules.mjs`).
 9. **UI states.** Every async view handles empty, loading, error (with retry) and pending
@@ -77,8 +77,15 @@ UI changes are inspected in a browser (chrome-devtools MCP or Playwright) before
 | `pnpm format:check`    | Prettier (staged files are formatted by lint-staged)              |
 | `pnpm depcruise:graph` | writes `architecture.mmd` for the README                          |
 
-**No autonomous `git commit` or `git push`.** Present verified changes and wait for the user.
-Ask before adding a dependency and say why it is needed.
+**Commits and pushes are allowed** once `pnpm check` and `pnpm test` are green (the Husky hooks run
+them; never skip them with `--no-verify`, never force-push, never rewrite remote history). One
+topic per commit, imperative Conventional Commit subject, never stage `.env*`. Work on a feature
+branch and merge to `main` only when the whole slice is green.
+**Dependencies may be added without asking.** Verify the current docs first (rule 12), keep the set
+small (YAGNI), and record why in the commit message.
+**Small decisions are yours.** Where the plan leaves something open, choose the simplest option
+that fits the plan and log it with the reason in [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md).
+Ask the user only for things that change scope, cost or data protection.
 
 **Definition-of-Done receipt** (end of every functional task):
 

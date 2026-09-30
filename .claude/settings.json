@@ -7,19 +7,10 @@
       "Edit(.env)",
       "Edit(.env.*)",
       "Edit(!.env.example)",
-      "Edit(pnpm-lock.yaml)",
-      "Bash(git commit)",
-      "Bash(git commit *)",
-      "Bash(git push)",
-      "Bash(git push *)"
+      "Edit(pnpm-lock.yaml)"
     ],
-    "ask": [
-      "Edit(AGENTS.md)",
-      "Edit(.claude/**)",
-      "Bash(pnpm add *)",
-      "Bash(pnpm remove *)",
-      "Bash(pnpm dlx *)"
-    ]
+    "allow": ["Bash(pnpm add *)", "Bash(pnpm remove *)", "Bash(pnpm dlx shadcn*)"],
+    "ask": ["Edit(AGENTS.md)", "Edit(.claude/**)", "Bash(pnpm dlx *)"]
   },
   "hooks": {
     "PreToolUse": [

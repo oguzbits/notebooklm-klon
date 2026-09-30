@@ -19,7 +19,7 @@ const bash = (command) => ({ tool_name: 'Bash', cwd: projectDir, tool_input: { c
 
 describe('guard-bash process', () => {
   it('denies with the documented JSON shape', () => {
-    const result = runHook(bash('git push origin main'));
+    const result = runHook(bash('git push --force origin main'));
     const output = JSON.parse(result.stdout);
 
     expect(result.status).toBe(0);

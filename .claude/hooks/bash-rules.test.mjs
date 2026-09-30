@@ -39,18 +39,41 @@ describe('git commit and push', () => {
   it.each([
     'git commit -m x',
     'git commit',
+    'git commit -am x',
     'git push',
     'git push origin main',
+    'git push -u origin feature/x',
     'git -C . push',
     'git -c user.name=x commit -m y',
     'pnpm check && git commit -m x',
-    'cd apps && git push',
-    'bash -c "git push"',
-    "sh -c 'git commit -m x'",
-    'eval "git push"',
-    'sudo git push',
-  ])('blocks %s', (command) => {
-    expect(blocked(command)).toMatch(/git (commit|push) is blocked/);
+  ])('allows %s', (command) => {
+    expect(blocked(command)).toBeNull();
+  });
+
+  it.each([
+    'git push --force',
+    'git push origin main --force',
+    'git push --force-with-lease',
+    'git push -f',
+    'git push -fu origin main',
+    'git push origin +main',
+    'git push --delete origin feature',
+    'git push origin -d feature',
+    'git push --mirror',
+    'bash -c "git push --force"',
+    'sudo git push -f',
+    'eval "git push --force"',
+  ])('blocks the destructive push %s', (command) => {
+    expect(blocked(command)).toMatch(/git push is blocked/);
+  });
+
+  it.each([
+    'git commit --no-verify -m x',
+    'git commit -n -m x',
+    'git commit -nm x',
+    "sh -c 'git commit --no-verify -m x'",
+  ])('blocks skipping the hooks with %s', (command) => {
+    expect(blocked(command)).toMatch(/git commit is blocked/);
   });
 });
 

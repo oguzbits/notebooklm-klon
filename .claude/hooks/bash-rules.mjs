@@ -14,7 +14,11 @@ const SEGMENT_SEPARATOR = /&&|\|\||[;|&\n]/;
 const TOKEN = /(?:[^\s"']|"[^"]*"|'[^']*')+/g;
 const WRAPPERS = new Set(['sudo', 'env', 'command', 'nohup', 'time', 'exec', 'xargs']);
 const SHELLS = new Set(['sh', 'bash', 'zsh']);
-const BLOCKED_GIT_SUBCOMMANDS = new Set(['commit', 'push']);
+// Committing and pushing are allowed: the Husky hooks (`pnpm check`, `pnpm test`) are the gate.
+// Blocked are the ways around it and the ways to destroy remote history.
+const FORCE_PUSH_FLAG =
+  /^(--force(-with-lease|-if-includes)?(=.*)?|--delete|--mirror|-[a-zA-Z]*[fd][a-zA-Z]*)$/;
+const NO_VERIFY_FLAG = /^(--no-verify|-[a-zA-Z]*n[a-zA-Z]*)$/;
 const GIT_OPTIONS_WITH_VALUE = new Set(['-C', '-c', '--git-dir', '--work-tree', '--namespace']);
 const GLOB_CHARS = /[*?[{]/;
 const DYNAMIC_PATH = /[`$]/;
@@ -105,8 +109,12 @@ function checkSegment(segment, ctx, depth) {
 
   if (command === 'git') {
     const sub = gitSubcommand(args);
-    if (sub && BLOCKED_GIT_SUBCOMMANDS.has(sub)) {
-      return `git ${sub} is blocked: never commit or push autonomously, ask the user.`;
+    const flags = sub ? args.slice(args.indexOf(sub) + 1) : [];
+    if (sub === 'push' && flags.some((f) => FORCE_PUSH_FLAG.test(f) || f.startsWith('+'))) {
+      return 'git push is blocked when it forces, deletes or mirrors: never rewrite remote history.';
+    }
+    if (sub === 'commit' && flags.some((f) => NO_VERIFY_FLAG.test(f))) {
+      return 'git commit is blocked with --no-verify or -n: the hooks are the quality gate.';
     }
   }
 
