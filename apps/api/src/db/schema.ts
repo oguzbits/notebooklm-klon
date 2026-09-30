@@ -146,3 +146,25 @@ export const chatMessages = pgTable(
   },
   (table) => [index('chat_messages_notebook_seq_idx').on(table.notebookId, table.seq)]
 );
+
+// A note is a copy of the statements of one saved answer (chat_messages), so its citations were
+// checked when the answer was made. message_id is unique: saving the same answer twice gives the
+// same note. The link is cut, not the note deleted, if the answer ever goes away.
+export const notes = pgTable(
+  'notes',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    notebookId: uuid('notebook_id')
+      .notNull()
+      .references(() => notebooks.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    messageId: uuid('message_id')
+      .unique()
+      .references(() => chatMessages.id, { onDelete: 'set null' }),
+    statements: jsonb('statements').notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [index('notes_notebook_idx').on(table.notebookId, table.createdAt)]
+);

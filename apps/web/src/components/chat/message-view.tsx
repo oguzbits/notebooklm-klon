@@ -1,6 +1,7 @@
 import { type AnswerStatement, CHAT_ROLE, type ChatMessage } from '@nlm/shared';
 
 import { CitationChip } from '@/components/chat/citation-chip';
+import { SaveNoteButton } from '@/components/chat/save-note-button';
 import { numberCitations } from '@/lib/citations';
 
 const NO_ANSWER = 'Dazu habe ich in den ausgewählten Quellen keine belegte Antwort gefunden.';
@@ -66,6 +67,9 @@ export function MessageView({
         finished
         onOpenCitation={onOpenCitation}
       />
+      {message.statements.length > 0 && (
+        <SaveNoteButton notebookId={notebookId} messageId={message.id} />
+      )}
     </div>
   );
 }

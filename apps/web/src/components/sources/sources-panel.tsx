@@ -23,9 +23,6 @@ export function SourcesPanel({
 
   return (
     <div className="flex h-full flex-col gap-4 overflow-y-auto p-4">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-        Quellen
-      </h2>
       <AddSource notebookId={notebookId} />
       <Separator />
       <QueryBoundary

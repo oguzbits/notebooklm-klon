@@ -4,6 +4,7 @@ export const queryKeys = {
   notebooks: ['notebooks'] as const,
   sources: (notebookId: string) => ['notebooks', notebookId, 'sources'] as const,
   messages: (notebookId: string) => ['notebooks', notebookId, 'messages'] as const,
+  notes: (notebookId: string) => ['notebooks', notebookId, 'notes'] as const,
   chunk: (notebookId: string, chunkId: string) =>
     ['notebooks', notebookId, 'chunks', chunkId] as const,
   overview: (notebookId: string, sourceId: string) =>

@@ -14,6 +14,7 @@ export {
 } from './chat';
 export { type Answer, AnswerSchema, type AnswerStatement, AnswerStatementSchema } from './citation';
 export { type Health, HealthSchema } from './health';
+export { CreateNoteBodySchema, type Note, NoteListSchema, NoteSchema } from './note';
 export {
   CreateNotebookBodySchema,
   type Notebook,

@@ -2,6 +2,7 @@ import {
   CHAT_ROLE,
   type ChatMessage,
   type ChunkDetail,
+  type Note,
   SOURCE_KIND,
   SOURCE_STATUS,
   type SourceOverview,
@@ -61,5 +62,16 @@ export const overview = (overrides: Partial<SourceOverview> = {}): SourceOvervie
   summary: 'Das Projekt Nordlicht erforscht Polarlicht über Norwegen.',
   keyTopics: ['Polarlicht', 'Budget'],
   suggestedQuestions: ['Wer leitet das Projekt?', 'Wie hoch ist das Budget?'],
+  ...overrides,
+});
+
+export const NOTE_ID = '4c2d7e9f-2a58-4b1c-9d34-6e8f0a1b2c33';
+export const ANSWER_ID = '22222222-2222-4222-8222-222222222222';
+
+export const note = (overrides: Partial<Note> = {}): Note => ({
+  id: NOTE_ID,
+  messageId: ANSWER_ID,
+  statements: [{ text: 'Dr. Brandt leitet es.', chunkIds: [CHUNK_ID] }],
+  createdAt: CREATED_AT,
   ...overrides,
 });

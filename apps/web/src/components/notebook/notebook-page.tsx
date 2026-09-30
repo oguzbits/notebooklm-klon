@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 
 import { ChatPanel } from '@/components/chat/chat-panel';
+import { SidePanel } from '@/components/notebook/side-panel';
 import { ErrorNotice, ListSkeleton } from '@/components/query-boundary';
 import { ReaderPanel, type ReaderTarget } from '@/components/reader/reader-panel';
-import { SourcesPanel } from '@/components/sources/sources-panel';
 import { Button } from '@/components/ui/button';
 import { useNotebook } from '@/hooks/use-notebooks';
 import { ROUTES } from '@/lib/routes';
@@ -67,9 +67,10 @@ export function NotebookPage() {
               onClose={() => setReading(null)}
             />
           ) : (
-            <SourcesPanel
+            <SidePanel
               notebookId={notebook.data.id}
               onOpenSource={(sourceId) => setReading({ sourceId })}
+              onOpenCitation={(chunkId) => setReading({ chunkId })}
             />
           )}
         </aside>

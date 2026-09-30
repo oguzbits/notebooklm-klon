@@ -90,3 +90,13 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   (etwa 15.000 Token) und das im Prompt vermerkt.
 - **Vorschläge im leeren Chat:** aus den ersten drei ausgewählten, fertigen Quellen je zwei Fragen,
   höchstens vier. Schlägt die Erzeugung fehl, steht dort ein Hinweis und die Eingabe bleibt frei.
+
+## 2026-09-30 (Notizen)
+
+- **Eine Notiz ist eine Kopie einer gespeicherten Antwort, der Client schickt nur die Nachrichten-ID:**
+  `POST /api/notebooks/:id/notes` mit `{ messageId }` kopiert die Aussagen samt Zitaten in SQL aus
+  `chat_messages`. Ein Client kann so keine Zitate einschmuggeln, die der Server nicht geprüft hat
+  (Invariante 1). Dieselbe Antwort zweimal zu speichern ergibt dieselbe Notiz (`message_id` ist
+  eindeutig). Freitext-Notizen gibt es bewusst nicht; sie wären ohne Zitate und ohne Prüfung.
+- **Notizen links neben den Quellen (Tabs „Quellen“ / „Notizen“):** Die Leseansicht ersetzt weiterhin das
+  ganze linke Panel, damit ein Klick auf ein Zitat in einer Notiz dieselbe Ansicht öffnet wie im Chat.

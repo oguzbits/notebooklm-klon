@@ -43,6 +43,13 @@
       "when": 1790781305177,
       "tag": "0005_spotty_maverick",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790781588862,
+      "tag": "0006_lonely_grim_reaper",
+      "breakpoints": true
     }
   ]
 }

@@ -2,12 +2,14 @@ import { API_ERROR, CHAT_EVENT, type ChatEvent, SOURCE_STATUS } from '@nlm/share
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse, type JsonBodyType } from 'msw';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   answer,
+  ANSWER_ID,
   CHUNK_ID,
   chunkDetail,
+  note,
   NOTEBOOK_ID,
   OTHER_CHUNK_ID,
   overview,
@@ -37,6 +39,11 @@ const overviewOf = (sourceId: string, body: JsonBodyType, status = 200) =>
   http.get(`${base}/sources/${sourceId}/overview`, () => HttpResponse.json(body, { status }));
 
 describe('ChatPanel', () => {
+  // Answers ask for the notes, to show which are saved. Most tests do not care about them.
+  beforeEach(() => {
+    server.use(http.get(`${base}/notes`, () => HttpResponse.json([])));
+  });
+
   it('invites the user to ask the first question when the history is empty', async () => {
     server.use(sources(), history([]));
     renderChat();
@@ -220,5 +227,39 @@ describe('ChatPanel', () => {
 
     expect(await screen.findByText(/Vorschläge konnten nicht erstellt werden/)).toBeTruthy();
     expect(screen.getByLabelText('Deine Frage').hasAttribute('disabled')).toBe(false);
+  });
+
+  it('saves an answer as a note and then shows that it is saved', async () => {
+    let body: unknown;
+    let saved = false;
+    server.use(
+      sources(),
+      history([answer([{ text: 'Aussage.', chunkIds: [CHUNK_ID] }])]),
+      http.get(`${base}/notes`, () => HttpResponse.json(saved ? [note()] : [])),
+      http.post(`${base}/notes`, async ({ request }) => {
+        body = await request.json();
+        saved = true;
+        return HttpResponse.json(note(), { status: 201 });
+      })
+    );
+    renderChat();
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole('button', { name: 'Als Notiz speichern' }));
+
+    expect(await screen.findByText('Als Notiz gespeichert')).toBeTruthy();
+    expect(body).toEqual({ messageId: ANSWER_ID });
+  });
+
+  it('shows an answer that is already a note as saved', async () => {
+    server.use(
+      sources(),
+      history([answer([{ text: 'Aussage.', chunkIds: [CHUNK_ID] }])]),
+      http.get(`${base}/notes`, () => HttpResponse.json([note()]))
+    );
+    renderChat();
+
+    expect(await screen.findByText('Als Notiz gespeichert')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Als Notiz speichern' })).toBeNull();
   });
 });
