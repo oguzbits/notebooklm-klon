@@ -133,9 +133,10 @@ Voraussetzungen: Node 24, pnpm, Docker.
 pnpm install
 pnpm db:up                        # Postgres mit pgvector auf Port 54329
 cp .env.example .env.local        # Werte eintragen, siehe unten
-pnpm --filter @nlm/api dev        # API auf :3000
-pnpm --filter @nlm/web dev        # Web auf :5173, leitet /api an die API weiter
+pnpm dev                          # API auf :3000 und Web auf :5173 zusammen, Web leitet /api an die API weiter
 ```
+
+Einzeln geht es auch: `pnpm --filter @nlm/api dev` und `pnpm --filter @nlm/web dev`.
 
 In `.env.local` (Vorlage: [.env.example](.env.example)) sind nötig: `GEMINI_API_KEY`, die drei Modell-IDs `AI_MODEL`, `PARSE_MODEL`, `EMBEDDING_MODEL`, `DATABASE_URL`, `BETTER_AUTH_SECRET` (`openssl rand -base64 32`) und `BETTER_AUTH_URL` (`http://localhost:5173`). Die Modell-IDs stehen nie im Code, ein Wechsel ist eine Umgebungsvariable. Optional ist `PARSE_FALLBACK_MODEL`: ein größeres Modell für PDFs, die `PARSE_MODEL` als Wiedergabe geschützten Textes ablehnt (`RECITATION`). Die im Spike gewählten Modelle stehen in [docs/SPIKE-ERGEBNISSE.md](docs/SPIKE-ERGEBNISSE.md).
 
