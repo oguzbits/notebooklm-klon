@@ -1,0 +1,19 @@
+# Local Postgres with pgvector for the database tests (`pnpm db:up`, then `pnpm test:db`).
+# Data lives in memory (tmpfs) and is gone after `pnpm db:down`. The credentials are for this
+# throwaway container only.
+services:
+  db:
+    image: pgvector/pgvector:pg18
+    environment:
+      POSTGRES_USER: nlm
+      POSTGRES_PASSWORD: nlm
+      POSTGRES_DB: nlm_test
+    ports:
+      - '54329:5432'
+    tmpfs:
+      - /var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U nlm -d nlm_test']
+      interval: 2s
+      timeout: 3s
+      retries: 20

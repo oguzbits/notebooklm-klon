@@ -18,9 +18,12 @@
     "knip": "knip --include dependencies,unlisted,binaries,unresolved,files,cycles",
     "audit:duplication": "jscpd",
     "audit:magic": "node scripts/audit/audit-magic-strings.mjs",
-    "test": "vitest run",
+    "test": "vitest run --project shared --project api --project hooks --project web",
     "test:watch": "vitest",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:db": "vitest run --project db",
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

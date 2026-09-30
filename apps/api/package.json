@@ -7,15 +7,21 @@
     "dev": "tsx watch --env-file-if-exists=../../.env.local src/index.ts",
     "build": "esbuild src/index.ts --bundle --platform=node --format=esm --target=node24 --outfile=dist/index.js",
     "start": "node dist/index.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx --env-file-if-exists=../../.env.local src/db/migrate.ts"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.1",
     "@nlm/shared": "workspace:*",
+    "drizzle-orm": "^0.45.3",
     "hono": "^4.13.10",
+    "pg": "^8.23.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@types/pg": "^8.23.1",
+    "drizzle-kit": "^0.31.11",
     "esbuild": "^0.28.2",
     "tsx": "^4.23.15"
   }

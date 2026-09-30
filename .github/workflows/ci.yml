@@ -40,6 +40,31 @@ jobs:
           require-lockfile: true
       - run: pnpm test
 
+  test-db:
+    name: Tests (Postgres with pgvector)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg18
+        env:
+          POSTGRES_USER: nlm
+          POSTGRES_PASSWORD: nlm
+          POSTGRES_DB: nlm_test
+        ports:
+          - 54329:5432
+        options: >-
+          --health-cmd "pg_isready -U nlm -d nlm_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        with:
+          cache: true
+          require-lockfile: true
+      - run: pnpm test:db
+
   build:
     name: Build api and web
     runs-on: ubuntu-latest

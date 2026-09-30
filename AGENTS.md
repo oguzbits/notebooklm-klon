@@ -70,6 +70,8 @@ UI changes are inspected in a browser (chrome-devtools MCP or Playwright) before
 | ---------------------- | ----------------------------------------------------------------- |
 | `pnpm check`           | typecheck, lint, depcruise, knip, jscpd (2 %), magic-string audit |
 | `pnpm test`            | Vitest, offline                                                   |
+| `pnpm test:db`         | Postgres tests (needs `pnpm db:up`, Docker)                       |
+| `pnpm db:generate`     | drizzle-kit: new migration from `apps/api/src/db/schema.ts`       |
 | `pnpm format:check`    | Prettier (staged files are formatted by lint-staged)              |
 | `pnpm depcruise:graph` | writes `architecture.mmd` for the README                          |
 
