@@ -137,3 +137,9 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
 - **Abgebrochene Skriptläufe werden fortgesetzt:** `importLocalFiles` verarbeitet eine vorhandene Quelle,
   deren Upload noch gespeichert ist. Vorher blieb sie nach einem abgebrochenen Lauf für immer PENDING,
   und `pnpm eval:live` maß mit fünf von sieben Dokumenten weniger (44 % Trefferquote).
+- **RECITATION ist bei dem NIST-Scan kein Zufall, sondern eine Grenze:** Sechs Wiederholungen mit
+  `gemini-3.5-flash` ergaben dreimal RECITATION, einmal Erfolg und zweimal 503. Die Blockade hängt vom
+  Modell und vom Dokument ab, nicht vom Prompt. Ein Wiederholen bis zum Erfolg wäre langsam (20 bis 80 s
+  je Versuch) und unzuverlässig, deshalb wird nicht wiederholt. Stattdessen nimmt `pnpm eval:live` eine
+  nicht lesbare Datei aus der Wertung und nennt sie im Bericht; ihre Fragen zählen nicht als Fehlgriff der
+  Suche. Im Produkt erscheint so ein Dokument als "fehlgeschlagen" und lässt sich erneut hochladen.

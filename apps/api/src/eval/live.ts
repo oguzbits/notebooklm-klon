@@ -38,6 +38,12 @@ const option = (name: string): string | undefined => {
   return index >= 0 ? args[index + 1] : undefined;
 };
 
+/** The message at the end of the cause chain, e.g. the finish reason behind an ingest error. */
+function rootMessage(error: unknown): string {
+  if (!(error instanceof Error)) return '';
+  return error.cause instanceof Error ? rootMessage(error.cause) : error.message;
+}
+
 const env = parseEnv(process.env);
 const corpusDir = path.resolve(option('corpus') ?? path.join(REPO_ROOT, 'spikes/corpus'));
 const onlyIds = option('ids')?.split(',');
@@ -46,8 +52,8 @@ const pauseMs = Number(option('pause-ms') ?? DEFAULT_PAUSE_MS);
 const dataset = EvalDatasetSchema.parse(
   JSON.parse(readFileSync(path.join(import.meta.dirname, 'golden-questions.json'), 'utf8'))
 );
-const questions = dataset.filter((question) => !onlyIds || onlyIds.includes(question.id));
-if (questions.length === 0) throw new Error('No golden question matches --ids.');
+const selected = dataset.filter((question) => !onlyIds || onlyIds.includes(question.id));
+if (selected.length === 0) throw new Error('No golden question matches --ids.');
 
 await runMigrations(env.DATABASE_URL);
 const { db, pool } = createDb(env.DATABASE_URL);
@@ -61,17 +67,36 @@ const notebook = await createNotebook(db, EVAL_USER_ID, 'Eval');
 
 try {
   const fileNames = [
-    ...new Set(questions.flatMap((q) => q.expectedAnchors.map((a) => a.sourceFile))),
+    ...new Set(selected.flatMap((q) => q.expectedAnchors.map((a) => a.sourceFile))),
   ];
-  const files = fileNames.map((name) =>
-    toLocalFile(name, new Uint8Array(readFileSync(path.join(corpusDir, name))))
-  );
-  log({ level: 'info', msg: 'eval: reading corpus', files: files.length });
+  log({ level: 'info', msg: 'eval: reading corpus', files: fileNames.length });
 
-  await importLocalFiles(
-    { userId: EVAL_USER_ID, notebookId: notebook.id, files },
-    createLocalImportDeps(db, providers)
+  // One file at a time: a file the models refuse (seen with the scanned NIST paper, which ends in
+  // RECITATION) must not stop the run. It is named in the report, and its questions are left out
+  // instead of being scored as misses. A FAILED source is read again by the next run.
+  const deps = createLocalImportDeps(db, providers);
+  const unreadable: string[] = [];
+  for (const name of fileNames) {
+    const file = toLocalFile(name, new Uint8Array(readFileSync(path.join(corpusDir, name))));
+    try {
+      await importLocalFiles(
+        { userId: EVAL_USER_ID, notebookId: notebook.id, files: [file] },
+        deps
+      );
+    } catch (error) {
+      unreadable.push(name);
+      log({
+        level: 'error',
+        msg: 'eval: file not readable',
+        file: name,
+        reason: rootMessage(error),
+      });
+    }
+  }
+  const questions = selected.filter((q) =>
+    q.expectedAnchors.every((anchor) => !unreadable.includes(anchor.sourceFile))
   );
+  if (questions.length === 0) throw new Error('No corpus file could be read.');
 
   const scope = {
     userId: EVAL_USER_ID,
@@ -79,8 +104,9 @@ try {
     sourceIds: await selectedReadySourceIds(db, EVAL_USER_ID, notebook.id),
   };
   // A source that is not ready would silently lower every score that depends on it.
-  if (scope.sourceIds.length !== files.length) {
-    throw new Error(`Only ${scope.sourceIds.length} of ${files.length} corpus files are ready.`);
+  const expectedReady = fileNames.length - unreadable.length;
+  if (scope.sourceIds.length !== expectedReady) {
+    throw new Error(`Only ${scope.sourceIds.length} of ${expectedReady} corpus files are ready.`);
   }
   const ports = {
     embedQuery: providers.embedQuery,
@@ -109,7 +135,11 @@ try {
   }
 
   const summary = summarize(results);
-  const markdown = formatReport(results, summary);
+  const notRead =
+    unreadable.length === 0
+      ? ''
+      : `\n\nNicht gelesen (die Fragen dazu fehlen oben): ${unreadable.join(', ')}`;
+  const markdown = `${formatReport(results, summary)}${notRead}`;
   const stamp = new Date().toISOString().replaceAll(':', '-');
   const reports = path.join(REPO_ROOT, 'reports');
   mkdirSync(reports, { recursive: true });
