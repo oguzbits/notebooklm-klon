@@ -20,6 +20,8 @@ export function useChatHistory(notebookId: string) {
 /** The answer that is being written right now, before the server has saved it. */
 export interface LiveAnswer {
   question: string;
+  /** When the question was sent, for the time above it. */
+  askedAt: string;
   statements: AnswerStatement[];
 }
 
@@ -33,7 +35,7 @@ export function useAskQuestion(notebookId: string) {
 
   const mutation = useMutation({
     mutationFn: async (question: string) => {
-      setLive({ question, statements: [] });
+      setLive({ question, askedAt: new Date().toISOString(), statements: [] });
       for await (const event of streamChat(notebookId, question)) {
         if (event.type === CHAT_EVENT.STATEMENT) {
           const statement = { text: event.text, chunkIds: event.chunkIds };

@@ -22,6 +22,26 @@ export function relativeTime(iso: string, now: Date = new Date()): string {
   return date.format(new Date(iso));
 }
 
+const dayFormat = new Intl.DateTimeFormat('de-DE', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+});
+const clockFormat = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+const startOfDay = (value: Date) =>
+  new Date(value.getFullYear(), value.getMonth(), value.getDate());
+
+/** "Heute • 20:51" above a question: today, yesterday, or the plain date, with the time. */
+export function messageTime(iso: string, now: Date = new Date()): string {
+  const moment = new Date(iso);
+  const days = Math.round(
+    (startOfDay(now).getTime() - startOfDay(moment).getTime()) / (DAY_S * SECOND_MS)
+  );
+  const day = days === 0 ? 'Heute' : days === 1 ? 'Gestern' : dayFormat.format(moment);
+  return `${day} • ${clockFormat.format(moment)}`;
+}
+
 function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }

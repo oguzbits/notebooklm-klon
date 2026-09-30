@@ -12,7 +12,11 @@
   --radius: 1rem;
   /* The page, and on it the panels, the prompt bar and the dialogs. */
   --background: #faf9f9;
-  --foreground: #1b1b1c;
+  --foreground: #000000;
+  /* Reading text in the chat, the text of a source, and the small meta text (time, citation numbers). */
+  --body: #303030;
+  --doc: #1b1b1c;
+  --meta: #5e5e5e;
   --card: #ffffff;
   --card-foreground: #1b1b1c;
   --popover: #ffffff;
@@ -86,6 +90,9 @@
 .dark {
   --background: #0f0f0f;
   --foreground: #e6e6e6;
+  --body: #c7c7c7;
+  --doc: #f2f2f2;
+  --meta: #ababab;
   --card: #1f1f1f;
   --card-foreground: #e6e6e6;
   --popover: #1f1f1f;
@@ -149,6 +156,8 @@
   --radius-bubble: 40px;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-body: var(--body);
+  --color-meta: var(--meta);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
@@ -261,6 +270,7 @@
   line-height: 1.5rem;
   font-stretch: 100%;
   overflow-wrap: anywhere;
+  color: var(--doc);
 }
 .source-text > :first-child {
   margin-top: 0;

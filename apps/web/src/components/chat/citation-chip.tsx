@@ -27,7 +27,7 @@ export function CitationChip({ notebookId, chunkId, number, onOpen }: CitationCh
           type="button"
           onClick={() => onOpen(chunkId)}
           aria-label={`Quelle ${number} anzeigen`}
-          className="veil ml-1 inline-flex size-[22px] items-center justify-center rounded-full bg-secondary align-middle text-[0.6875rem] leading-4 font-[500] text-muted-foreground"
+          className="veil ml-1 inline-flex size-[22px] items-center justify-center rounded-full bg-secondary align-middle text-[0.6875rem] leading-4 font-[500] text-meta"
         >
           {number}
         </button>

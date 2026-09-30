@@ -33,7 +33,7 @@ export function CopyAnswerButton({ statements }: { statements: AnswerStatement[]
         tooltip={copied ? 'Kopiert' : 'Kopieren'}
         onClick={() => void copy()}
       >
-        {copied ? <Check className="size-6" /> : <Copy className="size-6" />}
+        {copied ? <Check /> : <Copy />}
       </Button>
       {failure !== null && (
         <span className="text-small text-destructive" role="alert">

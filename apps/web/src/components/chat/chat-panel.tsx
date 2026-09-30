@@ -123,7 +123,7 @@ export function ChatPanel({
                 ))}
                 {ask.live && (
                   <>
-                    <QuestionBubble text={ask.live.question} />
+                    <QuestionBubble text={ask.live.question} askedAt={ask.live.askedAt} />
                     <div className="pr-8">
                       <AnswerView
                         notebookId={notebookId}

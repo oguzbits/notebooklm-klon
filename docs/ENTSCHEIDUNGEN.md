@@ -248,3 +248,7 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   Quellen. Die Zahl zählt die Datenbank (`sourceCount` im Vertrag, ein Unterabfrage-Zähler je Notizbuch). Der
   Einleitungstext entfällt, er steht nicht im Original. Nicht übernommen: Filter-Tabs „Alle / Entdecken /
   Sammlungen“, der Umschalter Raster/Liste, „Empfohlene Notebooks“ (Googles Inhalte).
+- **Textfarben wie im Original (2026-10-01):** Gemessen sind drei Töne: UI-Text (hell #000, dunkel #e6e6e6), der
+  Fließtext im Chat (#303030 / #c7c7c7, Token `--body`), der Text einer Quelle (#1b1b1c / #f2f2f2, `--doc`) und
+  das Kleingedruckte wie Uhrzeit und Zitat-Zahl (#5e5e5e / #ababab, `--meta`). Über jeder Frage steht wie im
+  Original „Heute • 20:51“ (gestern, sonst das Datum).
