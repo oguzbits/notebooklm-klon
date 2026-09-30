@@ -18,6 +18,7 @@ import { runIngestJob, type SubmitPorts } from './ingestion/submit';
 import { createJobQueue } from './jobs/queue';
 import { log } from './logger';
 import { createParseSource } from './parsing/parse-source';
+import { serveWeb } from './web/serve-web';
 
 let env;
 try {
@@ -99,6 +100,8 @@ const app = createApp({
       }),
   },
 });
+
+if (env.WEB_DIST_DIR) serveWeb(app, env.WEB_DIST_DIR);
 
 serve({ fetch: app.fetch, port: env.PORT }, (info) => {
   log({ level: 'info', msg: 'listening', port: info.port });

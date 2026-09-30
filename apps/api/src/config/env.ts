@@ -20,6 +20,8 @@ export const EnvSchema = DatabaseEnvSchema.extend({
   BETTER_AUTH_SECRET: z.string().trim().min(MIN_AUTH_SECRET_CHARS),
   // Public origin of the app, also the only origin allowed to send authenticated requests.
   BETTER_AUTH_URL: z.url({ protocol: /^https?$/ }),
+  // Folder of the built web app. Set: the API serves it (one container). Unset: API only.
+  WEB_DIST_DIR: z.string().trim().min(1).optional(),
 });
 
 // The database tests reset the whole schema, so they refuse any database not named *_test.
@@ -41,6 +43,7 @@ export const OfflineServerEnvSchema = EnvSchema.pick({
   PORT: true,
   BETTER_AUTH_SECRET: true,
   BETTER_AUTH_URL: true,
+  WEB_DIST_DIR: true,
 });
 
 export type Env = z.infer<typeof EnvSchema>;

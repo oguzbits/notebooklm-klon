@@ -33,6 +33,14 @@ describe('parseEnv', () => {
     });
   });
 
+  it('serves no web app unless WEB_DIST_DIR is set, and rejects a blank value', () => {
+    expect(parseEnv(VALID).WEB_DIST_DIR).toBeUndefined();
+    expect(parseEnv({ ...VALID, WEB_DIST_DIR: 'apps/web/dist' }).WEB_DIST_DIR).toBe(
+      'apps/web/dist'
+    );
+    expect(() => parseEnv({ ...VALID, WEB_DIST_DIR: '  ' })).toThrow(/WEB_DIST_DIR/);
+  });
+
   it('coerces PORT from a string', () => {
     expect(parseEnv({ ...VALID, PORT: '8080' }).PORT).toBe(8080);
   });

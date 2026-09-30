@@ -21,6 +21,7 @@ import { systemDeps } from '../import/system-deps';
 import { runIngestJob, type SubmitPorts } from '../ingestion/submit';
 import { log } from '../logger';
 import { createParseSource } from '../parsing/parse-source';
+import { serveWeb } from '../web/serve-web';
 import { extractiveAnswer, fakeOverview, hashEmbedding, trickle } from './fakes';
 
 const env = parseOfflineServerEnv(process.env);
@@ -76,6 +77,8 @@ const app = createApp({
       }),
   },
 });
+
+if (env.WEB_DIST_DIR) serveWeb(app, env.WEB_DIST_DIR);
 
 serve({ fetch: app.fetch, port: env.PORT }, (info) => {
   log({ level: 'info', msg: 'offline server listening', port: info.port });
