@@ -1,4 +1,5 @@
-# Local Postgres with pgvector for the database tests (`pnpm db:up`, then `pnpm test:db`).
+# Local Postgres with pgvector for the database tests (`pnpm db:up`, then `pnpm test:db`) and the
+# browser tests (`pnpm e2e`, database nlm_e2e).
 # Data lives in memory (tmpfs) and is gone after `pnpm db:down`. The credentials are for this
 # throwaway container only.
 services:
@@ -12,6 +13,8 @@ services:
       - '54329:5432'
     tmpfs:
       - /var/lib/postgresql
+    volumes:
+      - ./docker/init-e2e.sql:/docker-entrypoint-initdb.d/init-e2e.sql:ro
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U nlm -d nlm_test']
       interval: 2s

@@ -23,7 +23,8 @@
     "prepare": "husky",
     "test:db": "vitest run --project db",
     "db:up": "docker compose up -d --wait",
-    "db:down": "docker compose down"
+    "db:down": "docker compose down",
+    "e2e": "pnpm --filter @nlm/web exec playwright test"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -76,7 +77,9 @@
         ],
         "entry": [
           "src/**/*.test.{ts,tsx}",
-          "src/test/setup.ts"
+          "src/test/setup.ts",
+          "e2e/**/*.e2e.ts",
+          "playwright.config.ts"
         ]
       }
     }
