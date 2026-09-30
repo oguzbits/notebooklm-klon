@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { describe, expect, it } from 'vitest';
@@ -36,23 +35,10 @@ describe('ProtectedLayout', () => {
     expect(await screen.findByText('Anmeldeseite')).toBeTruthy();
   });
 
-  it('shows the content and the email address of the signed-in user', async () => {
+  it('shows the content for a signed-in user', async () => {
     server.use(http.get('*/api/auth/get-session', () => HttpResponse.json({ user: USER })));
     renderLayout();
 
     expect(await screen.findByText('Geschützter Inhalt')).toBeTruthy();
-    expect(screen.getByText('anna@example.test')).toBeTruthy();
-  });
-
-  it('leaves for the sign-in after signing out', async () => {
-    server.use(
-      http.get('*/api/auth/get-session', () => HttpResponse.json({ user: USER })),
-      http.post('*/api/auth/sign-out', () => HttpResponse.json({ success: true }))
-    );
-    renderLayout();
-
-    await userEvent.setup().click(await screen.findByRole('button', { name: 'Abmelden' }));
-
-    expect(await screen.findByText('Anmeldeseite')).toBeTruthy();
   });
 });

@@ -5,6 +5,8 @@ export const queryKeys = {
   sources: (notebookId: string) => ['notebooks', notebookId, 'sources'] as const,
   messages: (notebookId: string) => ['notebooks', notebookId, 'messages'] as const,
   notes: (notebookId: string) => ['notebooks', notebookId, 'notes'] as const,
+  studio: (notebookId: string) => ['notebooks', notebookId, 'studio'] as const,
+  chatConfig: (notebookId: string) => ['notebooks', notebookId, 'chat-config'] as const,
   chunk: (notebookId: string, chunkId: string) =>
     ['notebooks', notebookId, 'chunks', chunkId] as const,
   overview: (notebookId: string, sourceId: string) =>

@@ -1,86 +1,156 @@
-import { ArrowLeft } from 'lucide-react';
+import { FileText, MessageSquare, Shapes } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 
 import { ChatPanel } from '@/components/chat/chat-panel';
-import { SidePanel } from '@/components/notebook/side-panel';
+import { ChatSettingsDialog } from '@/components/chat/chat-settings-dialog';
+import { AppHeader } from '@/components/layout/app-header';
+import { Panel } from '@/components/notebook/panel';
 import { ErrorNotice, ListSkeleton } from '@/components/query-boundary';
 import { ReaderPanel, type ReaderTarget } from '@/components/reader/reader-panel';
+import { SourcesPanel } from '@/components/sources/sources-panel';
+import { StudioPanel } from '@/components/studio/studio-panel';
 import { Button } from '@/components/ui/button';
 import { useNotebook } from '@/hooks/use-notebooks';
 import { ROUTES } from '@/lib/routes';
+import { cn } from '@/lib/utils';
 
-/** One notebook: sources (or the reader) on the left, the conversation on the right. */
+const COLUMN = { SOURCES: 'SOURCES', CHAT: 'CHAT', STUDIO: 'STUDIO' } as const;
+type Column = (typeof COLUMN)[keyof typeof COLUMN];
+
+const COLUMN_TAB: { column: Column; label: string; icon: typeof FileText }[] = [
+  { column: COLUMN.SOURCES, label: 'Quellen', icon: FileText },
+  { column: COLUMN.CHAT, label: 'Chat', icon: MessageSquare },
+  { column: COLUMN.STUDIO, label: 'Studio', icon: Shapes },
+];
+
+const SIDE_WIDTH = '21rem';
+const STUDIO_WIDTH = '23rem';
+const RAIL_WIDTH = '3.5rem';
+
+/**
+ * One notebook in three columns like NotebookLM: sources (or the source text) on the left, the
+ * conversation in the middle, the Studio and the notes on the right. Below the wide layout one
+ * column shows at a time, switched from a bar at the bottom.
+ */
 export function NotebookPage() {
   const { notebookId = '' } = useParams();
   const notebook = useNotebook(notebookId);
   const [reading, setReading] = useState<ReaderTarget | null>(null);
+  const [sourcesOpen, setSourcesOpen] = useState(true);
+  const [studioOpen, setStudioOpen] = useState(true);
+  const [column, setColumn] = useState<Column>(COLUMN.CHAT);
 
   if (notebook.isPending) {
     return (
-      <div className="mx-auto max-w-xl p-6">
-        <ListSkeleton />
-      </div>
+      <>
+        <AppHeader />
+        <div className="mx-auto w-full max-w-xl p-6">
+          <ListSkeleton />
+        </div>
+      </>
     );
   }
   if (notebook.isError) {
     return (
-      <div className="mx-auto max-w-xl p-6">
-        <ErrorNotice
-          error={notebook.error}
-          onRetry={() => void notebook.refetch()}
-          retrying={notebook.isFetching}
-        />
-      </div>
+      <>
+        <AppHeader />
+        <div className="mx-auto w-full max-w-xl p-6">
+          <ErrorNotice
+            error={notebook.error}
+            onRetry={() => void notebook.refetch()}
+            retrying={notebook.isFetching}
+          />
+        </div>
+      </>
     );
   }
   if (!notebook.data) {
     return (
-      <div className="mx-auto flex max-w-xl flex-col items-start gap-3 p-6">
-        <h1 className="text-xl font-semibold">Notizbuch nicht gefunden</h1>
-        <p className="text-muted-foreground">
-          Dieses Notizbuch gibt es nicht (mehr) in deinem Konto.
-        </p>
-        <Button asChild variant="outline">
-          <Link to={ROUTES.HOME}>Zu deinen Notizbüchern</Link>
-        </Button>
-      </div>
+      <>
+        <AppHeader />
+        <div className="mx-auto flex w-full max-w-xl flex-col items-start gap-3 p-6">
+          <h1 className="text-xl font-medium">Notizbuch nicht gefunden</h1>
+          <p className="text-muted-foreground">
+            Dieses Notizbuch gibt es nicht (mehr) in deinem Konto.
+          </p>
+          <Button asChild variant="outline">
+            <Link to={ROUTES.HOME}>Zu deinen Notizbüchern</Link>
+          </Button>
+        </div>
+      </>
     );
   }
 
+  const { id, title } = notebook.data;
+  const openReader = (target: ReaderTarget) => {
+    setReading(target);
+    setSourcesOpen(true);
+    setColumn(COLUMN.SOURCES);
+  };
+  const hiddenBelowWide = (own: Column) => (column === own ? '' : 'max-lg:hidden');
+
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2 border-b px-4 py-2">
-        <Button asChild variant="ghost" size="icon-sm" aria-label="Zu deinen Notizbüchern">
-          <Link to={ROUTES.HOME}>
-            <ArrowLeft />
-          </Link>
-        </Button>
-        <h1 className="truncate text-base font-semibold">{notebook.data.title}</h1>
-      </div>
-      <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,2fr)_minmax(0,3fr)] lg:grid-cols-[minmax(20rem,26rem)_1fr] lg:grid-rows-1">
-        <aside className="min-h-0 border-b bg-card lg:border-r lg:border-b-0">
+    <>
+      <AppHeader
+        title={<h1 className="truncate text-lg font-medium sm:text-xl">{title}</h1>}
+        actions={<ChatSettingsDialog notebookId={id} />}
+      />
+      <div
+        className="grid min-h-0 flex-1 gap-3 px-3 pb-3 max-lg:grid-cols-1 sm:px-4 sm:pb-4 lg:[grid-template-columns:var(--sources)_minmax(0,1fr)_var(--studio)]"
+        style={
+          {
+            '--sources': sourcesOpen ? SIDE_WIDTH : RAIL_WIDTH,
+            '--studio': studioOpen ? STUDIO_WIDTH : RAIL_WIDTH,
+          } as React.CSSProperties
+        }
+      >
+        <Panel
+          title="Quellen"
+          side="left"
+          collapsed={!sourcesOpen}
+          onToggle={() => setSourcesOpen((value) => !value)}
+          className={hiddenBelowWide(COLUMN.SOURCES)}
+        >
           {reading ? (
-            <ReaderPanel
-              notebookId={notebook.data.id}
-              target={reading}
-              onClose={() => setReading(null)}
-            />
+            <ReaderPanel notebookId={id} target={reading} onClose={() => setReading(null)} />
           ) : (
-            <SidePanel
-              notebookId={notebook.data.id}
-              onOpenSource={(sourceId) => setReading({ sourceId })}
-              onOpenCitation={(chunkId) => setReading({ chunkId })}
-            />
+            <SourcesPanel notebookId={id} onOpenSource={(sourceId) => openReader({ sourceId })} />
           )}
-        </aside>
-        <section className="min-h-0">
-          <ChatPanel
-            notebookId={notebook.data.id}
-            onOpenCitation={(chunkId) => setReading({ chunkId })}
-          />
-        </section>
+        </Panel>
+        <Panel title="Chat" className={hiddenBelowWide(COLUMN.CHAT)}>
+          <ChatPanel notebookId={id} onOpenCitation={(chunkId) => openReader({ chunkId })} />
+        </Panel>
+        <Panel
+          title="Studio"
+          side="right"
+          collapsed={!studioOpen}
+          onToggle={() => setStudioOpen((value) => !value)}
+          className={hiddenBelowWide(COLUMN.STUDIO)}
+        >
+          <StudioPanel notebookId={id} onOpenCitation={(chunkId) => openReader({ chunkId })} />
+        </Panel>
       </div>
-    </div>
+      <nav
+        aria-label="Bereiche"
+        className="flex shrink-0 justify-around gap-1 bg-card px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] lg:hidden"
+      >
+        {COLUMN_TAB.map(({ column: own, label, icon: Icon }) => (
+          <button
+            key={own}
+            type="button"
+            aria-current={column === own ? 'page' : undefined}
+            onClick={() => setColumn(own)}
+            className={cn(
+              'flex flex-1 flex-col items-center gap-1 rounded-2xl px-3 py-1.5 text-xs font-medium text-muted-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none',
+              column === own && 'bg-accent text-accent-foreground'
+            )}
+          >
+            <Icon className="size-5" aria-hidden />
+            {label}
+          </button>
+        ))}
+      </nav>
+    </>
   );
 }

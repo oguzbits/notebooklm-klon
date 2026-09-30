@@ -23,7 +23,7 @@ interface SourceRowProps {
 
 function KindIcon({ kind }: { kind: SourceKind }) {
   const Icon = kind === SOURCE_KIND.URL ? Globe : FileText;
-  return <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />;
+  return <Icon className="size-5 shrink-0 text-primary" aria-hidden />;
 }
 
 /** One source: a checkbox to use it for answers, its title (opens the text) and its status. */
@@ -41,18 +41,11 @@ export function SourceRow({
   const working = !ready && !failed;
 
   return (
-    <li className="flex items-start gap-2 rounded-md px-2 py-2 hover:bg-accent/50">
-      <Checkbox
-        className="mt-1"
-        checked={source.selected && ready}
-        disabled={!ready || busy}
-        onCheckedChange={(checked) => onToggle(checked === true)}
-        aria-label={`„${source.title}“ für Antworten verwenden`}
-      />
+    <li className="flex items-start gap-2 rounded-2xl px-3 py-2.5 hover:bg-secondary">
       <div className="min-w-0 flex-1">
         <button
           type="button"
-          className="flex w-full items-center gap-2 text-left text-sm font-medium disabled:cursor-default"
+          className="flex w-full items-center gap-3 rounded-full text-left text-sm font-medium focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none disabled:cursor-default"
           disabled={!ready}
           onClick={onOpen}
           title={ready ? 'Text der Quelle anzeigen' : undefined}
@@ -104,6 +97,13 @@ export function SourceRow({
       >
         <Trash2 />
       </Button>
+      <Checkbox
+        className="mt-1"
+        checked={source.selected && ready}
+        disabled={!ready || busy}
+        onCheckedChange={(checked) => onToggle(checked === true)}
+        aria-label={`„${source.title}“ für Antworten verwenden`}
+      />
     </li>
   );
 }

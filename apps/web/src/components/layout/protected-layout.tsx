@@ -1,11 +1,10 @@
 import { Navigate, Outlet } from 'react-router';
 
-import { AppHeader } from '@/components/layout/app-header';
 import { ErrorNotice, ListSkeleton } from '@/components/query-boundary';
 import { useSession } from '@/hooks/use-session';
 import { ROUTES } from '@/lib/routes';
 
-/** Everything behind the sign-in: shows the header, sends signed-out visitors to the sign-in. */
+/** Everything behind the sign-in: sends signed-out visitors to the sign-in. Pages draw their own header. */
 export function ProtectedLayout() {
   const session = useSession();
 
@@ -31,10 +30,7 @@ export function ProtectedLayout() {
 
   return (
     <div className="flex h-dvh flex-col">
-      <AppHeader email={session.data.email} />
-      <main className="min-h-0 flex-1">
-        <Outlet />
-      </main>
+      <Outlet />
     </div>
   );
 }

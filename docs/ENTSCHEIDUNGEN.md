@@ -161,3 +161,12 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
 - **Chat-Einstellungen pro Notizbuch** (`notebooks.chat_config`, null = Standard): Stil, Länge, Sprache.
   Die eigene Anweisung des Nutzers steht im Systemprompt hinter den Regeln, die die Zitate sichern. Sie kann
   sie nicht aufheben, denn der Server prüft jedes Zitat unabhängig vom Prompt.
+- **Nachbau-Oberfläche:** Dreispaltig (Quellen | Chat | Studio) auf hellblauem Grund mit weißen, stark
+  gerundeten Flächen, Pillen-Buttons, Google Sans Flex (OFL, über Fontsource) und den Blautönen von Material 3.
+  Hell und Dunkel folgen dem System (`lib/theme.ts`). Die Werte sind aus dem Gedächtnis der Google-Palette
+  übernommen, nicht aus NotebookLM ausgelesen (belegt ist nur der dreispaltige Aufbau). Unter der Breite von
+  `lg` zeigt eine Leiste unten einen Bereich nach dem anderen. Icons bleiben Lucide (Google nutzt Material
+  Symbols). Das Logo ist eine eigene Zeichnung (`components/brand/logo.tsx`), die das Original ersetzen
+  kann; auf Anmeldung und Notizbuchliste steht, dass es ein Nachbau ist (`lib/notice.ts`).
+- **Notizen wohnen im Studio**, nicht in einem eigenen Reiter. Quellen werden über einen Dialog hinzugefügt
+  (Datei, Webseite, kopierter Text). Kopierter Text wird als `.txt` hochgeladen: kein neuer Endpunkt.

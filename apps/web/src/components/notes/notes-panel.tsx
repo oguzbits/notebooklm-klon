@@ -21,7 +21,7 @@ import { describeError } from '@/lib/messages';
 const dateFormat = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' });
 
 /** Saved answers. The chips in a note lead to the passages like they do in the chat. */
-export function NotesPanel({
+export function NotesSection({
   notebookId,
   onOpenCitation,
 }: {
@@ -33,7 +33,10 @@ export function NotesPanel({
   const [toDelete, setToDelete] = useState<string | null>(null);
 
   return (
-    <div className="flex h-full flex-col gap-3 overflow-y-auto p-4">
+    <section aria-labelledby="notes-heading" className="flex flex-col gap-3">
+      <h3 id="notes-heading" className="text-base font-medium">
+        Notizen
+      </h3>
       <QueryBoundary
         query={notes}
         isEmpty={(list) => list.length === 0}
@@ -50,7 +53,7 @@ export function NotesPanel({
         {(list) => (
           <ul className="flex flex-col gap-3">
             {list.map((note) => (
-              <li key={note.id} className="rounded-lg border bg-background p-3 text-sm">
+              <li key={note.id} className="rounded-2xl bg-secondary p-4 text-sm">
                 <AnswerView
                   notebookId={notebookId}
                   statements={note.statements}
@@ -99,6 +102,6 @@ export function NotesPanel({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </section>
   );
 }

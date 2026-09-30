@@ -26,6 +26,7 @@ test('from sign-up to a cited passage, a note and back out', async ({ page }) =>
   await page.getByRole('link', { name: /Smoke-Test/ }).click();
 
   // A refused file explains itself; a text file is read.
+  await page.getByRole('button', { name: 'Quelle hinzufügen' }).click();
   await page.locator('input[type=file]').setInputFiles(path.join(FIXTURES, 'unsupported.png'));
   await expect(page.getByText(/Dateiformat wird nicht unterstützt/)).toBeVisible();
   await page.locator('input[type=file]').setInputFiles(path.join(FIXTURES, 'nordlicht.txt'));
@@ -51,14 +52,21 @@ test('from sign-up to a cited passage, a note and back out', async ({ page }) =>
   await page.getByRole('button', { name: 'Als Notiz speichern' }).click();
   await expect(page.getByText('Als Notiz gespeichert')).toBeVisible();
   await page.getByRole('button', { name: /Zurück zu den Quellen/ }).click();
-  await page.getByRole('tab', { name: 'Notizen' }).click();
   await expect(page.getByRole('button', { name: 'Notiz löschen' })).toBeVisible();
+
+  // The Studio makes flashcards from the source; every card has a passage behind it.
+  await page.getByRole('button', { name: 'Karteikarten', exact: true }).click();
+  await expect(page.getByText(/Karte 1 von/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Quelle 1 anzeigen' }).last()).toBeVisible();
+  await page.getByRole('button', { name: 'Zurück zum Studio' }).click();
+  await expect(page.getByText(/Karteikarten · \d+ Karte/)).toBeVisible();
 
   // The conversation survives a reload.
   await page.reload();
   await expect(page.getByText('Wer leitet das Projekt Nordlicht?')).toBeVisible();
 
   // Sign out.
-  await page.getByRole('button', { name: 'Abmelden' }).click();
+  await page.getByRole('button', { name: 'Konto' }).click();
+  await page.getByRole('menuitem', { name: 'Abmelden' }).click();
   await expect(page).toHaveURL(/\/anmelden$/);
 });

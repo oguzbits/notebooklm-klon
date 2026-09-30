@@ -1,68 +1,83 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import '@fontsource-variable/google-sans-flex';
 
 @custom-variant dark (&:is(.dark *));
 
 /* Semantic tokens only: components use bg-primary, text-muted-foreground and so on, never a raw
    palette color. Light and dark differ here and nowhere else. */
 :root {
-  --radius: 0.625rem;
-  --background: oklch(0.985 0.004 95);
-  --foreground: oklch(0.22 0.02 265);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.02 265);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.02 265);
-  --primary: oklch(0.46 0.13 262);
-  --primary-foreground: oklch(0.985 0.004 95);
-  --secondary: oklch(0.955 0.008 95);
-  --secondary-foreground: oklch(0.28 0.03 265);
-  --muted: oklch(0.955 0.008 95);
-  --muted-foreground: oklch(0.5 0.02 265);
-  --accent: oklch(0.94 0.02 262);
-  --accent-foreground: oklch(0.3 0.08 262);
-  --destructive: oklch(0.55 0.21 27);
-  --border: oklch(0.91 0.008 95);
-  --input: oklch(0.88 0.01 95);
-  --ring: oklch(0.6 0.12 262);
+  --radius: 1rem;
+  /* The page and, on it, the white panels. Values follow Google's Material 3 palette (the blues of
+     Gmail and Gemini); they are an approximation of NotebookLM, not taken from its source. */
+  --background: #f0f4f9;
+  --foreground: #1f1f1f;
+  --card: #ffffff;
+  --card-foreground: #1f1f1f;
+  --popover: #ffffff;
+  --popover-foreground: #1f1f1f;
+  --primary: #0b57d0;
+  --primary-foreground: #ffffff;
+  --secondary: #e9eef6;
+  --secondary-foreground: #1f1f1f;
+  --muted: #f0f4f9;
+  --muted-foreground: #444746;
+  --accent: #d3e3fd;
+  --accent-foreground: #041e49;
+  --destructive: #b3261e;
+  --border: #e1e3e1;
+  --input: #747775;
+  --ring: #0b57d0;
   /* Highlight of a cited passage in the reader, and the status colors of a source. */
-  --highlight: oklch(0.93 0.09 95);
-  --highlight-foreground: oklch(0.25 0.03 95);
-  --success: oklch(0.55 0.13 155);
-  --warning: oklch(0.62 0.14 70);
+  --highlight: #fde293;
+  --highlight-foreground: #3c2f00;
+  --success: #146c2e;
+  --warning: #8c5000;
+  /* Soft backgrounds for the notebook cards. */
+  --tone-1: #d3e3fd;
+  --tone-2: #c4eed0;
+  --tone-3: #ffe7a0;
+  --tone-4: #fad2e1;
 }
 
 .dark {
-  --background: oklch(0.19 0.015 265);
-  --foreground: oklch(0.95 0.005 95);
-  --card: oklch(0.23 0.018 265);
-  --card-foreground: oklch(0.95 0.005 95);
-  --popover: oklch(0.25 0.02 265);
-  --popover-foreground: oklch(0.95 0.005 95);
-  --primary: oklch(0.72 0.13 262);
-  --primary-foreground: oklch(0.19 0.015 265);
-  --secondary: oklch(0.28 0.02 265);
-  --secondary-foreground: oklch(0.95 0.005 95);
-  --muted: oklch(0.28 0.02 265);
-  --muted-foreground: oklch(0.7 0.02 265);
-  --accent: oklch(0.32 0.05 262);
-  --accent-foreground: oklch(0.95 0.005 95);
-  --destructive: oklch(0.7 0.19 22);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 16%);
-  --ring: oklch(0.65 0.12 262);
-  --highlight: oklch(0.42 0.08 95);
-  --highlight-foreground: oklch(0.96 0.01 95);
-  --success: oklch(0.72 0.14 155);
-  --warning: oklch(0.78 0.13 75);
+  --background: #131314;
+  --foreground: #e3e3e3;
+  --card: #1e1f20;
+  --card-foreground: #e3e3e3;
+  --popover: #282a2c;
+  --popover-foreground: #e3e3e3;
+  --primary: #a8c7fa;
+  --primary-foreground: #062e6f;
+  --secondary: #282a2c;
+  --secondary-foreground: #e3e3e3;
+  --muted: #282a2c;
+  --muted-foreground: #c4c7c5;
+  --accent: #0842a0;
+  --accent-foreground: #d3e3fd;
+  --destructive: #f2b8b5;
+  --border: #444746;
+  --input: #8e918f;
+  --ring: #a8c7fa;
+  --highlight: #5b4a00;
+  --highlight-foreground: #fde293;
+  --success: #81c995;
+  --warning: #fdd663;
+  --tone-1: #1b3a6b;
+  --tone-2: #1d4a2c;
+  --tone-3: #53420a;
+  --tone-4: #5a2a42;
 }
 
 @theme inline {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans:
+    'Google Sans Flex Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -85,6 +100,10 @@
   --color-highlight-foreground: var(--highlight-foreground);
   --color-success: var(--success);
   --color-warning: var(--warning);
+  --color-tone-1: var(--tone-1);
+  --color-tone-2: var(--tone-2);
+  --color-tone-3: var(--tone-3);
+  --color-tone-4: var(--tone-4);
 }
 
 @layer base {
@@ -94,4 +113,18 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+}
+
+/* Browser surfaces that belong to the design too: selection, scrollbars, the caret. */
+::selection {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+input,
+textarea {
+  caret-color: var(--primary);
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--muted-foreground) 35%, transparent) transparent;
 }

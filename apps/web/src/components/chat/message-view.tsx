@@ -1,6 +1,7 @@
 import { type AnswerStatement, CHAT_ROLE, type ChatMessage } from '@nlm/shared';
 
 import { CitationChip } from '@/components/chat/citation-chip';
+import { CopyAnswerButton } from '@/components/chat/copy-answer-button';
 import { SaveNoteButton } from '@/components/chat/save-note-button';
 import { numberCitations } from '@/lib/citations';
 
@@ -42,7 +43,7 @@ export function AnswerView({ notebookId, statements, finished, onOpenCitation }:
 export function QuestionBubble({ text }: { text: string }) {
   return (
     <div className="flex justify-end">
-      <p className="max-w-[85%] rounded-2xl rounded-br-sm bg-primary px-4 py-2 text-primary-foreground">
+      <p className="max-w-[85%] rounded-3xl rounded-br-lg bg-accent px-5 py-3 text-accent-foreground">
         {text}
       </p>
     </div>
@@ -68,7 +69,10 @@ export function MessageView({
         onOpenCitation={onOpenCitation}
       />
       {message.statements.length > 0 && (
-        <SaveNoteButton notebookId={notebookId} messageId={message.id} />
+        <div className="mt-1 flex flex-wrap items-center gap-1">
+          <CopyAnswerButton statements={message.statements} />
+          <SaveNoteButton notebookId={notebookId} messageId={message.id} />
+        </div>
       )}
     </div>
   );

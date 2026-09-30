@@ -1,7 +1,7 @@
-import { BookOpenText } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
 import { Navigate } from 'react-router';
 
+import { Logo } from '@/components/brand/logo';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { useAuthenticate, useSession } from '@/hooks/use-session';
 import { AUTH_FAILURE, AuthError } from '@/lib/auth';
 import { AUTH_MESSAGE } from '@/lib/messages';
+import { IMITATION_NOTICE } from '@/lib/notice';
 import { ROUTES } from '@/lib/routes';
 
 const MIN_PASSWORD_LENGTH = 8;
@@ -34,12 +35,12 @@ export function AuthPage() {
   const failure = authenticate.error;
 
   return (
-    <div className="flex min-h-dvh items-center justify-center p-4">
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-4 p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <div className="mb-2 flex items-center gap-2 text-primary">
-            <BookOpenText className="size-6" aria-hidden />
-            <span className="font-semibold">Notizbücher</span>
+          <div className="mb-2 flex items-center gap-2">
+            <Logo />
+            <span className="text-xl font-medium">NotebookLM</span>
           </div>
           <CardTitle>
             <h1 className="text-xl">{signingUp ? 'Konto erstellen' : 'Anmelden'}</h1>
@@ -97,6 +98,7 @@ export function AuthPage() {
           </form>
         </CardContent>
       </Card>
+      <p className="max-w-sm text-center text-xs text-muted-foreground">{IMITATION_NOTICE}</p>
     </div>
   );
 }

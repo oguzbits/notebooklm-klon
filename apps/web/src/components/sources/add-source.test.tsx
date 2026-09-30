@@ -56,6 +56,31 @@ describe('AddSource', () => {
     );
   });
 
+  it('sends pasted text as a text file with its title', async () => {
+    const uploads: File[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_input: string, init: { body: FormData }) => {
+        uploads.push(init.body.get('file') as File);
+        return Response.json(
+          { sourceId: '9b2c7d6e-1f43-4c8a-8a3b-5e7a8f0c1d22', action: SUBMIT_ACTION.CREATED },
+          { status: 202 }
+        );
+      })
+    );
+    const onAdded = vi.fn();
+    renderWithProviders(<AddSource notebookId={NOTEBOOK_ID} onAdded={onAdded} />);
+    const user = userEvent.setup();
+
+    await user.type(screen.getByLabelText('Titel des Textes'), 'Protokoll');
+    await user.type(screen.getByLabelText('Oder kopierter Text'), 'Dr. Brandt leitet es.');
+    await user.click(screen.getByRole('button', { name: 'Text hinzufügen' }));
+
+    await vi.waitFor(() => expect(onAdded).toHaveBeenCalled());
+    expect(uploads[0]?.name).toBe('Protokoll.txt');
+    expect(await uploads[0]?.text()).toBe('Dr. Brandt leitet es.');
+  });
+
   it('shows why an address was refused', async () => {
     server.use(
       http.post(`*/api/notebooks/${NOTEBOOK_ID}/sources/url`, () =>

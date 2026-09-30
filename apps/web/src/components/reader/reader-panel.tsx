@@ -42,7 +42,7 @@ export function ReaderPanel({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2 border-b p-3">
+      <div className="flex items-center gap-2 px-3 pb-2">
         <Button variant="ghost" size="sm" onClick={onClose}>
           <ArrowLeft />
           Zurück zu den Quellen
@@ -69,7 +69,7 @@ export function ReaderPanel({
         {source.data && (
           <article className="flex flex-col gap-3">
             <header>
-              <h2 className="text-lg font-semibold">{source.data.title}</h2>
+              <h3 className="text-lg font-medium">{source.data.title}</h3>
               {source.data.sourceUrl && (
                 <a
                   href={source.data.sourceUrl}
@@ -87,7 +87,7 @@ export function ReaderPanel({
               {parts.highlight && (
                 <mark
                   ref={mark}
-                  className="rounded-sm bg-highlight px-0.5 text-highlight-foreground"
+                  className="rounded-md bg-highlight px-0.5 text-highlight-foreground"
                 >
                   {parts.highlight}
                 </mark>

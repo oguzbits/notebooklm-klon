@@ -8,17 +8,17 @@ import { CHUNK_ID, note, NOTE_ID, NOTEBOOK_ID } from '@/test/fixtures';
 import { renderWithProviders } from '@/test/render';
 
 import { server } from '../../../../../vitest.setup';
-import { NotesPanel } from './notes-panel';
+import { NotesSection } from './notes-panel';
 
 const base = `*/api/notebooks/${NOTEBOOK_ID}/notes`;
 
 function renderPanel(onOpenCitation: (chunkId: string) => void = () => {}) {
   return renderWithProviders(
-    <NotesPanel notebookId={NOTEBOOK_ID} onOpenCitation={onOpenCitation} />
+    <NotesSection notebookId={NOTEBOOK_ID} onOpenCitation={onOpenCitation} />
   );
 }
 
-describe('NotesPanel', () => {
+describe('NotesSection', () => {
   it('explains how to make a note when there is none', async () => {
     server.use(http.get(base, () => HttpResponse.json([])));
     renderPanel();
