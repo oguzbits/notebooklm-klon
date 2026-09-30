@@ -12,6 +12,7 @@
     "db:migrate": "tsx --env-file-if-exists=../../.env.local src/db/migrate-cli.ts",
     "dev:offline": "tsx src/e2e/server.ts",
     "eval:live": "tsx --env-file-if-exists=../../.env.local src/eval/live.ts",
+    "eval:studio": "tsx --env-file-if-exists=../../.env.local src/eval/studio-live.ts",
     "seed:demo": "tsx --env-file-if-exists=../../.env.local src/seed/run.ts"
   },
   "dependencies": {

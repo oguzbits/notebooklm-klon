@@ -170,3 +170,7 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   kann; auf Anmeldung und Notizbuchliste steht, dass es ein Nachbau ist (`lib/notice.ts`).
 - **Notizen wohnen im Studio**, nicht in einem eigenen Reiter. Quellen werden über einen Dialog hinzugefügt
   (Datei, Webseite, kopierter Text). Kopierter Text wird als `.txt` hochgeladen: kein neuer Endpunkt.
+- **`pnpm eval:studio` (Live-Prüfung des Studios, 2026-09-30):** Mit dem Lite-Modell aus der Umgebung und den
+  drei Demo-Texten kamen Bericht, Karteikarten, Quiz und Mindmap in 4 bis 6 s zurück. Der Anbieter nahm
+  alle vier Schemas an, der Server verwarf keinen Teil. Das Beispiel ist klein (6 Abschnitte Kontext); wie
+  sich große Quellen verhalten, ist nicht gemessen.
