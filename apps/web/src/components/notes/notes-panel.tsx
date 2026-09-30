@@ -1,4 +1,5 @@
-import { NotebookText, Trash2 } from 'lucide-react';
+import type { Note } from '@nlm/shared';
+import { FilePlus2, NotebookText, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { AnswerView } from '@/components/chat/message-view';
@@ -16,6 +17,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { useDeleteNote, useNotes } from '@/hooks/use-notes';
+import { useUploadFile } from '@/hooks/use-sources';
 import { describeError } from '@/lib/messages';
 
 const dateFormat = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' });
@@ -30,7 +32,20 @@ export function NotesSection({
 }) {
   const notes = useNotes(notebookId);
   const remove = useDeleteNote(notebookId);
+  const upload = useUploadFile(notebookId);
   const [toDelete, setToDelete] = useState<string | null>(null);
+  const [added, setAdded] = useState<ReadonlySet<string>>(new Set());
+
+  /** A note becomes a source: its text goes up as a text file, like pasted text does. */
+  const addAsSource = (note: Note) =>
+    upload.mutate(
+      new File(
+        [note.statements.map((statement) => statement.text).join(' ')],
+        `Notiz vom ${dateFormat.format(new Date(note.createdAt))}.txt`,
+        { type: 'text/plain' }
+      ),
+      { onSuccess: () => setAdded((current) => new Set(current).add(note.id)) }
+    );
 
   return (
     <section aria-labelledby="notes-heading" className="flex flex-col gap-3">
@@ -64,23 +79,39 @@ export function NotesSection({
                   <span className="text-xs text-muted-foreground">
                     {dateFormat.format(new Date(note.createdAt))}
                   </span>
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    aria-label="Notiz löschen"
-                    onClick={() => setToDelete(note.id)}
-                  >
-                    <Trash2 />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    {added.has(note.id) ? (
+                      <span className="text-xs text-muted-foreground">Als Quelle hinzugefügt</span>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="xs"
+                        aria-label="Notiz als Quelle hinzufügen"
+                        disabled={upload.isPending}
+                        onClick={() => addAsSource(note)}
+                      >
+                        <FilePlus2 />
+                        Als Quelle
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      aria-label="Notiz löschen"
+                      onClick={() => setToDelete(note.id)}
+                    >
+                      <Trash2 />
+                    </Button>
+                  </div>
                 </div>
               </li>
             ))}
           </ul>
         )}
       </QueryBoundary>
-      {remove.isError && (
+      {(remove.isError || upload.isError) && (
         <Alert variant="destructive">
-          <AlertDescription>{describeError(remove.error)}</AlertDescription>
+          <AlertDescription>{describeError(remove.error ?? upload.error)}</AlertDescription>
         </Alert>
       )}
       <AlertDialog open={toDelete !== null} onOpenChange={(open) => !open && setToDelete(null)}>
