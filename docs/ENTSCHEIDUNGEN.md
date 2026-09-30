@@ -143,3 +143,10 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   je Versuch) und unzuverlässig, deshalb wird nicht wiederholt. Stattdessen nimmt `pnpm eval:live` eine
   nicht lesbare Datei aus der Wertung und nennt sie im Bericht; ihre Fragen zählen nicht als Fehlgriff der
   Suche. Im Produkt erscheint so ein Dokument als "fehlgeschlagen" und lässt sich erneut hochladen.
+- **Zeitlimit beim Lesen von PDFs (120 s je Modellaufruf):** Im Live-Lauf hing ein Aufruf 5 min 40 s und
+  endete erst mit dem Standard-Limit der HTTP-Bibliothek (`headers timeout after 300000`). Jetzt bricht der
+  Parser nach `LIMITS.PARSE_TIMEOUT_MS` ab; der Import gilt dann als fehlgeschlagen und lässt sich erneut
+  versuchen. Gemessen wurden bis zu 79 s für den Scan mit `gemini-3.5-flash`, 120 s lässt Luft.
+- **Gleichwertige Schreibweisen bei Pflichtfakten der Auswertung:** Ein Eintrag in `requiredFacts` darf eine
+  Liste sein, von der eine Schreibweise genügt. Anlass: Die Quelle nennt "46,2 Millionen" im Text und
+  "46 185" (Tausend) in der Tabelle, die richtige Antwort "46,185 Millionen" wurde mit 0 % bewertet.

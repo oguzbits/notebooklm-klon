@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 
 import { server } from '../../../../vitest.setup';
@@ -14,11 +14,12 @@ const PDF = new TextEncoder().encode('%PDF-1.4 fake');
 const FALLBACK_MODEL = 'test-fallback-model';
 const FALLBACK_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${FALLBACK_MODEL}:generateContent`;
 
-function parser(sleeps: number[] = [], fallbackModel?: string) {
+function parser(sleeps: number[] = [], fallbackModel?: string, timeoutMs?: number) {
   return createGeminiPdfParser({
     apiKey: KEY,
     model: MODEL,
     fallbackModel,
+    timeoutMs,
     limiter: new RateLimiter({ requestsPerMinute: 1000, tokensPerMinute: 1_000_000 }),
     sleep: async (ms) => {
       sleeps.push(ms);
@@ -144,6 +145,17 @@ describe('createGeminiPdfParser', () => {
     );
 
     await expect(parser().parse(PDF)).rejects.toThrow('MAX_TOKENS');
+  });
+
+  it('gives up when the model does not answer within the time limit', async () => {
+    server.use(
+      http.post(ENDPOINT, async () => {
+        await delay(500);
+        return HttpResponse.json(answer('zu spät'));
+      })
+    );
+
+    await expect(parser([], undefined, 20).parse(PDF)).rejects.toThrow(/time/i);
   });
 
   it('fails when the answer has no candidate at all', async () => {

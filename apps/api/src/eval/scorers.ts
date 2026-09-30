@@ -80,8 +80,13 @@ export function scoreCitations(
   };
 }
 
-export function scoreRequiredFacts(answer: string, requiredFacts: string[]): number | null {
+export function scoreRequiredFacts(
+  answer: string,
+  requiredFacts: (string | string[])[]
+): number | null {
   const normalizedAnswer = normalizeText(answer);
-  const present = requiredFacts.filter((fact) => normalizedAnswer.includes(normalizeText(fact)));
+  const present = requiredFacts.filter((fact) =>
+    [fact].flat().some((spelling) => normalizedAnswer.includes(normalizeText(spelling)))
+  );
   return ratio(present.length, requiredFacts.length);
 }

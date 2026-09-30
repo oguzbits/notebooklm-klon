@@ -85,7 +85,7 @@
         "text": "Zahl der Erwerbspersonen erreicht mit 46,2 Millionen für 2018 einen neuen Höchststand"
       }
     ],
-    "requiredFacts": ["46,2"]
+    "requiredFacts": [["46,2", "46,185"]]
   },
   {
     "id": "destatis-erwerbslosenquote",

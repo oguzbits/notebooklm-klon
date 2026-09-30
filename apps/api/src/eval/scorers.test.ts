@@ -99,6 +99,13 @@ describe('scoreRequiredFacts', () => {
     expect(scoreRequiredFacts(answer, ['12 %', '4,2 Mio. Euro', 'Berlin'])).toBeCloseTo(2 / 3);
   });
 
+  it('counts a fact as present when any of its equivalent spellings is', () => {
+    const answer = 'Es gab 46,185 Millionen Erwerbspersonen.';
+
+    expect(scoreRequiredFacts(answer, [['46,2', '46,185']])).toBe(1);
+    expect(scoreRequiredFacts(answer, [['46,2', '46,3']])).toBe(0);
+  });
+
   it('is not applicable without required facts', () => {
     expect(scoreRequiredFacts('anything', [])).toBeNull();
   });

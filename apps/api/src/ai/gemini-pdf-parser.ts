@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { LIMITS } from '../config/limits';
 import type { ParsedDocument } from '../ingestion/ingest';
 import { postGemini } from './gemini-http';
 import type { RateLimiter } from './rate-limiter';
@@ -40,6 +41,8 @@ export interface GeminiPdfParserConfig {
    */
   fallbackModel?: string | undefined;
   limiter: RateLimiter;
+  /** Longest wait for one model call. Defaults to the limit in the config. */
+  timeoutMs?: number | undefined;
   sleep: (ms: number) => Promise<void>;
 }
 
@@ -51,22 +54,27 @@ export function createGeminiPdfParser(config: GeminiPdfParserConfig) {
   async function transcribe(model: string, bytes: Uint8Array) {
     const estimatedTokens = Math.ceil(bytes.length / BYTES_PER_TOKEN) + PROMPT_TOKENS;
     const json = await config.limiter.schedule(estimatedTokens, () =>
-      postGemini(config, `models/${model}:generateContent`, {
-        contents: [
-          {
-            parts: [
-              {
-                inlineData: {
-                  mimeType: 'application/pdf',
-                  data: Buffer.from(bytes).toString('base64'),
+      postGemini(
+        config,
+        `models/${model}:generateContent`,
+        {
+          contents: [
+            {
+              parts: [
+                {
+                  inlineData: {
+                    mimeType: 'application/pdf',
+                    data: Buffer.from(bytes).toString('base64'),
+                  },
                 },
-              },
-              { text: PROMPT },
-            ],
-          },
-        ],
-        generationConfig: { temperature: 0 },
-      })
+                { text: PROMPT },
+              ],
+            },
+          ],
+          generationConfig: { temperature: 0 },
+        },
+        AbortSignal.timeout(config.timeoutMs ?? LIMITS.PARSE_TIMEOUT_MS)
+      )
     );
     const [candidate] = ResponseSchema.parse(json).candidates ?? [];
     if (!candidate) throw new Error('The model returned no candidate.');

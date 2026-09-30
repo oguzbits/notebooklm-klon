@@ -18,6 +18,8 @@ export const LIMITS = {
   QUOTA_WINDOW_HOURS: 24,
   /** Chat: passages handed to the model per question. */
   CHAT_CONTEXT_CHUNKS: 8,
+  /** Parsing: longest wait for one model to read a PDF. Without it a stalled call hangs for 5 min. */
+  PARSE_TIMEOUT_MS: 120_000,
   /** Ingestion: chunks per embedding request. */
   EMBED_BATCH_SIZE: 16,
 } as const;
