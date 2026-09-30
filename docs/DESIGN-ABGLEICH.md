@@ -79,17 +79,21 @@ Gewichte nicht kannte und sie beim Zusammenführen mit einer Textfarbe stillschw
 | Zitat-Popup      | 420x420, Radius 8, Kopf 14/500 ohne Linie, Text wie Reader, Fuß mit Linie und Link                                                                | Text als Klartext           | `SourceText`, Maße wie Original      | ✔      |
 | Parser           | Links, Fett, Kursiv, Tabellen bleiben erhalten                                                                                                    | gehen bei Web/DOCX verloren | `html-text.ts` schreibt Markdown     | ✔      |
 
-### 2.6 Weitere Bereiche (noch zu prüfen, Reihenfolge der Umsetzung)
+### 2.6 Weitere Bereiche
 
-Jeder Punkt wird gemessen, verglichen und nur bei einer Abweichung geändert.
+| Bereich                    | Stand                                                                                                                                                                                                                              | Status |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| Startseite                 | Kopf mit Suche und ⚙, Karten 272x185 mit Emoji, Datum TT.MM.JJJJ und Quellenzahl, Pille „Neues Notizbuch“. Ohne Filter-Tabs, Raster/Liste-Umschalter, empfohlene Notebooks.                                                        | ◐      |
+| Dialoge                    | „Quellen hinzufügen“ 700 px, Radius 28, Bottom-Sheet auf dem Handy, Fokus auf dem Dialog. Ohne Web-Recherche, Drive, Bücher, Zähler „n/300“.                                                                                       | ◐      |
+| Menüs                      | Panel Radius 20, Einträge 36 hoch, ohne Abstand unter dem Auslöser, Untermenü für die Darstellung. Quelle umbenennen fehlt.                                                                                                        | ◐      |
+| Studio-Liste und Ansichten | Notizen und Ausgaben in einer Liste, gemeinsamer Rahmen, ⋮-Menü, Schimmerzeile beim Erzeugen, leere Liste wie im Original. Ohne Teilen, Prompt-Chip, „Guter/Schlechter Bericht“, Notiz-Editor.                                     | ◐      |
+| Chat                       | Zeitstempel, Fließtextfarbe, fette Begriffe, Aktionsleiste, Senden-Pfeil nach Eingabe, Eingabeleiste 628 px, Verläufe oben. Ohne Notebook-Übersicht (Emoji, Titel 36/44, Zusammenfassung), „Thoughts“, Daumen, „Nach unten“-Knopf. | ◐      |
+| Dunkelmodus                | Tokens aus den Messungen, Tooltip invertiert, Quellenkarte #2f334b, Markierung #32343e; Screenshots verglichen.                                                                                                                    | ✔      |
+| Handy 390 px               | Tab-Leiste 12 px unter der Kopfzeile, Bottom-Sheets, Platzhalter wie Desktop. Titel bleibt sichtbar (Original blendet ihn aus Platzmangel aus).                                                                                    | ◐      |
+| Seite als Ganzes           | Schrift, Fokusring 3 px, Auswahlfarbe, Scrollbalken, `prefers-reduced-motion` (Schimmer steht still).                                                                                                                              | ✔      |
 
-1. Startseite: Kopf, Filter-Tabs, Suchfeld, Ansichtsumschalter, Kartenmaße, ⋮-Menü, leerer Zustand.
-2. Dialoge: Hinzufügen (700, Radius 28), Bericht, Chat konfigurieren, Löschen-Bestätigung, Mobil als Bottom-Sheet.
-3. Menüs: Panel 20 Radius, Einträge 36 hoch, Icons 20; Sortierung der Quellen.
-4. Studio-Ausgaben: Zeilen 60 hoch, „Neu“-Punkt, Viewer (Bericht, Karteikarten, Quiz, Mindmap), Breadcrumb.
-5. Chat: Antwortleiste (Kopieren, In Notiz speichern), Zitat-Chips 22 px, Listen mit Kreis-Bullet, „Nach unten“-Knopf.
-6. Dunkelmodus vollständig; Handy 390 px (Tabs, Bottom-Sheets, Zeilenlisten auf der Startseite).
-7. Seite als Ganzes: Seitentitel, Favicon, Auswahlfarbe, Scrollbalken, Bewegung (`prefers-reduced-motion`).
+**Offen, nicht gebaut** (nicht ohne neuen Umfang möglich): Notebook-Übersicht im Chat (braucht eine KI-Zusammenfassung über alle Quellen), freie Notizen
+(„Notiz hinzufügen“), Quelle umbenennen, Filter und Sammlungen auf der Startseite, Feedback zu Berichten.
 
 ## 3. Reihenfolge und Commits
 

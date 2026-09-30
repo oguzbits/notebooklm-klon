@@ -28,7 +28,7 @@ export function OutputViewer({
       crumb={KIND_LABEL[output.kind]}
       title={output.title}
       subtitle={describeOutput(output)}
-      deleteLabel="Ausgabe löschen"
+      deleteLabel="Löschen"
       deleting={deleting}
       onBack={onBack}
       onDelete={onDelete}

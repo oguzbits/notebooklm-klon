@@ -54,7 +54,7 @@ export function CitationChip({ notebookId, chunkId, number, onOpen }: CitationCh
             <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-4">
               <SourceText text={chunk.data.text} kind={chunk.data.sourceKind} />
             </div>
-            <div className="shrink-0 border-t border-border p-4 text-[0.875rem] leading-6">
+            <div className="shrink-0 border-t border-[var(--table-line)] p-4 text-[0.875rem] leading-6">
               <button
                 type="button"
                 className="rounded-sm text-link hover:underline"

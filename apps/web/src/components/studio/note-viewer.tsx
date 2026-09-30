@@ -52,7 +52,7 @@ export function NoteViewer({
       crumb="Notiz"
       title="Notiz"
       subtitle={`Gespeichert ${relativeTime(note.createdAt)}`}
-      deleteLabel="Notiz löschen"
+      deleteLabel="Löschen"
       deleting={deleting}
       onBack={onBack}
       onDelete={onDelete}

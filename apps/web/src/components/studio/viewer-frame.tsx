@@ -1,7 +1,13 @@
-import { ChevronRight, Trash2 } from 'lucide-react';
+import { ChevronRight, EllipsisVertical, Trash2 } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 /**
  * The frame around one thing of the Studio in full, in place of the list: the path back ("Studio
@@ -51,16 +57,25 @@ export function ViewerFrame({
           <h3 className="truncate text-[1.375rem] leading-9">{title}</h3>
           <p className="truncate text-small text-muted-foreground">{subtitle}</p>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={deleteLabel}
-          tooltip="Löschen"
-          disabled={deleting}
-          onClick={onDelete}
-        >
-          <Trash2 />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Weitere Aktionen"
+              tooltip="Mehr"
+              disabled={deleting}
+            >
+              <EllipsisVertical />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem disabled={deleting} onSelect={onDelete}>
+              <Trash2 aria-hidden />
+              {deleteLabel}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pt-4 pb-3">{children}</div>
       {footer && <div className="shrink-0 px-3 pb-1">{footer}</div>}

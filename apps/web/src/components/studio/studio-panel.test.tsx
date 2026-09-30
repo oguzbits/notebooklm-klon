@@ -199,6 +199,26 @@ describe('StudioPanel', () => {
     expect(await screen.findByText('Hier wird die Ausgabe von Studio gespeichert.')).toBeTruthy();
   });
 
+  it('deletes an output from inside its view and returns to the list', async () => {
+    let deleted = false;
+    serve();
+    server.use(
+      http.get(`${base}/studio`, () => HttpResponse.json(deleted ? [] : [flashcardsOutput()])),
+      http.delete(`${base}/studio/${OUTPUT_ID}`, () => {
+        deleted = true;
+        return new HttpResponse(null, { status: 204 });
+      })
+    );
+    renderPanel();
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole('button', { name: /Karteikarten · 2 Karten/ }));
+    await user.click(await screen.findByRole('button', { name: 'Weitere Aktionen' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Löschen' }));
+
+    expect(await screen.findByText('Hier wird die Ausgabe von Studio gespeichert.')).toBeTruthy();
+  });
+
   describe('notes', () => {
     it('lists a saved answer between the outputs, newest first', async () => {
       serve({
