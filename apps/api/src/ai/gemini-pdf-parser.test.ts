@@ -71,7 +71,7 @@ describe('createGeminiPdfParser', () => {
     async (finishReason) => {
       server.use(http.post(ENDPOINT, () => HttpResponse.json(answer('halber Text', finishReason))));
 
-      await expect(parser().parse(PDF)).rejects.toThrow(new RegExp(finishReason));
+      await expect(parser().parse(PDF)).rejects.toThrow(finishReason);
     }
   );
 
