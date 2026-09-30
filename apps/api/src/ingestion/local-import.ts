@@ -60,6 +60,13 @@ export async function importLocalFiles(
     }
   }
 
-  for (const sourceId of queued) await runIngestJob({ sourceId }, ports);
+  const names = new Map([...sourceIds].map(([name, sourceId]) => [sourceId, name]));
+  for (const sourceId of queued) {
+    try {
+      await runIngestJob({ sourceId }, ports);
+    } catch (error) {
+      throw new Error(`The file "${names.get(sourceId)}" could not be read.`, { cause: error });
+    }
+  }
   return sourceIds;
 }

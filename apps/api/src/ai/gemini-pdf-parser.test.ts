@@ -117,6 +117,21 @@ describe('createGeminiPdfParser', () => {
 
       await expect(parser([], FALLBACK_MODEL).parse(PDF)).rejects.toThrow('SAFETY');
     });
+
+    it('says that the fallback model was tried when it is blocked too', async () => {
+      server.use(
+        http.post(ENDPOINT, () =>
+          HttpResponse.json({ candidates: [{ finishReason: 'RECITATION' }] })
+        ),
+        http.post(FALLBACK_ENDPOINT, () =>
+          HttpResponse.json({ candidates: [{ finishReason: 'RECITATION' }] })
+        )
+      );
+
+      await expect(parser([], FALLBACK_MODEL).parse(PDF)).rejects.toThrow(
+        /fallback model.*RECITATION/i
+      );
+    });
   });
 
   it('names the finish reason when the answer has no text parts at all', async () => {

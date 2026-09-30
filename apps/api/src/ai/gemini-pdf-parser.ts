@@ -76,12 +76,15 @@ export function createGeminiPdfParser(config: GeminiPdfParserConfig) {
   return {
     async parse(bytes: Uint8Array): Promise<ParsedDocument> {
       let candidate = await transcribe(config.model, bytes);
+      let fallbackTried = false;
       if (candidate.finishReason === FINISH_RECITATION && config.fallbackModel) {
         candidate = await transcribe(config.fallbackModel, bytes);
+        fallbackTried = true;
       }
       if (candidate.finishReason !== FINISH_STOP) {
         throw new Error(
-          `The model did not finish normally: ${candidate.finishReason ?? 'unknown'}.`
+          `The ${fallbackTried ? 'fallback ' : ''}model did not finish normally: ` +
+            `${candidate.finishReason ?? 'unknown'}.`
         );
       }
       const text = (candidate.content?.parts ?? []).map((part) => part.text ?? '').join('');

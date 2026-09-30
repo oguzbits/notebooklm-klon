@@ -127,4 +127,21 @@ describe('importLocalFiles', () => {
       importLocalFiles({ userId: USER, notebookId: notebook.id, files }, failing)
     ).rejects.toThrow();
   });
+
+  it('names the file that could not be read', async () => {
+    const notebook = await createNotebook(db, USER, 'N');
+    const failing = {
+      ...deps,
+      ports: {
+        ...deps.ports,
+        parse: async () => {
+          throw new Error('kaputt');
+        },
+      },
+    };
+
+    await expect(
+      importLocalFiles({ userId: USER, notebookId: notebook.id, files }, failing)
+    ).rejects.toThrow(/eins\.txt/);
+  });
 });
