@@ -3,6 +3,7 @@ import { z } from 'zod';
 const DEFAULT_PORT = 3000;
 const MAX_PORT = 65535;
 const MIN_AUTH_SECRET_CHARS = 32;
+const MIN_PASSWORD_CHARS = 8;
 
 export const DatabaseEnvSchema = z.object({
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
@@ -22,6 +23,9 @@ export const EnvSchema = DatabaseEnvSchema.extend({
   BETTER_AUTH_URL: z.url({ protocol: /^https?$/ }),
   // Folder of the built web app. Set: the API serves it (one container). Unset: API only.
   WEB_DIST_DIR: z.string().trim().min(1).optional(),
+  // Only for `pnpm seed:demo`: the account of the example notebook. Both or neither.
+  SEED_DEMO_EMAIL: z.email().optional(),
+  SEED_DEMO_PASSWORD: z.string().min(MIN_PASSWORD_CHARS).optional(),
 });
 
 // The database tests reset the whole schema, so they refuse any database not named *_test.

@@ -3,8 +3,8 @@ import { API_ERROR, SourceOverviewSchema } from '@nlm/shared';
 
 import type { AppDeps } from '../app-deps';
 import type { AuthVariables } from '../auth/session';
-import { getOrCreateOverview, type OverviewPorts } from '../chat/overview';
-import { findSourceForOverview, saveOverview } from '../db/overview-repository';
+import { getOrCreateOverview } from '../chat/overview';
+import { createOverviewPorts } from '../chat/overview-ports';
 import { json, notFound, unauthenticated } from './openapi';
 
 const OK = 200;
@@ -24,12 +24,7 @@ const overviewRoute = createRoute({
 /** The overview of a source: made by the model on first request, then read from the database. */
 export function overviewRoutes(deps: AppDeps) {
   const app = new OpenAPIHono<{ Variables: AuthVariables }>();
-  const ports: OverviewPorts = {
-    find: (userId, notebookId, sourceId) =>
-      findSourceForOverview(deps.db, userId, notebookId, sourceId),
-    save: (userId, sourceId, overview) => saveOverview(deps.db, userId, sourceId, overview),
-    stream: deps.chat.stream,
-  };
+  const ports = createOverviewPorts(deps.db, deps.chat.stream);
 
   return app.openapi(overviewRoute, async (c) => {
     const { notebookId, sourceId } = c.req.valid('param');

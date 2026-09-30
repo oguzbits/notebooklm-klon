@@ -10,7 +10,9 @@
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file-if-exists=../../.env.local src/db/migrate.ts",
-    "dev:offline": "tsx src/e2e/server.ts"
+    "dev:offline": "tsx src/e2e/server.ts",
+    "eval:live": "tsx --env-file-if-exists=../../.env.local src/eval/live.ts",
+    "seed:demo": "tsx --env-file-if-exists=../../.env.local src/seed/run.ts"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "^1.7.6",

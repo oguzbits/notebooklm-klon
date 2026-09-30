@@ -41,6 +41,18 @@ describe('parseEnv', () => {
     expect(() => parseEnv({ ...VALID, WEB_DIST_DIR: '  ' })).toThrow(/WEB_DIST_DIR/);
   });
 
+  it('takes the demo account only as a valid email address and a password of 8 characters', () => {
+    const demo = { SEED_DEMO_EMAIL: 'demo@example.test', SEED_DEMO_PASSWORD: 'demo-passwort' };
+
+    expect(parseEnv({ ...VALID, ...demo })).toMatchObject(demo);
+    expect(() => parseEnv({ ...VALID, ...demo, SEED_DEMO_EMAIL: 'keine-mail' })).toThrow(
+      /SEED_DEMO_EMAIL/
+    );
+    expect(() => parseEnv({ ...VALID, ...demo, SEED_DEMO_PASSWORD: 'kurz' })).toThrow(
+      /SEED_DEMO_PASSWORD/
+    );
+  });
+
   it('coerces PORT from a string', () => {
     expect(parseEnv({ ...VALID, PORT: '8080' }).PORT).toBe(8080);
   });

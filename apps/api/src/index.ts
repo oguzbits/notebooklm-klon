@@ -1,13 +1,8 @@
 import { serve } from '@hono/node-server';
 
-import { createGeminiChat } from './ai/gemini-chat';
-import { createGeminiEmbedder } from './ai/gemini-embedder';
-import { createGeminiPdfParser } from './ai/gemini-pdf-parser';
-import { RateLimiter, systemClock } from './ai/rate-limiter';
 import { createApp } from './app';
 import { createAuth } from './auth/auth';
 import { parseEnv } from './config/env';
-import { PROVIDER_LIMITS } from './config/limits';
 import { createDb } from './db/client';
 import { runMigrations } from './db/migrate';
 import { createQuota } from './db/quota';
@@ -17,7 +12,7 @@ import { IngestError } from './ingestion/ingest';
 import { runIngestJob, type SubmitPorts } from './ingestion/submit';
 import { createJobQueue } from './jobs/queue';
 import { log } from './logger';
-import { createParseSource } from './parsing/parse-source';
+import { createProviders } from './providers';
 import { serveWeb } from './web/serve-web';
 
 let env;
@@ -38,32 +33,15 @@ const queue = await createJobQueue(env.DATABASE_URL, {
 });
 
 // Every provider call goes through the limiter of its role.
-const provider = { apiKey: env.GEMINI_API_KEY, sleep: systemClock.sleep };
-const pdfParser = createGeminiPdfParser({
-  ...provider,
-  model: env.PARSE_MODEL,
-  limiter: new RateLimiter(PROVIDER_LIMITS.PARSE),
-});
-const embedder = createGeminiEmbedder({
-  ...provider,
-  model: env.EMBEDDING_MODEL,
-  limiter: new RateLimiter(PROVIDER_LIMITS.EMBED),
-});
-
-const chat = createGeminiChat({
-  ...provider,
-  model: env.AI_MODEL,
-  limiter: new RateLimiter(PROVIDER_LIMITS.CHAT),
-  onUsage: (usage) => log({ level: 'info', msg: 'chat usage', ...usage }),
-});
+const providers = createProviders(env);
 
 const ingest: SubmitPorts = {
   sources: createSourceStorage(db),
   uploads: createUploadStorage(db),
   queue,
   assertCanCreate: createQuota(db),
-  parse: createParseSource(pdfParser),
-  embed: (texts) => embedder.embedDocuments(texts),
+  parse: providers.parse,
+  embed: providers.embedDocuments,
 };
 
 await queue.work(async (payload) => {
@@ -90,8 +68,8 @@ const app = createApp({
   ingest,
   fetch: systemDeps,
   chat: {
-    embedQuery: (text) => embedder.embedQuery(text),
-    stream: (input) => chat.stream(input),
+    embedQuery: providers.embedQuery,
+    stream: providers.stream,
     onError: (error) =>
       log({
         level: 'error',
