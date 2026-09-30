@@ -79,21 +79,21 @@ Die Ingestion schreibt Chunks und Vektoren in Postgres, der Chat liest nur die p
 
 React-Frontend und Node.js-Backend in einem Monorepo, ein Container, Postgres mit pgvector, Gemini im Free Tier. Docling und ein zweiter Service entfallen. Preise und Benchmarks stammen teils aus Drittquellen (Stand 29.09.2026) und sind vor dem Bau zu prüfen.
 
-| Bereich | Wahl | Begründung / Alternative |
-| --- | --- | --- |
-| Runtime, Sprache | Node.js LTS, pnpm-Workspaces, TypeScript strict, Zod in `packages/shared` | Everlast-Anzeige nennt Node.js und JavaScript. Bun bewusst nicht |
-| Frontend | React 19, Vite, React Router, TanStack Query, Tailwind, shadcn/ui, react-markdown | Anzeige nennt React. Ein getrenntes Frontend zeigt API-Design sichtbar |
-| Backend | Hono mit `@hono/zod-openapi`, SSE-Streaming, liefert auch das Frontend aus | Typisierter RPC-Client und OpenAPI aus Zod-Schemas. Fastify, Express oder NestJS wären gleichwertig, Hono ist austauschbar |
-| Auth | Better Auth mit Drizzle-Adapter | Nutzer in der eigenen Postgres. Supabase Auth bringt bei direkter DB-Verbindung keinen RLS-Vorteil |
-| Datenbank | Neon Postgres (dauerhaft kostenlos, 500 MB), pgvector mit HNSW, Postgres-Volltextsuche, Drizzle ORM | Render-Postgres läuft im Gratis-Tarif nach 30 Tagen ab |
-| Jobs | pg-boss | Etablierte Postgres-Queue statt Eigenbau. Pooler-Modus des Hosts prüfen |
-| Parsing | PDF: Gemini 3.1 Flash-Lite (GPT-6 Luna als Kandidat). DOCX: mammoth. TXT/MD direkt. URL: Readability. Fallback: liteparse | ParseBench (Tabellen / Inhaltstreue): Gemini 3.1 Flash-Lite 85,5 / 89,5, Docling 66,4 / 66,9, LiteParse 42,4 / 70,0 |
-| Embeddings | Gemini Embedding 2 mit 768 Dimensionen, Fallback `gemini-embedding-001` | Limits bekannt (RPM 100, TPM 30K, RPD 1000). Die Vektorräume beider Modelle sind inkompatibel |
-| Retrieval | pgvector plus Volltextsuche, Fusion per RRF in SQL | Hybrid fängt Eigennamen und Zahlen, die Vektorsuche verfehlt |
-| LLM-Schicht | Vercel AI SDK, Modell-IDs und Limits in der Config | Chat: Gemini 3.5 Flash-Lite oder GPT-6 Luna (niedrige Reasoning-Stufe), per Spike. Studio: 3.x Flash, Fallback Flash-Lite |
-| Zitate | Strukturierte Ausgabe mit Chunk-Nummern, Server prüft, dass die zitierten Chunks im Kontext waren | Anthropic-Citations verworfen (Kosten, Anbieter-Bindung) |
-| Tests, Qualität | Vitest, Playwright-Smoke, Eval-Skript, ESLint, Prettier, GitHub Actions | Tests ohne echte API-Aufrufe |
-| Hosting | Render (kostenloser Web Service) plus Neon | Kaltstart etwa 1 Minute nach 15 Minuten Leerlauf, im README erwähnen |
+| Bereich          | Wahl                                                                                                                      | Begründung / Alternative                                                                                                   |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Runtime, Sprache | Node.js LTS, pnpm-Workspaces, TypeScript strict, Zod in `packages/shared`                                                 | Everlast-Anzeige nennt Node.js und JavaScript. Bun bewusst nicht                                                           |
+| Frontend         | React 19, Vite, React Router, TanStack Query, Tailwind, shadcn/ui, react-markdown                                         | Anzeige nennt React. Ein getrenntes Frontend zeigt API-Design sichtbar                                                     |
+| Backend          | Hono mit `@hono/zod-openapi`, SSE-Streaming, liefert auch das Frontend aus                                                | Typisierter RPC-Client und OpenAPI aus Zod-Schemas. Fastify, Express oder NestJS wären gleichwertig, Hono ist austauschbar |
+| Auth             | Better Auth mit Drizzle-Adapter                                                                                           | Nutzer in der eigenen Postgres. Supabase Auth bringt bei direkter DB-Verbindung keinen RLS-Vorteil                         |
+| Datenbank        | Neon Postgres (dauerhaft kostenlos, 500 MB), pgvector mit HNSW, Postgres-Volltextsuche, Drizzle ORM                       | Render-Postgres läuft im Gratis-Tarif nach 30 Tagen ab                                                                     |
+| Jobs             | pg-boss                                                                                                                   | Etablierte Postgres-Queue statt Eigenbau. Pooler-Modus des Hosts prüfen                                                    |
+| Parsing          | PDF: Gemini 3.1 Flash-Lite (GPT-6 Luna als Kandidat). DOCX: mammoth. TXT/MD direkt. URL: Readability. Fallback: liteparse | ParseBench (Tabellen / Inhaltstreue): Gemini 3.1 Flash-Lite 85,5 / 89,5, Docling 66,4 / 66,9, LiteParse 42,4 / 70,0        |
+| Embeddings       | Gemini Embedding 2 mit 768 Dimensionen, Fallback `gemini-embedding-001`                                                   | Limits bekannt (RPM 100, TPM 30K, RPD 1000). Die Vektorräume beider Modelle sind inkompatibel                              |
+| Retrieval        | pgvector plus Volltextsuche, Fusion per RRF in SQL                                                                        | Hybrid fängt Eigennamen und Zahlen, die Vektorsuche verfehlt                                                               |
+| LLM-Schicht      | Vercel AI SDK, Modell-IDs und Limits in der Config                                                                        | Chat: Gemini 3.5 Flash-Lite oder GPT-6 Luna (niedrige Reasoning-Stufe), per Spike. Studio: 3.x Flash, Fallback Flash-Lite  |
+| Zitate           | Strukturierte Ausgabe mit Chunk-Nummern, Server prüft, dass die zitierten Chunks im Kontext waren                         | Anthropic-Citations verworfen (Kosten, Anbieter-Bindung)                                                                   |
+| Tests, Qualität  | Vitest, Playwright-Smoke, Eval-Skript, ESLint, Prettier, GitHub Actions                                                   | Tests ohne echte API-Aufrufe                                                                                               |
+| Hosting          | Render (kostenloser Web Service) plus Neon                                                                                | Kaltstart etwa 1 Minute nach 15 Minuten Leerlauf, im README erwähnen                                                       |
 
 **Abgrenzung zu notar-agent:** Übernommen werden Zod, Drizzle, pgvector und das Hybrid-Retrieval mit RRF. Neu bzw. geändert sind Auth, Queue (pg-boss statt Eigenbau), Parsing (Gemini statt liteparse plus mammoth für alles) und der Verzicht auf Supabase.
 
@@ -113,11 +113,11 @@ React-Frontend und Node.js-Backend in einem Monorepo, ein Container, Postgres mi
 
 Der Engpass ist nicht Parsing oder Chat, sondern die 20 Tagesanfragen der großen Flash-Modelle und die 30K Embedding-Tokens pro Minute. Die Werte stammen aus deiner AI-Studio-Konsole (Stand 29.09.2026).
 
-| Modell | RPM | TPM | RPD |
-| --- | --- | --- | --- |
-| Gemini 3.1 und 3.5 Flash-Lite | 15 | 250K | 500 |
-| Gemini 3.5 bis 3.8 Flash | 5 | 250K | 20 |
-| Gemini Embedding 2 | 100 | 30K | 1000 |
+| Modell                        | RPM | TPM  | RPD  |
+| ----------------------------- | --- | ---- | ---- |
+| Gemini 3.1 und 3.5 Flash-Lite | 15  | 250K | 500  |
+| Gemini 3.5 bis 3.8 Flash      | 5   | 250K | 20   |
+| Gemini Embedding 2            | 100 | 30K  | 1000 |
 
 Die Limits gelten pro **Projekt**, nicht pro Key. Das Tageslimit wird um Mitternacht Pacific Time zurückgesetzt, in Hamburg um 9 Uhr.
 
@@ -142,12 +142,12 @@ Ein Spike ist ein zeitlich begrenzter Wegwerf-Test, der eine Unsicherheit klärt
 
 **Testmenge:** 6 bis 8 Dokumente (zweispaltiges Paper, tabellenlastiger Bericht, DOCX mit Tabellen und Bildern, einfacher Text-PDF, ein Scan, deutsch und englisch gemischt) und 10 bis 20 Fragen, darunter deutsche Fragen auf englische Quellen.
 
-| Aufgabe | Kandidaten | Messgrößen | Entscheidungsregel |
-| --- | --- | --- | --- |
-| Parsing | Gemini 3.1 Flash-Lite, GPT-6 Luna (Low, Medium), liteparse als Fallback | Auslassungen, Tabellenstruktur und Lesereihenfolge (Stichprobe von Hand), Zeit und Kosten pro Seite | Höchste Inhaltstreue gewinnt, bei Gleichstand der günstigere |
-| Chat | Gemini 3.5 Flash-Lite, GPT-6 Luna (niedrige Reasoning-Stufe) | Antwortqualität, Zitat-Treffer, Zeit bis zum ersten Token, Kosten pro brauchbarer Antwort | Die Zeit bis zum ersten Token darf den Chat nicht spürbar bremsen (Ziel ca. 5 Sekunden, Annahme) |
-| Embeddings | Gemini Embedding 2, `gemini-embedding-001` (je 768 Dimensionen) | Trefferquote: liegt der passende Chunk in den Top 5, auch bei deutscher Frage auf englische Quelle | Höhere Trefferquote, bei Gleichstand Embedding 2 |
-| Zitate | Strukturierte Ausgabe mit Chunk-Nummern | Anteil der Antworten mit gültigen, tragenden Zitaten | Format und Prompt festlegen |
+| Aufgabe    | Kandidaten                                                              | Messgrößen                                                                                          | Entscheidungsregel                                                                               |
+| ---------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Parsing    | Gemini 3.1 Flash-Lite, GPT-6 Luna (Low, Medium), liteparse als Fallback | Auslassungen, Tabellenstruktur und Lesereihenfolge (Stichprobe von Hand), Zeit und Kosten pro Seite | Höchste Inhaltstreue gewinnt, bei Gleichstand der günstigere                                     |
+| Chat       | Gemini 3.5 Flash-Lite, GPT-6 Luna (niedrige Reasoning-Stufe)            | Antwortqualität, Zitat-Treffer, Zeit bis zum ersten Token, Kosten pro brauchbarer Antwort           | Die Zeit bis zum ersten Token darf den Chat nicht spürbar bremsen (Ziel ca. 5 Sekunden, Annahme) |
+| Embeddings | Gemini Embedding 2, `gemini-embedding-001` (je 768 Dimensionen)         | Trefferquote: liegt der passende Chunk in den Top 5, auch bei deutscher Frage auf englische Quelle  | Höhere Trefferquote, bei Gleichstand Embedding 2                                                 |
+| Zitate     | Strukturierte Ausgabe mit Chunk-Nummern                                 | Anteil der Antworten mit gültigen, tragenden Zitaten                                                | Format und Prompt festlegen                                                                      |
 
 **Regeln:** Der Code ist Wegwerf-Code. Ergebnisse und Entscheidung landen als kurze Notiz im Repo und sind im Video zeigbar. Die 5 Dollar Guthaben gehen an den Anbieter, der gewinnt. Weil Modell-IDs und Limits in der Config stehen, ist ein späterer Wechsel nur eine Umgebungsvariable.
 
@@ -170,14 +170,14 @@ Das größte Risiko ist das Free-Tier-Kontingent im Live-Demo. Danach folgen Par
 
 Fünf Arbeitstage bis zur Abgabe, danach zwei Tage Puffer. Feature-Freeze ist am Abend von Tag 4, damit Tag 5 für Härtung, README und Video bleibt.
 
-| Tag | Ziel | Aufgaben | Ausgangskriterium |
-| --- | --- | --- | --- |
-| 1 | Spike und Fundament | Modell-Spike (halber Tag). Monorepo, CI, `AGENTS.md`, Setup aus notar-agent übertragen, Config mit Limits, Schema und Migrationen, erstes Deployment (Hello World live) | Spike-Entscheidungen notiert, Deployment erreichbar |
-| 2 | Ingestion | Auth, Notebooks, Upload, Parsing, kanonischer Text mit Segmenten, Chunking mit Offsets, Embeddings, pg-boss-Jobs, Status in der UI | PDF, DOCX und URL werden verarbeitet |
-| 3 | Chat und Zitate | Hybrid-Retrieval mit RRF, Quellenauswahl, Streaming, Zitat-Chips, Hover-Popup, Quellenpanel mit Chunk-Hervorhebung | Frage stellen und per Klick zur Textstelle springen |
-| 4 | Umfang komplettieren | Quellenübersicht, Vorschlagsfragen, Notizen, Chat-Konfiguration, Studio (Bericht, Karteikarten, Quiz), Fehler-, Lade- und Leerzustände | Feature-Freeze am Abend |
-| 5 | Härtung und Abgabe | Tests, Eval-Skript, Quoten, SSRF-Schutz, README, Deployment-Check mit frischem Account, Beispiel-Notebook, Loom aufnehmen, abgeben | E-Mail mit Repo, Live-Link und Loom verschickt |
-| 6 bis 7 | Puffer | Nur Fehlerbehebung, keine neuen Funktionen | Nicht eingeplant |
+| Tag     | Ziel                 | Aufgaben                                                                                                                                                                | Ausgangskriterium                                   |
+| ------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| 1       | Spike und Fundament  | Modell-Spike (halber Tag). Monorepo, CI, `AGENTS.md`, Setup aus notar-agent übertragen, Config mit Limits, Schema und Migrationen, erstes Deployment (Hello World live) | Spike-Entscheidungen notiert, Deployment erreichbar |
+| 2       | Ingestion            | Auth, Notebooks, Upload, Parsing, kanonischer Text mit Segmenten, Chunking mit Offsets, Embeddings, pg-boss-Jobs, Status in der UI                                      | PDF, DOCX und URL werden verarbeitet                |
+| 3       | Chat und Zitate      | Hybrid-Retrieval mit RRF, Quellenauswahl, Streaming, Zitat-Chips, Hover-Popup, Quellenpanel mit Chunk-Hervorhebung                                                      | Frage stellen und per Klick zur Textstelle springen |
+| 4       | Umfang komplettieren | Quellenübersicht, Vorschlagsfragen, Notizen, Chat-Konfiguration, Studio (Bericht, Karteikarten, Quiz), Fehler-, Lade- und Leerzustände                                  | Feature-Freeze am Abend                             |
+| 5       | Härtung und Abgabe   | Tests, Eval-Skript, Quoten, SSRF-Schutz, README, Deployment-Check mit frischem Account, Beispiel-Notebook, Loom aufnehmen, abgeben                                      | E-Mail mit Repo, Live-Link und Loom verschickt      |
+| 6 bis 7 | Puffer               | Nur Fehlerbehebung, keine neuen Funktionen                                                                                                                              | Nicht eingeplant                                    |
 
 Die Mindmap kommt nur dazu, wenn Tag 4 früher fertig ist.
 

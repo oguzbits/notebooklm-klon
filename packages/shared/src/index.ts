@@ -1,1 +1,1 @@
-export { HealthSchema, type Health } from './health';
+export { type Health, HealthSchema } from './health';

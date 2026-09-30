@@ -1,0 +1,9 @@
+node_modules
+dist
+coverage
+reports
+test-results
+playwright-report
+pnpm-lock.yaml
+architecture.mmd
+docs/PLAN.md
