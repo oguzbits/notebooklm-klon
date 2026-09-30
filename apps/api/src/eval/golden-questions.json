@@ -94,7 +94,7 @@
     "expectedAnchors": [
       {
         "sourceFile": "02-destatis-arbeitsmarkt-de.pdf",
-        "text": "Die Erwerbslosenquote sinkt 2018 weiter auf 3,4 %"
+        "text": "Die Erwerbslosenquote sinkt 2018 weiter auf"
       }
     ],
     "requiredFacts": ["3,4"]

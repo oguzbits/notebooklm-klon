@@ -1,0 +1,8 @@
+{
+  "name": "nlm-spikes",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@llamaindex/liteparse": "^2.14.7"
+  }
+}

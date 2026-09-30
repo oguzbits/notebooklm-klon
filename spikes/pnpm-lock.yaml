@@ -1,0 +1,99 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      '@llamaindex/liteparse':
+        specifier: ^2.14.7
+        version: 2.14.7
+
+packages:
+
+  '@llamaindex/liteparse-darwin-arm64@2.14.7':
+    resolution: {integrity: sha512-t58h+EPNc3FNN30KVLg31L7tkoxNTWI7Qj0aN3QS9Yq5cDMJEWjFA1uA0Q0nmuhwvbkuhUhr42mSyCLTDo/Bhg==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@llamaindex/liteparse-darwin-x64@2.14.7':
+    resolution: {integrity: sha512-aeq5Xqq9KAiT4WMGT/F9Hd0MfM1DAOgWqW9z2W8VLWAaW1mQ5mtRXjgibzuEqwy/C/Hp7VWorX2udRwESL2+ag==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@llamaindex/liteparse-linux-arm64-gnu@2.14.7':
+    resolution: {integrity: sha512-mAzXKiZsDo4khGxuXnthktxYg6Kw6t2Xje/XkqG+9PLEBJEcmUgnarCiS67QXdIVl/9c4wHFHSrZ74k5PrjugA==}
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  '@llamaindex/liteparse-linux-x64-gnu@2.14.7':
+    resolution: {integrity: sha512-gZgAhcSGloLN99lk6DhazjllNfMlvNeXw86TrEvZdXHMxr1ntU0sQj2MCRQi8qwUF7x+SosM5lmp8kE9iM3YBQ==}
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  '@llamaindex/liteparse-linux-x64-musl@2.14.7':
+    resolution: {integrity: sha512-FuJsz52JUaR7PLTOpBA5KVDGIEhuZwPSARaMuyEbwx6FGKKpbtOnCH3f9jHo7sEtRPdkMJJ4hNvK5h76ddjx+w==}
+    cpu: [x64]
+    os: [linux]
+    libc: [musl]
+
+  '@llamaindex/liteparse-win32-arm64-msvc@2.14.7':
+    resolution: {integrity: sha512-THeMXMfuc/Sf5FEkSndRl2F2t9nSUOJq04OefJdLa3MLwIm5RBDJUgFAEv+MYlpsK+OeYErzm0wn0Uq8h0oPlg==}
+    cpu: [arm64]
+    os: [win32]
+
+  '@llamaindex/liteparse-win32-x64-msvc@2.14.7':
+    resolution: {integrity: sha512-Lascyz5RLH+YnH6sXBvhaLgWZGLQCq4keMDDGARRZVZamigKi61aGXw00DTtWkfM+soRzCKlOKm+WFfUUBa3bg==}
+    cpu: [x64]
+    os: [win32]
+
+  '@llamaindex/liteparse@2.14.7':
+    resolution: {integrity: sha512-S8rKn7lp6kfWCngtwEZXaBxA9W09Sehwl+cvyxNb1boguL5a1yerUKmuXaGNstIkVQsMJC/SnDqVAHdAHLBhDw==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
+
+  commander@12.1.0:
+    resolution: {integrity: sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA==}
+    engines: {node: '>=18'}
+
+snapshots:
+
+  '@llamaindex/liteparse-darwin-arm64@2.14.7':
+    optional: true
+
+  '@llamaindex/liteparse-darwin-x64@2.14.7':
+    optional: true
+
+  '@llamaindex/liteparse-linux-arm64-gnu@2.14.7':
+    optional: true
+
+  '@llamaindex/liteparse-linux-x64-gnu@2.14.7':
+    optional: true
+
+  '@llamaindex/liteparse-linux-x64-musl@2.14.7':
+    optional: true
+
+  '@llamaindex/liteparse-win32-arm64-msvc@2.14.7':
+    optional: true
+
+  '@llamaindex/liteparse-win32-x64-msvc@2.14.7':
+    optional: true
+
+  '@llamaindex/liteparse@2.14.7':
+    dependencies:
+      commander: 12.1.0
+    optionalDependencies:
+      '@llamaindex/liteparse-darwin-arm64': 2.14.7
+      '@llamaindex/liteparse-darwin-x64': 2.14.7
+      '@llamaindex/liteparse-linux-arm64-gnu': 2.14.7
+      '@llamaindex/liteparse-linux-x64-gnu': 2.14.7
+      '@llamaindex/liteparse-linux-x64-musl': 2.14.7
+      '@llamaindex/liteparse-win32-arm64-msvc': 2.14.7
+      '@llamaindex/liteparse-win32-x64-msvc': 2.14.7
+
+  commander@12.1.0: {}

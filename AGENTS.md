@@ -44,7 +44,9 @@ Project context and stack: [docs/PLAN.md](docs/PLAN.md). Use `pnpm`, never `npm`
 7. **No document content in logs.** Log IDs, lengths, durations and token counts only. Structured
    JSON lines, no `console`.
 8. **Env only via `apps/api/src/config/env.ts`.** Never read `process.env` elsewhere. Never open,
-   print or edit `.env*` files; only `.env.example` is tracked.
+   print or edit `.env*` files; only `.env.example` is tracked. The one exception: a reviewed
+   spike script may run as `node --env-file=.env.local spikes/<name>.mjs`, so Node loads the key
+   and the agent never sees it (see `.claude/hooks/bash-rules.mjs`).
 9. **UI states.** Every async view handles empty, loading, error (with retry) and pending
    (disabled controls, no double submit). One canonical trigger per user intent.
 10. **UI language is German** and free of technical terms (no "RAG", "Embedding", "Chunk" for

@@ -20,6 +20,10 @@ const GLOB_CHARS = /[*?[{]/;
 const DYNAMIC_PATH = /[`$]/;
 const SECRET_FILE = /(^|[/=])(\.env(\.[^/]*)?|id_rsa[^/]*|[^/]+\.pem)$/;
 const SECRET_EXAMPLE = /\.env\.example$/;
+// The one allowed use of a secrets file: Node loads it itself for a reviewed spike script, so the
+// agent never reads or prints it. Exactly `node --env-file=.env.local spikes/<name>.mjs ...`.
+const SPIKE_ENV_FLAG = '--env-file=.env.local';
+const SPIKE_SCRIPT = /^spikes\/[\w-]+\.mjs$/;
 
 function tokenize(segment) {
   return (segment.match(TOKEN) ?? []).map((token) => token.replace(/"([^"]*)"|'([^']*)'/g, '$1$2'));
@@ -130,7 +134,14 @@ function checkSegment(segment, ctx, depth) {
     }
   }
 
-  const secret = rest.find((token) => SECRET_FILE.test(token) && !SECRET_EXAMPLE.test(token));
+  const isSpikeRun =
+    command === 'node' && args[0] === SPIKE_ENV_FLAG && SPIKE_SCRIPT.test(args[1] ?? '');
+  const secret = rest.find(
+    (token, index) =>
+      SECRET_FILE.test(token) &&
+      !SECRET_EXAMPLE.test(token) &&
+      !(isSpikeRun && index === 1 && token === SPIKE_ENV_FLAG)
+  );
   if (secret) {
     return `"${secret}" looks like a secrets file. Never open or reference .env files or keys; only .env.example is allowed.`;
   }

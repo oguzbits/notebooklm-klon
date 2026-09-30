@@ -28,6 +28,7 @@ describe('allowed commands', () => {
     'rm -rf /tmp/scratch',
     'rm -rf /private/tmp/scratch/build',
     'FOO=1 pnpm test',
+    'node --env-file=.env.local spikes/parse-gemini.mjs --model m --files 04',
     'echo "a b" | wc -c',
   ])('%s', (command) => {
     expect(blocked(command)).toBeNull();
@@ -106,6 +107,12 @@ describe('secret files', () => {
     'tail id_rsa',
     'cat cert.pem',
     'node --env-file=.env.local script.js',
+    'node --env-file=.env.local spikes/../script.mjs',
+    'node --env-file=.env.local spikes/sub/x.mjs',
+    'node --env-file=.env.production spikes/x.mjs',
+    'node --env-file=.env.local spikes/x.mjs; cat .env.local',
+    'node --env-file=.env.local spikes/x.mjs .env.local',
+    'node --env-file=.env.local -e "console.log(process.env)"',
     'bash -c "cat .env"',
   ])('blocks %s', (command) => {
     expect(blocked(command)).toMatch(/secrets file/);

@@ -148,10 +148,12 @@ Ein Spike ist ein zeitlich begrenzter Wegwerf-Test, der eine Unsicherheit klärt
 
 | Aufgabe    | Kandidaten                                                              | Messgrößen                                                                                          | Entscheidungsregel                                                                               |
 | ---------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Parsing    | Gemini 3.1 Flash-Lite, GPT-6 Luna (Low, Medium), liteparse als Fallback | Auslassungen, Tabellenstruktur und Lesereihenfolge (Stichprobe von Hand), Zeit und Kosten pro Seite | Höchste Inhaltstreue gewinnt, bei Gleichstand der günstigere                                     |
-| Chat       | Gemini 3.5 Flash-Lite, GPT-6 Luna (niedrige Reasoning-Stufe)            | Antwortqualität, Zitat-Treffer, Zeit bis zum ersten Token, Kosten pro brauchbarer Antwort           | Die Zeit bis zum ersten Token darf den Chat nicht spürbar bremsen (Ziel ca. 5 Sekunden, Annahme) |
+| Parsing    | Gemini 3.1 Flash-Lite gegen liteparse (lokal, deterministisch)          | Auslassungen, Tabellenstruktur und Lesereihenfolge (Stichprobe von Hand), Zeit und Kosten pro Seite | Höchste Inhaltstreue gewinnt, bei Gleichstand der günstigere                                     |
+| Chat       | Gemini 3.5 Flash-Lite, ein größeres Flash-Modell nur als Stichprobe     | Antwortqualität, Zitat-Treffer, Zeit bis zum ersten Token, Kosten pro brauchbarer Antwort           | Die Zeit bis zum ersten Token darf den Chat nicht spürbar bremsen (Ziel ca. 5 Sekunden, Annahme) |
 | Embeddings | Gemini Embedding 2, `gemini-embedding-001` (je 768 Dimensionen)         | Trefferquote: liegt der passende Chunk in den Top 5, auch bei deutscher Frage auf englische Quelle  | Höhere Trefferquote, bei Gleichstand Embedding 2                                                 |
 | Zitate     | Strukturierte Ausgabe mit Chunk-Nummern                                 | Anteil der Antworten mit gültigen, tragenden Zitaten                                                | Format und Prompt festlegen                                                                      |
+
+**Entscheidung zum Umfang:** Es gibt keinen Vergleich mit OpenAI-Modellen, weil kein OpenAI-Zugang vorhanden ist. GPT-6 Luna bleibt als Alternative in der Stack-Tabelle und ist ungemessen. Das größere Flash-Modell läuft nur bei einer Stichprobe, weil es nur 20 Anfragen pro Tag gibt.
 
 **Regeln:** Der Code ist Wegwerf-Code. Ergebnisse und Entscheidung landen als kurze Notiz im Repo und sind im Video zeigbar. Die 5 Dollar Guthaben gehen an den Anbieter, der gewinnt. Weil Modell-IDs und Limits in der Config stehen, ist ein späterer Wechsel nur eine Umgebungsvariable.
 
@@ -159,9 +161,9 @@ Ein Spike ist ein zeitlich begrenzter Wegwerf-Test, der eine Unsicherheit klärt
 
 Das größte Risiko ist das Free-Tier-Kontingent im Live-Demo. Danach folgen Parsing-Qualität und Latenz.
 
-- **Kontingent:** Nur 20 Anfragen pro Tag bei den großen Flash-Modellen machen Studio knapp. Fallback ist Flash-Lite.
-- **Embeddings:** 30K Tokens pro Minute sind eng. Wie ein Batch gezählt wird und welche Limits `gemini-embedding-001` hat, ist nicht geprüft.
-- **Latenz:** GPT-6 Luna hatte laut Artificial Analysis bei Max-Reasoning eine Zeit bis zum ersten Token von etwa 139 Sekunden (Gemini 3.5 Flash-Lite etwa 8,8 Sekunden). Bei niedriger Stufe nicht gemessen.
+- **Kontingent:** Laut AI-Studio-Dashboard (Free Tier, im Spike geprüft) haben Gemini 3.5 bis 3.8 Flash 5 Anfragen pro Minute und 20 pro Tag, die Flash-Lite-Modelle 15 pro Minute und 500 pro Tag (beide 250K Tokens pro Minute). Das macht Studio auf den großen Modellen knapp. Fallback ist Flash-Lite.
+- **Embeddings:** Gemini Embedding 2 hat 100 Anfragen pro Minute, 30K Tokens pro Minute und 1000 pro Tag (Dashboard). 30K Tokens pro Minute sind eng, Ingestion braucht Drosselung nach Tokens. Wie ein Batch gezählt wird und welche Limits `gemini-embedding-001` hat, ist nicht geprüft.
+- **Latenz:** GPT-6 Luna (im Spike nicht gemessen) hatte laut Artificial Analysis bei Max-Reasoning eine Zeit bis zum ersten Token von etwa 139 Sekunden (Gemini 3.5 Flash-Lite etwa 8,8 Sekunden). Bei niedriger Stufe nicht gemessen.
 - **Parsing per LLM** ist nicht deterministisch und kann auslassen. Gegenmittel: Stichprobentests und liteparse als Fallback.
 - **ParseBench** stammt von LlamaIndex, deckt Enterprise-PDFs ab und enthält kein DOCX. Deshalb der eigene Spike.
 - **Datennutzung im Free Tier:** Bedingungen lesen, Hinweis im Demo.
