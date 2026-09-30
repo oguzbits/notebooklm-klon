@@ -1,7 +1,0 @@
-{
-  "path": ["apps/api/src", "apps/web/src", "packages/shared/src"],
-  "ignore": ["**/*.test.*", "**/*.spec.*", "**/components/ui/**"],
-  "threshold": 2,
-  "reporters": ["console"],
-  "gitignore": true
-}

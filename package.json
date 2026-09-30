@@ -47,5 +47,46 @@
     "*.{json,css,md,html,yml,yaml}": [
       "prettier --write"
     ]
+  },
+  "prettier": {
+    "semi": true,
+    "singleQuote": true,
+    "tabWidth": 2,
+    "trailingComma": "es5",
+    "printWidth": 100
+  },
+  "knip": {
+    "ignoreDependencies": [
+      "lint-staged"
+    ],
+    "workspaces": {
+      ".": {
+        "entry": [
+          ".claude/hooks/guard-*.mjs"
+        ]
+      },
+      "apps/web": {
+        "ignoreDependencies": [
+          "jsdom"
+        ]
+      }
+    }
+  },
+  "jscpd": {
+    "path": [
+      "apps/api/src",
+      "apps/web/src",
+      "packages/shared/src"
+    ],
+    "ignore": [
+      "**/*.test.*",
+      "**/*.spec.*",
+      "**/components/ui/**"
+    ],
+    "threshold": 2,
+    "reporters": [
+      "console"
+    ],
+    "gitignore": true
   }
 }
