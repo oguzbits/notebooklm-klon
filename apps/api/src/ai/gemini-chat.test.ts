@@ -60,13 +60,13 @@ describe('createGeminiChat', () => {
     );
 
     const pieces = await collect(
-      chat().stream({ system: 'SYSTEM', user: 'USER', schema: { type: 'object' } })
+      chat().stream({ system: 'SYSTEM', user: 'FRAGE', schema: { type: 'object' } })
     );
 
     expect(pieces).toEqual(['{"statements":', '[]}']);
     expect(seen).toMatchObject({
       systemInstruction: { parts: [{ text: 'SYSTEM' }] },
-      contents: [{ role: 'user', parts: [{ text: 'USER' }] }],
+      contents: [{ role: 'user', parts: [{ text: 'FRAGE' }] }],
       generationConfig: {
         temperature: 0,
         responseMimeType: 'application/json',

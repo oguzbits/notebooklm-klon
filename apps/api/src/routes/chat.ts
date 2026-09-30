@@ -1,4 +1,4 @@
-import { API_ERROR, ChatRequestSchema } from '@nlm/shared';
+import { type AnswerStatement, API_ERROR, CHAT_EVENT, ChatRequestSchema } from '@nlm/shared';
 import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
 
@@ -11,6 +11,7 @@ import {
   prepareAnswer,
 } from '../chat/answer';
 import { findNotebook, selectedReadySourceIds } from '../db/notebook-repository';
+import { saveAssistantMessage, saveUserMessage } from '../db/reader-repository';
 import { searchChunks } from '../db/retrieval';
 
 const BAD_REQUEST = 400;
@@ -49,9 +50,32 @@ export function chatRoutes(deps: AppDeps) {
       throw caught;
     }
 
+    // Saved only now: a rejected question (no source ready, quota) leaves no trace in the history.
+    await saveUserMessage(deps.db, userId, notebookId, parsed.data.question);
+
     return streamSSE(c, async (stream) => {
-      for await (const event of answerQuestion(prepared, ports)) {
-        await stream.writeSSE({ event: event.type, data: JSON.stringify(event) });
+      const statements: AnswerStatement[] = [];
+      let saved = false;
+      // An answer is saved once, before its last event goes out, so the client can read it back at
+      // once. An answer with no statements is saved only if the model finished (it found nothing).
+      const saveAnswer = async (finished: boolean) => {
+        if (saved || (!finished && statements.length === 0)) return;
+        saved = true;
+        await saveAssistantMessage(deps.db, userId, notebookId, statements);
+      };
+
+      try {
+        for await (const event of answerQuestion(prepared, ports)) {
+          if (event.type === CHAT_EVENT.STATEMENT) {
+            statements.push({ text: event.text, chunkIds: event.chunkIds });
+          } else {
+            await saveAnswer(event.type === CHAT_EVENT.DONE);
+          }
+          await stream.writeSSE({ event: event.type, data: JSON.stringify(event) });
+        }
+      } finally {
+        // The client left midway: keep what it already saw.
+        await saveAnswer(false);
       }
     });
   });

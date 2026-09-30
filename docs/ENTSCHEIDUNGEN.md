@@ -28,3 +28,18 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
 - **Kein liteparse-Fallback im ersten Wurf:** Scheitert Gemini bei einem PDF, wird die Quelle
   FAILED (PARSE_FAILED) und der Nutzer kann es erneut versuchen. Der Fallback wäre ein zweiter
   Parser mit Tesseract-Daten zur Laufzeit; er kommt nur, wenn die Fehlerrate es rechtfertigt.
+
+## 2026-09-30 (Leseansicht und Chat-Verlauf)
+
+- **Der Server speichert den Chat-Verlauf selbst, es gibt keinen Speichern-Endpunkt:** Die Frage wird
+  gespeichert, sobald die Antwort startet (abgewiesene Fragen hinterlassen nichts). Die Antwort wird
+  kurz vor dem letzten Ereignis gespeichert. Ein Client, der Antworten mit Zitaten selbst speichern
+  könnte, könnte den Zitat-Vertrag umgehen. Bricht das Modell mittendrin ab, bleiben die schon
+  geprüften Aussagen erhalten; ohne jede Aussage wird nur nach einem regulären Ende gespeichert.
+- **Nur Lesen für den Verlauf (`GET /api/notebooks/:id/messages`):** Löschen des Verlaufs kommt erst,
+  wenn die Oberfläche es braucht.
+- **Reihenfolge über eine Identity-Spalte `seq`:** Zeitstempel allein können bei zwei Zeilen im
+  selben Moment gleich sein. Die Aussagen liegen als JSON in der Tabelle und werden beim Lesen mit
+  `ChatMessageSchema` geprüft; eine kaputte Zeile wirft, statt übersprungen zu werden.
+- **Zitat-Details und Quellentext gelten nur, solange die Quelle im Notizbuch liegt:** Wird die Quelle
+  entfernt, liefern beide Endpunkte 404. Die Oberfläche zeigt dann „Quelle entfernt“ statt eines Popups.

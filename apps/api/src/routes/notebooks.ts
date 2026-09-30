@@ -19,18 +19,13 @@ import {
   setSourceSelected,
   unlinkSource,
 } from '../db/notebook-repository';
+import { json, notFound, unauthenticated } from './openapi';
 
 const OK = 200;
 const CREATED = 201;
 const NO_CONTENT = 204;
 const NOT_FOUND = 404;
 
-const json = <T extends z.ZodType>(schema: T, description: string) => ({
-  content: { 'application/json': { schema } },
-  description,
-});
-const notFound = json(ApiErrorSchema, 'Not found, or not owned by the user');
-const unauthenticated = json(ApiErrorSchema, 'Not signed in');
 const invalid = json(ApiErrorSchema, 'The request is invalid');
 
 const notebookParams = z.object({ notebookId: z.string().min(1) });

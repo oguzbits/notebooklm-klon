@@ -31,6 +31,17 @@ export {
   UrlSourceBodySchema,
 } from './notebook';
 export {
+  CHAT_ROLE,
+  type ChatMessage,
+  ChatMessageListSchema,
+  ChatMessageSchema,
+  type ChatRole,
+  type ChunkDetail,
+  ChunkDetailSchema,
+  type SourceText,
+  SourceTextSchema,
+} from './reader';
+export {
   EMBEDDING_DIMENSIONS,
   SOURCE_FAILURE,
   SOURCE_KIND,

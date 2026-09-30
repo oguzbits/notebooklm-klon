@@ -18,6 +18,7 @@ import { fetchPublicUrl } from '../import/fetch-url';
 import { submitSource } from '../ingestion/submit';
 import { pageTitle } from '../parsing/parse-web';
 import { countPdfPages } from '../parsing/pdf-pages';
+import { json } from './openapi';
 
 const ACCEPTED = 202;
 const BAD_REQUEST = 400;
@@ -29,10 +30,6 @@ const UNPROCESSABLE = 422;
 const MULTIPART_OVERHEAD_BYTES = 64 * 1024;
 
 const error = (code: (typeof API_ERROR)[keyof typeof API_ERROR]) => ({ code });
-const json = <T extends z.ZodType>(schema: T, description: string) => ({
-  content: { 'application/json': { schema } },
-  description,
-});
 
 const urlRoute = createRoute({
   method: 'post',
