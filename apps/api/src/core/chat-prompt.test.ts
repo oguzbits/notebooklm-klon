@@ -34,6 +34,7 @@ describe('chat prompt', () => {
 
   it('asks for a number only when a passage states it literally', () => {
     expect(CHAT_SYSTEM_PROMPT).toMatch(/literally/i);
+    expect(CHAT_SYSTEM_PROMPT).toMatch(/\*\*bold\*\*/);
   });
 
   it('describes the answer as statements with text and chunk IDs, derived from the shared schema', () => {

@@ -252,3 +252,10 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   Fließtext im Chat (#303030 / #c7c7c7, Token `--body`), der Text einer Quelle (#1b1b1c / #f2f2f2, `--doc`) und
   das Kleingedruckte wie Uhrzeit und Zitat-Zahl (#5e5e5e / #ababab, `--meta`). Über jeder Frage steht wie im
   Original „Heute • 20:51“ (gestern, sonst das Datum).
+- **Fette Begriffe in Antworten (2026-10-01):** Das Original hebt Schlüsselbegriffe fett hervor. Der Prompt erlaubt dem
+  Modell `**fett**` (sonst kein Markdown), die Oberfläche zeigt fett, kursiv und Code in einer Aussage und lässt
+  alles andere Text (keine Überschrift, Liste oder Link aus Modellausgabe). Beim Kopieren und bei „Als Quelle
+  festlegen“ fallen die Sternchen weg. Der Zitatvertrag ist unberührt: der Server prüft jede Belegnummer wie
+  zuvor. Listen wie im Original gibt es bewusst nicht: unsere Aussagen bilden fließenden Text, eine Liste würde
+  sie falsch gliedern. Live geprüft: 9 fette Begriffe in einer Antwort zu einem Wikipedia-Artikel, alle Belege
+  gültig.

@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useUploadFile } from '@/hooks/use-sources';
 import { describeError } from '@/lib/messages';
+import { withoutMarkers } from '@/lib/plain-text';
 import { relativeTime } from '@/lib/relative-time';
 
 const dateFormat = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' });
@@ -39,7 +40,7 @@ export function NoteViewer({
   const addAsSource = () =>
     upload.mutate(
       new File(
-        [note.statements.map((statement) => statement.text).join(' ')],
+        [note.statements.map((statement) => withoutMarkers(statement.text)).join(' ')],
         `Notiz vom ${dateFormat.format(new Date(note.createdAt))}.txt`,
         { type: 'text/plain' }
       ),

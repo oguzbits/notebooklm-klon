@@ -10,7 +10,8 @@ export const CHAT_SYSTEM_PROMPT =
   'supported by the cited passages. Never cite an ID that is not in the context. State a number, ' +
   'date or name only if a cited passage says it literally; do not derive it from a related ' +
   'figure. If the context does not contain the answer, return one statement saying so with an ' +
-  'empty citation list.';
+  'empty citation list. You may mark the most important terms of a statement with **bold**; ' +
+  'use no other Markdown.';
 
 /** The answer contract as JSON Schema for the provider, derived from the shared schema. */
 export const ANSWER_JSON_SCHEMA: Record<string, unknown> = (() => {

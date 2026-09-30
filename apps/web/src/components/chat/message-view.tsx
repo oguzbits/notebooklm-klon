@@ -2,6 +2,7 @@ import { type AnswerStatement, CHAT_ROLE, type ChatMessage } from '@nlm/shared';
 
 import { CitationChip } from '@/components/chat/citation-chip';
 import { CopyAnswerButton } from '@/components/chat/copy-answer-button';
+import { InlineText } from '@/components/chat/inline-text';
 import { SaveNoteButton } from '@/components/chat/save-note-button';
 import { numberCitations } from '@/lib/citations';
 import { messageTime } from '@/lib/relative-time';
@@ -25,7 +26,7 @@ export function AnswerView({ notebookId, statements, finished, onOpenCitation }:
     <p className="text-read text-body">
       {numberCitations(statements).map((statement, index) => (
         <span key={index}>
-          {statement.text}
+          <InlineText text={statement.text} />
           {statement.citations.map((citation) => (
             <CitationChip
               key={citation.chunkId}

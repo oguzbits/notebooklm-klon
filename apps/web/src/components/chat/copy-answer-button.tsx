@@ -3,6 +3,7 @@ import { Check, Copy } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { withoutMarkers } from '@/lib/plain-text';
 
 const CONFIRMATION_MS = 2000;
 
@@ -14,7 +15,9 @@ export function CopyAnswerButton({ statements }: { statements: AnswerStatement[]
 
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(statements.map((statement) => statement.text).join(' '));
+      await navigator.clipboard.writeText(
+        statements.map((statement) => withoutMarkers(statement.text)).join(' ')
+      );
       setFailure(null);
       setCopied(true);
       setTimeout(() => setCopied(false), CONFIRMATION_MS);

@@ -7,6 +7,8 @@ import {
   type StudioOutput,
 } from '@nlm/shared';
 
+import { withoutMarkers } from '@/lib/plain-text';
+
 /** Names shown for the kinds of Studio output and the formats of a report. */
 export const KIND_LABEL: Record<StudioKind, string> = {
   [STUDIO_KIND.REPORT]: 'Bericht',
@@ -53,7 +55,7 @@ export function describeOutput(output: StudioOutput): string {
 /** What a note is called in the list: the start of its text, since a note has no title of its own. */
 export function noteTitle(note: Note): string {
   const text = note.statements
-    .map((statement) => statement.text)
+    .map((statement) => withoutMarkers(statement.text))
     .join(' ')
     .replace(/\s+/g, ' ')
     .trim();
