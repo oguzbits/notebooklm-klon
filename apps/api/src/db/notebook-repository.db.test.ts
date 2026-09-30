@@ -9,6 +9,7 @@ import {
   linkSource,
   listNotebooks,
   listNotebookSources,
+  renameNotebook,
   selectedReadySourceIds,
   setSourceSelected,
   unlinkSource,
@@ -182,6 +183,25 @@ describe('deleteNotebook', () => {
     expect(await deleteNotebook(db, USER, theirs.id)).toBe(false);
     expect(await deleteNotebook(db, USER, 'kein-uuid')).toBe(false);
     expect(await findNotebook(db, OTHER, theirs.id)).not.toBeNull();
+  });
+});
+
+describe('renameNotebook', () => {
+  it('changes the title and returns the notebook', async () => {
+    const notebook = await createNotebook(db, USER, 'Alt');
+
+    const renamed = await renameNotebook(db, USER, notebook.id, 'Neu');
+
+    expect(renamed).toEqual({ ...notebook, title: 'Neu' });
+    expect((await findNotebook(db, USER, notebook.id))?.title).toBe('Neu');
+  });
+
+  it("does not rename another user's notebook or answer for an unknown ID", async () => {
+    const theirs = await createNotebook(db, OTHER, 'Fremd');
+
+    expect(await renameNotebook(db, USER, theirs.id, 'Meins')).toBeNull();
+    expect(await renameNotebook(db, USER, 'kein-uuid', 'X')).toBeNull();
+    expect((await findNotebook(db, OTHER, theirs.id))?.title).toBe('Fremd');
   });
 });
 

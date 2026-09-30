@@ -6,14 +6,14 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
 
 import { App } from './App';
-import { followColorScheme } from './lib/theme';
+import { initTheme } from './lib/theme';
 
 const root = document.getElementById('root');
 if (!root) {
   throw new Error('Root-Element #root fehlt in index.html');
 }
 
-followColorScheme(document.documentElement);
+initTheme(document.documentElement);
 
 // Errors are shown to the user, so a failed request is not repeated behind their back.
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });

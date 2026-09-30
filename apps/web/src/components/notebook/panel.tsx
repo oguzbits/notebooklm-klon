@@ -66,7 +66,7 @@ export function Panel({
     <section
       aria-label={title}
       className={cn(
-        'flex min-h-0 flex-col',
+        'flex min-h-0 min-w-0 flex-col',
         !bare &&
           'wide:mb-3 wide:rounded-panel wide:border wide:border-transparent wide:bg-card wide:p-2',
         className

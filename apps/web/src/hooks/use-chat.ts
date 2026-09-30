@@ -2,7 +2,7 @@ import { type AnswerStatement, API_ERROR, CHAT_EVENT, ChatMessageListSchema } fr
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { api, ApiRequestError, readJson } from '@/lib/api';
+import { api, ApiRequestError, expectOk, readJson } from '@/lib/api';
 import { streamChat } from '@/lib/chat-stream';
 import { queryKeys } from '@/lib/query-keys';
 
@@ -57,3 +57,13 @@ export function useAskQuestion(notebookId: string) {
 }
 
 export { API_ERROR };
+
+/** Deletes the whole chat history of the notebook. */
+export function useClearChat(notebookId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async () =>
+      expectOk(await api.api.notebooks[':notebookId'].messages.$delete({ param: { notebookId } })),
+    onSuccess: () => client.invalidateQueries({ queryKey: queryKeys.messages(notebookId) }),
+  });
+}

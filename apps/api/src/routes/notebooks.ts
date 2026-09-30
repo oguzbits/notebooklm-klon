@@ -5,6 +5,7 @@ import {
   CreateNotebookBodySchema,
   NotebookListSchema,
   NotebookSchema,
+  RenameNotebookBodySchema,
   SetSourceSelectionBodySchema,
   SourceListSchema,
 } from '@nlm/shared';
@@ -17,6 +18,7 @@ import {
   findNotebook,
   listNotebooks,
   listNotebookSources,
+  renameNotebook,
   setSourceSelected,
   unlinkSource,
 } from '../db/notebook-repository';
@@ -48,6 +50,21 @@ const createRoute_ = createRoute({
     [CREATED]: json(NotebookSchema, 'The new notebook'),
     400: invalid,
     401: unauthenticated,
+  },
+});
+
+const renameRoute = createRoute({
+  method: 'patch',
+  path: '/{notebookId}',
+  request: {
+    params: notebookParams,
+    body: { content: { 'application/json': { schema: RenameNotebookBodySchema } }, required: true },
+  },
+  responses: {
+    [OK]: json(NotebookSchema, 'The notebook with its new title'),
+    400: invalid,
+    401: unauthenticated,
+    [NOT_FOUND]: notFound,
   },
 });
 
@@ -111,6 +128,12 @@ export function notebookRoutes(deps: AppDeps) {
     .openapi(createRoute_, async (c) => {
       const { title } = c.req.valid('json');
       return c.json(await createNotebook(deps.db, c.var.userId, title), CREATED);
+    })
+    .openapi(renameRoute, async (c) => {
+      const { notebookId } = c.req.valid('param');
+      const { title } = c.req.valid('json');
+      const renamed = await renameNotebook(deps.db, c.var.userId, notebookId, title);
+      return renamed ? c.json(renamed, OK) : c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
     })
     .openapi(deleteRoute, async (c) => {
       const { notebookId } = c.req.valid('param');

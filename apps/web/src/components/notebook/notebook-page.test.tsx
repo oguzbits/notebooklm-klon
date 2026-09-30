@@ -66,6 +66,9 @@ describe('NotebookPage', () => {
     );
     renderPage();
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Forschung' })).toBeTruthy();
+    expect(await screen.findByRole('textbox', { name: 'Titel des Notizbuchs' })).toHaveProperty(
+      'value',
+      'Forschung'
+    );
   });
 });

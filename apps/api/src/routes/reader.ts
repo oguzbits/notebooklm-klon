@@ -4,10 +4,16 @@ import { API_ERROR, ChatMessageListSchema, ChunkDetailSchema, SourceTextSchema }
 import type { AppDeps } from '../app-deps';
 import type { AuthVariables } from '../auth/session';
 import { findNotebook } from '../db/notebook-repository';
-import { findChunkDetail, findSourceText, listChatMessages } from '../db/reader-repository';
+import {
+  clearChatMessages,
+  findChunkDetail,
+  findSourceText,
+  listChatMessages,
+} from '../db/reader-repository';
 import { json, notFound, unauthenticated } from './openapi';
 
 const OK = 200;
+const NO_CONTENT = 204;
 const NOT_FOUND = 404;
 
 const notebookParams = z.object({ notebookId: z.string().min(1) });
@@ -45,6 +51,17 @@ const messagesRoute = createRoute({
   },
 });
 
+const clearMessagesRoute = createRoute({
+  method: 'delete',
+  path: '/{notebookId}/messages',
+  request: { params: notebookParams },
+  responses: {
+    [NO_CONTENT]: { description: 'The chat history of the notebook is deleted' },
+    401: unauthenticated,
+    [NOT_FOUND]: notFound,
+  },
+});
+
 /** What the reader and the chat history need: cited passages, source text and past messages. */
 export function readerRoutes(deps: AppDeps) {
   const app = new OpenAPIHono<{ Variables: AuthVariables }>();
@@ -66,5 +83,10 @@ export function readerRoutes(deps: AppDeps) {
       const { userId } = c.var;
       if (!(await findNotebook(deps.db, userId, notebookId))) return c.json(missing, NOT_FOUND);
       return c.json(await listChatMessages(deps.db, userId, notebookId), OK);
+    })
+    .openapi(clearMessagesRoute, async (c) => {
+      const { notebookId } = c.req.valid('param');
+      const cleared = await clearChatMessages(deps.db, c.var.userId, notebookId);
+      return cleared ? c.body(null, NO_CONTENT) : c.json(missing, NOT_FOUND);
     });
 }

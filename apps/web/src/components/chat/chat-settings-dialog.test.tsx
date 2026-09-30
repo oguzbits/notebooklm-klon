@@ -2,7 +2,7 @@ import { CHAT_LENGTH, CHAT_STYLE, type ChatConfig, DEFAULT_CHAT_CONFIG } from '@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { NOTEBOOK_ID } from '@/test/fixtures';
 import { renderWithProviders } from '@/test/render';
@@ -22,29 +22,31 @@ describe('ChatSettingsDialog', () => {
         return HttpResponse.json(saved);
       })
     );
-    renderWithProviders(<ChatSettingsDialog notebookId={NOTEBOOK_ID} />);
+    const onOpenChange = vi.fn();
+    renderWithProviders(
+      <ChatSettingsDialog notebookId={NOTEBOOK_ID} open onOpenChange={onOpenChange} />
+    );
     const user = userEvent.setup();
 
-    await user.click(screen.getByRole('button', { name: /Einstellungen/ }));
     await user.click(await screen.findByRole('radio', { name: 'Kürzer' }));
     await user.click(screen.getByRole('radio', { name: /Lernbegleiter/ }));
     await user.click(screen.getByRole('button', { name: 'Speichern' }));
 
-    await screen.findByRole('button', { name: /Einstellungen/ });
+    await vi.waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
     expect(saved).toEqual({
       ...DEFAULT_CHAT_CONFIG,
       style: CHAT_STYLE.LEARNING_GUIDE,
       length: CHAT_LENGTH.SHORTER,
     });
-    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('asks for the instruction of the custom style before it can be saved', async () => {
     server.use(http.get(url, () => HttpResponse.json(DEFAULT_CHAT_CONFIG)));
-    renderWithProviders(<ChatSettingsDialog notebookId={NOTEBOOK_ID} />);
+    renderWithProviders(
+      <ChatSettingsDialog notebookId={NOTEBOOK_ID} open onOpenChange={() => {}} />
+    );
     const user = userEvent.setup();
 
-    await user.click(screen.getByRole('button', { name: /Einstellungen/ }));
     await user.click(await screen.findByRole('radio', { name: /Eigene Anweisung/ }));
 
     expect(screen.getByRole('button', { name: 'Speichern' })).toHaveProperty('disabled', true);

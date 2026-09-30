@@ -32,6 +32,7 @@ export {
   type Notebook,
   NotebookListSchema,
   NotebookSchema,
+  RenameNotebookBodySchema,
   SetSourceSelectionBodySchema,
   SourceListSchema,
   type SourceSummary,

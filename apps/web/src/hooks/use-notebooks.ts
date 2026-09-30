@@ -33,3 +33,15 @@ export function useDeleteNotebook() {
     onSuccess: () => client.invalidateQueries({ queryKey: queryKeys.notebooks }),
   });
 }
+
+export function useRenameNotebook(notebookId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (title: string) =>
+      readJson(
+        await api.api.notebooks[':notebookId'].$patch({ param: { notebookId }, json: { title } }),
+        NotebookSchema
+      ),
+    onSuccess: () => client.invalidateQueries({ queryKey: queryKeys.notebooks }),
+  });
+}

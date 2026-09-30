@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 
 import { Logo } from '@/components/brand/logo';
+import { SettingsMenu } from '@/components/layout/settings-menu';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +23,7 @@ export function AppHeader({ title, actions }: { title?: ReactNode; actions?: Rea
 
   return (
     <header className="flex h-16 shrink-0 items-center justify-between gap-3 pr-3 pl-4 sm:pr-4 sm:pl-5">
-      <div className="flex min-w-0 items-center gap-3">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
         <Link
           to={ROUTES.HOME}
           aria-label="Zu deinen Notizbüchern"
@@ -35,12 +36,13 @@ export function AppHeader({ title, actions }: { title?: ReactNode; actions?: Rea
         </Link>
         {title}
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex shrink-0 items-center gap-2">
         {actions}
+        <SettingsMenu />
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label="Konto"
-            className="veil ml-1 inline-flex size-10 items-center justify-center rounded-full bg-secondary text-base font-title text-foreground"
+            className="veil inline-flex size-10 items-center justify-center rounded-full bg-secondary text-base font-title text-foreground"
           >
             {email.charAt(0).toUpperCase() || '?'}
           </DropdownMenuTrigger>

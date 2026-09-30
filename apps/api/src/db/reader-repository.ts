@@ -135,3 +135,21 @@ export const saveAssistantMessage = (
   notebookId: string,
   statements: AnswerStatement[]
 ) => saveMessage(db, userId, notebookId, { role: CHAT_ROLE.ASSISTANT, text: null, statements });
+
+/** Deletes the whole chat history of a notebook. False when it is not the user's or does not exist. */
+export async function clearChatMessages(
+  db: Database,
+  userId: string,
+  notebookId: string
+): Promise<boolean> {
+  if (!UUID.test(notebookId)) return false;
+  const [notebook] = await db
+    .select({ id: notebooks.id })
+    .from(notebooks)
+    .where(and(eq(notebooks.id, notebookId), eq(notebooks.userId, userId)));
+  if (!notebook) return false;
+  await db
+    .delete(chatMessages)
+    .where(and(eq(chatMessages.notebookId, notebookId), eq(chatMessages.userId, userId)));
+  return true;
+}

@@ -6,7 +6,6 @@ import {
   DEFAULT_CHAT_CONFIG,
   MAX_CUSTOM_INSTRUCTION_CHARS,
 } from '@nlm/shared';
-import { Settings2 } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
 
 import { QueryBoundary } from '@/components/query-boundary';
@@ -20,7 +19,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -166,22 +164,23 @@ function SettingsForm({
   );
 }
 
-/** The chat settings of one notebook, opened from the header. */
-export function ChatSettingsDialog({ notebookId }: { notebookId: string }) {
-  const [open, setOpen] = useState(false);
+/** The chat settings of one notebook, opened from the menu of the notebook. */
+export function ChatSettingsDialog({
+  notebookId,
+  open,
+  onOpenChange,
+}: {
+  notebookId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const config = useChatConfig(notebookId, open);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" className="text-foreground">
-          <Settings2 />
-          <span className="max-sm:sr-only">Einstellungen</span>
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Einstellungen für den Chat</DialogTitle>
+          <DialogTitle>Chat konfigurieren</DialogTitle>
           <DialogDescription>
             Gilt für dieses Notizbuch. Jede Aussage bleibt mit einer Quelle belegt, was du auch
             einstellst.
@@ -192,7 +191,7 @@ export function ChatSettingsDialog({ notebookId }: { notebookId: string }) {
             <SettingsForm
               notebookId={notebookId}
               initial={loaded ?? DEFAULT_CHAT_CONFIG}
-              onSaved={() => setOpen(false)}
+              onSaved={() => onOpenChange(false)}
             />
           )}
         </QueryBoundary>

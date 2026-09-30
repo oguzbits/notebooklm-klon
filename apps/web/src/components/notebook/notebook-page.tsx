@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 
 import { ChatPanel } from '@/components/chat/chat-panel';
-import { ChatSettingsDialog } from '@/components/chat/chat-settings-dialog';
 import { AppHeader } from '@/components/layout/app-header';
+import { NotebookActions } from '@/components/notebook/notebook-actions';
+import { NotebookTitle } from '@/components/notebook/notebook-title';
 import { Panel } from '@/components/notebook/panel';
 import { ErrorNotice } from '@/components/query-boundary';
 import {
@@ -89,7 +90,6 @@ export function NotebookPage() {
   }
 
   // While the notebook loads, the layout already stands and each column shows its own placeholder.
-  const pending = notebook.isPending;
   const id = notebook.data?.id ?? notebookId;
   const openReader = (target: ReaderTarget) => {
     setReading(target);
@@ -102,13 +102,13 @@ export function NotebookPage() {
     <>
       <AppHeader
         title={
-          pending ? (
-            <Skeleton className="h-7 w-64 max-w-[40vw]" aria-hidden />
+          notebook.data ? (
+            <NotebookTitle key={notebook.data.title} notebook={notebook.data} />
           ) : (
-            <h1 className="truncate text-xl">{notebook.data?.title}</h1>
+            <Skeleton className="h-7 w-64 max-w-[40vw]" aria-hidden />
           )
         }
-        actions={pending ? undefined : <ChatSettingsDialog notebookId={id} />}
+        actions={notebook.data ? <NotebookActions notebook={notebook.data} /> : undefined}
       />
       <nav
         aria-label="Bereiche"

@@ -222,6 +222,25 @@ describe('chat history', () => {
     expect(rows).toEqual([{ source_id: sourceId }]);
   });
 
+  it('is deleted on request, only for the own notebook', async () => {
+    const notebook = await createNotebook(alice);
+    const bobsBook = await createNotebook(bob);
+    await addText(alice, notebook, 'Dr. Brandt leitet das Projekt Nordlicht.');
+    await harness.runJobs();
+    await ask(alice, notebook, 'Wer leitet es?');
+    const remove = (id: string, cookie: string) =>
+      app.request(`/api/notebooks/${id}/messages`, { method: 'DELETE', headers: { cookie } });
+
+    expect((await remove(bobsBook, alice)).status).toBe(404);
+    expect((await remove(notebook, alice)).status).toBe(204);
+
+    const history = await app.request(`/api/notebooks/${notebook}/messages`, get(alice));
+    expect(await history.json()).toEqual([]);
+    expect(
+      (await app.request(`/api/notebooks/${notebook}/messages`, { method: 'DELETE' })).status
+    ).toBe(401);
+  });
+
   it('saves nothing when the question is rejected because no source is ready', async () => {
     const notebook = await createNotebook(alice);
     await addText(alice, notebook, 'noch nicht verarbeitet');

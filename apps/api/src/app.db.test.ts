@@ -124,6 +124,39 @@ describe('notebooks', () => {
     expect(ApiErrorSchema.parse(await response.json()).code).toBe(API_ERROR.INVALID_REQUEST);
   });
 
+  it('renames an own notebook and refuses an empty title', async () => {
+    const own = await createNotebook(alice, 'Alt');
+
+    const renamed = await app.request(`/api/notebooks/${own}`, {
+      method: 'PATCH',
+      headers: { cookie: alice, 'content-type': 'application/json' },
+      body: JSON.stringify({ title: ' Neu ' }),
+    });
+    const empty = await app.request(`/api/notebooks/${own}`, {
+      method: 'PATCH',
+      headers: { cookie: alice, 'content-type': 'application/json' },
+      body: JSON.stringify({ title: '  ' }),
+    });
+
+    expect(renamed.status).toBe(200);
+    expect(NotebookSchema.parse(await renamed.json())).toMatchObject({ id: own, title: 'Neu' });
+    expect(empty.status).toBe(400);
+  });
+
+  it("does not rename another user's notebook", async () => {
+    const bobs = await createNotebook(bob, 'Bobs');
+
+    const response = await app.request(`/api/notebooks/${bobs}`, {
+      method: 'PATCH',
+      headers: { cookie: alice, 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Meins' }),
+    });
+
+    expect(response.status).toBe(404);
+    const list = await app.request('/api/notebooks', { headers: { cookie: bob } });
+    expect(NotebookListSchema.parse(await list.json())[0]?.title).toBe('Bobs');
+  });
+
   it('deletes an own notebook and answers 404 for the same one afterwards', async () => {
     const own = await createNotebook(alice, 'Weg damit');
 

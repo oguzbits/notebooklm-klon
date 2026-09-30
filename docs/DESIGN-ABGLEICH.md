@@ -48,9 +48,9 @@ Gewichte nicht kannte und sie beim Zusammenführen mit einer Textfarbe stillschw
 
 | Was      | Original                                                                                          | Nachbau vorher             | Maßnahme                                                                   | Status |
 | -------- | ------------------------------------------------------------------------------------------------- | -------------------------- | -------------------------------------------------------------------------- | ------ |
-| Titel    | Eingabe 22/36, x=76 (Logo 36 bei x=20, Lücke 12, Innen 8), bearbeitbar                            | h1 20 px, nicht editierbar | 22/36; Umbenennen über das Feld (sofern Endpunkt vorhanden)                | ➜      |
-| Rechts   | „+ Notebook erstellen“ (Text-Pille), Freigeben, ⋮ Konfiguration, ⚙, PRO, Apps, Avatar 40; Lücke 8 | „Einstellungen“ + Avatar   | „+ Notizbuch erstellen“, ⋮ (Chat konfigurieren …), ⚙ (Darstellung), Avatar | ➜      |
-| Tooltips | „Weitere Optionen“, „Einstellungen“ …                                                             | keine                      | über den neuen Tooltip                                                     | ➜      |
+| Titel    | Eingabe 22/36, x=76 (Logo 36 bei x=20, Lücke 12, Innen 8), bearbeitbar                            | h1 20 px, nicht editierbar | 22/36; Umbenennen über das Feld (sofern Endpunkt vorhanden)                | ✔      |
+| Rechts   | „+ Notebook erstellen“ (Text-Pille), Freigeben, ⋮ Konfiguration, ⚙, PRO, Apps, Avatar 40; Lücke 8 | „Einstellungen“ + Avatar   | „+ Notizbuch erstellen“, ⋮ (Chat konfigurieren …), ⚙ (Darstellung), Avatar | ◐      |
+| Tooltips | „Weitere Optionen“, „Einstellungen“ …                                                             | keine                      | über den neuen Tooltip                                                     | ✔      |
 
 ### 2.3 Zeiger, Tooltips, Fokus
 

@@ -28,6 +28,9 @@ export const CreateNotebookBodySchema = z.object({
   title: z.string().trim().min(1).max(MAX_TITLE_CHARS),
 });
 
+/** A notebook is renamed with a title under the same rules as when it is created. */
+export const RenameNotebookBodySchema = CreateNotebookBodySchema;
+
 export const SourceSummarySchema = z.object({
   id: z.uuid(),
   title: z.string(),

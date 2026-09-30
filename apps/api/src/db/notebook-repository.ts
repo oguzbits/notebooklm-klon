@@ -56,6 +56,22 @@ export async function findNotebook(
   return row ? { id: row.id, title: row.title, createdAt: row.createdAt.toISOString() } : null;
 }
 
+/** Gives the notebook a new title. Null when it is not the user's or does not exist. */
+export async function renameNotebook(
+  db: Database,
+  userId: string,
+  notebookId: string,
+  title: string
+): Promise<Notebook | null> {
+  if (!UUID.test(notebookId)) return null;
+  const [row] = await db
+    .update(notebooks)
+    .set({ title })
+    .where(and(eq(notebooks.id, notebookId), eq(notebooks.userId, userId)))
+    .returning();
+  return row ? { id: row.id, title: row.title, createdAt: row.createdAt.toISOString() } : null;
+}
+
 /** Deletes the notebook with its links and chat history. The sources stay: they are the user's. */
 export async function deleteNotebook(
   db: Database,

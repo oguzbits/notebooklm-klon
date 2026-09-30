@@ -2,6 +2,7 @@ import { CHAT_ROLE, SOURCE_KIND, SOURCE_STATUS } from '@nlm/shared';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import {
+  clearChatMessages,
   findChunkDetail,
   findSourceText,
   listChatMessages,
@@ -171,5 +172,35 @@ describe('chat messages', () => {
 
     await expect(saveUserMessage(db, USER, foreign.id, 'Einbruch')).rejects.toThrow();
     expect(await listChatMessages(db, OTHER_USER, foreign.id)).toEqual([]);
+  });
+});
+
+describe('clearChatMessages', () => {
+  it('deletes the history of one notebook and leaves the others', async () => {
+    const first = await insertNotebook(USER);
+    const second = await insertNotebook(USER);
+    for (const notebook of [first, second]) {
+      await pool.query(
+        'INSERT INTO chat_messages (notebook_id, user_id, role, text) VALUES ($1, $2, $3, $4)',
+        [notebook.id, USER, CHAT_ROLE.USER, 'Frage']
+      );
+    }
+
+    expect(await clearChatMessages(db, USER, first.id)).toBe(true);
+
+    expect(await listChatMessages(db, USER, first.id)).toEqual([]);
+    expect(await listChatMessages(db, USER, second.id)).toHaveLength(1);
+  });
+
+  it("does not touch another user's history and says so for an unknown notebook", async () => {
+    const theirs = await insertNotebook(OTHER_USER);
+    await pool.query(
+      'INSERT INTO chat_messages (notebook_id, user_id, role, text) VALUES ($1, $2, $3, $4)',
+      [theirs.id, OTHER_USER, CHAT_ROLE.USER, 'Frage']
+    );
+
+    expect(await clearChatMessages(db, USER, theirs.id)).toBe(false);
+    expect(await clearChatMessages(db, USER, 'kein-uuid')).toBe(false);
+    expect(await listChatMessages(db, OTHER_USER, theirs.id)).toHaveLength(1);
   });
 });

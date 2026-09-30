@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   CreateNotebookBodySchema,
   NotebookSchema,
+  RenameNotebookBodySchema,
   SetSourceSelectionBodySchema,
   SOURCE_KIND,
   SOURCE_STATUS,
@@ -26,6 +27,8 @@ describe('notebook contracts', () => {
     expect(CreateNotebookBodySchema.parse({ title: '  Idee  ' })).toEqual({ title: 'Idee' });
     expect(CreateNotebookBodySchema.safeParse({ title: '   ' }).success).toBe(false);
     expect(CreateNotebookBodySchema.safeParse({ title: 'x'.repeat(201) }).success).toBe(false);
+    expect(RenameNotebookBodySchema.parse({ title: ' Neu ' })).toEqual({ title: 'Neu' });
+    expect(RenameNotebookBodySchema.safeParse({ title: '' }).success).toBe(false);
   });
 
   it('parses a source summary with and without a failure', () => {

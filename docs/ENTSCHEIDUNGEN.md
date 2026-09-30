@@ -224,3 +224,12 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   Farben im Dunkelmodus sind eigene Werte: das Original nutzt dort eine grelle Lichtkante (#d4d7db), die auf
   dunklem Grund störte. `QueryBoundary` verlangt jetzt eine `loading`-Angabe, damit keine Stelle einen
   unpassenden Standard-Platzhalter bekommt.
+- **Kopfzeile wie im Original (2026-10-01):** Rechts „+ Notizbuch erstellen“ (legt ein Notizbuch an und öffnet es),
+  ⋮ (Chat konfigurieren, Chatverlauf löschen mit Hinweis, Notizbuch löschen, die beiden Löschungen mit
+  Rückfrage) und ⚙ (Darstellung: Gerätestandard / Hell / Dunkel; die Wahl steht in einem Cookie, weil
+  `localStorage` bei gesperrtem Speicher wirft und die Regeln stilles Fangen ausschließen). Der Titel ist wie im
+  Original ein Eingabefeld (22/36): Verlassen oder Enter speichert, Escape verwirft. Dafür gibt es zwei neue
+  Endpunkte, `PATCH /api/notebooks/:id` (Titel) und `DELETE /api/notebooks/:id/messages` (Chatverlauf), beide
+  auf den eigenen Nutzer begrenzt. Bewusst nicht übernommen: „Freigeben“, „PRO“, Apps-Raster, „Notebook
+  anpassen/kopieren“, „Analysen“, Hilfe, Discord, Abo, Wasserzeichen, Lizenzen (Google-Kontext oder keine Funktion
+  bei uns). Menüs öffnen ohne Abstand unter dem Auslöser (im Original y = Unterkante des Buttons).
