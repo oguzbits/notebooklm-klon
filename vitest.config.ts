@@ -9,6 +9,7 @@ export default defineConfig({
     projects: [
       { test: { name: 'shared', root: './packages/shared', environment: 'node', setupFiles } },
       { test: { name: 'api', root: './apps/api', environment: 'node', setupFiles } },
+      { test: { name: 'hooks', root: './.claude/hooks', environment: 'node', setupFiles } },
       { test: { name: 'web', root: './apps/web', environment: 'jsdom', setupFiles } },
     ],
   },

@@ -2,6 +2,7 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "ignoreDependencies": ["lint-staged"],
   "workspaces": {
+    ".": { "entry": [".claude/hooks/guard-*.mjs"] },
     "apps/web": { "ignoreDependencies": ["jsdom"] }
   }
 }
