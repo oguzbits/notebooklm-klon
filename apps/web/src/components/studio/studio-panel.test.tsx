@@ -52,6 +52,32 @@ describe('StudioPanel', () => {
     expect(screen.getByText('Noch keine Notizen')).toBeTruthy();
   });
 
+  it('tells what a tile makes when the pointer rests on it', async () => {
+    serve();
+    renderPanel();
+    const user = userEvent.setup();
+
+    await user.hover(await screen.findByRole('button', { name: 'Quiz' }));
+
+    expect(
+      (await screen.findAllByText(/Interaktives Quiz auf Grundlage deiner Quellen/)).length
+    ).toBeGreaterThan(0);
+  });
+
+  it('keeps the tooltip of a tile that cannot be used yet', async () => {
+    serve({ sources: [] });
+    renderPanel();
+    const user = userEvent.setup();
+
+    const tile = await screen.findByRole('button', { name: 'Mindmap' });
+    expect(tile).toHaveProperty('disabled', true);
+    await user.hover(tile.parentElement as HTMLElement);
+
+    expect(
+      (await screen.findAllByText(/Mindmap mithilfe von KI erstellen/)).length
+    ).toBeGreaterThan(0);
+  });
+
   it('lists the outputs with what they are', async () => {
     serve({ outputs: [flashcardsOutput()] });
     renderPanel();

@@ -20,6 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { FAILURE_MESSAGE, STATUS_LABEL } from '@/lib/messages';
 import { cn } from '@/lib/utils';
 
@@ -60,22 +61,27 @@ export function SourceRow({
   return (
     <li className="group/row veil rounded-lg px-2 py-1">
       <div className="flex min-h-9 items-center gap-3">
-        <button
-          type="button"
-          className="flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left text-[0.875rem] leading-6 disabled:cursor-default"
-          disabled={!ready}
-          onClick={onOpen}
-          title={ready ? 'Text der Quelle anzeigen' : undefined}
-        >
-          <KindIcon kind={source.kind} />
-          <span className="truncate">{source.title}</span>
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              className="flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left text-[0.875rem] leading-6"
+              disabled={!ready}
+              onClick={onOpen}
+            >
+              <KindIcon kind={source.kind} />
+              <span className="truncate">{source.title}</span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>{source.title}</TooltipContent>
+        </Tooltip>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
               size="icon-xs"
               aria-label={`Weitere Aktionen für „${source.title}“`}
+              tooltip="Mehr"
               disabled={busy}
               className="opacity-0 group-focus-within/row:opacity-100 group-hover/row:opacity-100 data-[state=open]:opacity-100 max-wide:opacity-100"
             >

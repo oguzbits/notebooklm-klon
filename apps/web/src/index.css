@@ -67,6 +67,9 @@
   --veil-press: color-mix(in srgb, var(--foreground) 12%, transparent);
   /* The soft glow under floating surfaces. */
   --glow: 0 0 20px rgb(0 0 0 / 0.04);
+  /* A tooltip is the inverse of the page: dark on light, light on dark. */
+  --tooltip: #303030;
+  --tooltip-foreground: #f2f2f2;
   /* The notification card while the Studio works. */
   --callout: linear-gradient(268deg, rgb(169 168 255 / 0.15), rgb(49 134 255 / 0.15));
 }
@@ -106,6 +109,8 @@
   --studio-blue: #76a0ff;
   --studio-green: #3fdda0;
   --glow: 0 0 20px rgb(0 0 0 / 0.28);
+  --tooltip: #e3e3e3;
+  --tooltip-foreground: #303030;
   --tile: #171717;
   --tile-ring: transparent;
   --action: #8b8aff;
@@ -161,6 +166,8 @@
   --color-studio-blue: var(--studio-blue);
   --color-studio-green: var(--studio-green);
   --color-tile: var(--tile);
+  --color-tooltip: var(--tooltip);
+  --color-tooltip-foreground: var(--tooltip-foreground);
   --color-flashcard: var(--flashcard);
   --color-flashcard-foreground: var(--flashcard-foreground);
   --color-action: var(--action);
@@ -192,6 +199,20 @@
     @apply bg-background font-sans text-foreground antialiased;
     font-size: 0.9375rem;
     line-height: 1.25rem;
+  }
+  /* Tailwind v4 leaves buttons on the default arrow; every control that can be used shows the hand. */
+  :where(
+    button,
+    [role='button'],
+    [role='menuitem'],
+    [role='tab'],
+    [role='checkbox'],
+    [role='radio'],
+    [role='switch'],
+    summary,
+    select
+  ):not(:disabled, [aria-disabled='true'], [data-disabled]) {
+    cursor: pointer;
   }
   /* The keyboard focus of every control: a 3px ring that follows its shape. */
   :where(button, a, [role='button'], input, textarea, select, [tabindex]):focus-visible {

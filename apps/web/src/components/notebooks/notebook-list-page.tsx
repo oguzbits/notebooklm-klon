@@ -155,6 +155,7 @@ export function NotebookListPage() {
                           size="icon-xs"
                           className="absolute top-6 right-6"
                           aria-label={`Weitere Aktionen für Notizbuch „${notebook.title}“`}
+                          tooltip="Mehr"
                         >
                           <EllipsisVertical />
                         </Button>

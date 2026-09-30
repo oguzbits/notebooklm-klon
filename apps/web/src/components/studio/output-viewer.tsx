@@ -50,6 +50,7 @@ export function OutputViewer({
           variant="ghost"
           size="icon"
           aria-label="Ausgabe löschen"
+          tooltip="Löschen"
           disabled={deleting}
           onClick={onDelete}
         >

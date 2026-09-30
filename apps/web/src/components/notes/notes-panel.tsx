@@ -100,6 +100,7 @@ export function NotesSection({
                       variant="ghost"
                       size="icon-xs"
                       aria-label="Notiz löschen"
+                      tooltip="Löschen"
                       onClick={() => setToDelete(note.id)}
                     >
                       <Trash2 />

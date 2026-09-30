@@ -45,7 +45,13 @@ export function Panel({
           className
         )}
       >
-        <Button variant="ghost" size="icon" aria-label={`${title} einblenden`} onClick={onToggle}>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={`${title} einblenden`}
+          tooltip={`${title} einblenden`}
+          onClick={onToggle}
+        >
           <Open />
         </Button>
         <span className="mt-4 text-ui text-muted-foreground [writing-mode:vertical-rl]">
@@ -76,6 +82,7 @@ export function Panel({
             variant="ghost"
             size="icon-sm"
             aria-label={`${title} ausblenden`}
+            tooltip={`${title} ausblenden`}
             onClick={onToggle}
           >
             <Close />

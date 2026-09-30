@@ -31,6 +31,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useSources } from '@/hooks/use-sources';
 import { useCreateStudioOutput, useDeleteStudioOutput, useStudioOutputs } from '@/hooks/use-studio';
 import { describeError } from '@/lib/messages';
@@ -53,17 +54,33 @@ const KIND_COLOR: Record<StudioKind, string> = {
 };
 
 const TILE =
-  'flex h-12 items-center gap-1 rounded-xl bg-tile pr-3 pl-2 text-left text-small ring-1 ring-inset ring-[var(--tile-ring)] transition-transform duration-200 ease-[cubic-bezier(0.05,0.7,0.1,1)] hover:scale-[0.985] active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50';
+  'flex h-12 w-full items-center gap-1 rounded-xl bg-tile pr-3 pl-2 text-left text-small ring-1 ring-inset ring-[var(--tile-ring)] transition-transform duration-200 ease-[cubic-bezier(0.05,0.7,0.1,1)] hover:scale-[0.985] active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50';
+
+/** What a tile says when the pointer rests on it, worded like the original. */
+const KIND_TIP: Record<StudioKind, string> = {
+  [STUDIO_KIND.REPORT]: 'Berichte auf Grundlage deiner Quellen erstellen',
+  [STUDIO_KIND.FLASHCARDS]: 'Karteikarten mithilfe von KI basierend auf deinen Quellen erstellen',
+  [STUDIO_KIND.QUIZ]: 'Interaktives Quiz auf Grundlage deiner Quellen mit KI erstellen',
+  [STUDIO_KIND.MINDMAP]: 'Mindmap mithilfe von KI erstellen, basierend auf deinen Quellen',
+};
 
 function Tile({ kind, children, ...props }: { kind: StudioKind } & React.ComponentProps<'button'>) {
   const Icon = KIND_ICON[kind];
   return (
-    <button type="button" className={TILE} {...props}>
-      <span className="flex size-10 shrink-0 items-center justify-center">
-        <Icon className={cn('size-6', KIND_COLOR[kind])} aria-hidden />
-      </span>
-      {children ?? KIND_LABEL[kind]}
-    </button>
+    <Tooltip>
+      {/* The span keeps the tooltip alive while the tile is disabled (a disabled button gets no pointer events). */}
+      <TooltipTrigger asChild>
+        <span className="flex">
+          <button type="button" className={TILE} {...props}>
+            <span className="flex size-10 shrink-0 items-center justify-center">
+              <Icon className={cn('size-6', KIND_COLOR[kind])} aria-hidden />
+            </span>
+            {children ?? KIND_LABEL[kind]}
+          </button>
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{KIND_TIP[kind]}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -228,21 +245,26 @@ function OutputRow({
   const Icon = KIND_ICON[output.kind];
   return (
     <li className={cn('veil flex items-center rounded-xl', deleting && 'opacity-50')}>
-      <button
-        type="button"
-        onClick={onOpen}
-        className="flex h-[60px] min-w-0 flex-1 items-center gap-2 rounded-xl p-2 text-left"
-      >
-        <span className="flex size-8 shrink-0 items-center justify-center">
-          <Icon className={cn('size-6', KIND_COLOR[output.kind])} aria-hidden />
-        </span>
-        <span className="min-w-0 text-small">
-          <span className="block truncate">{output.title}</span>
-          <span className="block truncate text-[0.75rem] leading-4 text-muted-foreground">
-            {describeOutput(output)} · {relativeTime(output.createdAt)}
-          </span>
-        </span>
-      </button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            onClick={onOpen}
+            className="flex h-[60px] min-w-0 flex-1 items-center gap-2 rounded-xl p-2 text-left"
+          >
+            <span className="flex size-8 shrink-0 items-center justify-center">
+              <Icon className={cn('size-6', KIND_COLOR[output.kind])} aria-hidden />
+            </span>
+            <span className="min-w-0 text-small">
+              <span className="block truncate">{output.title}</span>
+              <span className="block truncate text-[0.75rem] leading-4 text-muted-foreground">
+                {describeOutput(output)} · {relativeTime(output.createdAt)}
+              </span>
+            </span>
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>{output.title}</TooltipContent>
+      </Tooltip>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -250,6 +272,7 @@ function OutputRow({
             size="icon-sm"
             className="mr-1"
             aria-label={`Weitere Aktionen für „${output.title}“`}
+            tooltip="Mehr"
             disabled={deleting}
           >
             <EllipsisVertical />
