@@ -34,7 +34,7 @@ const CHUNKS = [
 ];
 
 const json = (...statements: { text: string; chunkIds: string[] }[]) =>
-  JSON.stringify({ statements });
+  JSON.stringify({ statements, followUps: [] });
 
 /** A stream that fails on the first read. */
 async function* failing(error: Error): AsyncGenerator<string> {
@@ -134,8 +134,53 @@ describe('answerQuestion', () => {
 
     expect(events).toEqual([
       { type: CHAT_EVENT.STATEMENT, text: 'Dr. Brandt leitet es.', chunkIds: ['chunk-1'] },
-      { type: CHAT_EVENT.DONE, statements: 1, droppedStatements: 0, strippedCitations: 0 },
+      {
+        type: CHAT_EVENT.DONE,
+        statements: 1,
+        droppedStatements: 0,
+        strippedCitations: 0,
+        followUps: [],
+      },
     ]);
+  });
+
+  it('closes with the questions the reader could ask next, tidied', async () => {
+    const { ports } = fakePorts({
+      stream: async function* () {
+        yield* pieces(
+          JSON.stringify({
+            statements: [{ text: 'Dr. Brandt leitet es.', chunkIds: ['c1'] }],
+            followUps: [
+              'Wer leitet das Projekt?',
+              'Wie hoch ist das Budget?',
+              'wie hoch ist das Budget?',
+            ],
+          })
+        );
+      },
+    });
+
+    const events = await run(ports);
+
+    expect(events.at(-1)).toMatchObject({
+      type: CHAT_EVENT.DONE,
+      followUps: ['Wie hoch ist das Budget?'],
+    });
+  });
+
+  it('suggests nothing when no statement kept a valid citation', async () => {
+    const { ports } = fakePorts({
+      stream: async function* () {
+        yield* pieces(
+          JSON.stringify({
+            statements: [{ text: 'Erfunden.', chunkIds: ['c9'] }],
+            followUps: ['Wie geht es weiter?'],
+          })
+        );
+      },
+    });
+
+    expect((await run(ports)).at(-1)).toMatchObject({ type: CHAT_EVENT.DONE, followUps: [] });
   });
 
   it('shows the model the numbered passages and the question', async () => {
@@ -166,7 +211,13 @@ describe('answerQuestion', () => {
 
     expect(events).toEqual([
       { type: CHAT_EVENT.STATEMENT, text: 'Belegt.', chunkIds: ['chunk-2'] },
-      { type: CHAT_EVENT.DONE, statements: 1, droppedStatements: 2, strippedCitations: 2 },
+      {
+        type: CHAT_EVENT.DONE,
+        statements: 1,
+        droppedStatements: 2,
+        strippedCitations: 2,
+        followUps: [],
+      },
     ]);
   });
 
@@ -176,7 +227,7 @@ describe('answerQuestion', () => {
       stream: async function* () {
         yield '{"statements":[{"text":"Eins.","chunkIds":["c1"]},';
         order.push('after first statement');
-        yield '{"text":"Zwei.","chunkIds":["c2"]}]}';
+        yield '{"text":"Zwei.","chunkIds":["c2"]}],"followUps":[]}';
         order.push('after second statement');
       },
     });
@@ -245,7 +296,13 @@ describe('answerQuestion', () => {
     });
 
     expect(await run(ports)).toEqual([
-      { type: CHAT_EVENT.DONE, statements: 0, droppedStatements: 0, strippedCitations: 0 },
+      {
+        type: CHAT_EVENT.DONE,
+        statements: 0,
+        droppedStatements: 0,
+        strippedCitations: 0,
+        followUps: [],
+      },
     ]);
     expect(modelCalled).toBe(false);
   });

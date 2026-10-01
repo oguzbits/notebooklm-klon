@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Link, useParams } from 'react-router';
 
 import { ChatPanel } from '@/components/chat/chat-panel';
@@ -13,10 +13,12 @@ import {
   type ReaderTarget,
 } from '@/components/reader/reader-panel';
 import { SourcesPanel } from '@/components/sources/sources-panel';
+import { SourcesRail } from '@/components/sources/sources-rail';
 import { StudioPanel } from '@/components/studio/studio-panel';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNotebook } from '@/hooks/use-notebooks';
+import { useWideLayout } from '@/hooks/use-wide-layout';
 import { ROUTES } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 
@@ -31,17 +33,20 @@ const COLUMN_TAB: { column: Column; label: string }[] = [
 
 // The columns of the original are flex items in a container as wide as the window minus 12px each
 // side: 25 % / 48 % / 25 % of it with 8px between them (the 2 % that is left stays empty on the right).
-// While a Studio output is open the Studio takes 37.5 % of the window and the other two share the
-// rest 10 : 19. A column that is folded away becomes a rail of 56px.
+// The chat always fills what the side columns leave, but never more than 48 % while both are open.
+// While a Studio output is open the Studio asks for at least 37.5 % of the window (`min-width`) and
+// the other two give way in proportion to their size, exactly the way the original does it. A column
+// that is folded away becomes a rail of 56px. Everything that changes between these states is a
+// length, so the browser can move it smoothly in both directions (nothing flips at the start or the
+// end, which is what made the earlier version jump).
+const MOTION =
+  'wide:transition-[flex-basis,min-width,max-width,margin] wide:duration-200 wide:ease-in-out';
 const FLEX = {
-  SOURCES: 'wide:[flex:0_1_25%]',
-  CHAT: 'wide:[flex:0_1_48%]',
-  STUDIO: 'wide:[flex:0_1_25%]',
-  SOURCES_WHILE_VIEWING: 'wide:[flex:10_1_0%]',
-  CHAT_WHILE_VIEWING: 'wide:[flex:19_1_0%]',
-  STUDIO_WHILE_VIEWING: 'wide:[flex:0_0_37.5vw]',
-  CHAT_FILLING: 'wide:[flex:1_1_0%]',
+  SIDE: 'wide:[flex:0_1_25%]',
   RAIL: 'wide:[flex:0_0_56px]',
+  CHAT: 'wide:[flex:1_1_48%] wide:max-w-[48%]',
+  CHAT_FILLING: 'wide:[flex:1_1_48%] wide:max-w-full',
+  STUDIO_VIEWING: 'wide:min-w-[37.5vw]',
 } as const;
 
 /**
@@ -57,6 +62,25 @@ export function NotebookPage() {
   const [studioOpen, setStudioOpen] = useState(true);
   const [column, setColumn] = useState<Column>(COLUMN.CHAT);
   const [viewingOutput, setViewingOutput] = useState(false);
+  // A question that came from the Studio ("Erklären" on a card); the chat asks it once.
+  const [asked, setAsked] = useState<{ id: number; question: string } | null>(null);
+  const wide = useWideLayout();
+
+  // The columns are memoized, so folding one (or opening something in the Studio) does not render the
+  // others again; for that these functions must keep their identity.
+  const openReader = useCallback((target: ReaderTarget) => {
+    setReading(target);
+    setSourcesOpen(true);
+    setColumn(COLUMN.SOURCES);
+  }, []);
+  const openSource = useCallback((sourceId: string) => openReader({ sourceId }), [openReader]);
+  const openCitation = useCallback((chunkId: string) => openReader({ chunkId }), [openReader]);
+  const expandStudio = useCallback(() => setStudioOpen(true), []);
+  const askInChat = useCallback((question: string) => {
+    setAsked((current) => ({ id: (current?.id ?? 0) + 1, question }));
+    setColumn(COLUMN.CHAT);
+  }, []);
+  const toggleStudio = useCallback(() => setStudioOpen((value) => !value), []);
 
   if (notebook.isError) {
     return (
@@ -91,12 +115,10 @@ export function NotebookPage() {
 
   // While the notebook loads, the layout already stands and each column shows its own placeholder.
   const id = notebook.data?.id ?? notebookId;
-  const openReader = (target: ReaderTarget) => {
-    setReading(target);
-    setSourcesOpen(true);
-    setColumn(COLUMN.SOURCES);
-  };
   const hiddenBelowWide = (own: Column) => (column === own ? '' : 'max-wide:hidden');
+  // Only the wide layout has rails; below it every column is shown whole.
+  const sourcesFolded = wide && !sourcesOpen;
+  const studioFolded = wide && !studioOpen;
 
   return (
     <>
@@ -133,19 +155,23 @@ export function NotebookPage() {
         <Panel
           title="Quellen"
           side="left"
-          collapsed={!sourcesOpen}
+          collapsed={sourcesFolded}
           onToggle={() => setSourcesOpen((value) => !value)}
           action={reading ? <CloseReaderButton onClick={() => setReading(null)} /> : undefined}
+          rail={
+            <SourcesRail notebookId={id} onOpenSource={(sourceId) => openReader({ sourceId })} />
+          }
           className={cn(
             hiddenBelowWide(COLUMN.SOURCES),
-            'w-full wide:w-auto wide:transition-[flex] wide:duration-200 wide:ease-in-out',
-            !sourcesOpen ? FLEX.RAIL : viewingOutput ? FLEX.SOURCES_WHILE_VIEWING : FLEX.SOURCES
+            'w-full wide:w-auto',
+            MOTION,
+            sourcesFolded ? FLEX.RAIL : FLEX.SIDE
           )}
         >
           {reading ? (
             <ReaderPanel notebookId={id} target={reading} />
           ) : (
-            <SourcesPanel notebookId={id} onOpenSource={(sourceId) => openReader({ sourceId })} />
+            <SourcesPanel notebookId={id} onOpenSource={openSource} />
           )}
         </Panel>
         <Panel
@@ -153,36 +179,31 @@ export function NotebookPage() {
           bare
           className={cn(
             hiddenBelowWide(COLUMN.CHAT),
-            'w-full wide:w-auto wide:transition-[flex] wide:duration-200 wide:ease-in-out',
-            !sourcesOpen || !studioOpen
-              ? FLEX.CHAT_FILLING
-              : viewingOutput
-                ? FLEX.CHAT_WHILE_VIEWING
-                : FLEX.CHAT,
-            !sourcesOpen && 'wide:ml-2',
-            !studioOpen && 'wide:mr-2'
+            'w-full wide:w-auto',
+            MOTION,
+            sourcesFolded || studioFolded ? FLEX.CHAT_FILLING : FLEX.CHAT,
+            sourcesFolded && 'wide:ml-2',
+            studioFolded && 'wide:mr-2'
           )}
         >
-          <ChatPanel notebookId={id} onOpenCitation={(chunkId) => openReader({ chunkId })} />
+          <ChatPanel notebookId={id} onOpenCitation={openCitation} incoming={asked} />
         </Panel>
-        <Panel
-          title="Studio"
-          side="right"
-          titleHidden={viewingOutput}
-          collapsed={!studioOpen}
-          onToggle={() => setStudioOpen((value) => !value)}
+        <StudioPanel
+          notebookId={id}
+          collapsed={studioFolded}
+          onToggle={toggleStudio}
+          onExpand={expandStudio}
+          onOpenCitation={openCitation}
+          onAsk={askInChat}
+          onViewingChange={setViewingOutput}
           className={cn(
             hiddenBelowWide(COLUMN.STUDIO),
-            'w-full wide:w-auto wide:transition-[flex] wide:duration-200 wide:ease-in-out',
-            !studioOpen ? FLEX.RAIL : viewingOutput ? FLEX.STUDIO_WHILE_VIEWING : FLEX.STUDIO
+            'w-full wide:w-auto',
+            MOTION,
+            studioFolded ? FLEX.RAIL : FLEX.SIDE,
+            viewingOutput && !studioFolded && FLEX.STUDIO_VIEWING
           )}
-        >
-          <StudioPanel
-            notebookId={id}
-            onOpenCitation={(chunkId) => openReader({ chunkId })}
-            onViewingChange={setViewingOutput}
-          />
-        </Panel>
+        />
       </div>
     </>
   );

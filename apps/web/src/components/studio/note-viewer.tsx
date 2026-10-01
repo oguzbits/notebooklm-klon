@@ -1,89 +1,93 @@
-import type { Note } from '@nlm/shared';
-import { Check, FilePlus2 } from 'lucide-react';
-import { useState } from 'react';
+import { type AnswerNote, type Note, NOTE_KIND } from '@nlm/shared';
+import { lazy, Suspense } from 'react';
 
 import { AnswerView } from '@/components/chat/message-view';
-import { noteTitle } from '@/components/studio/studio-labels';
-import { ViewerFrame } from '@/components/studio/viewer-frame';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { useUploadFile } from '@/hooks/use-sources';
-import { describeError } from '@/lib/messages';
+import { NoteEditorSkeleton } from '@/components/skeletons';
+import { NoteFrame } from '@/components/studio/note-frame';
 import { withoutMarkers } from '@/lib/plain-text';
-import { relativeTime } from '@/lib/relative-time';
 
-const dateFormat = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' });
+const PLAIN_TEXT = 'text/plain';
+
+// The editor is more than half of what the rest of the page weighs, and only a note of the reader
+// needs it, so it is fetched when the first such note opens.
+const WrittenNoteView = lazy(async () => ({
+  default: (await import('@/components/studio/written-note')).WrittenNoteView,
+}));
 
 /**
- * One saved answer in full, in place of the Studio list. The chips in it lead to the passages like
- * in the chat, and "Als Quelle festlegen" puts its text among the sources.
+ * A saved answer in full: its chips lead to the passages like in the chat. The text cannot be
+ * changed, because a chip would then vouch for words that are no longer there. It can be named.
  */
-export function NoteViewer({
+function AnswerNoteView({
   notebookId,
   note,
   deleting,
-  onBack,
   onDelete,
   onOpenCitation,
 }: {
   notebookId: string;
-  note: Note;
+  note: AnswerNote;
   deleting: boolean;
-  onBack: () => void;
   onDelete: () => void;
   onOpenCitation: (chunkId: string) => void;
 }) {
-  const upload = useUploadFile(notebookId);
-  const [added, setAdded] = useState(false);
-
-  /** The text of the note goes up as a text file, like pasted text does. */
-  const addAsSource = () =>
-    upload.mutate(
-      new File(
-        [note.statements.map((statement) => withoutMarkers(statement.text)).join(' ')],
-        `Notiz vom ${dateFormat.format(new Date(note.createdAt))}.txt`,
-        { type: 'text/plain' }
-      ),
-      { onSuccess: () => setAdded(true) }
-    );
-
   return (
-    <ViewerFrame
-      crumb="Notiz"
-      title="Notiz"
-      subtitle={`Gespeichert ${relativeTime(note.createdAt)}`}
-      deleteLabel="Löschen"
+    <NoteFrame
+      notebookId={notebookId}
+      note={note}
       deleting={deleting}
-      onBack={onBack}
       onDelete={onDelete}
-      footer={
-        <div className="flex flex-col items-start gap-2">
-          {upload.isError && (
-            <Alert variant="destructive">
-              <AlertDescription>{describeError(upload.error)}</AlertDescription>
-            </Alert>
-          )}
-          {added ? (
-            <p className="flex h-9 items-center gap-2 px-2 text-ui text-muted-foreground">
-              <Check className="size-5" aria-hidden />
-              Als Quelle hinzugefügt
-            </p>
-          ) : (
-            <Button variant="secondary" disabled={upload.isPending} onClick={addAsSource}>
-              <FilePlus2 />
-              Als Quelle festlegen
-            </Button>
-          )}
-        </div>
+      sourceType={PLAIN_TEXT}
+      getSourceText={() =>
+        note.statements.map((statement) => withoutMarkers(statement.text)).join(' ')
       }
     >
-      <p className="sr-only">{noteTitle(note)}</p>
       <AnswerView
         notebookId={notebookId}
         statements={note.statements}
         finished
         onOpenCitation={onOpenCitation}
       />
-    </ViewerFrame>
+    </NoteFrame>
+  );
+}
+
+/**
+ * One note in full, in place of the Studio list: a saved answer, or a note of the reader with the
+ * editor. "Als Quelle festlegen" puts its text among the sources.
+ */
+export function NoteViewer({
+  notebookId,
+  note,
+  deleting,
+  onDelete,
+  onOpenCitation,
+}: {
+  notebookId: string;
+  note: Note;
+  deleting: boolean;
+  onDelete: () => void;
+  onOpenCitation: (chunkId: string) => void;
+}) {
+  if (note.kind === NOTE_KIND.WRITTEN) {
+    return (
+      <Suspense fallback={<NoteEditorSkeleton />}>
+        <WrittenNoteView
+          notebookId={notebookId}
+          note={note}
+          deleting={deleting}
+          onDelete={onDelete}
+        />
+      </Suspense>
+    );
+  }
+  return (
+    <AnswerNoteView
+      notebookId={notebookId}
+      note={note}
+      deleting={deleting}
+      onDelete={onDelete}
+      onOpenCitation={onOpenCitation}
+    />
   );
 }

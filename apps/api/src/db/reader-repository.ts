@@ -98,6 +98,7 @@ export async function listChatMessages(
       role: row.role,
       text: row.text ?? undefined,
       statements: row.statements ?? undefined,
+      followUps: row.followUps ?? undefined,
       createdAt: row.createdAt.toISOString(),
     })
   );
@@ -107,6 +108,7 @@ interface NewMessage {
   role: (typeof CHAT_ROLE)[keyof typeof CHAT_ROLE];
   text: string | null;
   statements: AnswerStatement[] | null;
+  followUps: string[];
 }
 
 /** Inserts only into a notebook of the user; throws when there is none. */
@@ -117,9 +119,11 @@ async function saveMessage(
   message: NewMessage
 ): Promise<void> {
   const statements = message.statements === null ? null : JSON.stringify(message.statements);
+  const followUps = message.followUps.length === 0 ? null : JSON.stringify(message.followUps);
   const result = await db.execute(sql`
-    INSERT INTO chat_messages (notebook_id, user_id, role, text, statements)
-    SELECT n.id, n.user_id, ${message.role}::chat_role, ${message.text}, ${statements}::jsonb
+    INSERT INTO chat_messages (notebook_id, user_id, role, text, statements, follow_ups)
+    SELECT n.id, n.user_id, ${message.role}::chat_role, ${message.text}, ${statements}::jsonb,
+      ${followUps}::jsonb
     FROM notebooks n
     WHERE n.id = ${notebookId} AND n.user_id = ${userId}
     RETURNING id`);
@@ -127,14 +131,26 @@ async function saveMessage(
 }
 
 export const saveUserMessage = (db: Database, userId: string, notebookId: string, text: string) =>
-  saveMessage(db, userId, notebookId, { role: CHAT_ROLE.USER, text, statements: null });
+  saveMessage(db, userId, notebookId, {
+    role: CHAT_ROLE.USER,
+    text,
+    statements: null,
+    followUps: [],
+  });
 
 export const saveAssistantMessage = (
   db: Database,
   userId: string,
   notebookId: string,
-  statements: AnswerStatement[]
-) => saveMessage(db, userId, notebookId, { role: CHAT_ROLE.ASSISTANT, text: null, statements });
+  statements: AnswerStatement[],
+  followUps: string[] = []
+) =>
+  saveMessage(db, userId, notebookId, {
+    role: CHAT_ROLE.ASSISTANT,
+    text: null,
+    statements,
+    followUps,
+  });
 
 /** Deletes the whole chat history of a notebook. False when it is not the user's or does not exist. */
 export async function clearChatMessages(

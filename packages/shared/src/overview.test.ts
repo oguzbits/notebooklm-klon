@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { SourceOverviewSchema } from './overview';
+import {
+  NotebookOverviewResponseSchema,
+  NotebookOverviewSchema,
+  SourceOverviewSchema,
+} from './overview';
 
 describe('source overview contract', () => {
   it('parses a summary with key topics and suggested questions', () => {
@@ -27,5 +31,40 @@ describe('source overview contract', () => {
     const overview = { summary: 'Sehr kurz.', keyTopics: [], suggestedQuestions: [] };
 
     expect(SourceOverviewSchema.parse(overview)).toEqual(overview);
+  });
+});
+
+describe('notebook overview contract', () => {
+  const summary = 'Die Quellen beschreiben **Jev**, ein Modell für strukturierte Werte.';
+
+  it('parses a symbol and a summary with bold key terms', () => {
+    expect(NotebookOverviewSchema.parse({ emoji: '🤖', summary })).toEqual({
+      emoji: '🤖',
+      summary,
+    });
+  });
+
+  it('takes one symbol, also when it is made of several parts', () => {
+    for (const emoji of ['🔬', '❤️', '👩‍🔬', '🏳️‍🌈', '👍🏽']) {
+      expect(NotebookOverviewSchema.safeParse({ emoji, summary }).success).toBe(true);
+    }
+  });
+
+  it('refuses text, digits, several symbols and nothing as the symbol', () => {
+    for (const emoji of ['A', '12', 'Jev', '🤖🔬', '🤖 🔬', '', ' ', '🤖x']) {
+      expect(NotebookOverviewSchema.safeParse({ emoji, summary }).success).toBe(false);
+    }
+  });
+
+  it('refuses an empty summary', () => {
+    expect(NotebookOverviewSchema.safeParse({ emoji: '🤖', summary: '  ' }).success).toBe(false);
+  });
+
+  it('answers with the overview, or with null while no source is ready', () => {
+    expect(NotebookOverviewResponseSchema.parse({ overview: { emoji: '🤖', summary } })).toEqual({
+      overview: { emoji: '🤖', summary },
+    });
+    expect(NotebookOverviewResponseSchema.parse({ overview: null })).toEqual({ overview: null });
+    expect(NotebookOverviewResponseSchema.safeParse({}).success).toBe(false);
   });
 });

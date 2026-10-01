@@ -3,13 +3,21 @@ import {
   API_ERROR,
   ApiErrorSchema,
   CreateNoteBodySchema,
+  NOTE_KIND,
   NoteListSchema,
   NoteSchema,
+  NoteUpdateBodySchema,
 } from '@nlm/shared';
 
 import type { AppDeps } from '../app-deps';
 import type { AuthVariables } from '../auth/session';
-import { createNoteFromMessage, deleteNote, listNotes } from '../db/note-repository';
+import {
+  createNoteFromMessage,
+  createWrittenNote,
+  deleteNote,
+  listNotes,
+  updateNote,
+} from '../db/note-repository';
 import { findNotebook } from '../db/notebook-repository';
 import { json, notFound, unauthenticated } from './openapi';
 
@@ -39,7 +47,22 @@ const createNoteRoute = createRoute({
     body: { content: { 'application/json': { schema: CreateNoteBodySchema } }, required: true },
   },
   responses: {
-    [CREATED]: json(NoteSchema, 'The note made from the saved answer'),
+    [CREATED]: json(NoteSchema, 'The note made from a saved answer, or an empty one to write'),
+    400: json(ApiErrorSchema, 'The request is invalid'),
+    401: unauthenticated,
+    [NOT_FOUND]: notFound,
+  },
+});
+
+const updateRoute = createRoute({
+  method: 'patch',
+  path: '/{notebookId}/notes/{noteId}',
+  request: {
+    params: notebookParams.extend({ noteId: z.string().min(1) }),
+    body: { content: { 'application/json': { schema: NoteUpdateBodySchema } }, required: true },
+  },
+  responses: {
+    [OK]: json(NoteSchema, 'The note after the change'),
     400: json(ApiErrorSchema, 'The request is invalid'),
     401: unauthenticated,
     [NOT_FOUND]: notFound,
@@ -57,7 +80,10 @@ const deleteRoute = createRoute({
   },
 });
 
-/** Notes: saved answers with their citations. The content is copied by the server, not sent. */
+/**
+ * Notes: saved answers with their citations (copied by the server, never sent) and notes the reader
+ * writes. The text of a saved answer cannot be changed, only its title.
+ */
 export function noteRoutes(deps: AppDeps) {
   const app = new OpenAPIHono<{ Variables: AuthVariables }>();
   const missing = { code: API_ERROR.NOT_FOUND };
@@ -71,9 +97,20 @@ export function noteRoutes(deps: AppDeps) {
     })
     .openapi(createNoteRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
-      const { messageId } = c.req.valid('json');
-      const note = await createNoteFromMessage(deps.db, c.var.userId, notebookId, messageId);
+      const body = c.req.valid('json');
+      const note =
+        body.kind === NOTE_KIND.ANSWER
+          ? await createNoteFromMessage(deps.db, c.var.userId, notebookId, body.messageId)
+          : await createWrittenNote(deps.db, c.var.userId, notebookId, {
+              title: body.title,
+              body: body.body,
+            });
       return note ? c.json(note, CREATED) : c.json(missing, NOT_FOUND);
+    })
+    .openapi(updateRoute, async (c) => {
+      const { notebookId, noteId } = c.req.valid('param');
+      const note = await updateNote(deps.db, c.var.userId, notebookId, noteId, c.req.valid('json'));
+      return note ? c.json(note, OK) : c.json(missing, NOT_FOUND);
     })
     .openapi(deleteRoute, async (c) => {
       const { notebookId, noteId } = c.req.valid('param');

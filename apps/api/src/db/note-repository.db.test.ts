@@ -1,7 +1,13 @@
-import { CHAT_ROLE } from '@nlm/shared';
+import { CHAT_ROLE, NOTE_KIND } from '@nlm/shared';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { createNoteFromMessage, deleteNote, listNotes } from './note-repository';
+import {
+  createNoteFromMessage,
+  createWrittenNote,
+  deleteNote,
+  listNotes,
+  updateNote,
+} from './note-repository';
 import { saveAssistantMessage, saveUserMessage } from './reader-repository';
 import { notebooks } from './schema';
 import { createTestDb, ensureUsers } from './testing/test-db';
@@ -44,7 +50,12 @@ describe('notes', () => {
 
     const note = await createNoteFromMessage(db, USER, notebook.id, messageId);
 
-    expect(note).toMatchObject({ messageId, statements: STATEMENTS });
+    expect(note).toMatchObject({
+      kind: NOTE_KIND.ANSWER,
+      title: null,
+      messageId,
+      statements: STATEMENTS,
+    });
     expect(await listNotes(db, USER, notebook.id)).toEqual([note]);
   });
 
@@ -88,7 +99,9 @@ describe('notes', () => {
 
     const notes = await listNotes(db, USER, first.id);
 
-    expect(notes.map((note) => note.statements[0]?.text)).toEqual(['Neu.', 'Alt.']);
+    expect(
+      notes.map((note) => (note.kind === NOTE_KIND.ANSWER ? note.statements[0]?.text : null))
+    ).toEqual(['Neu.', 'Alt.']);
     expect(await listNotes(db, OTHER_USER, first.id)).toEqual([]);
     expect(await listNotes(db, USER, 'kein-uuid')).toEqual([]);
   });
@@ -107,5 +120,109 @@ describe('notes', () => {
     expect(await deleteNote(db, USER, notebook.id, 'kein-uuid')).toBe(false);
     expect(await deleteNote(db, USER, notebook.id, note.id)).toBe(true);
     expect(await deleteNote(db, USER, notebook.id, note.id)).toBe(false);
+  });
+
+  describe('written notes', () => {
+    it('makes an empty note of the reader, each time a new one', async () => {
+      const notebook = await insertNotebook(USER);
+
+      const first = await createWrittenNote(db, USER, notebook.id);
+      const second = await createWrittenNote(db, USER, notebook.id);
+
+      expect(first).toMatchObject({ kind: NOTE_KIND.WRITTEN, title: null, body: '' });
+      expect(second?.id).not.toBe(first?.id);
+      expect(await listNotes(db, USER, notebook.id)).toHaveLength(2);
+    });
+
+    it('can start with a title and a text, which is how a saved summary becomes a note', async () => {
+      const notebook = await insertNotebook(USER);
+
+      const note = await createWrittenNote(db, USER, notebook.id, {
+        title: 'Zusammenfassung',
+        body: 'Es geht um **Nordlicht**.',
+      });
+
+      expect(note).toMatchObject({
+        kind: NOTE_KIND.WRITTEN,
+        title: 'Zusammenfassung',
+        body: 'Es geht um **Nordlicht**.',
+      });
+      expect(await listNotes(db, USER, notebook.id)).toEqual([note]);
+    });
+
+    it('starts with the part that is given and leaves the other empty', async () => {
+      const notebook = await insertNotebook(USER);
+
+      const onlyText = await createWrittenNote(db, USER, notebook.id, { body: 'Nur Text.' });
+      const onlyTitle = await createWrittenNote(db, USER, notebook.id, { title: 'Nur Titel' });
+
+      expect(onlyText).toMatchObject({ title: null, body: 'Nur Text.' });
+      expect(onlyTitle).toMatchObject({ title: 'Nur Titel', body: '' });
+    });
+
+    it('makes no note in the notebook of another user or in an unknown one', async () => {
+      const foreign = await insertNotebook(OTHER_USER);
+
+      expect(await createWrittenNote(db, USER, foreign.id)).toBeNull();
+      expect(await createWrittenNote(db, USER, 'kein-uuid')).toBeNull();
+      expect(await listNotes(db, OTHER_USER, foreign.id)).toEqual([]);
+    });
+
+    it('lists them with the saved answers, newest first', async () => {
+      const notebook = await insertNotebook(USER);
+      await createNoteFromMessage(db, USER, notebook.id, await answered(USER, notebook.id));
+      await createWrittenNote(db, USER, notebook.id);
+
+      const kinds = (await listNotes(db, USER, notebook.id)).map((note) => note.kind);
+
+      expect(kinds).toEqual([NOTE_KIND.WRITTEN, NOTE_KIND.ANSWER]);
+    });
+
+    it('changes the title and the text and hands back the note', async () => {
+      const notebook = await insertNotebook(USER);
+      const note = await createWrittenNote(db, USER, notebook.id);
+      if (!note) throw new Error('expected a note');
+
+      const renamed = await updateNote(db, USER, notebook.id, note.id, { title: 'Ideen' });
+      const written = await updateNote(db, USER, notebook.id, note.id, {
+        body: '# Ideen\n\n**Eins**',
+      });
+
+      expect(renamed).toMatchObject({ title: 'Ideen', body: '' });
+      expect(written).toMatchObject({ title: 'Ideen', body: '# Ideen\n\n**Eins**' });
+      expect(await listNotes(db, USER, notebook.id)).toEqual([written]);
+    });
+
+    it('lets the reader name a saved answer, but never rewrite it', async () => {
+      const notebook = await insertNotebook(USER);
+      const note = await createNoteFromMessage(
+        db,
+        USER,
+        notebook.id,
+        await answered(USER, notebook.id)
+      );
+      if (!note) throw new Error('expected a note');
+
+      expect(await updateNote(db, USER, notebook.id, note.id, { body: 'Neu' })).toBeNull();
+      expect(
+        await updateNote(db, USER, notebook.id, note.id, { title: 'Meine Antwort' })
+      ).toMatchObject({
+        kind: NOTE_KIND.ANSWER,
+        title: 'Meine Antwort',
+        statements: STATEMENTS,
+      });
+    });
+
+    it('changes nothing of another user, in another notebook, or with a bad ID', async () => {
+      const notebook = await insertNotebook(USER);
+      const other = await insertNotebook(USER);
+      const note = await createWrittenNote(db, USER, notebook.id);
+      if (!note) throw new Error('expected a note');
+
+      expect(await updateNote(db, OTHER_USER, notebook.id, note.id, { body: 'x' })).toBeNull();
+      expect(await updateNote(db, USER, other.id, note.id, { body: 'x' })).toBeNull();
+      expect(await updateNote(db, USER, notebook.id, 'kein-uuid', { body: 'x' })).toBeNull();
+      expect(await listNotes(db, USER, notebook.id)).toEqual([note]);
+    });
   });
 });

@@ -17,18 +17,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useDeleteNotebook, useNotebooks } from '@/hooks/use-notebooks';
+import { formatDay } from '@/lib/day';
 import { describeError } from '@/lib/messages';
 import { notebookEmoji } from '@/lib/notebook-emoji';
 import { IMITATION_NOTICE } from '@/lib/notice';
 import { ROUTES } from '@/lib/routes';
-
-const dateFormat = new Intl.DateTimeFormat('de-DE', {
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-});
-
-const sourcesLabel = (count: number) => `${count} ${count === 1 ? 'Quelle' : 'Quellen'}`;
+import { sourcesLabel } from '@/lib/sources-label';
 
 /** The signed-in user's notebooks: create, open, delete. */
 export function NotebookListPage() {
@@ -87,15 +81,14 @@ export function NotebookListPage() {
                         className="veil flex h-[185px] flex-col justify-between rounded-bubble bg-secondary p-8"
                       >
                         <span className="text-4xl leading-9" aria-hidden>
-                          {notebookEmoji(notebook.id)}
+                          {notebook.emoji ?? notebookEmoji(notebook.id)}
                         </span>
                         <span>
                           <span className="line-clamp-2 block text-xl leading-6 font-title">
                             {notebook.title}
                           </span>
                           <span className="mt-1 block text-ui text-muted-foreground">
-                            {dateFormat.format(new Date(notebook.createdAt))} ·{' '}
-                            {sourcesLabel(notebook.sourceCount)}
+                            {formatDay(notebook.createdAt)} · {sourcesLabel(notebook.sourceCount)}
                           </span>
                         </span>
                       </Link>

@@ -3,6 +3,7 @@ import {
   ApiErrorSchema,
   CHAT_ROLE,
   ChatMessageListSchema,
+  NOTE_KIND,
   NotebookSchema,
   NoteListSchema,
   NoteSchema,
@@ -62,6 +63,16 @@ async function answeredNotebook(cookie: string) {
   return { notebook, answerId: answer.id, questionId: question.id };
 }
 
+/** The body that saves an answer as a note. */
+const fromAnswer = (messageId: string) => ({ kind: NOTE_KIND.ANSWER, messageId });
+
+/** Parses a response as a note that was saved from an answer. */
+async function answerNote(response: Response) {
+  const note = NoteSchema.parse(await response.json());
+  if (note.kind !== NOTE_KIND.ANSWER) throw new Error('expected a saved answer');
+  return note;
+}
+
 let alice: string;
 let bob: string;
 
@@ -104,14 +115,14 @@ describe('notes', () => {
 
     const created = await app.request(
       `/api/notebooks/${notebook}/notes`,
-      send('POST', alice, { messageId: answerId })
+      send('POST', alice, fromAnswer(answerId))
     );
     const list = await app.request(`/api/notebooks/${notebook}/notes`, {
       headers: { cookie: alice },
     });
 
     expect(created.status).toBe(201);
-    const note = NoteSchema.parse(await created.json());
+    const note = await answerNote(created);
     expect(note.messageId).toBe(answerId);
     expect(note.statements[0]?.text).toBe('Antwort.');
     expect(NoteListSchema.parse(await list.json())).toEqual([note]);
@@ -123,12 +134,12 @@ describe('notes', () => {
     const created = await app.request(
       `/api/notebooks/${notebook}/notes`,
       send('POST', alice, {
-        messageId: answerId,
+        ...fromAnswer(answerId),
         statements: [{ text: 'Erfunden.', chunkIds: ['x'] }],
       })
     );
 
-    expect(NoteSchema.parse(await created.json()).statements[0]?.text).toBe('Antwort.');
+    expect((await answerNote(created)).statements[0]?.text).toBe('Antwort.');
   });
 
   it('answers 404 for a question, for the answer of another user and for a missing answer', async () => {
@@ -138,7 +149,7 @@ describe('notes', () => {
     for (const messageId of [mine.questionId, theirs.answerId]) {
       const response = await app.request(
         `/api/notebooks/${mine.notebook}/notes`,
-        send('POST', alice, { messageId })
+        send('POST', alice, fromAnswer(messageId))
       );
       expect(response.status).toBe(404);
       expect(ApiErrorSchema.parse(await response.json()).code).toBe(API_ERROR.NOT_FOUND);
@@ -150,10 +161,13 @@ describe('notes', () => {
 
     const response = await app.request(
       `/api/notebooks/${notebook}/notes`,
-      send('POST', alice, { messageId: 'x' })
+      send('POST', alice, fromAnswer('x'))
     );
 
     expect(response.status).toBe(400);
+    expect(
+      (await app.request(`/api/notebooks/${notebook}/notes`, send('POST', alice, {}))).status
+    ).toBe(400);
   });
 
   it('deletes an own note once and never the note of another user', async () => {
@@ -163,7 +177,7 @@ describe('notes', () => {
       await (
         await app.request(
           `/api/notebooks/${theirs.notebook}/notes`,
-          send('POST', bob, { messageId: theirs.answerId })
+          send('POST', bob, fromAnswer(theirs.answerId))
         )
       ).json()
     );
@@ -171,7 +185,7 @@ describe('notes', () => {
       await (
         await app.request(
           `/api/notebooks/${mine.notebook}/notes`,
-          send('POST', alice, { messageId: mine.answerId })
+          send('POST', alice, fromAnswer(mine.answerId))
         )
       ).json()
     );
@@ -190,5 +204,122 @@ describe('notes', () => {
     );
 
     expect([foreign.status, first.status, second.status]).toEqual([404, 204, 404]);
+  });
+});
+
+/** Makes an empty note of the reader and returns it. */
+async function writeNote(cookie: string, notebook: string) {
+  const response = await app.request(
+    `/api/notebooks/${notebook}/notes`,
+    send('POST', cookie, { kind: NOTE_KIND.WRITTEN })
+  );
+  return { response, note: NoteSchema.parse(await response.json()) };
+}
+
+describe('notes of the reader', () => {
+  it('makes an empty note, and a new one each time', async () => {
+    const { notebook } = await answeredNotebook(alice);
+
+    const first = await writeNote(alice, notebook);
+    const second = await writeNote(alice, notebook);
+
+    expect(first.response.status).toBe(201);
+    expect(first.note).toMatchObject({ kind: NOTE_KIND.WRITTEN, title: null, body: '' });
+    expect(second.note.id).not.toBe(first.note.id);
+  });
+
+  it('starts a note with the title and the text it is given', async () => {
+    const { notebook } = await answeredNotebook(alice);
+
+    const response = await app.request(
+      `/api/notebooks/${notebook}/notes`,
+      send('POST', alice, {
+        kind: NOTE_KIND.WRITTEN,
+        title: 'Zusammenfassung',
+        body: 'Es geht um **Nordlicht**.',
+      })
+    );
+
+    expect(response.status).toBe(201);
+    expect(NoteSchema.parse(await response.json())).toMatchObject({
+      kind: NOTE_KIND.WRITTEN,
+      title: 'Zusammenfassung',
+      body: 'Es geht um **Nordlicht**.',
+    });
+  });
+
+  it('makes no note in the notebook of another user', async () => {
+    const { notebook } = await answeredNotebook(bob);
+
+    const response = await app.request(
+      `/api/notebooks/${notebook}/notes`,
+      send('POST', alice, { kind: NOTE_KIND.WRITTEN })
+    );
+
+    expect(response.status).toBe(404);
+    expect(ApiErrorSchema.parse(await response.json()).code).toBe(API_ERROR.NOT_FOUND);
+  });
+
+  it('keeps what the reader types, and the title', async () => {
+    const { notebook } = await answeredNotebook(alice);
+    const { note } = await writeNote(alice, notebook);
+
+    const typed = await app.request(
+      `/api/notebooks/${notebook}/notes/${note.id}`,
+      send('PATCH', alice, { body: '# Idee\n\nEin **Absatz**.' })
+    );
+    const named = await app.request(
+      `/api/notebooks/${notebook}/notes/${note.id}`,
+      send('PATCH', alice, { title: '  Meine Idee  ' })
+    );
+    const list = await app.request(`/api/notebooks/${notebook}/notes`, {
+      headers: { cookie: alice },
+    });
+
+    expect(typed.status).toBe(200);
+    expect(NoteSchema.parse(await named.json())).toMatchObject({
+      title: 'Meine Idee',
+      body: '# Idee\n\nEin **Absatz**.',
+    });
+    expect(NoteListSchema.parse(await list.json())[0]).toMatchObject({ title: 'Meine Idee' });
+  });
+
+  it('names a saved answer but refuses to rewrite it', async () => {
+    const { notebook, answerId } = await answeredNotebook(alice);
+    const saved = await answerNote(
+      await app.request(
+        `/api/notebooks/${notebook}/notes`,
+        send('POST', alice, fromAnswer(answerId))
+      )
+    );
+
+    const rewritten = await app.request(
+      `/api/notebooks/${notebook}/notes/${saved.id}`,
+      send('PATCH', alice, { body: 'Erfunden.' })
+    );
+    const named = await app.request(
+      `/api/notebooks/${notebook}/notes/${saved.id}`,
+      send('PATCH', alice, { title: 'Wer leitet es?' })
+    );
+
+    expect(rewritten.status).toBe(404);
+    const after = await answerNote(named);
+    expect(after.title).toBe('Wer leitet es?');
+    expect(after.statements).toEqual(saved.statements);
+  });
+
+  it('needs a session, a valid change and a note of the user', async () => {
+    const mine = await answeredNotebook(alice);
+    const { note } = await writeNote(alice, mine.notebook);
+    const path = `/api/notebooks/${mine.notebook}/notes/${note.id}`;
+
+    const anonymous = await app.request(path, { method: 'PATCH' });
+    const empty = await app.request(path, send('PATCH', alice, {}));
+    const blank = await app.request(path, send('PATCH', alice, { title: ' ' }));
+    const foreign = await app.request(path, send('PATCH', bob, { body: 'x' }));
+
+    expect([anonymous.status, empty.status, blank.status, foreign.status]).toEqual([
+      401, 400, 400, 404,
+    ]);
   });
 });

@@ -38,6 +38,7 @@ describe('runQuestion', () => {
   it('scores retrieval, facts and citations of one answered question', async () => {
     const reply = JSON.stringify({
       statements: [{ text: 'Dr. Katharina Brandt leitet es.', chunkIds: ['c2'] }],
+      followUps: [],
     });
 
     const result = await runQuestion(QUESTION, SCOPE, ports(reply), { topK: 2, now });
@@ -59,6 +60,7 @@ describe('runQuestion', () => {
         { text: 'Katharina Brandt.', chunkIds: ['c2', 'c9'] },
         { text: 'Ohne Beleg.', chunkIds: [] },
       ],
+      followUps: [],
     });
 
     const result = await runQuestion(QUESTION, SCOPE, ports(reply), { topK: 2, now });
@@ -71,6 +73,7 @@ describe('runQuestion', () => {
   it('finds facts in the answer but not in the cited passage when the citation is wrong', async () => {
     const reply = JSON.stringify({
       statements: [{ text: 'Katharina Brandt leitet es.', chunkIds: ['c1'] }],
+      followUps: [],
     });
 
     const result = await runQuestion(QUESTION, SCOPE, ports(reply), { topK: 2, now });
@@ -97,7 +100,10 @@ describe('runQuestion', () => {
       expectedAnchors: [{ sourceFile: 'a.docx', text: 'steht nirgends' }],
     };
 
-    const result = await runQuestion(miss, SCOPE, ports('{"statements":[]}'), { topK: 2, now });
+    const result = await runQuestion(miss, SCOPE, ports('{"statements":[],"followUps":[]}'), {
+      topK: 2,
+      now,
+    });
 
     expect(result.retrieval).toEqual({ hit: false, rank: null, anchorRecall: 0 });
   });

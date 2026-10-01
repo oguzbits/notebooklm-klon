@@ -37,11 +37,19 @@ describe('chat prompt', () => {
     expect(CHAT_SYSTEM_PROMPT).toMatch(/\*\*bold\*\*/);
   });
 
+  it('asks for up to three follow-up questions, kept apart from the cited statements', () => {
+    expect(CHAT_SYSTEM_PROMPT).toMatch(/follow-up questions/i);
+    expect(CHAT_SYSTEM_PROMPT).toMatch(/followUps/);
+    expect(CHAT_SYSTEM_PROMPT).toMatch(/at most three/i);
+    expect(CHAT_SYSTEM_PROMPT).toMatch(/answerable from the context/i);
+  });
+
   it('describes the answer as statements with text and chunk IDs, derived from the shared schema', () => {
     expect(ANSWER_JSON_SCHEMA).toMatchObject({
       type: 'object',
-      required: ['statements'],
+      required: ['statements', 'followUps'],
       properties: {
+        followUps: { type: 'array', maxItems: 3, items: { type: 'string' } },
         statements: {
           type: 'array',
           items: {

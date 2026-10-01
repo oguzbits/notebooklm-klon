@@ -10,6 +10,7 @@ const PASSAGE = /\[(c\d+)\]\n([\s\S]*?)(?=\n\n\[c\d+\]\n|\n\nQuestion:|$)/g;
 // A sentence ends at ".", "!" or "?" followed by a space, but not after an abbreviation like "Dr.".
 const SENTENCE_END = /(?<!\b\p{L}{1,2}\.)(?<=[.!?])\s+/u;
 const NO_ANSWER = 'In den ausgewählten Quellen steht dazu nichts.';
+const FAKE_FOLLOW_UPS = ['Was steht noch in den Quellen?', 'Welche Einzelheiten gibt es dazu?'];
 const MAX_PASSAGES_IN_ANSWER = 2;
 const STREAM_PIECE_CHARS = 24;
 const STREAM_PIECE_DELAY_MS = 25;
@@ -50,7 +51,10 @@ export function extractiveAnswer(userMessage: string): string {
           text: (text ?? '').trim().split(SENTENCE_END)[0] ?? '',
           chunkIds: [label ?? ''],
         }));
-  return JSON.stringify({ statements });
+  return JSON.stringify({
+    statements,
+    followUps: passages.length === 0 ? [] : FAKE_FOLLOW_UPS,
+  });
 }
 
 /** Hands the text out in small pieces with a short pause, so the UI shows real streaming. */
@@ -91,6 +95,37 @@ export function fakeOverview(userMessage: string): string {
   });
 }
 
+const NOTEBOOK_SOURCE = /^Source \d+: .*\n\n([\s\S]*?)(?=\n\nSource \d+: |$)/gm;
+const NOTEBOOK_SUMMARY_SOURCES = 3;
+const NOTEBOOK_TERMS = 2;
+const NO_SOURCE_TEXT = 'In den Quellen steht kein lesbarer Text.';
+
+/**
+ * A stand-in for the notebook overview: the first sentence of each source as the summary, the two
+ * most frequent long capitalised words in bold, and a fixed symbol.
+ */
+export function fakeNotebookOverview(userMessage: string): string {
+  const texts = [...userMessage.matchAll(NOTEBOOK_SOURCE)].map(([, text]) => (text ?? '').trim());
+  let summary =
+    texts
+      .slice(0, NOTEBOOK_SUMMARY_SOURCES)
+      .map((text) => text.split(SENTENCE_END)[0] ?? '')
+      .filter((sentence) => sentence !== '')
+      .join(' ') || NO_SOURCE_TEXT;
+
+  const counts = new Map<string, number>();
+  for (const word of texts.join(' ').match(/\p{Lu}\p{L}{4,}/gu) ?? []) {
+    counts.set(word, (counts.get(word) ?? 0) + 1);
+  }
+  const terms = [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, NOTEBOOK_TERMS)
+    .map(([word]) => word);
+  for (const term of terms) summary = summary.replace(term, `**${term}**`);
+
+  return JSON.stringify({ emoji: '📚', summary });
+}
+
 const STUDIO_TITLE_WORDS = 3;
 
 function firstWords(text: string, count: number): string {
@@ -111,6 +146,7 @@ export function fakeStudio(schema: Record<string, unknown>, userMessage: string)
 
   if (properties.includes('cards')) {
     return JSON.stringify({
+      title,
       cards: passages.map((p) => ({
         front: `Was steht hier: ${firstWords(p.sentence, STUDIO_TITLE_WORDS)} …?`,
         back: p.sentence,
@@ -120,11 +156,19 @@ export function fakeStudio(schema: Record<string, unknown>, userMessage: string)
   }
   if (properties.includes('questions')) {
     return JSON.stringify({
+      title,
       questions: passages.map((p) => ({
         question: `Welche Aussage passt zur Quelle (${p.label})?`,
         options: [p.sentence, 'Das steht nirgends.', 'Keine der Antworten.', 'Das ist offen.'],
         correctIndex: 0,
         explanation: p.sentence,
+        hint: `Lies die Stelle (${p.label}) noch einmal.`,
+        rationales: [
+          'Das steht so in der Quelle.',
+          'Doch, es steht in der Quelle.',
+          'Eine der Antworten stimmt.',
+          'Die Quelle ist eindeutig.',
+        ],
         chunkIds: [p.label],
       })),
     });

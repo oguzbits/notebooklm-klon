@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 
+import { notebookEmoji } from '@/lib/notebook-emoji';
 import { notebook } from '@/test/fixtures';
 import { renderWithProviders } from '@/test/render';
 
@@ -112,6 +113,25 @@ describe('NotebookListPage', () => {
     expect(await screen.findByText(/2 Quellen/)).toBeTruthy();
     expect(screen.getByText(/· 1 Quelle$/)).toBeTruthy();
     expect(screen.getAllByText(/^\d{2}\.\d{2}\.\d{4} ·/).length).toBe(2);
+  });
+
+  it('shows the symbol the notebook chose, and one derived from its ID until it has one', async () => {
+    server.use(
+      list([
+        notebook({ title: 'Mit Symbol', emoji: '🔬' }),
+        notebook({
+          id: '22222222-2222-4222-8222-222222222222',
+          title: 'Ohne Symbol',
+          emoji: null,
+        }),
+      ])
+    );
+    renderWithProviders(<NotebookListPage />);
+
+    const cards = await screen.findAllByRole('link', { name: /Quellen/ });
+
+    expect(cards[0]?.textContent).toContain('🔬');
+    expect(cards[1]?.textContent).toContain(notebookEmoji('22222222-2222-4222-8222-222222222222'));
   });
 
   it('narrows the list as the user types in the search and says when nothing is left', async () => {

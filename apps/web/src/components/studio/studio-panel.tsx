@@ -1,93 +1,51 @@
 import {
   type CreateStudioBody,
   type Note,
+  NOTE_KIND,
   SOURCE_STATUS,
-  STUDIO_KIND,
-  type StudioKind,
   type StudioOutput,
 } from '@nlm/shared';
 import {
-  FileText,
-  Layers,
-  ListChecks,
+  ChevronRight,
   LoaderCircle,
   type LucideIcon,
-  Network,
+  Minimize2,
   NotebookText,
   RotateCw,
   WandSparkles,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useState, useTransition } from 'react';
 
+import { Panel } from '@/components/notebook/panel';
 import { QueryBoundary } from '@/components/query-boundary';
 import { OutputRowsSkeleton } from '@/components/skeletons';
+import { CreateDialog } from '@/components/studio/create-dialog';
 import { LibraryRow } from '@/components/studio/library-row';
 import { NoteViewer } from '@/components/studio/note-viewer';
 import { OutputViewer } from '@/components/studio/output-viewer';
-import { ReportDialog } from '@/components/studio/report-dialog';
 import {
+  CLOSE_NOTE_LABEL,
+  CLOSE_VIEW_LABEL,
   describeOutput,
   KIND_LABEL,
   noteTitle,
-  TILE_LABEL,
 } from '@/components/studio/studio-labels';
+import { KIND_COLOR, KIND_ICON, Tile, TILE_ORDER } from '@/components/studio/studio-tiles';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useDeleteNote, useNotes } from '@/hooks/use-notes';
+import { useCreateWrittenNote, useDeleteNote, useNotes } from '@/hooks/use-notes';
 import { useSources } from '@/hooks/use-sources';
-import { useCreateStudioOutput, useDeleteStudioOutput, useStudioOutputs } from '@/hooks/use-studio';
+import {
+  useCreateStudioOutput,
+  useDeleteStudioOutput,
+  useStudioOutputs,
+  useUpdateStudioOutput,
+} from '@/hooks/use-studio';
 import { describeError } from '@/lib/messages';
 import { relativeTime } from '@/lib/relative-time';
 import { cn } from '@/lib/utils';
-
-const KIND_ICON: Record<StudioKind, LucideIcon> = {
-  [STUDIO_KIND.REPORT]: FileText,
-  [STUDIO_KIND.FLASHCARDS]: Layers,
-  [STUDIO_KIND.QUIZ]: ListChecks,
-  [STUDIO_KIND.MINDMAP]: Network,
-};
-
-/** Each format has its own icon color, like in the original. */
-const KIND_COLOR: Record<StudioKind, string> = {
-  [STUDIO_KIND.REPORT]: 'text-studio-pink',
-  [STUDIO_KIND.FLASHCARDS]: 'text-studio-warm',
-  [STUDIO_KIND.QUIZ]: 'text-studio-teal',
-  [STUDIO_KIND.MINDMAP]: 'text-studio-purple',
-};
-
-const TILE =
-  'flex h-12 w-full items-center gap-1 rounded-xl bg-tile pr-3 pl-2 text-left text-small ring-1 ring-inset ring-[var(--tile-ring)] transition-transform duration-200 ease-[cubic-bezier(0.05,0.7,0.1,1)] hover:scale-[0.985] active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50';
-
-/** What a tile says when the pointer rests on it, worded like the original. */
-const KIND_TIP: Record<StudioKind, string> = {
-  [STUDIO_KIND.REPORT]: 'Berichte auf Grundlage deiner Quellen erstellen',
-  [STUDIO_KIND.FLASHCARDS]: 'Karteikarten mithilfe von KI basierend auf deinen Quellen erstellen',
-  [STUDIO_KIND.QUIZ]: 'Interaktives Quiz auf Grundlage deiner Quellen mit KI erstellen',
-  [STUDIO_KIND.MINDMAP]: 'Mindmap mithilfe von KI erstellen, basierend auf deinen Quellen',
-};
-
-function Tile({ kind, children, ...props }: { kind: StudioKind } & React.ComponentProps<'button'>) {
-  const Icon = KIND_ICON[kind];
-  return (
-    <Tooltip>
-      {/* The span keeps the tooltip alive while the tile is disabled (a disabled button gets no pointer events). */}
-      <TooltipTrigger asChild>
-        <span className="flex">
-          <button type="button" className={TILE} {...props}>
-            <span className="flex size-10 shrink-0 items-center justify-center">
-              <Icon className={cn('size-6', KIND_COLOR[kind])} aria-hidden />
-            </span>
-            {children ?? TILE_LABEL[kind]}
-          </button>
-        </span>
-      </TooltipTrigger>
-      <TooltipContent>{KIND_TIP[kind]}</TooltipContent>
-    </Tooltip>
-  );
-}
 
 const ENTRY = { OUTPUT: 'OUTPUT', NOTE: 'NOTE' } as const;
 type OpenEntry = { type: (typeof ENTRY)[keyof typeof ENTRY]; id: string };
@@ -114,29 +72,95 @@ function EmptyLibrary() {
   );
 }
 
-/** The right column: make reports, flashcards, quizzes and mind maps; open them; keep notes. */
+/** What an output or a note is on the rail of the folded column: its symbol. */
+function RailButton({
+  icon: Icon,
+  iconClassName,
+  title,
+  onClick,
+  className,
+  disabled,
+}: {
+  icon: LucideIcon;
+  iconClassName?: string;
+  title: string;
+  onClick: () => void;
+  className?: string;
+  disabled?: boolean;
+}) {
+  return (
+    <Button
+      variant="ghost"
+      size="icon-lg"
+      aria-label={title}
+      tooltip={title}
+      onClick={onClick}
+      disabled={disabled}
+      className={className}
+    >
+      <Icon className={cn('size-6', iconClassName)} aria-hidden />
+    </Button>
+  );
+}
+
+/** The path back in the header of the column while something is open: "Studio › Notiz". */
+function ViewerPath({ crumb, onBack }: { crumb: string; onBack: () => void }) {
+  return (
+    <nav aria-label="Pfad" className="flex min-w-0 items-center gap-1 text-ui">
+      <button type="button" aria-label="Zurück zum Studio" onClick={onBack} className="rounded-md">
+        Studio
+      </button>
+      <ChevronRight className="size-5 shrink-0" aria-hidden />
+      <span className="truncate" aria-current="page">
+        {crumb}
+      </span>
+    </nav>
+  );
+}
+
+/**
+ * The right column: make reports, flashcards, quizzes and mind maps; open them; keep notes. It owns
+ * its panel, because an open thing writes its own path into the header ("Studio › Notiz") and takes
+ * the place of the fold button there.
+ */
 export function StudioPanel({
   notebookId,
+  collapsed,
+  onToggle,
+  onExpand,
+  className,
   onOpenCitation,
+  onAsk,
   onViewingChange,
 }: {
   notebookId: string;
+  collapsed: boolean;
+  onToggle: () => void;
+  /** Opens the folded column, for a symbol on the rail that leads to something inside it. */
+  onExpand: () => void;
+  className?: string;
   onOpenCitation: (chunkId: string) => void;
-  /** Tells the page whether an output is open, because the Studio grows while one is. */
+  /** Asks the chat a question: a card or a quiz question is explained there. */
+  onAsk: (question: string) => void;
+  /** Tells the page whether something is open, because the Studio grows while it is. */
   onViewingChange?: (viewing: boolean) => void;
 }) {
   const outputs = useStudioOutputs(notebookId);
   const sources = useSources(notebookId);
   const create = useCreateStudioOutput(notebookId);
   const remove = useDeleteStudioOutput(notebookId);
+  const update = useUpdateStudioOutput(notebookId);
   const notes = useNotes(notebookId);
   const removeNote = useDeleteNote(notebookId);
+  const addNote = useCreateWrittenNote(notebookId);
   const [open, setOpen] = useState<OpenEntry | null>(null);
   const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
 
-  const usableCount = (sources.data ?? []).filter(
+  const usableSources = (sources.data ?? []).filter(
     (source) => source.selected && source.status === SOURCE_STATUS.READY
-  ).length;
+  );
+  const usableCount = usableSources.length;
   const usable = usableCount > 0;
   const openedOutput =
     open?.type === ENTRY.OUTPUT ? outputs.data?.find((output) => output.id === open.id) : undefined;
@@ -147,8 +171,15 @@ export function StudioPanel({
     onViewingChange?.(viewing);
   }, [viewing, onViewingChange]);
 
-  const make = (body: CreateStudioBody) =>
-    create.mutate(body, { onSuccess: (output) => setOpen({ type: ENTRY.OUTPUT, id: output.id }) });
+  // The column changes its width when something opens in it. That is told first and at once; the
+  // content follows as a transition, so the heavy render of a view does not eat the start of the move.
+  const show = (entry: OpenEntry | null) => {
+    onViewingChange?.(entry !== null);
+    startTransition(() => setOpen(entry));
+  };
+
+  // The result is not opened by itself: it joins the list with a blue dot, and the reader opens it.
+  const make = (body: CreateStudioBody) => create.mutate(body);
   const blocked = !usable || create.isPending;
 
   const entries: LibraryEntry[] = [
@@ -156,174 +187,286 @@ export function StudioPanel({
     ...(notes.data ?? []).map((note): LibraryEntry => ({ type: ENTRY.NOTE, note })),
   ].sort((a, b) => entryTime(b).localeCompare(entryTime(a)));
 
+  const tile = (kind: (typeof TILE_ORDER)[number], compact: boolean) => (
+    <CreateDialog key={kind} kind={kind} sources={usableSources} onCreate={make}>
+      <Tile kind={kind} compact={compact} disabled={blocked} />
+    </CreateDialog>
+  );
+
   const deleteNoteDialog = (
     <ConfirmDialog
       open={noteToDelete !== null}
       onOpenChange={(isOpen) => !isOpen && setNoteToDelete(null)}
       title="Notiz löschen?"
-      description="Die Notiz wird gelöscht. Die Antwort im Chat bleibt erhalten."
+      description={
+        // Only a saved answer has one that stays in the chat.
+        notes.data?.find((item) => item.id === noteToDelete)?.kind === NOTE_KIND.WRITTEN
+          ? 'Die Notiz wird gelöscht.'
+          : 'Die Notiz wird gelöscht. Die Antwort im Chat bleibt erhalten.'
+      }
       pending={removeNote.isPending}
       onConfirm={() =>
         noteToDelete &&
         removeNote.mutate(noteToDelete, {
           onSuccess: () => {
             setNoteToDelete(null);
-            setOpen(null);
+            show(null);
           },
         })
       }
     />
   );
 
+  const openEntry = (entry: OpenEntry) => {
+    onExpand();
+    show(entry);
+    // The blue dot goes out once the output was opened.
+    const output =
+      entry.type === ENTRY.OUTPUT ? outputs.data?.find((item) => item.id === entry.id) : undefined;
+    if (output?.unread) update.mutate({ outputId: output.id, changes: { read: true } });
+  };
+  const back = () => show(null);
+  // Like in the original, an empty note is made at once and opens, so the reader can start typing.
+  const startNote = () =>
+    addNote.mutate(undefined, {
+      onSuccess: (created) => openEntry({ type: ENTRY.NOTE, id: created.id }),
+    });
+  const noteBlocked = addNote.isPending || notes.isPending;
+
+  let content: ReactNode;
+  let header: ReactNode;
+  let close: ReactNode;
+  if (openedOutput || openedNote) {
+    const crumb = openedOutput ? KIND_LABEL[openedOutput.kind] : 'Notiz';
+    const closeLabel = openedOutput ? CLOSE_VIEW_LABEL[openedOutput.kind] : CLOSE_NOTE_LABEL;
+    header = <ViewerPath crumb={crumb} onBack={back} />;
+    close = (
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        aria-label={closeLabel}
+        tooltip={closeLabel}
+        onClick={back}
+      >
+        <Minimize2 />
+      </Button>
+    );
+  }
   if (openedOutput) {
-    return (
+    content = (
       <OutputViewer
         notebookId={notebookId}
         output={openedOutput}
         deleting={remove.isPending}
-        onBack={() => setOpen(null)}
-        onDelete={() => remove.mutate(openedOutput.id, { onSuccess: () => setOpen(null) })}
+        onDelete={() => remove.mutate(openedOutput.id, { onSuccess: () => show(null) })}
+        onOpenCitation={onOpenCitation}
+        onAsk={onAsk}
+      />
+    );
+  } else if (openedNote) {
+    content = (
+      <NoteViewer
+        key={openedNote.id}
+        notebookId={notebookId}
+        note={openedNote}
+        deleting={removeNote.isPending}
+        onDelete={() => setNoteToDelete(openedNote.id)}
         onOpenCitation={onOpenCitation}
       />
     );
-  }
-  if (openedNote) {
-    return (
-      <>
-        <NoteViewer
-          notebookId={notebookId}
-          note={openedNote}
-          deleting={removeNote.isPending}
-          onBack={() => setOpen(null)}
-          onDelete={() => setNoteToDelete(openedNote.id)}
-          onOpenCitation={onOpenCitation}
+  } else {
+    content = (
+      <div className="relative h-full min-h-0">
+        <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto pb-16">
+          <div className="grid grid-cols-2 gap-2">
+            {TILE_ORDER.map((kind) => tile(kind, false))}
+          </div>
+          {!usable && sources.isSuccess && (
+            <p className="text-small text-muted-foreground">
+              Wähle mindestens eine fertig gelesene Quelle aus, um etwas zu erstellen.
+            </p>
+          )}
+
+          {create.isError && (
+            <Alert variant="destructive">
+              <AlertDescription className="flex flex-col items-start gap-2">
+                <p>{describeError(create.error)}</p>
+                {create.variables && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={create.isPending}
+                    onClick={() => make(create.variables)}
+                  >
+                    <RotateCw />
+                    Erneut versuchen
+                  </Button>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <section aria-label="Erstellte Ausgaben" className="flex flex-col gap-1">
+            {addNote.isPending && (
+              <Skeleton
+                role="status"
+                className="flex h-16 items-center gap-2 rounded-2xl p-3 [--shimmer-base:var(--source-guide)] [--shimmer-edge:color-mix(in_srgb,var(--source-guide),var(--card)_60%)]"
+              >
+                <span className="flex size-8 shrink-0 items-center justify-center">
+                  <LoaderCircle className="size-5 animate-spin" aria-hidden />
+                </span>
+                <span className="min-w-0 truncate text-small">Notiz wird erstellt …</span>
+              </Skeleton>
+            )}
+            {create.isPending && (
+              <Skeleton
+                role="status"
+                className="flex h-16 items-center gap-2 rounded-2xl p-3 [--shimmer-base:var(--source-guide)] [--shimmer-edge:color-mix(in_srgb,var(--source-guide),var(--card)_60%)]"
+              >
+                <span className="flex size-8 shrink-0 items-center justify-center">
+                  <LoaderCircle className="size-5 animate-spin" aria-hidden />
+                </span>
+                <span className="min-w-0 text-small">
+                  <span className="block truncate">
+                    {create.variables ? KIND_LABEL[create.variables.kind] : 'Ausgabe'} wird erstellt
+                    …
+                  </span>
+                  <span className="block truncate text-muted-foreground">
+                    basierend auf {usableCount} {usableCount === 1 ? 'Quelle' : 'Quellen'}
+                  </span>
+                </span>
+              </Skeleton>
+            )}
+            <QueryBoundary
+              query={outputs}
+              loading={<OutputRowsSkeleton />}
+              isEmpty={() => entries.length === 0}
+              empty={!create.isPending && !notes.isPending && <EmptyLibrary />}
+            >
+              {() => (
+                <ul className="flex flex-col gap-1">
+                  {entries.map((entry) =>
+                    entry.type === ENTRY.OUTPUT ? (
+                      <LibraryRow
+                        key={entry.output.id}
+                        icon={KIND_ICON[entry.output.kind]}
+                        iconClassName={KIND_COLOR[entry.output.kind]}
+                        title={entry.output.title}
+                        subtitle={[
+                          describeOutput(entry.output),
+                          relativeTime(entry.output.createdAt),
+                        ]
+                          .filter((part) => part !== '')
+                          .join(' · ')}
+                        unread={entry.output.unread}
+                        deleting={remove.isPending && remove.variables === entry.output.id}
+                        onOpen={() => openEntry({ type: ENTRY.OUTPUT, id: entry.output.id })}
+                        onDelete={() => remove.mutate(entry.output.id)}
+                      />
+                    ) : (
+                      <LibraryRow
+                        key={entry.note.id}
+                        icon={NotebookText}
+                        iconClassName="text-foreground"
+                        title={noteTitle(entry.note)}
+                        subtitle={relativeTime(entry.note.createdAt)}
+                        deleting={removeNote.isPending && noteToDelete === entry.note.id}
+                        onOpen={() => openEntry({ type: ENTRY.NOTE, id: entry.note.id })}
+                        onDelete={() => setNoteToDelete(entry.note.id)}
+                      />
+                    )
+                  )}
+                </ul>
+              )}
+            </QueryBoundary>
+            {notes.isError && (
+              <Alert variant="destructive">
+                <AlertDescription>{describeError(notes.error)}</AlertDescription>
+              </Alert>
+            )}
+            {addNote.isError && (
+              <Alert variant="destructive">
+                <AlertDescription className="flex flex-col items-start gap-2">
+                  <p>{describeError(addNote.error)}</p>
+                  <Button size="sm" variant="outline" disabled={noteBlocked} onClick={startNote}>
+                    <RotateCw />
+                    Erneut versuchen
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
+            {(remove.isError || removeNote.isError) && (
+              <Alert variant="destructive">
+                <AlertDescription>
+                  {describeError(remove.error ?? removeNote.error)}
+                </AlertDescription>
+              </Alert>
+            )}
+          </section>
+        </div>
+        <Button
+          variant="secondary"
+          size="xl"
+          disabled={noteBlocked}
+          onClick={startNote}
+          className="absolute bottom-[18px] left-1/2 z-10 -translate-x-1/2 shadow-glow"
+        >
+          <NotebookText />
+          Notiz hinzufügen
+        </Button>
+        {/* The list fades out above the lower edge of the panel, padding included. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-2 -bottom-2 -left-2 h-7 rounded-b-panel bg-gradient-to-t from-card from-0% via-card/98 via-10% to-transparent"
         />
-        {deleteNoteDialog}
-      </>
+      </div>
     );
   }
 
-  return (
-    <div className="relative h-full min-h-0">
-      <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto pb-2">
-        <div className="grid grid-cols-2 gap-2">
-          <ReportDialog onCreate={(format) => make({ kind: STUDIO_KIND.REPORT, format })}>
-            <Tile kind={STUDIO_KIND.REPORT} disabled={blocked} />
-          </ReportDialog>
-          <Tile
-            kind={STUDIO_KIND.FLASHCARDS}
-            disabled={blocked}
-            onClick={() => make({ kind: STUDIO_KIND.FLASHCARDS })}
+  const rail = (
+    <>
+      {TILE_ORDER.map((kind) => tile(kind, true))}
+      {entries.map((entry) =>
+        entry.type === ENTRY.OUTPUT ? (
+          <RailButton
+            key={entry.output.id}
+            icon={KIND_ICON[entry.output.kind]}
+            iconClassName={KIND_COLOR[entry.output.kind]}
+            title={entry.output.title}
+            onClick={() => openEntry({ type: ENTRY.OUTPUT, id: entry.output.id })}
           />
-          <Tile
-            kind={STUDIO_KIND.QUIZ}
-            disabled={blocked}
-            onClick={() => make({ kind: STUDIO_KIND.QUIZ })}
+        ) : (
+          <RailButton
+            key={entry.note.id}
+            icon={NotebookText}
+            title={noteTitle(entry.note)}
+            onClick={() => openEntry({ type: ENTRY.NOTE, id: entry.note.id })}
           />
-          <Tile
-            kind={STUDIO_KIND.MINDMAP}
-            disabled={blocked}
-            onClick={() => make({ kind: STUDIO_KIND.MINDMAP })}
-          />
-        </div>
-        {!usable && sources.isSuccess && (
-          <p className="text-small text-muted-foreground">
-            Wähle mindestens eine fertig gelesene Quelle aus, um etwas zu erstellen.
-          </p>
-        )}
-
-        {create.isError && (
-          <Alert variant="destructive">
-            <AlertDescription className="flex flex-col items-start gap-2">
-              <p>{describeError(create.error)}</p>
-              {create.variables && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={create.isPending}
-                  onClick={() => make(create.variables)}
-                >
-                  <RotateCw />
-                  Erneut versuchen
-                </Button>
-              )}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        <section aria-label="Erstellte Ausgaben" className="flex flex-col gap-1">
-          {create.isPending && (
-            <Skeleton
-              role="status"
-              className="flex h-16 items-center gap-2 rounded-2xl p-3 [--shimmer-base:var(--source-guide)] [--shimmer-edge:color-mix(in_srgb,var(--source-guide),var(--card)_60%)]"
-            >
-              <span className="flex size-8 shrink-0 items-center justify-center">
-                <LoaderCircle className="size-5 animate-spin" aria-hidden />
-              </span>
-              <span className="min-w-0 text-small">
-                <span className="block truncate">
-                  {create.variables ? KIND_LABEL[create.variables.kind] : 'Ausgabe'} wird erstellt …
-                </span>
-                <span className="block truncate text-muted-foreground">
-                  basierend auf {usableCount} {usableCount === 1 ? 'Quelle' : 'Quellen'}
-                </span>
-              </span>
-            </Skeleton>
-          )}
-          <QueryBoundary
-            query={outputs}
-            loading={<OutputRowsSkeleton />}
-            isEmpty={() => entries.length === 0}
-            empty={!create.isPending && !notes.isPending && <EmptyLibrary />}
-          >
-            {() => (
-              <ul className="flex flex-col gap-1">
-                {entries.map((entry) =>
-                  entry.type === ENTRY.OUTPUT ? (
-                    <LibraryRow
-                      key={entry.output.id}
-                      icon={KIND_ICON[entry.output.kind]}
-                      iconClassName={KIND_COLOR[entry.output.kind]}
-                      title={entry.output.title}
-                      subtitle={`${describeOutput(entry.output)} · ${relativeTime(entry.output.createdAt)}`}
-                      deleting={remove.isPending && remove.variables === entry.output.id}
-                      onOpen={() => setOpen({ type: ENTRY.OUTPUT, id: entry.output.id })}
-                      onDelete={() => remove.mutate(entry.output.id)}
-                    />
-                  ) : (
-                    <LibraryRow
-                      key={entry.note.id}
-                      icon={NotebookText}
-                      iconClassName="text-foreground"
-                      title={noteTitle(entry.note)}
-                      subtitle={`Notiz · ${relativeTime(entry.note.createdAt)}`}
-                      deleting={removeNote.isPending && noteToDelete === entry.note.id}
-                      onOpen={() => setOpen({ type: ENTRY.NOTE, id: entry.note.id })}
-                      onDelete={() => setNoteToDelete(entry.note.id)}
-                    />
-                  )
-                )}
-              </ul>
-            )}
-          </QueryBoundary>
-          {notes.isError && (
-            <Alert variant="destructive">
-              <AlertDescription>{describeError(notes.error)}</AlertDescription>
-            </Alert>
-          )}
-          {(remove.isError || removeNote.isError) && (
-            <Alert variant="destructive">
-              <AlertDescription>{describeError(remove.error ?? removeNote.error)}</AlertDescription>
-            </Alert>
-          )}
-        </section>
-      </div>
-      {/* The list fades out above the lower edge of the panel, padding included. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-2 -bottom-2 -left-2 h-7 rounded-b-panel bg-gradient-to-t from-card from-0% via-card/98 via-10% to-transparent"
+        )
+      )}
+      <RailButton
+        icon={NotebookText}
+        title="Notiz hinzufügen"
+        disabled={noteBlocked}
+        onClick={startNote}
+        className="mt-auto mb-4"
       />
+    </>
+  );
+
+  return (
+    <Panel
+      title="Studio"
+      side="right"
+      collapsed={collapsed}
+      onToggle={onToggle}
+      header={header}
+      action={close}
+      rail={rail}
+      className={className}
+    >
+      {content}
       {deleteNoteDialog}
-    </div>
+    </Panel>
   );
 }

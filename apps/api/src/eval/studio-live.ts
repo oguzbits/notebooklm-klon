@@ -8,7 +8,13 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { type CreateStudioBody, REPORT_FORMAT, STUDIO_KIND } from '@nlm/shared';
+import {
+  type CreateStudioBody,
+  REPORT_FORMAT,
+  STUDIO_DIFFICULTY,
+  STUDIO_KIND,
+  STUDIO_SIZE,
+} from '@nlm/shared';
 
 import { parseEnv } from '../config/env';
 import { LIMITS } from '../config/limits';
@@ -30,8 +36,8 @@ const DEMO_DIR = path.resolve(import.meta.dirname, '../../seed/demo');
 
 const REQUESTS: CreateStudioBody[] = [
   { kind: STUDIO_KIND.REPORT, format: REPORT_FORMAT.BRIEFING },
-  { kind: STUDIO_KIND.FLASHCARDS },
-  { kind: STUDIO_KIND.QUIZ },
+  { kind: STUDIO_KIND.FLASHCARDS, size: STUDIO_SIZE.DEFAULT, difficulty: STUDIO_DIFFICULTY.MEDIUM },
+  { kind: STUDIO_KIND.QUIZ, size: STUDIO_SIZE.DEFAULT, difficulty: STUDIO_DIFFICULTY.MEDIUM },
   { kind: STUDIO_KIND.MINDMAP },
 ];
 

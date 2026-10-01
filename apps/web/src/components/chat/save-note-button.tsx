@@ -1,3 +1,4 @@
+import { NOTE_KIND } from '@nlm/shared';
 import { Check, Pin } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,7 @@ export function SaveNoteButton({
   const notes = useNotes(notebookId);
   const create = useCreateNote(notebookId);
 
-  if (notes.data?.some((note) => note.messageId === messageId)) {
+  if (notes.data?.some((note) => note.kind === NOTE_KIND.ANSWER && note.messageId === messageId)) {
     return (
       <p className="flex h-9 items-center gap-1.5 px-3 text-ui text-muted-foreground">
         <Check className="size-4" aria-hidden />

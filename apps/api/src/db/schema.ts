@@ -1,6 +1,7 @@
 import {
   CHAT_ROLE,
   EMBEDDING_DIMENSIONS,
+  NOTE_KIND,
   SOURCE_KIND,
   SOURCE_STATUS,
   STUDIO_KIND,
@@ -39,6 +40,7 @@ export const sourceKind = pgEnum('source_kind', SOURCE_KIND);
 export const sourceStatus = pgEnum('source_status', SOURCE_STATUS);
 export const chatRole = pgEnum('chat_role', CHAT_ROLE);
 export const studioKind = pgEnum('studio_kind', STUDIO_KIND);
+export const noteKind = pgEnum('note_kind', NOTE_KIND);
 
 // user_id is the Better Auth user id. Deleting a user deletes their notebooks and sources. Every
 // query still filters by user_id: the foreign key is integrity, not authorization (see AGENTS.md).
@@ -52,6 +54,10 @@ export const notebooks = pgTable(
     title: text('title').notNull(),
     // How the assistant talks in this notebook (ChatConfigSchema). Null: the default.
     chatConfig: jsonb('chat_config'),
+    // What all sources of the notebook are about (NotebookOverviewSchema) and the key of the set of
+    // sources it was made from. Both are null until the first overview exists.
+    overview: jsonb('overview'),
+    overviewKey: text('overview_key'),
     createdAt: createdAt(),
   },
   (table) => [index('notebooks_user_id_idx').on(table.userId)]
@@ -151,6 +157,9 @@ export const chatMessages = pgTable(
     role: chatRole('role').notNull(),
     text: text('text'),
     statements: jsonb('statements'),
+    // The questions the assistant suggested after an answer (FollowUpsSchema). Null: none, or an
+    // answer from before they existed.
+    followUps: jsonb('follow_ups'),
     createdAt: createdAt(),
   },
   (table) => [index('chat_messages_notebook_seq_idx').on(table.notebookId, table.seq)]
@@ -172,7 +181,12 @@ export const notes = pgTable(
     messageId: uuid('message_id')
       .unique()
       .references(() => chatMessages.id, { onDelete: 'set null' }),
+    // ANSWER: statements copied from a saved answer. WRITTEN: statements stay empty and body holds
+    // the reader's Markdown. Every note from before the kinds existed is an answer.
+    kind: noteKind('kind').notNull().default(NOTE_KIND.ANSWER),
     statements: jsonb('statements').notNull(),
+    title: text('title'),
+    body: text('body'),
     createdAt: createdAt(),
   },
   (table) => [index('notes_notebook_idx').on(table.notebookId, table.createdAt)]
@@ -180,7 +194,9 @@ export const notes = pgTable(
 
 // What the Studio made from the selected sources: a report, flashcards, a quiz or a mind map. The
 // content is validated with StudioOutputSchema when read and holds only citations the server
-// checked. format is set for reports only.
+// checked. format is set for reports only. request is how it was asked for (the prompt in words and
+// the titles of the sources), unread is the blue dot until the output is opened (false for the
+// outputs made before it existed) and feedback is what the reader thought of it.
 export const studioOutputs = pgTable(
   'studio_outputs',
   {
@@ -195,6 +211,9 @@ export const studioOutputs = pgTable(
     format: text('format'),
     title: text('title').notNull(),
     content: jsonb('content').notNull(),
+    request: jsonb('request'),
+    unread: boolean('unread').notNull().default(false),
+    feedback: text('feedback'),
     createdAt: createdAt(),
   },
   (table) => [index('studio_outputs_notebook_idx').on(table.notebookId, table.createdAt)]

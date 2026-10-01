@@ -1,18 +1,27 @@
 import {
   AnswerSchema,
   CHAT_LANGUAGE,
-  FlashcardsSchema,
+  FlashcardsReplySchema,
   MindmapSchema,
-  QuizSchema,
+  NotebookOverviewSchema,
+  QuizReplySchema,
   REPORT_FORMAT,
   ReportSchema,
   SourceOverviewSchema,
+  STUDIO_DIFFICULTY,
   STUDIO_KIND,
+  STUDIO_SIZE,
 } from '@nlm/shared';
 import { describe, expect, it } from 'vitest';
 
 import { studioRequest } from '../core/studio-prompt';
-import { extractiveAnswer, fakeOverview, fakeStudio, hashEmbedding } from './fakes';
+import {
+  extractiveAnswer,
+  fakeNotebookOverview,
+  fakeOverview,
+  fakeStudio,
+  hashEmbedding,
+} from './fakes';
 
 const DIMENSIONS = 16;
 
@@ -85,6 +94,30 @@ describe('fakeOverview', () => {
   });
 });
 
+describe('fakeNotebookOverview', () => {
+  const message =
+    'These are the 2 sources of the notebook.\n\n' +
+    'Source 1: nordlicht.txt\n\nDr. Brandt leitet das Projekt Nordlicht. Das Projekt untersucht Polarlicht.\n\n' +
+    'Source 2: budget.txt\n\nDas Budget beträgt viel. Es dient dem Nordlicht.';
+
+  it('returns a valid overview: the first sentence of each source, the most frequent terms in bold', () => {
+    const overview = NotebookOverviewSchema.parse(JSON.parse(fakeNotebookOverview(message)));
+
+    expect(overview.summary).toContain('Dr. Brandt leitet das');
+    expect(overview.summary).toContain('Das Budget beträgt viel.');
+    expect(overview.summary).not.toContain('Polarlicht');
+    expect(overview.summary).toMatch(/\*\*Nordlicht\*\*/);
+  });
+
+  it('copes with a notebook that has no text', () => {
+    const overview = NotebookOverviewSchema.parse(
+      JSON.parse(fakeNotebookOverview('These are the 0 sources of the notebook.'))
+    );
+
+    expect(overview.summary.length).toBeGreaterThan(0);
+  });
+});
+
 describe('fakeStudio', () => {
   const chunks = [
     { id: 'id-1', text: 'Dr. Brandt leitet das Projekt. Es startete 2024.' },
@@ -92,8 +125,18 @@ describe('fakeStudio', () => {
   ];
   const kinds = [
     [{ kind: STUDIO_KIND.REPORT, format: REPORT_FORMAT.BRIEFING }, ReportSchema],
-    [{ kind: STUDIO_KIND.FLASHCARDS }, FlashcardsSchema],
-    [{ kind: STUDIO_KIND.QUIZ }, QuizSchema],
+    [
+      {
+        kind: STUDIO_KIND.FLASHCARDS,
+        size: STUDIO_SIZE.DEFAULT,
+        difficulty: STUDIO_DIFFICULTY.MEDIUM,
+      },
+      FlashcardsReplySchema,
+    ],
+    [
+      { kind: STUDIO_KIND.QUIZ, size: STUDIO_SIZE.DEFAULT, difficulty: STUDIO_DIFFICULTY.MEDIUM },
+      QuizReplySchema,
+    ],
     [{ kind: STUDIO_KIND.MINDMAP }, MindmapSchema],
   ] as const;
 

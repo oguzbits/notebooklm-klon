@@ -8,13 +8,15 @@ const ANSWER = {
     { text: 'Zweite mit } und { und ] und [ und \\" und \n Umbruch.', chunkIds: ['c2', 'c3'] },
     { text: 'Dritte Aussage mit Ümlauten und 😀.', chunkIds: ['c1'] },
   ],
+  followUps: ['Und wie geht es weiter?', 'Wer ist noch dabei, [und } warum]?'],
 };
 const TEXT = JSON.stringify(ANSWER);
 
 function collect(pieces: string[]) {
   const stream = new StatementStream();
   const emitted = pieces.flatMap((piece) => stream.push(piece));
-  return { emitted, rest: stream.finish() };
+  const { statements: rest, followUps } = stream.finish();
+  return { emitted, rest, followUps };
 }
 
 describe('StatementStream', () => {
@@ -49,9 +51,33 @@ describe('StatementStream', () => {
   });
 
   it('accepts an answer without statements', () => {
-    const { emitted, rest } = collect(['{"statements": []}']);
+    const { emitted, rest, followUps } = collect(['{"statements": [], "followUps": []}']);
 
     expect([...emitted, ...rest]).toEqual([]);
+    expect(followUps).toEqual([]);
+  });
+
+  it('hands out the questions that follow once the answer is complete', () => {
+    for (let cut = 0; cut <= TEXT.length; cut += 7) {
+      const { followUps } = collect([TEXT.slice(0, cut), TEXT.slice(cut)]);
+
+      expect(followUps).toEqual(ANSWER.followUps);
+    }
+  });
+
+  it('does not take a question for a statement, wherever the questions stand in the answer', () => {
+    const first = JSON.stringify({ followUps: ANSWER.followUps, statements: ANSWER.statements });
+    const { emitted, rest, followUps } = collect([first]);
+
+    expect([...emitted, ...rest]).toEqual(ANSWER.statements);
+    expect(followUps).toEqual(ANSWER.followUps);
+  });
+
+  it('throws at the end when the model left out the questions', () => {
+    const stream = new StatementStream();
+    stream.push('{"statements": []}');
+
+    expect(() => stream.finish()).toThrow();
   });
 
   it('throws at the end when the JSON was cut off', () => {

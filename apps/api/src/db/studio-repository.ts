@@ -4,6 +4,7 @@ import {
   STUDIO_KIND,
   type StudioOutput,
   StudioOutputSchema,
+  type StudioUpdateBody,
 } from '@nlm/shared';
 import { and, desc, eq, sql } from 'drizzle-orm';
 
@@ -14,6 +15,14 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 type OutputRow = typeof studioOutputs.$inferSelect;
 
+/**
+ * A list of IDs as the text of a Postgres array, for a parameter cast to `uuid[]` (Drizzle spreads a
+ * JavaScript array into a list of parameters). Anything that is no UUID is left out, so a picked
+ * source that cannot exist matches nothing. Null: no choice was made.
+ */
+const uuidArray = (ids: readonly string[] | undefined): string | null =>
+  ids === undefined ? null : `{${ids.filter((id) => UUID.test(id)).join(',')}}`;
+
 // A stored output that does not fit the contract is a bug, not a case to skip: parse throws.
 const toOutput = (row: OutputRow): StudioOutput =>
   StudioOutputSchema.parse({
@@ -22,6 +31,9 @@ const toOutput = (row: OutputRow): StudioOutput =>
     ...(row.format === null ? {} : { format: row.format }),
     title: row.title,
     content: row.content,
+    request: row.request,
+    unread: row.unread,
+    feedback: row.feedback,
     createdAt: row.createdAt.toISOString(),
   });
 
@@ -49,10 +61,43 @@ export async function createStudioOutput(
       format: output.kind === STUDIO_KIND.REPORT ? output.format : null,
       title: output.title,
       content: output.content,
+      request: output.request,
+      // Made just now, so nobody has looked at it yet.
+      unread: true,
     })
     .returning();
   if (!row) throw new Error('The insert returned no row.');
   return toOutput(row);
+}
+
+/**
+ * Changes the name of an output, what the reader thought of it, or clears its unread mark. Null when
+ * there is no such output of this user in this notebook.
+ */
+export async function updateStudioOutput(
+  db: Database,
+  userId: string,
+  notebookId: string,
+  outputId: string,
+  changes: StudioUpdateBody
+): Promise<StudioOutput | null> {
+  if (!UUID.test(notebookId) || !UUID.test(outputId)) return null;
+  const set: Partial<typeof studioOutputs.$inferInsert> = {};
+  if (changes.title !== undefined) set.title = changes.title;
+  if (changes.feedback !== undefined) set.feedback = changes.feedback;
+  if (changes.read === true) set.unread = false;
+  const [row] = await db
+    .update(studioOutputs)
+    .set(set)
+    .where(
+      and(
+        eq(studioOutputs.id, outputId),
+        eq(studioOutputs.notebookId, notebookId),
+        eq(studioOutputs.userId, userId)
+      )
+    )
+    .returning();
+  return row ? toOutput(row) : null;
 }
 
 export async function listStudioOutputs(
@@ -90,17 +135,44 @@ export async function deleteStudioOutput(
 }
 
 /**
- * The text the Studio works on: the chunks of the selected, ready sources of the notebook in reading
- * order, at most `maxChars` characters in all. The budget is shared equally between the sources and
- * the start of every source is always kept, so one long source cannot push the others out.
+ * The selected, ready sources of the notebook the Studio may work on, or only the ones the reader
+ * picked among them. A picked source that is not selected, not ready or not the user's is ignored.
+ */
+export async function listStudioSources(
+  db: Database,
+  userId: string,
+  notebookId: string,
+  sourceIds?: readonly string[]
+): Promise<{ id: string; title: string }[]> {
+  if (!UUID.test(notebookId)) return [];
+  const picked = uuidArray(sourceIds);
+  const result = await db.execute<{ id: string; title: string }>(sql`
+    SELECT s.id, s.title
+    FROM notebook_sources ns
+    JOIN notebooks n ON n.id = ns.notebook_id
+    JOIN sources s ON s.id = ns.source_id
+    WHERE ns.notebook_id = ${notebookId} AND ns.selected
+      AND n.user_id = ${userId} AND s.user_id = ${userId} AND s.status = ${SOURCE_STATUS.READY}
+      AND (${picked}::uuid[] IS NULL OR s.id = ANY(${picked}::uuid[]))
+    ORDER BY ns.added_at, s.id`);
+  return result.rows;
+}
+
+/**
+ * The text the Studio works on: the chunks of the selected, ready sources of the notebook (or only
+ * the ones picked among them) in reading order, at most `maxChars` characters in all. The budget is
+ * shared equally between the sources and the start of every source is always kept, so one long
+ * source cannot push the others out.
  */
 export async function loadStudioChunks(
   db: Database,
   userId: string,
   notebookId: string,
-  maxChars: number
+  maxChars: number,
+  sourceIds?: readonly string[]
 ): Promise<{ id: string; text: string }[]> {
   if (!UUID.test(notebookId)) return [];
+  const picked = uuidArray(sourceIds);
   const result = await db.execute<{ id: string; text: string }>(sql`
     WITH selected AS (
       SELECT s.id, ns.added_at
@@ -109,6 +181,7 @@ export async function loadStudioChunks(
       JOIN sources s ON s.id = ns.source_id
       WHERE ns.notebook_id = ${notebookId} AND ns.selected
         AND n.user_id = ${userId} AND s.user_id = ${userId} AND s.status = ${SOURCE_STATUS.READY}
+        AND (${picked}::uuid[] IS NULL OR s.id = ANY(${picked}::uuid[]))
     ),
     budget AS (SELECT (${maxChars}::int / GREATEST(count(*), 1)) AS per_source FROM selected),
     running AS (

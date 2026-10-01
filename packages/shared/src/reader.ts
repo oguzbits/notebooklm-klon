@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { FollowUpsSchema } from './chat';
 import { AnswerStatementSchema } from './citation';
 import { SourceKindSchema } from './source';
 
@@ -45,6 +46,8 @@ export const ChatMessageSchema = z.discriminatedUnion('role', [
     role: z.literal(CHAT_ROLE.ASSISTANT),
     /** Only statements the server checked: every chunk ID was part of the context. */
     statements: z.array(AnswerStatementSchema),
+    /** What the reader could ask next. Answers from before this existed have none. */
+    followUps: FollowUpsSchema.default([]),
   }),
 ]);
 

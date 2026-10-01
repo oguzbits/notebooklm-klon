@@ -9,8 +9,11 @@ export {
   CHAT_EVENT,
   type ChatEvent,
   ChatEventSchema,
+  ChatReplySchema,
   type ChatRequest,
   ChatRequestSchema,
+  FollowUpsSchema,
+  MAX_FOLLOW_UPS,
 } from './chat';
 export {
   CHAT_LANGUAGE,
@@ -26,7 +29,19 @@ export {
 } from './chat-config';
 export { type Answer, AnswerSchema, type AnswerStatement, AnswerStatementSchema } from './citation';
 export { type Health, HealthSchema } from './health';
-export { CreateNoteBodySchema, type Note, NoteListSchema, NoteSchema } from './note';
+export {
+  type AnswerNote,
+  type CreateNoteBody,
+  CreateNoteBodySchema,
+  type Note,
+  NOTE_KIND,
+  NOTE_LIMITS,
+  NoteListSchema,
+  NoteSchema,
+  type NoteUpdateBody,
+  NoteUpdateBodySchema,
+  type WrittenNote,
+} from './note';
 export {
   CreateNotebookBodySchema,
   type Notebook,
@@ -44,7 +59,13 @@ export {
   SubmitSourceResultSchema,
   UrlSourceBodySchema,
 } from './notebook';
-export { type SourceOverview, SourceOverviewSchema } from './overview';
+export {
+  type NotebookOverview,
+  NotebookOverviewResponseSchema,
+  NotebookOverviewSchema,
+  type SourceOverview,
+  SourceOverviewSchema,
+} from './overview';
 export {
   CHAT_ROLE,
   type ChatMessage,
@@ -72,21 +93,35 @@ export {
   type CreateStudioBody,
   CreateStudioBodySchema,
   type Flashcards,
+  type FlashcardsReply,
+  FlashcardsReplySchema,
   FlashcardsSchema,
+  MAX_STUDIO_FOCUS_CHARS,
   type Mindmap,
   MindmapSchema,
   type NewStudioOutput,
   type Quiz,
+  type QuizReply,
+  QuizReplySchema,
   QuizSchema,
   type Report,
   REPORT_FORMAT,
   type ReportFormat,
   ReportFormatSchema,
   ReportSchema,
+  STUDIO_DIFFICULTY,
+  STUDIO_FEEDBACK,
   STUDIO_KIND,
+  STUDIO_SIZE,
+  type StudioDifficulty,
+  type StudioFeedback,
   type StudioKind,
   StudioKindSchema,
   type StudioOutput,
   StudioOutputListSchema,
   StudioOutputSchema,
+  type StudioRequest,
+  type StudioSize,
+  type StudioUpdateBody,
+  StudioUpdateBodySchema,
 } from './studio';

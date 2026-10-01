@@ -1,139 +1,268 @@
 import type { Mindmap } from '@nlm/shared';
-import { Maximize2 } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsDownUp,
+  ChevronsUpDown,
+  Download,
+  Minus,
+  Plus,
+} from 'lucide-react';
+import { type PointerEvent, useCallback, useMemo, useRef, useState } from 'react';
 
 import { CitedBy } from '@/components/studio/cited-by';
 import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  type Layout,
+  layoutMindmap,
+  linkPath,
+  type MapNode,
+  NODE_HEIGHT,
+  TOGGLE_SPACE,
+  toTree,
+} from '@/lib/mindmap-layout';
+import { downloadMindmapPng } from '@/lib/mindmap-png';
 import { cn } from '@/lib/utils';
 
-interface TreeNode {
-  label: string;
-  chunkIds: string[];
-  children?: TreeNode[];
-}
+const MARGIN = 24;
+const MIN_ZOOM = 0.4;
+const MAX_ZOOM = 2;
+const ZOOM_STEP = 0.2;
+const FILL = ['bg-node-root', 'bg-node-branch', 'bg-node-leaf'] as const;
 
-/**
- * One node and, to its right, its children. The lines come from the borders of the wrappers: each
- * child has a short line to its left, and the vertical line joins its siblings.
- */
-function Branch({
-  node,
-  notebookId,
-  onOpenCitation,
-  root = false,
-}: {
-  node: TreeNode;
-  notebookId: string;
-  onOpenCitation: (chunkId: string) => void;
-  root?: boolean;
-}) {
-  const children = node.children ?? [];
-  return (
-    <div className="flex items-center">
-      <div
-        className={cn(
-          'max-w-56 shrink-0 rounded-lg px-4 py-2 text-ui',
-          root ? 'bg-node-root' : 'bg-node-branch'
-        )}
-      >
-        {node.label}
-        {node.chunkIds.length > 0 && (
-          <span className="ml-1">
-            <CitedBy notebookId={notebookId} chunkIds={node.chunkIds} onOpen={onOpenCitation} />
-          </span>
-        )}
-      </div>
-      {children.length > 0 && (
-        <ul className="relative ml-6 flex flex-col before:absolute before:top-1/2 before:-left-6 before:w-6 before:border-t before:border-input">
-          {children.map((child) => (
-            <li
-              key={child.label}
-              className="relative py-1.5 pl-6 before:absolute before:top-1/2 before:left-0 before:w-6 before:border-t before:border-input after:absolute after:left-0 after:h-full after:border-l after:border-input first:after:top-1/2 first:after:h-1/2 last:after:h-1/2 only:after:hidden"
-            >
-              <Branch node={child} notebookId={notebookId} onOpenCitation={onOpenCitation} />
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+const clamp = (value: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
+
+/** The zoom at which the whole map fits into the view, never larger than the real size. */
+function fitScale(box: HTMLElement | null, layout: Layout): number {
+  // jsdom and a hidden dialog have no size to fit into.
+  if (!box || box.clientWidth === 0 || box.clientHeight === 0) return 1;
+  return clamp(
+    Math.min(
+      1,
+      box.clientWidth / (layout.width + MARGIN * 2),
+      box.clientHeight / (layout.height + MARGIN * 2)
+    )
   );
 }
 
-function Canvas({
-  notebookId,
-  mindmap,
-  onOpenCitation,
-  label,
-}: {
-  notebookId: string;
-  mindmap: Mindmap;
-  onOpenCitation: (chunkId: string) => void;
-  label: string;
-}) {
-  return (
-    <div className="overflow-auto pb-2" tabIndex={0} aria-label={label}>
-      <div className="w-max min-w-full py-2">
-        <Branch
-          root
-          node={{ label: mindmap.title, chunkIds: [], children: mindmap.branches }}
-          notebookId={notebookId}
-          onOpenCitation={onOpenCitation}
-        />
-      </div>
-    </div>
-  );
+/** Every node that has children: what "alle aufklappen" opens. */
+function expandable(node: MapNode): string[] {
+  return node.children.length === 0 ? [] : [node.id, ...node.children.flatMap(expandable)];
+}
+
+/** The colors of the map as the page has them now, for the picture that is downloaded. */
+function pageColors() {
+  const style = getComputedStyle(document.documentElement);
+  const read = (name: string) => style.getPropertyValue(name).trim();
+  return {
+    root: read('--node-root'),
+    branch: read('--node-branch'),
+    leaf: read('--node-leaf'),
+    text: read('--foreground'),
+    link: read('--node-link'),
+    background: read('--card'),
+  };
 }
 
 /**
- * A mind map from left to right: the topic, its branches, their twigs. It scrolls sideways in the
- * narrow Studio column and opens larger in a dialog.
+ * A mind map from left to right, like the original: the topic and its branches to begin with,
+ * a round toggle after every node opens or closes what is below it, "alle aufklappen" opens
+ * everything and fits it into the view, zoom and a download as image sit on the left. The map
+ * moves with the scroll bars or by dragging. Every node keeps the chips of the passages behind it.
  */
 export function MindmapView({
   notebookId,
+  title,
   mindmap,
   onOpenCitation,
 }: {
   notebookId: string;
+  /** Names the downloaded picture. */
+  title: string;
   mindmap: Mindmap;
   onOpenCitation: (chunkId: string) => void;
 }) {
+  const tree = useMemo(() => toTree(mindmap), [mindmap]);
+  const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set([tree.id]));
+  const [everything, setEverything] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  const scroller = useRef<HTMLDivElement | null>(null);
+  const drag = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
+  const layout = useMemo(() => layoutMindmap(tree, expanded), [tree, expanded]);
+  // The map the view opens with, which is fitted into it as soon as the view is there.
+  const first = useRef(layout);
+  const attach = useCallback((box: HTMLDivElement | null) => {
+    scroller.current = box;
+    if (box) setZoom(fitScale(box, first.current));
+  }, []);
+
+  const toggle = (id: string) =>
+    setExpanded((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const toggleEverything = () => {
+    const next = everything ? new Set([tree.id]) : new Set(expandable(tree));
+    setExpanded(next);
+    setEverything(!everything);
+    // Everything that is shown now fits into the view.
+    setZoom(fitScale(scroller.current, layoutMindmap(tree, next)));
+  };
+
+  const startDrag = (event: PointerEvent<HTMLDivElement>) => {
+    const box = scroller.current;
+    // Only the empty ground drags; a node or a button is for clicking.
+    if (!box || (event.target as HTMLElement).closest('[data-node], button')) return;
+    drag.current = { x: event.clientX, y: event.clientY, left: box.scrollLeft, top: box.scrollTop };
+    box.setPointerCapture(event.pointerId);
+  };
+  const moveDrag = (event: PointerEvent<HTMLDivElement>) => {
+    const box = scroller.current;
+    const start = drag.current;
+    if (!box || !start) return;
+    box.scrollLeft = start.left - (event.clientX - start.x);
+    box.scrollTop = start.top - (event.clientY - start.y);
+  };
+  const endDrag = (event: PointerEvent<HTMLDivElement>) => {
+    drag.current = null;
+    scroller.current?.releasePointerCapture(event.pointerId);
+  };
+
+  const round = 'size-10 rounded-full border border-border bg-card text-foreground shadow-glow';
+
   return (
-    <div className="flex flex-col gap-2">
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button variant="outline" size="sm" className="self-start">
-            <Maximize2 />
-            Vergrößern
+    <div className="relative h-full min-h-[360px] overflow-hidden rounded-2xl bg-secondary">
+      <div className="absolute top-4 left-4 z-10 flex flex-col gap-3">
+        <Button
+          variant="ghost"
+          size="icon"
+          className={round}
+          aria-label={everything ? 'Alle Knoten zuklappen' : 'Alle Knoten aufklappen'}
+          tooltip={everything ? 'Alle Knoten zuklappen' : 'Alle Knoten aufklappen'}
+          onClick={toggleEverything}
+        >
+          {everything ? <ChevronsDownUp /> : <ChevronsUpDown />}
+        </Button>
+        <div className="flex flex-col rounded-full border border-border bg-card shadow-glow">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full"
+            aria-label="Vergrößern"
+            tooltip="Vergrößern"
+            disabled={zoom >= MAX_ZOOM}
+            onClick={() => setZoom((value) => clamp(value + ZOOM_STEP))}
+          >
+            <Plus />
           </Button>
-        </DialogTrigger>
-        <DialogContent className="h-[85dvh] max-w-[calc(100%-2rem)] grid-rows-[auto_1fr] sm:max-w-5xl">
-          <DialogHeader>
-            <DialogTitle>{mindmap.title}</DialogTitle>
-            <DialogDescription className="sr-only">
-              Die Mindmap in voller Größe. Die Nummern führen zu den Textstellen.
-            </DialogDescription>
-          </DialogHeader>
-          <Canvas
-            notebookId={notebookId}
-            mindmap={mindmap}
-            onOpenCitation={onOpenCitation}
-            label="Mindmap groß"
-          />
-        </DialogContent>
-      </Dialog>
-      <Canvas
-        notebookId={notebookId}
-        mindmap={mindmap}
-        onOpenCitation={onOpenCitation}
-        label="Mindmap"
-      />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full"
+            aria-label="Verkleinern"
+            tooltip="Verkleinern"
+            disabled={zoom <= MIN_ZOOM}
+            onClick={() => setZoom((value) => clamp(value - ZOOM_STEP))}
+          >
+            <Minus />
+          </Button>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className={round}
+          aria-label="Mindmap als Bild herunterladen"
+          tooltip="Als Bild herunterladen"
+          onClick={() => void downloadMindmapPng(layout, pageColors(), title)}
+        >
+          <Download />
+        </Button>
+      </div>
+      <div
+        ref={attach}
+        data-testid="mindmap-canvas"
+        data-zoom={zoom}
+        onPointerDown={startDrag}
+        onPointerMove={moveDrag}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        className="flex h-full cursor-grab overflow-auto active:cursor-grabbing"
+      >
+        <div
+          className="relative m-auto shrink-0"
+          style={{
+            width: (layout.width + MARGIN * 2) * zoom,
+            height: (layout.height + MARGIN * 2) * zoom,
+          }}
+        >
+          <div
+            className="absolute"
+            style={{
+              left: MARGIN * zoom,
+              top: MARGIN * zoom,
+              width: layout.width,
+              height: layout.height,
+              transform: `scale(${zoom})`,
+              transformOrigin: '0 0',
+            }}
+          >
+            <svg
+              aria-hidden
+              width={layout.width}
+              height={layout.height}
+              className="pointer-events-none absolute inset-0 overflow-visible"
+            >
+              {layout.links.map((link) => (
+                <path
+                  key={`${link.from.node.id}>${link.to.node.id}`}
+                  d={linkPath(link)}
+                  fill="none"
+                  stroke="var(--node-link)"
+                  strokeWidth={1.5}
+                />
+              ))}
+            </svg>
+            {layout.nodes.map((placed) => (
+              <div
+                key={placed.node.id}
+                data-node
+                className={cn(
+                  'absolute flex items-center gap-1 rounded-[10px] px-4 text-ui whitespace-nowrap',
+                  FILL[Math.min(placed.depth, FILL.length - 1)]
+                )}
+                style={{ left: placed.x, top: placed.y, width: placed.width, height: NODE_HEIGHT }}
+              >
+                <span className="truncate">{placed.node.label}</span>
+                {placed.node.chunkIds.length > 0 && (
+                  <CitedBy
+                    notebookId={notebookId}
+                    chunkIds={placed.node.chunkIds}
+                    onOpen={onOpenCitation}
+                  />
+                )}
+                {placed.expandable && (
+                  <button
+                    type="button"
+                    aria-label={`„${placed.node.label}“ ${placed.open ? 'zuklappen' : 'aufklappen'}`}
+                    aria-expanded={placed.open}
+                    onClick={() => toggle(placed.node.id)}
+                    className="veil absolute top-1/2 flex size-5 -translate-y-1/2 items-center justify-center rounded-full bg-card text-foreground shadow-glow"
+                    style={{ left: placed.width + (TOGGLE_SPACE - 20) }}
+                  >
+                    {placed.open ? (
+                      <ChevronLeft className="size-3.5" aria-hidden />
+                    ) : (
+                      <ChevronRight className="size-3.5" aria-hidden />
+                    )}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

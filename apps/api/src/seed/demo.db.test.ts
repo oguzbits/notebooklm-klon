@@ -2,6 +2,7 @@ import { EMBEDDING_DIMENSIONS, SOURCE_KIND, SOURCE_STATUS } from '@nlm/shared';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import type { ChatInput } from '../ai/gemini-chat';
+import { findNotebookForOverview, saveNotebookOverview } from '../db/notebook-overview-repository';
 import { linkSource, listNotebooks, listNotebookSources } from '../db/notebook-repository';
 import { findSourceForOverview, saveOverview } from '../db/overview-repository';
 import { createSourceStorage, createUploadStorage } from '../db/source-storage';
@@ -17,8 +18,10 @@ const files: LocalFile[] = [
   { name: 'zwei.md', kind: SOURCE_KIND.MD, bytes: encode('Zweites Dokument.'), sourceUrl: null },
 ];
 const OVERVIEW = { summary: 'Kurz.', keyTopics: ['A'], suggestedQuestions: ['Was?'] };
+const NOTEBOOK_OVERVIEW = { emoji: '📚', summary: 'Zwei **Dokumente**.' };
 
 let modelCalls: ChatInput[] = [];
+let notebookModelCalls: ChatInput[] = [];
 const deps = {
   importDeps: {
     ports: {
@@ -43,6 +46,15 @@ const deps = {
       yield JSON.stringify(OVERVIEW);
     },
   },
+  notebookOverview: {
+    find: (userId: string, notebookId: string) => findNotebookForOverview(db, userId, notebookId),
+    save: (userId: string, notebookId: string, overview: typeof NOTEBOOK_OVERVIEW, key: string) =>
+      saveNotebookOverview(db, userId, notebookId, overview, key),
+    stream: async function* (input: ChatInput) {
+      notebookModelCalls.push(input);
+      yield JSON.stringify(NOTEBOOK_OVERVIEW);
+    },
+  },
   ensureUser: async () => {
     await ensureUsers(pool, [USER]);
     return USER;
@@ -53,6 +65,7 @@ const deps = {
 beforeEach(async () => {
   await pool.query('TRUNCATE "user" CASCADE');
   modelCalls = [];
+  notebookModelCalls = [];
 });
 
 afterAll(async () => {
@@ -78,13 +91,25 @@ describe('seedDemo', () => {
     }
   });
 
+  it('gives the notebook its own overview, so the first visit shows it at once', async () => {
+    await seedDemo({ files }, deps);
+
+    const [notebook] = await listNotebooks(db, USER);
+    expect(notebookModelCalls).toHaveLength(1);
+    expect(notebook?.emoji).toBe('📚');
+    const found = await findNotebookForOverview(db, USER, notebook?.id ?? '');
+    expect(found?.stored?.overview).toEqual(NOTEBOOK_OVERVIEW);
+  });
+
   it('can run again without a second notebook and without another model call', async () => {
     await seedDemo({ files }, deps);
     modelCalls = [];
+    notebookModelCalls = [];
 
     await seedDemo({ files }, deps);
 
     expect(await listNotebooks(db, USER)).toHaveLength(1);
     expect(modelCalls).toEqual([]);
+    expect(notebookModelCalls).toEqual([]);
   });
 });

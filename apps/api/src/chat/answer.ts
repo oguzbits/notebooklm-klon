@@ -11,6 +11,7 @@ import { GeminiError } from '../ai/gemini-error';
 import { LIMITS } from '../config/limits';
 import { buildChatContext, type ChatContext, resolveCitations } from '../core/chat-context';
 import { ANSWER_JSON_SCHEMA, buildUserMessage, chatSystemPrompt } from '../core/chat-prompt';
+import { cleanFollowUps } from '../core/follow-ups';
 import { StatementStream } from '../core/statement-stream';
 
 const QUOTA_STATUS = 429;
@@ -89,6 +90,7 @@ export async function* answerQuestion(
   let statements = 0;
   let droppedStatements = 0;
   let strippedCitations = 0;
+  let suggested: string[] = [];
 
   const check = (statement: { text: string; chunkIds: string[] }): ChatEvent | null => {
     const result = resolveCitations({ statements: [statement] }, context);
@@ -116,10 +118,12 @@ export async function* answerQuestion(
           if (event) yield event;
         }
       }
-      for (const statement of parser.finish()) {
+      const rest = parser.finish();
+      for (const statement of rest.statements) {
         const event = check(statement);
         if (event) yield event;
       }
+      suggested = rest.followUps;
     } catch (error) {
       ports.onError(error);
       const isQuota = error instanceof GeminiError && error.status === QUOTA_STATUS;
@@ -131,5 +135,7 @@ export async function* answerQuestion(
     }
   }
 
-  yield { type: CHAT_EVENT.DONE, statements, droppedStatements, strippedCitations };
+  // Questions only make sense next to an answer that has something to say.
+  const followUps = statements > 0 ? cleanFollowUps(suggested, question) : [];
+  yield { type: CHAT_EVENT.DONE, statements, droppedStatements, strippedCitations, followUps };
 }

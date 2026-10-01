@@ -154,6 +154,25 @@ describe('chat messages', () => {
     expect(messages[1]).toMatchObject({ statements: [{ text: 'Dr. Brandt.', chunkIds: ['a'] }] });
   });
 
+  it('keeps the questions an answer suggested, and none for an answer without', async () => {
+    const notebook = await insertNotebook(USER);
+    await saveAssistantMessage(
+      db,
+      USER,
+      notebook.id,
+      [{ text: 'Dr. Brandt.', chunkIds: ['a'] }],
+      ['Wie lange läuft das Projekt?', 'Wer ist noch beteiligt?']
+    );
+    await saveAssistantMessage(db, USER, notebook.id, [{ text: 'Frau Weiß.', chunkIds: ['a'] }]);
+
+    const [first, second] = await listChatMessages(db, USER, notebook.id);
+
+    expect(first).toMatchObject({
+      followUps: ['Wie lange läuft das Projekt?', 'Wer ist noch beteiligt?'],
+    });
+    expect(second).toMatchObject({ followUps: [] });
+  });
+
   it('keeps the histories of two notebooks and two users apart', async () => {
     const first = await insertNotebook(USER);
     const second = await insertNotebook(USER);

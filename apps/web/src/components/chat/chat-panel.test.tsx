@@ -1,15 +1,17 @@
-import { API_ERROR, CHAT_EVENT, type ChatEvent, SOURCE_STATUS } from '@nlm/shared';
-import { screen, waitFor } from '@testing-library/react';
+import { API_ERROR, CHAT_EVENT, type ChatEvent, NOTE_KIND, SOURCE_STATUS } from '@nlm/shared';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse, type JsonBodyType } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { formatWeekday } from '@/lib/day';
 import {
   answer,
   ANSWER_ID,
   CHUNK_ID,
   chunkDetail,
   note,
+  notebook,
   NOTEBOOK_ID,
   OTHER_CHUNK_ID,
   overview,
@@ -40,15 +42,46 @@ const overviewOf = (sourceId: string, body: JsonBodyType, status = 200) =>
 
 describe('ChatPanel', () => {
   // Answers ask for the notes, to show which are saved. Most tests do not care about them.
+  // The notebook and its overview lead the chat once a source is ready. Most tests do not care.
   beforeEach(() => {
-    server.use(http.get(`${base}/notes`, () => HttpResponse.json([])));
+    server.use(
+      http.get(`${base}/notes`, () => HttpResponse.json([])),
+      http.get('*/api/notebooks', () => HttpResponse.json([notebook({ title: 'Steuerrecht' })])),
+      http.get(`${base}/overview`, () =>
+        HttpResponse.json({ overview: { emoji: '📚', summary: 'Es geht um **Steuern**.' } })
+      )
+    );
   });
 
-  it('invites the user to ask the first question when the history is empty', async () => {
-    server.use(sources(), history([]));
+  it('invites the user to ask the first question while no source is ready', async () => {
+    server.use(sources([]), history([]));
     renderChat();
 
     expect(await screen.findByText('Stelle deine erste Frage')).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Steuerrecht' })).toBeNull();
+  });
+
+  it('leads with the overview of the notebook once a source is ready, and invites to ask under it', async () => {
+    server.use(sources(), history([]));
+    renderChat();
+
+    expect(await screen.findByRole('heading', { name: 'Steuerrecht' })).toBeTruthy();
+    expect((await screen.findByText('Steuern')).tagName).toBe('STRONG');
+    expect(screen.getByText(/Jede Aussage einer Antwort hat eine Nummer/)).toBeTruthy();
+    expect(screen.queryByText('Stelle deine erste Frage')).toBeNull();
+  });
+
+  it('keeps the overview above the conversation, so it scrolls away with it', async () => {
+    server.use(
+      sources(),
+      history([question('Wer leitet es?'), answer([{ text: 'Er.', chunkIds: [CHUNK_ID] }])])
+    );
+    renderChat();
+
+    const title = await screen.findByRole('heading', { name: 'Steuerrecht' });
+    const asked = await screen.findByText('Wer leitet es?');
+
+    expect(title.compareDocumentPosition(asked) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('shows saved answers with numbered chips that repeat for the same passage', async () => {
@@ -67,6 +100,27 @@ describe('ChatPanel', () => {
     expect(await screen.findByText('Wer leitet es?')).toBeTruthy();
     expect(screen.getAllByRole('button', { name: 'Quelle 1 anzeigen' })).toHaveLength(2);
     expect(screen.getAllByRole('button', { name: 'Quelle 2 anzeigen' })).toHaveLength(1);
+  });
+
+  it('starts each day of the conversation with its weekday and date, once', async () => {
+    const asked = (id: string, text: string, at: Date) => ({
+      ...question(text),
+      id,
+      createdAt: at.toISOString(),
+    });
+    server.use(
+      sources(),
+      history([
+        asked('a1111111-1111-4111-8111-111111111111', 'Erste Frage', new Date(2026, 8, 30, 9)),
+        asked('a2222222-2222-4222-8222-222222222222', 'Zweite Frage', new Date(2026, 8, 30, 18)),
+        asked('a3333333-3333-4333-8333-333333333333', 'Dritte Frage', new Date(2026, 9, 1, 8)),
+      ])
+    );
+    renderChat();
+
+    await screen.findByText('Dritte Frage');
+    expect(screen.getAllByText('Mittwoch, 30. September')).toHaveLength(1);
+    expect(screen.getAllByText('Donnerstag, 1. Oktober')).toHaveLength(1);
   });
 
   it('opens the source when a chip is clicked', async () => {
@@ -118,6 +172,7 @@ describe('ChatPanel', () => {
       statements: 1,
       droppedStatements: 0,
       strippedCitations: 0,
+      followUps: [],
     };
     const encoder = new TextEncoder();
     server.use(
@@ -147,13 +202,15 @@ describe('ChatPanel', () => {
     );
     renderChat();
     const user = userEvent.setup();
-    await screen.findByText('Stelle deine erste Frage');
+    await screen.findByLabelText('Deine Frage');
 
     await user.type(screen.getByLabelText('Deine Frage'), 'Wer leitet es?');
     await user.click(screen.getByRole('button', { name: 'Frage senden' }));
 
     expect(await screen.findByText(/Dr\. Brandt leitet es\./)).toBeTruthy();
     expect(screen.getByText('Antwort wird geschrieben …')).toBeTruthy();
+    // The question that is being answered opens the day as well, in an empty conversation.
+    expect(screen.getByText(formatWeekday(new Date().toISOString()))).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Frage senden' })).toHaveProperty('disabled', true);
     expect(screen.getByLabelText('Deine Frage')).toHaveProperty('disabled', true);
 
@@ -174,13 +231,88 @@ describe('ChatPanel', () => {
     );
     renderChat();
     const user = userEvent.setup();
-    await screen.findByText('Stelle deine erste Frage');
+    await screen.findByLabelText('Deine Frage');
 
     await user.type(screen.getByLabelText('Deine Frage'), 'Wer?');
     await user.click(screen.getByRole('button', { name: 'Frage senden' }));
 
     expect(await screen.findByText(/keine Antworten mehr möglich/)).toBeTruthy();
     expect(screen.getByRole('button', { name: /Erneut versuchen/ })).toBeTruthy();
+  });
+
+  describe('questions that could follow an answer', () => {
+    const followUps = ['Wie hoch ist das Budget?', 'Wer arbeitet noch mit?'];
+    const asking = () => {
+      const asked: unknown[] = [];
+      server.use(
+        http.post(`${base}/chat`, async ({ request }) => {
+          asked.push(await request.json());
+          return new HttpResponse('', { headers: { 'content-type': 'text/event-stream' } });
+        })
+      );
+      return asked;
+    };
+
+    it('shows them under the last answer and asks one on click', async () => {
+      const asked = asking();
+      server.use(
+        sources(),
+        history([
+          question('Wer leitet es?'),
+          answer([{ text: 'Dr. Brandt leitet es.', chunkIds: [CHUNK_ID] }], followUps),
+        ])
+      );
+      renderChat();
+
+      const list = await screen.findByRole('list', { name: 'Vorschläge für weitere Fragen' });
+      expect(within(list).getAllByRole('button')).toHaveLength(2);
+      await userEvent.setup().click(within(list).getByRole('button', { name: followUps[0] }));
+
+      await waitFor(() => expect(asked).toEqual([{ question: 'Wie hoch ist das Budget?' }]));
+    });
+
+    it('shows them only under the last answer of the conversation', async () => {
+      server.use(
+        sources(),
+        history([
+          question('Eins?'),
+          answer([{ text: 'Eins.', chunkIds: [CHUNK_ID] }], ['Nur für die alte Antwort?']),
+          question('Zwei?'),
+          answer([{ text: 'Zwei.', chunkIds: [CHUNK_ID] }], followUps),
+        ])
+      );
+      renderChat();
+
+      await screen.findByRole('list', { name: 'Vorschläge für weitere Fragen' });
+      expect(screen.queryByText('Nur für die alte Antwort?')).toBeNull();
+    });
+
+    it('shows nothing when the last message is a question or the answer has none', async () => {
+      server.use(
+        sources(),
+        history([
+          question('Wer leitet es?'),
+          answer([{ text: 'Dr. Brandt.', chunkIds: [CHUNK_ID] }]),
+        ])
+      );
+      renderChat();
+
+      await screen.findByText('Wer leitet es?');
+      expect(screen.queryByRole('list', { name: 'Vorschläge für weitere Fragen' })).toBeNull();
+    });
+
+    it('cannot be used while no ready source is selected', async () => {
+      server.use(
+        sources([source({ selected: false })]),
+        history([answer([{ text: 'Dr. Brandt.', chunkIds: [CHUNK_ID] }], followUps)])
+      );
+      renderChat();
+
+      const list = await screen.findByRole('list', { name: 'Vorschläge für weitere Fragen' });
+      for (const card of within(list).getAllByRole('button')) {
+        expect(card).toHaveProperty('disabled', true);
+      }
+    });
   });
 
   it('offers the suggested questions of the selected sources and asks one on click', async () => {
@@ -245,10 +377,12 @@ describe('ChatPanel', () => {
     renderChat();
     const user = userEvent.setup();
 
-    await user.click(await screen.findByRole('button', { name: 'In Notiz speichern' }));
+    // The overview above has the same button; the one of the answer is the last on the page.
+    const buttons = await screen.findAllByRole('button', { name: 'In Notiz speichern' });
+    await user.click(buttons[buttons.length - 1]!);
 
     expect(await screen.findByText('In Notiz gespeichert')).toBeTruthy();
-    expect(body).toEqual({ messageId: ANSWER_ID });
+    expect(body).toEqual({ kind: NOTE_KIND.ANSWER, messageId: ANSWER_ID });
   });
 
   it('shows an answer that is already a note as saved', async () => {
@@ -260,6 +394,8 @@ describe('ChatPanel', () => {
     renderChat();
 
     expect(await screen.findByText('In Notiz gespeichert')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'In Notiz speichern' })).toBeNull();
+    // What is left is the button of the overview, the answer has none.
+    await screen.findByText('Steuern');
+    expect(screen.getAllByRole('button', { name: 'In Notiz speichern' })).toHaveLength(1);
   });
 });

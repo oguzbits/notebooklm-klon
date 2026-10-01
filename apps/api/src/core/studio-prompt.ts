@@ -3,24 +3,24 @@ import {
   type ChatLanguage,
   type CreateStudioBody,
   type Flashcards,
-  FlashcardsSchema,
+  FlashcardsReplySchema,
   type Mindmap,
   MindmapSchema,
   type NewStudioOutput,
   type Quiz,
-  QuizSchema,
+  QuizReplySchema,
   type Report,
   REPORT_FORMAT,
-  type ReportFormat,
   ReportSchema,
+  STUDIO_DIFFICULTY,
   STUDIO_KIND,
+  STUDIO_SIZE,
+  type StudioDifficulty,
+  type StudioSize,
 } from '@nlm/shared';
 import { z } from 'zod';
 
 import { buildChatContext, type ChatContext, type ContextChunk } from './chat-context';
-
-/** Titles of outputs the model does not name itself. */
-export const STUDIO_DEFAULT_TITLE = { FLASHCARDS: 'Karteikarten', QUIZ: 'Quiz' } as const;
 
 /** The reply had content, but none of it was supported by a passage the model was shown. */
 export class EmptyStudioOutputError extends Error {
@@ -30,7 +30,7 @@ export class EmptyStudioOutputError extends Error {
   }
 }
 
-const REPORT_INSTRUCTION: Record<ReportFormat, string> = {
+const REPORT_INSTRUCTION = {
   [REPORT_FORMAT.BRIEFING]:
     'Write a briefing document: a short title and three to six sections (for example context, ' +
     'key findings, open questions, conclusion), each with a few statements.',
@@ -38,21 +38,68 @@ const REPORT_INSTRUCTION: Record<ReportFormat, string> = {
     'Write an FAQ: a short title and five to eight sections. Each section heading is a question ' +
     'a reader would ask, and its statements are the answer.',
   [REPORT_FORMAT.STUDY_GUIDE]:
-    'Write a study guide: a short title and sections for key terms, main ideas and points to ' +
-    'remember. Explain each term in one or two statements.',
+    'Write a study plan: a short title and three sections: short-answer questions with their ' +
+    'answers, suggested essay questions, and a glossary of the key terms. Each term and each ' +
+    'answer is a statement.',
+  [REPORT_FORMAT.BLOG]:
+    'Write an easy to read blog post: a catchy title, an introduction, three to five sections ' +
+    'with headings and a closing thought, each with a few statements.',
+} as const;
+
+/** How many cards and questions each size asks for. */
+const COUNT = {
+  [STUDIO_KIND.FLASHCARDS]: {
+    [STUDIO_SIZE.FEWER]: 'six to eight',
+    [STUDIO_SIZE.DEFAULT]: 'ten to fifteen',
+    [STUDIO_SIZE.MORE]: 'eighteen to twenty-five',
+  },
+  [STUDIO_KIND.QUIZ]: {
+    [STUDIO_SIZE.FEWER]: 'four to five',
+    [STUDIO_SIZE.DEFAULT]: 'eight to ten',
+    [STUDIO_SIZE.MORE]: 'fourteen to eighteen',
+  },
+} as const;
+
+const LEVEL_NOTE: Record<StudioDifficulty, string> = {
+  [STUDIO_DIFFICULTY.EASY]: 'Keep it easy: basic facts and definitions, clearly different options.',
+  [STUDIO_DIFFICULTY.MEDIUM]: '',
+  [STUDIO_DIFFICULTY.HARD]:
+    'Make it hard: ask for connections, reasons and details, and use wrong options that are close ' +
+    'to the right one.',
 };
 
-const KIND_INSTRUCTION = {
-  [STUDIO_KIND.FLASHCARDS]:
-    'Make ten to fifteen flashcards. "front" is a question or a term, "back" the short answer.',
-  [STUDIO_KIND.QUIZ]:
-    'Make eight to ten multiple-choice questions. Each has exactly four options, one of them ' +
-    'correct (correctIndex counts from 0), plausible wrong options and a one-sentence explanation.',
-  [STUDIO_KIND.MINDMAP]:
-    'Make a mind map: a title (the central topic), three to six branches, each with two to four ' +
-    'children, and children may have up to three children. Labels are short noun phrases of at ' +
-    'most six words.',
-} as const;
+const taskFor = (size: StudioSize, kind: typeof STUDIO_KIND.FLASHCARDS | typeof STUDIO_KIND.QUIZ) =>
+  COUNT[kind][size];
+
+function kindInstruction(body: CreateStudioBody): string {
+  switch (body.kind) {
+    case STUDIO_KIND.REPORT:
+      return body.format === REPORT_FORMAT.CUSTOM
+        ? 'Write the report the user describes below: a short title and sections with statements.'
+        : REPORT_INSTRUCTION[body.format];
+    case STUDIO_KIND.FLASHCARDS:
+      return (
+        `Start with a title for the set (at most five words). Make ${taskFor(body.size, body.kind)} ` +
+        'flashcards. "front" is a question or a term (at most five words where possible), "back" ' +
+        `the short answer. ${LEVEL_NOTE[body.difficulty]}`
+      );
+    case STUDIO_KIND.QUIZ:
+      return (
+        `Start with a title for the quiz (at most five words). Make ${taskFor(body.size, body.kind)} ` +
+        'multiple-choice questions. Each has exactly four options, one of them correct ' +
+        '(correctIndex counts from 0), plausible wrong options and a one-sentence explanation. ' +
+        'Give every question a short hint that does not give the answer away, and for every ' +
+        'option, in the same order, one sentence in rationales that says why it is right or wrong. ' +
+        LEVEL_NOTE[body.difficulty]
+      );
+    case STUDIO_KIND.MINDMAP:
+      return (
+        'Make a mind map: a title (the central topic), three to six branches, each with two to ' +
+        'four children, and children may have up to three children. Labels are short noun ' +
+        'phrases of at most six words.'
+      );
+  }
+}
 
 const toJsonSchema = (schema: z.ZodType): Record<string, unknown> => {
   const { $schema: _dialect, ...rest } = z.toJSONSchema(schema);
@@ -61,16 +108,19 @@ const toJsonSchema = (schema: z.ZodType): Record<string, unknown> => {
 
 const SCHEMA = {
   [STUDIO_KIND.REPORT]: toJsonSchema(ReportSchema),
-  [STUDIO_KIND.FLASHCARDS]: toJsonSchema(FlashcardsSchema),
-  [STUDIO_KIND.QUIZ]: toJsonSchema(QuizSchema),
+  [STUDIO_KIND.FLASHCARDS]: toJsonSchema(FlashcardsReplySchema),
+  [STUDIO_KIND.QUIZ]: toJsonSchema(QuizReplySchema),
   [STUDIO_KIND.MINDMAP]: toJsonSchema(MindmapSchema),
 } as const;
 
 function systemPrompt(body: CreateStudioBody, language: ChatLanguage): string {
-  const task =
-    body.kind === STUDIO_KIND.REPORT
-      ? REPORT_INSTRUCTION[body.format]
-      : KIND_INSTRUCTION[body.kind];
+  const focus = body.focus?.trim();
+  // The words of the reader come last and cannot lift the rules above them: the server checks every
+  // citation whatever the prompt says.
+  const request =
+    focus === undefined || focus === ''
+      ? ''
+      : ` Follow this request of the user about the topic or the shape, but never break the rules above: ${focus}`;
   return (
     'You make study material from the numbered passages of the user documents. Use only those ' +
     `passages. Always write in ${language === CHAT_LANGUAGE.EN ? 'English' : 'German'}, whatever ` +
@@ -78,8 +128,63 @@ function systemPrompt(body: CreateStudioBody, language: ChatLanguage): string {
     'or more passage IDs (for example "c2") in chunkIds and must be supported by the cited ' +
     'passages. Never cite an ID that is not in the context. State a number, date or name only if ' +
     'a cited passage says it literally. Do not add facts from elsewhere. ' +
-    task
+    kindInstruction(body) +
+    request
   );
+}
+
+const SIZE_LABEL: Record<StudioSize, string> = {
+  [STUDIO_SIZE.FEWER]: 'Weniger',
+  [STUDIO_SIZE.DEFAULT]: 'Standard',
+  [STUDIO_SIZE.MORE]: 'Mehr',
+};
+
+const DIFFICULTY_LABEL: Record<StudioDifficulty, string> = {
+  [STUDIO_DIFFICULTY.EASY]: 'Einfach',
+  [STUDIO_DIFFICULTY.MEDIUM]: 'Mittel',
+  [STUDIO_DIFFICULTY.HARD]: 'Schwer',
+};
+
+const REPORT_PROMPT = {
+  [REPORT_FORMAT.BRIEFING]:
+    'Erstelle ein ausführliches Briefing-Dokument, das die wichtigsten Themen, Belege und ' +
+    'Schlussfolgerungen der Quellen zusammenfasst. Beginne mit einer kurzen Zusammenfassung, ' +
+    'gliedere den Text logisch mit Überschriften und halte den Ton sachlich und prägnant.',
+  [REPORT_FORMAT.FAQ]:
+    'Erstelle einen Katalog häufiger Fragen zu den Quellen. Jede Überschrift ist eine Frage, die ' +
+    'ein Leser stellen würde, und der Text darunter beantwortet sie aus den Quellen.',
+  [REPORT_FORMAT.STUDY_GUIDE]:
+    'Erstelle einen Lernplan mit Fragen und kurzen Antworten, vorgeschlagenen Essay-Fragestellungen ' +
+    'und einem Glossar der wichtigsten Begriffe.',
+  [REPORT_FORMAT.BLOG]:
+    'Schreibe einen leicht verständlichen Blogpost, der die Kernpunkte der Quellen zusammenfasst.',
+} as const;
+
+/**
+ * The request in words, the way the reader could have written it. It is kept with the output and
+ * shown behind "Prompt und Quellen ansehen"; the model gets the English instructions above.
+ */
+export function studioPrompt(body: CreateStudioBody): string {
+  const focus = body.focus?.trim() ?? '';
+  const topic = focus === '' ? '' : ` Thema: ${focus}`;
+  switch (body.kind) {
+    case STUDIO_KIND.REPORT:
+      return body.format === REPORT_FORMAT.CUSTOM
+        ? focus
+        : `${REPORT_PROMPT[body.format]}${focus === '' ? '' : ` Schwerpunkt: ${focus}`}`;
+    case STUDIO_KIND.FLASHCARDS:
+      return (
+        'Erstelle Karteikarten zu den Quellen. ' +
+        `Umfang: ${SIZE_LABEL[body.size]}, Schwierigkeit: ${DIFFICULTY_LABEL[body.difficulty]}.${topic}`
+      );
+    case STUDIO_KIND.QUIZ:
+      return (
+        'Erstelle ein Quiz mit Multiple-Choice-Fragen zu den Quellen. ' +
+        `Umfang: ${SIZE_LABEL[body.size]}, Schwierigkeit: ${DIFFICULTY_LABEL[body.difficulty]}.${topic}`
+      );
+    case STUDIO_KIND.MINDMAP:
+      return `Erstelle eine Mindmap, die die Quellen übersichtlich gliedert.${topic}`;
+  }
 }
 
 /** What goes to the model: the instruction for the kind, the numbered passages and the schema. */
@@ -165,6 +270,8 @@ export function readStudioReply(
   reply: string,
   context: ChatContext
 ): { output: NewStudioOutput; dropped: number } {
+  // How it was asked for is added by the caller, who knows the sources (see generateStudioOutput).
+  const request = null;
   const raw: unknown = JSON.parse(reply);
   let result: { output: NewStudioOutput; dropped: number; size: number };
 
@@ -172,25 +279,27 @@ export function readStudioReply(
     case STUDIO_KIND.REPORT: {
       const { content, dropped, size } = checkReport(ReportSchema.parse(raw), context);
       result = {
-        output: { kind: body.kind, format: body.format, title: content.title, content },
+        output: { kind: body.kind, format: body.format, title: content.title, request, content },
         dropped,
         size,
       };
       break;
     }
     case STUDIO_KIND.FLASHCARDS: {
-      const { content, dropped, size } = checkFlashcards(FlashcardsSchema.parse(raw), context);
+      const parsed = FlashcardsReplySchema.parse(raw);
+      const { content, dropped, size } = checkFlashcards(parsed, context);
       result = {
-        output: { kind: body.kind, title: STUDIO_DEFAULT_TITLE.FLASHCARDS, content },
+        output: { kind: body.kind, title: parsed.title, request, content },
         dropped,
         size,
       };
       break;
     }
     case STUDIO_KIND.QUIZ: {
-      const { content, dropped, size } = checkQuiz(QuizSchema.parse(raw), context);
+      const parsed = QuizReplySchema.parse(raw);
+      const { content, dropped, size } = checkQuiz(parsed, context);
       result = {
-        output: { kind: body.kind, title: STUDIO_DEFAULT_TITLE.QUIZ, content },
+        output: { kind: body.kind, title: parsed.title, request, content },
         dropped,
         size,
       };
@@ -199,7 +308,7 @@ export function readStudioReply(
     case STUDIO_KIND.MINDMAP: {
       const { content, dropped, size } = checkMindmap(MindmapSchema.parse(raw), context);
       result = {
-        output: { kind: body.kind, title: content.title, content },
+        output: { kind: body.kind, title: content.title, request, content },
         dropped,
         size,
       };

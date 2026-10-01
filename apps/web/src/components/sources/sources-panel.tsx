@@ -1,5 +1,6 @@
 import { SOURCE_STATUS } from '@nlm/shared';
 import { FileQuestion } from 'lucide-react';
+import { memo } from 'react';
 
 import { QueryBoundary } from '@/components/query-boundary';
 import { SourceRowsSkeleton } from '@/components/skeletons';
@@ -11,7 +12,7 @@ import { useRemoveSource, useSources, useToggleSource } from '@/hooks/use-source
 import { describeError } from '@/lib/messages';
 
 /** The left column: add sources, choose which ones answers may use, open one to read it. */
-export function SourcesPanel({
+export const SourcesPanel = memo(function SourcesPanel({
   notebookId,
   onOpenSource,
 }: {
@@ -86,4 +87,4 @@ export function SourcesPanel({
       )}
     </div>
   );
-}
+});

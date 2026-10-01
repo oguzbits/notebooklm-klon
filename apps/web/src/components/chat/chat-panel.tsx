@@ -1,23 +1,88 @@
-import { SOURCE_STATUS } from '@nlm/shared';
+import { CHAT_ROLE, SOURCE_STATUS } from '@nlm/shared';
 import { ArrowUp, FileText, LoaderCircle, MessageCircleQuestion } from 'lucide-react';
-import { type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react';
+import {
+  type FormEvent,
+  Fragment,
+  type KeyboardEvent,
+  memo,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
-import { AnswerView, MessageView, QuestionBubble } from '@/components/chat/message-view';
+import { FollowUps } from '@/components/chat/follow-ups';
+import {
+  AnswerView,
+  DayDivider,
+  MessageView,
+  QuestionBubble,
+} from '@/components/chat/message-view';
+import { NotebookOverview } from '@/components/chat/notebook-overview';
 import { ErrorNotice, QueryBoundary } from '@/components/query-boundary';
 import { ChatSkeleton } from '@/components/skeletons';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAskQuestion, useChatHistory } from '@/hooks/use-chat';
-import { useSuggestedQuestions } from '@/hooks/use-overview';
+import { type Suggestions, useSuggestedQuestions } from '@/hooks/use-overview';
 import { useSources } from '@/hooks/use-sources';
+import { isSameDay } from '@/lib/day';
+
+/** Whether a message at this time opens a new day of the conversation. */
+const startsDay = (previous: { createdAt: string } | undefined, createdAt: string) =>
+  previous === undefined || !isSameDay(previous.createdAt, createdAt);
+
+/** The questions to start with: while they are made, when that failed, and as buttons. */
+function SuggestionList({
+  suggestions,
+  canAsk,
+  onAsk,
+}: {
+  suggestions: Suggestions;
+  canAsk: boolean;
+  onAsk: (question: string) => void;
+}) {
+  return (
+    <>
+      {suggestions.loading && (
+        <p className="text-ui text-muted-foreground" role="status">
+          Vorschläge werden erstellt …
+        </p>
+      )}
+      {suggestions.failed && (
+        <p className="text-ui text-muted-foreground">
+          Vorschläge konnten nicht erstellt werden. Du kannst trotzdem fragen.
+        </p>
+      )}
+      {suggestions.questions.length > 0 && (
+        <ul className="mt-4 flex max-w-xl flex-wrap justify-center gap-2">
+          {suggestions.questions.map((suggestion) => (
+            <li key={suggestion}>
+              <Button
+                variant="outline"
+                className="h-auto min-h-9 whitespace-normal py-2 text-left"
+                disabled={!canAsk}
+                onClick={() => onAsk(suggestion)}
+              >
+                {suggestion}
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
+  );
+}
 
 /** The middle panel: the conversation, the field for a new question and the streamed answer. */
-export function ChatPanel({
+export const ChatPanel = memo(function ChatPanel({
   notebookId,
   onOpenCitation,
+  incoming = null,
 }: {
   notebookId: string;
   onOpenCitation: (chunkId: string) => void;
+  /** A question from elsewhere on the page, asked once when it is new (its ID counts up). */
+  incoming?: { id: number; question: string } | null;
 }) {
   const history = useChatHistory(notebookId);
   const sources = useSources(notebookId);
@@ -25,17 +90,32 @@ export function ChatPanel({
   const suggestions = useSuggestedQuestions(notebookId, sources.data ?? []);
   const bottom = useRef<HTMLDivElement>(null);
   const [question, setQuestion] = useState('');
+  const handled = useRef(0);
 
   const usable = (sources.data ?? []).filter(
     (source) => source.selected && source.status === SOURCE_STATUS.READY
   ).length;
+  // With a source that is read, the overview of the notebook leads the chat.
+  const hasReady = (sources.data ?? []).some((source) => source.status === SOURCE_STATUS.READY);
   const canAsk = usable > 0 && !ask.isPending;
   const canSend = canAsk && question.trim() !== '';
+
+  // Only the last answer of the conversation suggests what to ask next, and only while it is the last.
+  const lastMessage = history.data?.at(-1);
+  const lastFollowUps = lastMessage?.role === CHAT_ROLE.ASSISTANT ? lastMessage.followUps : [];
 
   const liveCount = ask.live?.statements.length ?? 0;
   useEffect(() => {
     bottom.current?.scrollIntoView?.({ block: 'end' });
   }, [history.data?.length, liveCount, ask.isPending]);
+
+  // A question sent from elsewhere is asked like a typed one. While an answer is being written, or
+  // with no source to answer from, it is not asked: the same rule as for the field.
+  useEffect(() => {
+    if (!incoming || incoming.id === handled.current) return;
+    handled.current = incoming.id;
+    if (canAsk) ask.mutate(incoming.question);
+  }, [incoming, canAsk, ask]);
 
   const send = (form: HTMLFormElement) => {
     const text = String(new FormData(form).get('question') ?? '').trim();
@@ -70,59 +150,69 @@ export function ChatPanel({
       />
       <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5">
         <div className="mx-auto flex max-w-[756px] flex-col gap-3 px-6 pt-2">
+          <NotebookOverview notebookId={notebookId} sources={sources.data} />
           <QueryBoundary
             query={history}
-            loading={<ChatSkeleton />}
+            // The overview has placeholders of its own while it loads, a second set would double them.
+            loading={hasReady ? null : <ChatSkeleton />}
             isEmpty={(messages) => messages.length === 0 && !ask.live}
             empty={
-              <div className="flex flex-col items-center gap-2 py-16 text-center">
-                <MessageCircleQuestion className="size-12 text-muted-foreground" aria-hidden />
-                <p className="text-xl font-title">Stelle deine erste Frage</p>
-                <p className="max-w-sm text-read text-muted-foreground">
-                  Die Antwort stützt sich nur auf deine ausgewählten Quellen. Jede Aussage hat eine
-                  Nummer, die zur Textstelle führt.
-                </p>
-                {suggestions.loading && (
-                  <p className="text-ui text-muted-foreground" role="status">
-                    Vorschläge werden erstellt …
+              hasReady ? (
+                <div className="flex flex-col items-center gap-2 py-2 text-center">
+                  <p className="max-w-sm text-ui text-muted-foreground">
+                    Jede Aussage einer Antwort hat eine Nummer, die zur Textstelle führt.
                   </p>
-                )}
-                {suggestions.failed && (
-                  <p className="text-ui text-muted-foreground">
-                    Vorschläge konnten nicht erstellt werden. Du kannst trotzdem fragen.
+                  <SuggestionList
+                    suggestions={suggestions}
+                    canAsk={canAsk}
+                    onAsk={(text) => ask.mutate(text)}
+                  />
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-2 py-16 text-center">
+                  <MessageCircleQuestion className="size-12 text-muted-foreground" aria-hidden />
+                  <p className="text-xl font-title">Stelle deine erste Frage</p>
+                  <p className="max-w-sm text-read text-muted-foreground">
+                    Die Antwort stützt sich nur auf deine ausgewählten Quellen. Jede Aussage hat
+                    eine Nummer, die zur Textstelle führt.
                   </p>
-                )}
-                {suggestions.questions.length > 0 && (
-                  <ul className="mt-4 flex max-w-xl flex-wrap justify-center gap-2">
-                    {suggestions.questions.map((suggestion) => (
-                      <li key={suggestion}>
-                        <Button
-                          variant="outline"
-                          className="h-auto min-h-9 whitespace-normal py-2 text-left"
-                          disabled={!canAsk}
-                          onClick={() => ask.mutate(suggestion)}
-                        >
-                          {suggestion}
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+                  <SuggestionList
+                    suggestions={suggestions}
+                    canAsk={canAsk}
+                    onAsk={(text) => ask.mutate(text)}
+                  />
+                </div>
+              )
             }
           >
             {(messages) => (
               <>
-                {messages.map((message) => (
-                  <MessageView
-                    key={message.id}
-                    message={message}
-                    notebookId={notebookId}
-                    onOpenCitation={onOpenCitation}
-                  />
+                {messages.map((message, index) => (
+                  <Fragment key={message.id}>
+                    {startsDay(messages[index - 1], message.createdAt) && (
+                      <DayDivider iso={message.createdAt} />
+                    )}
+                    <MessageView
+                      message={message}
+                      notebookId={notebookId}
+                      onOpenCitation={onOpenCitation}
+                    />
+                  </Fragment>
                 ))}
+                {lastFollowUps.length > 0 && !ask.live && (
+                  <div className="pr-8">
+                    <FollowUps
+                      questions={lastFollowUps}
+                      disabled={!canAsk}
+                      onAsk={(suggestion) => ask.mutate(suggestion)}
+                    />
+                  </div>
+                )}
                 {ask.live && (
                   <>
+                    {startsDay(lastMessage, ask.live.askedAt) && (
+                      <DayDivider iso={ask.live.askedAt} />
+                    )}
                     <QuestionBubble text={ask.live.question} askedAt={ask.live.askedAt} />
                     <div className="pr-8">
                       <AnswerView
@@ -197,4 +287,4 @@ export function ChatPanel({
       </div>
     </div>
   );
-}
+});

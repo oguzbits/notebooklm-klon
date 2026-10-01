@@ -10,6 +10,7 @@ import path from 'node:path';
 import { eq } from 'drizzle-orm';
 
 import { createAuth } from '../auth/auth';
+import { createNotebookOverviewPorts } from '../chat/notebook-overview-ports';
 import { createOverviewPorts } from '../chat/overview-ports';
 import { parseEnv } from '../config/env';
 import { user } from '../db/auth-schema';
@@ -45,6 +46,7 @@ try {
       db,
       importDeps: createLocalImportDeps(db, providers),
       overview: createOverviewPorts(db, providers.stream),
+      notebookOverview: createNotebookOverviewPorts(db, providers.stream),
       ensureUser: async () => {
         const [existing] = await db.select({ id: user.id }).from(user).where(eq(user.email, email));
         if (existing) return existing.id;

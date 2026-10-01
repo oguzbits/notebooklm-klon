@@ -66,8 +66,25 @@ describe('reader contract', () => {
     };
 
     expect(ChatMessageSchema.parse(question)).toEqual(question);
-    expect(ChatMessageSchema.parse(answer)).toEqual(answer);
+    expect(ChatMessageSchema.parse(answer)).toEqual({ ...answer, followUps: [] });
     expect(ChatMessageListSchema.parse([question, answer])).toHaveLength(2);
+  });
+
+  it('keeps the questions an answer suggested, and gives an older answer none', () => {
+    const answer = {
+      id: OTHER_ID,
+      role: CHAT_ROLE.ASSISTANT,
+      statements: [{ text: 'Dr. Brandt.', chunkIds: [ID] }],
+      createdAt: CREATED_AT,
+    };
+
+    expect(
+      ChatMessageSchema.parse({ ...answer, followUps: ['Wie lange läuft es?'] })
+    ).toMatchObject({ followUps: ['Wie lange läuft es?'] });
+    expect(ChatMessageSchema.parse(answer)).toMatchObject({ followUps: [] });
+    expect(
+      ChatMessageSchema.safeParse({ ...answer, followUps: ['a', 'b', 'c', 'd'] }).success
+    ).toBe(false);
   });
 
   it('rejects an assistant message without statements and a user message without text', () => {

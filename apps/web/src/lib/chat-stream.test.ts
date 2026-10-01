@@ -13,6 +13,7 @@ const DONE: ChatEvent = {
   statements: 1,
   droppedStatements: 0,
   strippedCitations: 0,
+  followUps: [],
 };
 
 const frame = (event: ChatEvent) => `event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`;

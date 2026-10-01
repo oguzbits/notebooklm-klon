@@ -1,17 +1,13 @@
-import {
-  type Answer,
-  AnswerSchema,
-  type AnswerStatement,
-  AnswerStatementSchema,
-} from '@nlm/shared';
+import { type AnswerStatement, AnswerStatementSchema, ChatReplySchema } from '@nlm/shared';
 
 // {  "statements" [  { statement }  ]  }   -> a statement object opens at depth 3
+// The questions that follow, {"followUps": ["..."]}, hold no object, so they are never mistaken for one.
 const STATEMENT_DEPTH = 3;
 const QUOTE = '"';
 const BACKSLASH = '\\';
 
 /**
- * Turns the streamed JSON of an answer, `{"statements":[{...},{...}]}`, into finished statements as
+ * Turns the streamed JSON of an answer, `{"statements":[{...},{...}],"followUps":[...]}`, into finished statements as
  * soon as each object is complete, so the UI can show an answer while the model still writes. Any
  * malformed statement, and an answer that is cut off or breaks the contract, is an error: partial
  * text must never be shown as a complete answer.
@@ -57,11 +53,12 @@ export class StatementStream {
   }
 
   /**
-   * Call when the model is done. Checks the whole text against the answer contract and returns any
-   * statement that was not emitted yet (none, when the stream was well formed).
+   * Call when the model is done. Checks the whole text against the reply contract and returns any
+   * statement that was not emitted yet (none, when the stream was well formed) and the questions
+   * the reader could ask next.
    */
-  finish(): AnswerStatement[] {
-    const answer: Answer = AnswerSchema.parse(JSON.parse(this.text));
-    return answer.statements.slice(this.emitted);
+  finish(): { statements: AnswerStatement[]; followUps: string[] } {
+    const reply = ChatReplySchema.parse(JSON.parse(this.text));
+    return { statements: reply.statements.slice(this.emitted), followUps: reply.followUps };
   }
 }

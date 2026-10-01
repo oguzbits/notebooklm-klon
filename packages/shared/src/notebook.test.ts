@@ -19,12 +19,27 @@ const DATE = '2026-09-30T12:00:00.000Z';
 describe('notebook contracts', () => {
   it('parses a notebook', () => {
     expect(
-      NotebookSchema.parse({ id: ID, title: 'Recherche', sourceCount: 3, createdAt: DATE })
+      NotebookSchema.parse({
+        id: ID,
+        title: 'Recherche',
+        emoji: null,
+        sourceCount: 3,
+        createdAt: DATE,
+      })
     ).toMatchObject({ title: 'Recherche', sourceCount: 3 });
   });
 
+  it('carries the symbol of its overview, or null while there is none', () => {
+    const base = { id: ID, title: 'Recherche', sourceCount: 1, createdAt: DATE };
+
+    expect(NotebookSchema.parse({ ...base, emoji: '🔬' }).emoji).toBe('🔬');
+    expect(NotebookSchema.parse({ ...base, emoji: null }).emoji).toBeNull();
+    expect(NotebookSchema.safeParse(base).success).toBe(false);
+    expect(NotebookSchema.safeParse({ ...base, emoji: 'Text' }).success).toBe(false);
+  });
+
   it('needs a source count that is a whole number of zero or more', () => {
-    const base = { id: ID, title: 'Recherche', createdAt: DATE };
+    const base = { id: ID, title: 'Recherche', emoji: null, createdAt: DATE };
 
     expect(NotebookSchema.safeParse(base).success).toBe(false);
     expect(NotebookSchema.safeParse({ ...base, sourceCount: -1 }).success).toBe(false);

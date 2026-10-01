@@ -1,11 +1,18 @@
-import { CHAT_LANGUAGE, REPORT_FORMAT, STUDIO_KIND } from '@nlm/shared';
+import {
+  CHAT_LANGUAGE,
+  type CreateStudioBody,
+  REPORT_FORMAT,
+  STUDIO_DIFFICULTY,
+  STUDIO_KIND,
+  STUDIO_SIZE,
+} from '@nlm/shared';
 import { describe, expect, it } from 'vitest';
 
 import { buildChatContext } from './chat-context';
 import {
   EmptyStudioOutputError,
   readStudioReply,
-  STUDIO_DEFAULT_TITLE,
+  studioPrompt,
   studioRequest,
 } from './studio-prompt';
 
@@ -14,6 +21,18 @@ const chunks = [
   { id: 'id-2', text: 'Das Budget beträgt 1,25 Mio. Euro.' },
 ];
 const context = buildChatContext(chunks);
+
+const FLASHCARDS: CreateStudioBody = {
+  kind: STUDIO_KIND.FLASHCARDS,
+  size: STUDIO_SIZE.DEFAULT,
+  difficulty: STUDIO_DIFFICULTY.MEDIUM,
+};
+const QUIZ: CreateStudioBody = {
+  kind: STUDIO_KIND.QUIZ,
+  size: STUDIO_SIZE.DEFAULT,
+  difficulty: STUDIO_DIFFICULTY.MEDIUM,
+};
+const MINDMAP: CreateStudioBody = { kind: STUDIO_KIND.MINDMAP };
 
 describe('studioRequest', () => {
   it('puts the numbered passages into the message and asks for the requested kind', () => {
@@ -33,9 +52,9 @@ describe('studioRequest', () => {
 
   it('uses a different schema and instruction for each kind', () => {
     const schemaKeys = [
-      [{ kind: STUDIO_KIND.FLASHCARDS }, 'cards'],
-      [{ kind: STUDIO_KIND.QUIZ }, 'questions'],
-      [{ kind: STUDIO_KIND.MINDMAP }, 'branches'],
+      [FLASHCARDS, 'cards'],
+      [QUIZ, 'questions'],
+      [MINDMAP, 'branches'],
     ] as const;
 
     for (const [body, key] of schemaKeys) {
@@ -45,11 +64,106 @@ describe('studioRequest', () => {
   });
 
   it('writes in German unless the notebook asks for English', () => {
-    const german = studioRequest({ kind: STUDIO_KIND.QUIZ }, chunks, CHAT_LANGUAGE.AUTO);
-    const english = studioRequest({ kind: STUDIO_KIND.QUIZ }, chunks, CHAT_LANGUAGE.EN);
+    const german = studioRequest(QUIZ, chunks, CHAT_LANGUAGE.AUTO);
+    const english = studioRequest(QUIZ, chunks, CHAT_LANGUAGE.EN);
 
     expect(german.system).toMatch(/German/);
     expect(english.system).toMatch(/English/);
+  });
+
+  it('asks for as many cards or questions as the size says', () => {
+    const count = (body: CreateStudioBody) =>
+      studioRequest(body, chunks, CHAT_LANGUAGE.AUTO).system.match(
+        /Make (\w+(?:-\w+)? to \w+(?:-\w+)?) /
+      )?.[1];
+
+    expect(count({ ...FLASHCARDS, size: STUDIO_SIZE.FEWER })).toBe('six to eight');
+    expect(count(FLASHCARDS)).toBe('ten to fifteen');
+    expect(count({ ...FLASHCARDS, size: STUDIO_SIZE.MORE })).toBe('eighteen to twenty-five');
+    expect(count({ ...QUIZ, size: STUDIO_SIZE.FEWER })).toBe('four to five');
+    expect(count({ ...QUIZ, size: STUDIO_SIZE.MORE })).toBe('fourteen to eighteen');
+  });
+
+  it('tells the model how hard to make it, and says nothing for the usual level', () => {
+    const system = (difficulty: (typeof STUDIO_DIFFICULTY)[keyof typeof STUDIO_DIFFICULTY]) =>
+      studioRequest({ ...QUIZ, difficulty }, chunks, CHAT_LANGUAGE.AUTO).system;
+
+    expect(system(STUDIO_DIFFICULTY.EASY)).toMatch(/easy/i);
+    expect(system(STUDIO_DIFFICULTY.HARD)).toMatch(/hard/i);
+    expect(system(STUDIO_DIFFICULTY.MEDIUM)).not.toMatch(/\b(easy|hard)\b/i);
+  });
+
+  it('puts the topic below the rules that keep the citations, so it cannot lift them', () => {
+    const { system } = studioRequest(
+      { ...MINDMAP, focus: 'Nur die Architektur' },
+      chunks,
+      CHAT_LANGUAGE.AUTO
+    );
+
+    expect(system.indexOf('Nur die Architektur')).toBeGreaterThan(
+      system.indexOf('Never cite an ID')
+    );
+    expect(system).toMatch(/never break the rules above/i);
+  });
+
+  it('asks for a quiz question with a hint and a reason for every option, and for a title', () => {
+    const quiz = studioRequest(QUIZ, chunks, CHAT_LANGUAGE.AUTO);
+    const cards = studioRequest(FLASHCARDS, chunks, CHAT_LANGUAGE.AUTO);
+
+    expect(quiz.schema).toHaveProperty('required', ['title', 'questions']);
+    expect(quiz.system).toMatch(/hint/i);
+    expect(quiz.system).toMatch(/rationales/);
+    expect(cards.schema).toHaveProperty('required', ['title', 'cards']);
+  });
+
+  it('writes the template of a report: a blog post, a study plan, or what the reader describes', () => {
+    const system = (body: CreateStudioBody) =>
+      studioRequest(body, chunks, CHAT_LANGUAGE.AUTO).system;
+
+    expect(system({ kind: STUDIO_KIND.REPORT, format: REPORT_FORMAT.BLOG })).toMatch(/blog post/i);
+    expect(system({ kind: STUDIO_KIND.REPORT, format: REPORT_FORMAT.STUDY_GUIDE })).toMatch(
+      /glossary/i
+    );
+    expect(
+      system({
+        kind: STUDIO_KIND.REPORT,
+        format: REPORT_FORMAT.CUSTOM,
+        focus: 'Schreibe einen Brief an die Chefin.',
+      })
+    ).toContain('Schreibe einen Brief an die Chefin.');
+  });
+});
+
+describe('studioPrompt', () => {
+  it('words the request the way the reader could have written it, in German', () => {
+    expect(studioPrompt({ kind: STUDIO_KIND.REPORT, format: REPORT_FORMAT.BRIEFING })).toMatch(
+      /Briefing/
+    );
+    expect(studioPrompt(MINDMAP)).toMatch(/Mindmap/);
+  });
+
+  it('names the size, the difficulty and the topic of cards and questions', () => {
+    const prompt = studioPrompt({
+      ...QUIZ,
+      size: STUDIO_SIZE.MORE,
+      difficulty: STUDIO_DIFFICULTY.HARD,
+      focus: 'Das Budget',
+    });
+
+    expect(prompt).toMatch(/Quiz/);
+    expect(prompt).toMatch(/Mehr/);
+    expect(prompt).toMatch(/Schwer/);
+    expect(prompt).toContain('Das Budget');
+  });
+
+  it('is the instruction itself for a report the reader writes', () => {
+    expect(
+      studioPrompt({
+        kind: STUDIO_KIND.REPORT,
+        format: REPORT_FORMAT.CUSTOM,
+        focus: 'Schreibe einen Brief.',
+      })
+    ).toBe('Schreibe einen Brief.');
   });
 });
 
@@ -80,6 +194,7 @@ describe('readStudioReply', () => {
       kind: STUDIO_KIND.REPORT,
       format: REPORT_FORMAT.BRIEFING,
       title: 'Briefing',
+      request: null,
       content: {
         title: 'Briefing',
         sections: [
@@ -92,16 +207,17 @@ describe('readStudioReply', () => {
 
   it('keeps only flashcards that cite a passage of the context', () => {
     const reply = JSON.stringify({
+      title: 'Lernkarten',
       cards: [
         { front: 'Wer?', back: 'Brandt', chunkIds: ['c1', 'c1', 'c5'] },
         { front: 'Was?', back: 'Erfunden', chunkIds: ['c5'] },
       ],
     });
 
-    const { output, dropped } = readStudioReply({ kind: STUDIO_KIND.FLASHCARDS }, reply, context);
+    const { output, dropped } = readStudioReply(FLASHCARDS, reply, context);
 
     expect(output).toMatchObject({
-      title: STUDIO_DEFAULT_TITLE.FLASHCARDS,
+      title: 'Lernkarten',
       content: { cards: [{ front: 'Wer?', back: 'Brandt', chunkIds: ['id-1'] }] },
     });
     expect(dropped).toBe(1);
@@ -113,18 +229,31 @@ describe('readStudioReply', () => {
       options: ['1 Mio.', '1,25 Mio.', '2 Mio.', '3 Mio.'],
       correctIndex: 1,
       explanation: 'Das Budget beträgt 1,25 Mio. Euro.',
+      hint: 'Es geht um Geld.',
+      rationales: ['Zu wenig.', 'Richtig.', 'Zu viel.', 'Viel zu viel.'],
     };
     const reply = JSON.stringify({
+      title: 'Budget-Quiz',
       questions: [
         { ...question, chunkIds: ['c2'] },
         { ...question, chunkIds: [] },
       ],
     });
 
-    const { output } = readStudioReply({ kind: STUDIO_KIND.QUIZ }, reply, context);
+    const { output } = readStudioReply(QUIZ, reply, context);
 
     expect(output).toMatchObject({
-      content: { questions: [{ correctIndex: 1, chunkIds: ['id-2'] }] },
+      title: 'Budget-Quiz',
+      content: {
+        questions: [
+          {
+            correctIndex: 1,
+            chunkIds: ['id-2'],
+            hint: 'Es geht um Geld.',
+            rationales: expect.any(Array),
+          },
+        ],
+      },
     });
   });
 
@@ -144,7 +273,7 @@ describe('readStudioReply', () => {
       ],
     });
 
-    const { output } = readStudioReply({ kind: STUDIO_KIND.MINDMAP }, reply, context);
+    const { output } = readStudioReply(MINDMAP, reply, context);
 
     expect(output).toMatchObject({
       title: 'Projekt',
@@ -157,17 +286,16 @@ describe('readStudioReply', () => {
   });
 
   it('throws when nothing in the reply is supported by the passages', () => {
-    const reply = JSON.stringify({ cards: [{ front: 'F', back: 'B', chunkIds: ['c9'] }] });
+    const reply = JSON.stringify({
+      title: 'Lernkarten',
+      cards: [{ front: 'F', back: 'B', chunkIds: ['c9'] }],
+    });
 
-    expect(() => readStudioReply({ kind: STUDIO_KIND.FLASHCARDS }, reply, context)).toThrow(
-      EmptyStudioOutputError
-    );
+    expect(() => readStudioReply(FLASHCARDS, reply, context)).toThrow(EmptyStudioOutputError);
   });
 
   it('throws on a reply that does not fit the contract', () => {
-    expect(() =>
-      readStudioReply({ kind: STUDIO_KIND.QUIZ }, '{"questions":[{}]}', context)
-    ).toThrow();
-    expect(() => readStudioReply({ kind: STUDIO_KIND.QUIZ }, 'kein json', context)).toThrow();
+    expect(() => readStudioReply(QUIZ, '{"questions":[{}]}', context)).toThrow();
+    expect(() => readStudioReply(QUIZ, 'kein json', context)).toThrow();
   });
 });

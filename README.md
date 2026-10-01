@@ -18,10 +18,13 @@ Bewerbungsaufgabe für Everlast AI (zweite Runde). Der Schwerpunkt liegt auf dem
 - **Quellen** hinzufügen: PDF, DOCX, TXT, MD und Webseiten per Link. Die Verarbeitung läuft im Hintergrund mit sichtbarem Status und verständlichen Fehlermeldungen. Quellen lassen sich an- und abwählen, die Auswahl begrenzt auch die Suche.
 - **Chat** mit Streaming. Jede aussagekräftige Antwort besteht aus Aussagen mit nummerierten Chips. Hover zeigt die Textstelle mit Quellenname, Klick öffnet den Quelltext mit hervorgehobenem Abschnitt.
 - **Übersicht pro Quelle**: Zusammenfassung, Schlüsselthemen und Vorschlagsfragen, die das Gespräch starten.
-- **Notizen** aus Antworten, mit erhaltenen Zitaten.
-- **Verlauf** bleibt pro Notizbuch erhalten.
+- **Übersicht des Notizbuchs** am Anfang des Chats: ein Emoji, der Titel, die Zahl der Quellen und eine Zusammenfassung aller fertigen Quellen mit fetten Schlüsselbegriffen. Sie entsteht einmal, wenn sich die Quellen ändern, und lässt sich als Notiz speichern oder kopieren.
+- **Notizen** aus Antworten, mit erhaltenen Zitaten, und eigene Notizen mit Editor (Format-Leiste, wird beim Tippen gespeichert, auf Wunsch als Quelle).
+- **Studio**: Bericht (Briefing, FAQ, Lernleitfaden, Blogbeitrag oder eigene Anweisung), Karteikarten, Quiz und Mindmap aus den gewählten Quellen. Vor dem Erzeugen lassen sich Umfang und Schwierigkeit wählen; die Ausgaben tragen dieselben geprüften Zitate wie der Chat.
+- **Chat-Konfiguration** pro Notizbuch und Vorschlagsfragen unter der letzten Antwort.
+- **Verlauf** bleibt pro Notizbuch erhalten, gegliedert nach Tagen.
 
-Nicht gebaut (siehe [docs/PLAN.md](docs/PLAN.md), Kategorien Should und Stretch): Studio-Ausgaben (Bericht, Karteikarten, Quiz), Chat-Konfiguration pro Notizbuch, Mindmap, PPTX als Quelle, agentische Suche. Der Umfang wurde bewusst auf die Kernstrecke begrenzt.
+Nicht gebaut (siehe [docs/PLAN.md](docs/PLAN.md), Kategorien Should und Stretch): Audio, Präsentation, Video und Infografik im Studio, PPTX als Quelle, agentische Suche, Bewertung von Chat-Antworten (Daumen). Der Umfang wurde bewusst auf die Kernstrecke begrenzt, die Gründe stehen in [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md).
 
 ## Architektur
 
