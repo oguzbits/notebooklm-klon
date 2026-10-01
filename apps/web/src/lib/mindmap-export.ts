@@ -1,3 +1,4 @@
+import { escapeMarkup } from './escape-markup';
 import { type Layout, linkPath, NODE_HEIGHT } from './mindmap-layout';
 
 const MARGIN = 24;
@@ -12,9 +13,6 @@ export interface MapColors {
   link: string;
   background: string;
 }
-
-const escape = (text: string) =>
-  text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 
 /** The visible map as an SVG picture: the links, then the nodes with their labels. */
 export function mindmapSvg(layout: Layout, colors: MapColors): string {
@@ -33,7 +31,7 @@ export function mindmapSvg(layout: Layout, colors: MapColors): string {
       return (
         `<rect x="${placed.x}" y="${placed.y}" width="${placed.width}" height="${NODE_HEIGHT}" rx="${RADIUS}" fill="${fill}"/>` +
         `<text x="${placed.x + 16}" y="${placed.y + NODE_HEIGHT / 2}" dominant-baseline="central" ` +
-        `font-family="sans-serif" font-size="${FONT_SIZE}" fill="${colors.text}">${escape(placed.node.label)}</text>`
+        `font-family="sans-serif" font-size="${FONT_SIZE}" fill="${colors.text}">${escapeMarkup(placed.node.label)}</text>`
       );
     })
     .join('');

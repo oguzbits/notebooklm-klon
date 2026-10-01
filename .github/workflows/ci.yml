@@ -63,6 +63,8 @@ jobs:
         with:
           cache: true
           require-lockfile: true
+      # The object store of the cover images; Postgres comes from the service above.
+      - run: docker compose up -d --wait s3
       - run: pnpm test:db
 
   e2e:
