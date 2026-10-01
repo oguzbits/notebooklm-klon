@@ -117,12 +117,8 @@ describe('MindmapView', () => {
 
     await user.click(screen.getByRole('button', { name: 'Mindmap als Bild herunterladen' }));
 
-    expect(download).toHaveBeenCalledOnce();
-    expect(download).toHaveBeenCalledWith(
-      expect.objectContaining({ nodes: expect.any(Array) }),
-      expect.objectContaining({ root: expect.any(String) }),
-      'Projekt-Mindmap'
-    );
+    await vi.waitFor(() => expect(download).toHaveBeenCalledOnce());
+    expect(download).toHaveBeenCalledWith(expect.stringContaining('<svg'), 'Projekt-Mindmap');
   });
 
   it('opens the passage behind a node', async () => {

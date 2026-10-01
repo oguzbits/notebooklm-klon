@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { FlashcardsView } from '@/components/studio/flashcards-view';
 import { MindmapView } from '@/components/studio/mindmap-view';
 import { QuizView } from '@/components/studio/quiz-view';
+import { reportHtml } from '@/components/studio/report-html';
 import { ReportView } from '@/components/studio/report-view';
 import { ViewerFrame } from '@/components/studio/viewer-frame';
 import { CopyButton } from '@/components/ui/copy-button';
@@ -16,7 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { useUpdateStudioOutput } from '@/hooks/use-studio';
 import { describeError } from '@/lib/messages';
-import { reportToHtml, reportToText } from '@/lib/report-export';
+import { reportToText } from '@/lib/report-export';
 
 /** One output in full, in place of the list: its frame, and its content as the kind needs it. */
 export function OutputViewer({
@@ -107,7 +108,9 @@ export function OutputViewer({
               write={() =>
                 navigator.clipboard.write([
                   new ClipboardItem({
-                    'text/html': new Blob([reportToHtml(output.content)], { type: 'text/html' }),
+                    'text/html': reportHtml(output.content).then(
+                      (html) => new Blob([html], { type: 'text/html' })
+                    ),
                     'text/plain': new Blob([reportToText(output.content)], { type: 'text/plain' }),
                   }),
                 ])

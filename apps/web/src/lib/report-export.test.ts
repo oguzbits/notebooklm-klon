@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { reportToHtml, reportToText } from './report-export';
+import { reportToText } from './report-export';
 
 const report = {
   title: 'Überblick <Projekt>',
@@ -29,18 +29,5 @@ describe('reportToText', () => {
         'Es endet 2027.',
       ].join('\n')
     );
-  });
-});
-
-describe('reportToHtml', () => {
-  it('writes headings and paragraphs, keeps bold words and escapes what is not markup', () => {
-    const html = reportToHtml(report);
-
-    expect(html).toContain('<h1>Überblick &lt;Projekt&gt;</h1>');
-    expect(html).toContain('<h2>Lage</h2>');
-    expect(html).toContain(
-      '<p>Dr. Brandt leitet <strong>das Projekt</strong>. Es läuft seit 2024.</p>'
-    );
-    expect(html).toContain('<h2>Ausblick</h2>');
   });
 });

@@ -11,6 +11,7 @@ import {
 import { type PointerEvent, useCallback, useMemo, useRef, useState } from 'react';
 
 import { CitedBy } from '@/components/studio/cited-by';
+import { mindmapPictureSvg } from '@/components/studio/mindmap-picture';
 import { Button } from '@/components/ui/button';
 import {
   type Layout,
@@ -175,7 +176,11 @@ export function MindmapView({
           className={round}
           aria-label="Mindmap als Bild herunterladen"
           tooltip="Als Bild herunterladen"
-          onClick={() => void downloadMindmapPng(layout, pageColors(), title)}
+          onClick={() =>
+            void mindmapPictureSvg(layout, pageColors()).then((svg) =>
+              downloadMindmapPng(svg, title)
+            )
+          }
         >
           <Download />
         </Button>

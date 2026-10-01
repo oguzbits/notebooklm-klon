@@ -123,11 +123,11 @@ describe('OutputViewer', () => {
   });
 
   it('copies a report with its formatting and as plain text', async () => {
-    const made: Record<string, Blob>[] = [];
+    const made: Record<string, Blob | Promise<Blob>>[] = [];
     vi.stubGlobal(
       'ClipboardItem',
       class {
-        constructor(data: Record<string, Blob>) {
+        constructor(data: Record<string, Blob | Promise<Blob>>) {
           made.push(data);
         }
       }
@@ -139,8 +139,8 @@ describe('OutputViewer', () => {
     await user.click(screen.getByRole('button', { name: 'Inhalt mit Formatierung kopieren' }));
 
     await vi.waitFor(() => expect(write).toHaveBeenCalledOnce());
-    const html = await made[0]?.['text/html']?.text();
-    const text = await made[0]?.['text/plain']?.text();
+    const html = await (await made[0]?.['text/html'])?.text();
+    const text = await (await made[0]?.['text/plain'])?.text();
     expect(html).toContain('<h2>Lage</h2>');
     expect(html).toContain('<strong>es</strong>');
     expect(text).toContain('Dr. Brandt leitet es.');

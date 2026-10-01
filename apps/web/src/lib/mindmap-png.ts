@@ -1,16 +1,9 @@
 import { download } from './download';
-import { type MapColors, mindmapSvg } from './mindmap-export';
-import type { Layout } from './mindmap-layout';
 
 const SCALE = 2;
 
-/** The map as a PNG file, twice as sharp as it is on screen. It needs a browser (canvas). */
-export async function downloadMindmapPng(
-  layout: Layout,
-  colors: MapColors,
-  name: string
-): Promise<void> {
-  const svg = mindmapSvg(layout, colors);
+/** The picture of the map (the text of an SVG) as a PNG file, twice as sharp as on screen. It needs a browser (canvas). */
+export async function downloadMindmapPng(svg: string, name: string): Promise<void> {
   const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }));
   try {
     const image = new Image();

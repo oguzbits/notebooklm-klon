@@ -591,8 +591,11 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
 
 - **Ursachen und Behebung:** (1) `test-db` brauchte den S3-Dienst, den der Job nicht startete: Schritt `docker compose up -d --wait s3`.
   (2) Im Browser-Test verdeckte das noch offene Hover-Fenster der Quellenmarke den Schließen-Knopf: Der Test bewegt vorher die Maus weg.
-  (3) Semgrep: zwei gleiche handgeschriebene Escape-Funktionen ersetzt durch `lib/escape-markup.ts` (ein Durchgang, auch für
-  Attribute), das Favicon liegt als Datei in `public/` statt als Data-URI. Ob Semgrep damit durchläuft, zeigt erst CI (lokal nicht installiert).
+  (3) Semgrep: zwei gleiche handgeschriebene Escape-Funktionen. Zuerst durch eine gemeinsame ersetzt, dann die Ursache beseitigt: Markup
+  wird nicht mehr aus Textschnipseln gebaut. Das Mindmap-Bild (`components/studio/mindmap-picture.tsx`) und der Bericht zum Einfügen
+  (`report-html.tsx`) sind JSX und werden mit `renderToStaticMarkup` zu Text; React maskiert dabei jeden Text selbst. Der Renderer
+  (`react-dom/server`, 61 kB gzip) ist ein eigener Baustein, der erst beim ersten Herunterladen oder Kopieren geladen wird. Das Favicon liegt als Datei in `public/`
+  statt als Data-URI. Ob Semgrep damit durchläuft, zeigt erst CI (lokal nicht installiert).
 - **SeaweedFS fest auf `4.48`** (Tag auf Docker Hub geprüft), nicht mehr `latest`.
 - **Weniger Ausgabe, weniger Token:** `pnpm test` schrieb ~140 Zeilen (Warnungen zu `localStorage`, einmal je Worker); mit
   `NODE_OPTIONS=--no-experimental-webstorage` sind es 16. `pnpm check` listete bei jedem Lauf alle 15 Duplikate unter der Schwelle; jscpd
