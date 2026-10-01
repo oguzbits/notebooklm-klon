@@ -43,6 +43,9 @@ export function toTree(mindmap: Mindmap): MapNode {
   };
 }
 
+/** Estimated widths in pixels of one letter at the label size. */
+const LETTER_WIDTH = { NARROW: 4, WIDE: 12, CAPITAL: 9.5, OTHER: 7.6 } as const;
+
 const NARROW = /[iljtfI.,:;'!|()]/;
 const WIDE = /[mwMW]/;
 const CAPITAL = /\p{Lu}/u;
@@ -55,10 +58,10 @@ const CAPITAL = /\p{Lu}/u;
 export function nodeWidth(label: string, chips: number): number {
   let text = 0;
   for (const letter of label) {
-    if (NARROW.test(letter)) text += 4;
-    else if (WIDE.test(letter)) text += 12;
-    else if (CAPITAL.test(letter)) text += 9.5;
-    else text += 7.6;
+    if (NARROW.test(letter)) text += LETTER_WIDTH.NARROW;
+    else if (WIDE.test(letter)) text += LETTER_WIDTH.WIDE;
+    else if (CAPITAL.test(letter)) text += LETTER_WIDTH.CAPITAL;
+    else text += LETTER_WIDTH.OTHER;
   }
   return Math.ceil(Math.max(text, MIN_LABEL_WIDTH) + PADDING_X + chips * CHIP_WIDTH);
 }

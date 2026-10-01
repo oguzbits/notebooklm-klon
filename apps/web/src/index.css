@@ -218,6 +218,8 @@
   --color-node-branch: var(--node-branch);
   --color-node-leaf: var(--node-leaf);
   --shadow-glow: var(--glow);
+  /* The small lift of a popover, measured on the original. */
+  --shadow-popover: 0 1px 2px rgb(60 64 67 / 0.3), 0 1px 3px 1px rgb(60 64 67 / 0.15);
   /* Three columns from here; below it one column at a time. Measured on the original. */
   --breakpoint-wide: 66rem;
   /* The type scale of the original: 15/20 for the interface, 13/17 for small print. */
