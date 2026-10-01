@@ -10,6 +10,7 @@ import { QuotaExceededError } from './ingestion/ingest';
 import { log } from './logger';
 import { chatRoutes } from './routes/chat';
 import { chatConfigRoutes } from './routes/chat-config';
+import { guestRoutes } from './routes/guest';
 import { notebookOverviewRoutes } from './routes/notebook-overview';
 import { notebookRoutes } from './routes/notebooks';
 import { noteRoutes } from './routes/notes';
@@ -59,7 +60,10 @@ export function createApp(deps: AppDeps) {
   });
 
   app.get('/health', (c) => c.json(HealthSchema.parse({ status: 'ok' })));
+  // Guests are made by the guest route only: it copies the example and counts them.
+  app.post('/api/auth/sign-in/anonymous', (c) => c.json(errorBody(API_ERROR.NOT_FOUND), 404));
   app.on(['GET', 'POST'], '/api/auth/*', (c) => deps.auth.handler(c.req.raw));
+  app.route('/api/guest', guestRoutes(deps));
 
   app.use('/api/notebooks', requireUser(deps.auth));
   app.use('/api/notebooks/*', requireUser(deps.auth));

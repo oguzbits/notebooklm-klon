@@ -1,3 +1,4 @@
+import { GUEST_LIMITS } from '@nlm/shared';
 import { LogOut } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
@@ -19,7 +20,9 @@ import { ROUTES } from '@/lib/routes';
 export function AppHeader({ title, actions }: { title?: ReactNode; actions?: ReactNode }) {
   const session = useSession();
   const signOut = useSignOut();
-  const email = session.data?.email ?? '';
+  const isGuest = session.data?.isAnonymous === true;
+  // A guest has no email address of their own, only a placeholder.
+  const email = isGuest ? '' : (session.data?.email ?? '');
 
   return (
     <header className="flex h-16 shrink-0 items-center justify-between gap-3 pr-3 pl-4 sm:pr-4 sm:pl-5">
@@ -44,10 +47,19 @@ export function AppHeader({ title, actions }: { title?: ReactNode; actions?: Rea
             aria-label="Konto"
             className="veil inline-flex size-10 items-center justify-center rounded-full bg-secondary text-base font-title text-foreground"
           >
-            {email.charAt(0).toUpperCase() || '?'}
+            {isGuest ? 'G' : email.charAt(0).toUpperCase() || '?'}
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>{email}</DropdownMenuLabel>
+            {isGuest ? (
+              <DropdownMenuLabel>
+                <span className="block">Gast-Zugang</span>
+                <span className="block font-normal text-muted-foreground">
+                  Deine Daten werden nach {GUEST_LIMITS.LIFETIME_DAYS} Tagen gelöscht.
+                </span>
+              </DropdownMenuLabel>
+            ) : (
+              <DropdownMenuLabel>{email}</DropdownMenuLabel>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem disabled={signOut.isPending} onSelect={() => signOut.mutate()}>
               <LogOut aria-hidden />

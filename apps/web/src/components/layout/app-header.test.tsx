@@ -42,4 +42,28 @@ describe('AppHeader', () => {
 
     await vi.waitFor(() => expect(signedOut).toBe(true));
   });
+
+  it('calls a guest a guest and says that the data does not stay', async () => {
+    server.use(
+      http.get('*/api/auth/get-session', () =>
+        HttpResponse.json({
+          user: {
+            id: 'g',
+            name: 'Anonymous',
+            email: 'temp@anonymous.placeholder.invalid',
+            isAnonymous: true,
+          },
+        })
+      )
+    );
+    renderHeader();
+
+    const account = await screen.findByRole('button', { name: 'Konto' });
+    await vi.waitFor(() => expect(account.textContent).toBe('G'));
+    await userEvent.setup().click(account);
+
+    expect(await screen.findByText('Gast-Zugang')).toBeTruthy();
+    expect(screen.getByText('Deine Daten werden nach 7 Tagen gelöscht.')).toBeTruthy();
+    expect(screen.queryByText(/anonymous/)).toBeNull();
+  });
 });

@@ -1,5 +1,6 @@
 import { drizzleAdapter } from '@better-auth/drizzle-adapter';
 import { betterAuth } from 'better-auth';
+import { anonymous } from 'better-auth/plugins';
 
 import * as authSchema from '../db/auth-schema';
 import type { Database } from '../db/client';
@@ -12,7 +13,7 @@ export interface AuthConfig {
   baseURL: string;
 }
 
-/** Sessions and accounts in our own PostgreSQL. Email and password, no email verification yet. */
+/** Sessions and accounts in our own PostgreSQL. Email and password, no email verification yet, and guests for the demo. */
 export function createAuth(db: Database, config: AuthConfig) {
   return betterAuth({
     database: drizzleAdapter(db, { provider: 'pg', schema: authSchema }),
@@ -20,6 +21,8 @@ export function createAuth(db: Database, config: AuthConfig) {
     baseURL: config.baseURL,
     trustedOrigins: [config.baseURL],
     emailAndPassword: { enabled: true, minPasswordLength: MIN_PASSWORD_LENGTH },
+    // Guests of the live demo. Only the guest route may make one (see app.ts).
+    plugins: [anonymous()],
   });
 }
 

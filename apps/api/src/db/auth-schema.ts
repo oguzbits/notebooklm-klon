@@ -7,6 +7,8 @@ export const user = pgTable('user', {
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').default(false).notNull(),
   image: text('image'),
+  // Set by the anonymous plugin: a guest of the live demo, who is deleted after a few days.
+  isAnonymous: boolean('is_anonymous').default(false),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at')
     .defaultNow()

@@ -1,3 +1,5 @@
+import { GUEST_LIMITS } from '@nlm/shared';
+
 /**
  * Numeric limits of the application. Model IDs are not here: they come from the environment.
  * Free-tier provider limits are handled by the rate limiter, these are our own guard rails.
@@ -22,6 +24,12 @@ export const LIMITS = {
   PARSE_TIMEOUT_MS: 120_000,
   /** Studio: characters of source text handed to the model per output (about 30k tokens). */
   STUDIO_MAX_CHARS: 120_000,
+  /** Guests of the live demo: most that may be started within one hour, for everybody together. */
+  GUESTS_PER_HOUR: 20,
+  /** Guests of the live demo: most that may exist at the same time. */
+  GUESTS_ALIVE: 200,
+  /** Guests of the live demo: days until the account and its data are deleted. */
+  GUEST_LIFETIME_DAYS: GUEST_LIMITS.LIFETIME_DAYS,
   /** Ingestion: chunks per embedding request. */
   EMBED_BATCH_SIZE: 16,
 } as const;

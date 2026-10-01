@@ -26,6 +26,9 @@ services:
         sync: false
       - key: EMBEDDING_MODEL
         sync: false
+      # The demo owner: guests get a copy of this account's example notebook (pnpm seed:demo).
+      - key: SEED_DEMO_EMAIL
+        sync: false
       - key: BETTER_AUTH_SECRET
         generateValue: true
       # The public URL of this service, for example https://notebooklm-klon.onrender.com. Set it

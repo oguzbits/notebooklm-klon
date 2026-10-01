@@ -22,6 +22,8 @@ export const ERROR_MESSAGE: Record<ApiErrorCode, string> = {
     'Du hast in den letzten 24 Stunden schon die erlaubte Zahl neuer Quellen hinzugefügt.',
   [API_ERROR.STUDIO_EMPTY]:
     'Aus den ausgewählten Quellen ließ sich dazu nichts Belegbares erstellen. Wähle mehr oder andere Quellen.',
+  [API_ERROR.GUEST_UNAVAILABLE]:
+    'Das Beispiel ist gerade nicht verfügbar. Bitte versuche es später noch einmal.',
   [API_ERROR.INTERNAL]: 'Etwas ist schiefgelaufen. Bitte versuche es noch einmal.',
 };
 
@@ -44,6 +46,8 @@ export const AUTH_MESSAGE: Record<AuthFailure, string> = {
   [AUTH_FAILURE.INVALID_CREDENTIALS]: 'E-Mail-Adresse oder Passwort stimmen nicht.',
   [AUTH_FAILURE.EMAIL_TAKEN]: 'Mit dieser E-Mail-Adresse gibt es schon ein Konto.',
   [AUTH_FAILURE.WEAK_PASSWORD]: 'Das Passwort muss mindestens 8 Zeichen lang sein.',
+  [AUTH_FAILURE.GUEST_UNAVAILABLE]:
+    'Das Beispiel ist gerade nicht verfügbar. Bitte melde dich an oder versuche es später noch einmal.',
   [AUTH_FAILURE.UNKNOWN]: 'Das hat nicht geklappt. Bitte versuche es noch einmal.',
 };
 

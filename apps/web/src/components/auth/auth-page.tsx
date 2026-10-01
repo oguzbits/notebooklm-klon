@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuthenticate, useSession } from '@/hooks/use-session';
+import { useAuthenticate, useSession, useStartGuest } from '@/hooks/use-session';
 import { AUTH_FAILURE, AuthError } from '@/lib/auth';
 import { AUTH_MESSAGE } from '@/lib/messages';
 import { IMITATION_NOTICE } from '@/lib/notice';
@@ -20,8 +20,12 @@ export function AuthPage() {
   const [signingUp, setSigningUp] = useState(false);
   const session = useSession();
   const authenticate = useAuthenticate(signingUp ? 'signUp' : 'signIn');
+  const guest = useStartGuest();
 
-  if (session.data) return <Navigate to={ROUTES.HOME} replace />;
+  // A guest lands in the example notebook, everybody else on the list of notebooks.
+  if (session.data) {
+    return <Navigate to={guest.data ? ROUTES.notebook(guest.data) : ROUTES.HOME} replace />;
+  }
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -32,7 +36,7 @@ export function AuthPage() {
     });
   };
 
-  const failure = authenticate.error;
+  const failure = authenticate.error ?? guest.error;
 
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-4 p-4">
@@ -78,7 +82,7 @@ export function AuthPage() {
                 </AlertDescription>
               </Alert>
             )}
-            <Button type="submit" disabled={authenticate.isPending}>
+            <Button type="submit" disabled={authenticate.isPending || guest.isPending}>
               {authenticate.isPending
                 ? 'Einen Moment …'
                 : signingUp
@@ -90,12 +94,29 @@ export function AuthPage() {
               variant="link"
               onClick={() => {
                 authenticate.reset();
+                guest.reset();
                 setSigningUp((value) => !value);
               }}
             >
               {signingUp ? 'Ich habe schon ein Konto' : 'Noch kein Konto? Jetzt registrieren'}
             </Button>
           </form>
+          <div className="mt-2 flex flex-col gap-2 border-t pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={guest.isPending || authenticate.isPending}
+              onClick={() => {
+                authenticate.reset();
+                guest.mutate();
+              }}
+            >
+              {guest.isPending ? 'Beispiel wird vorbereitet …' : 'Beispiel ausprobieren'}
+            </Button>
+            <p className="text-center text-xs text-muted-foreground">
+              Ohne Anmeldung, mit einem fertigen Beispiel-Notizbuch zum Ausprobieren.
+            </p>
+          </div>
         </CardContent>
       </Card>
       <p className="max-w-sm text-center text-xs text-muted-foreground">{IMITATION_NOTICE}</p>

@@ -4,11 +4,11 @@ Ein Notizbuch, das nur auf deinen eigenen Quellen antwortet und jede Aussage mit
 
 Bewerbungsaufgabe für Everlast AI (zweite Runde). Der Schwerpunkt liegt auf dem Weg von der Quelle zum nachprüfbaren Zitat: Aufnahme, Suche, Antwort mit geprüften Zitaten, Auswertung. Die Oberfläche ist deutsch, Quellen und Fragen dürfen englisch sein.
 
-|             |                                                                                              |
-| ----------- | -------------------------------------------------------------------------------------------- |
-| Live-Demo   | _wird nach dem Deployment eingetragen_                                                       |
-| Demo-Zugang | _E-Mail und Passwort stehen nach dem Deployment hier, das Beispiel-Notizbuch ist vorbefüllt_ |
-| Video       | _Loom-Link folgt_                                                                            |
+|             |                                                                                                                                                                           |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Live-Demo   | _wird nach dem Deployment eingetragen_                                                                                                                                    |
+| Demo-Zugang | Auf der Anmeldeseite **„Beispiel ausprobieren“**: ein Gastkonto mit einer eigenen Kopie des Beispiel-Notizbuchs, ohne E-Mail und Passwort. Es wird nach 7 Tagen gelöscht. |
+| Video       | _Loom-Link folgt_                                                                                                                                                         |
 
 > Hinweis für die Demo: Keine sensiblen Dokumente hochladen. Im kostenlosen Tarif von Google können Eingaben zur Verbesserung der Modelle genutzt werden. Der kostenlose Hosting-Tarif schläft nach 15 Minuten Leerlauf ein, der erste Aufruf danach dauert etwa eine Minute.
 
@@ -152,7 +152,7 @@ BETTER_AUTH_URL=http://localhost:5173 \
 pnpm --filter @nlm/api dev:offline   # dazu in einem zweiten Terminal: pnpm --filter @nlm/web dev
 ```
 
-Beispiel-Notizbuch anlegen (braucht den Schlüssel, liest drei Beispieldokumente einmal ein): `SEED_DEMO_EMAIL` und `SEED_DEMO_PASSWORD` setzen, dann `pnpm seed:demo`. Der Befehl kann wiederholt werden.
+Beispiel-Notizbuch anlegen (braucht den Schlüssel, liest drei Beispieldokumente einmal ein): `SEED_DEMO_EMAIL` und `SEED_DEMO_PASSWORD` setzen, dann `pnpm seed:demo`. Der Befehl kann wiederholt werden. Gäste („Beispiel ausprobieren“) bekommen eine Kopie dieses Notizbuchs, dafür muss `SEED_DEMO_EMAIL` auch in der Umgebung der App stehen.
 
 ## Deployment
 
@@ -161,7 +161,7 @@ Ein Container aus dem [Dockerfile](Dockerfile), beschrieben in [render.yaml](ren
 1. Neon-Projekt anlegen, die **direkte** Verbindung (ohne `-pooler` im Host) als `DATABASE_URL` nehmen. Migrationen und die Job-Queue brauchen Funktionen, die ein Pooler nicht bietet.
 2. Auf Render ein Blueprint aus diesem Repository anlegen und die abgefragten Werte eintragen. Für den Schlüssel ein eigenes Google-Projekt nutzen, damit das Testen das Kontingent der Prüfer nicht verbraucht.
 3. Nach dem ersten Deploy die URL des Dienstes als `BETTER_AUTH_URL` eintragen und neu deployen.
-4. Einmalig von einem Rechner aus mit der Produktions-`DATABASE_URL`: `pnpm seed:demo`.
+4. `SEED_DEMO_EMAIL` in der Umgebung der App setzen, dann einmalig von einem Rechner aus mit der Produktions-`DATABASE_URL`: `pnpm seed:demo`. Ohne dieses Beispiel antwortet „Beispiel ausprobieren“ mit einer Fehlermeldung.
 
 ## Wo es zuerst brechen würde
 
