@@ -138,6 +138,24 @@ describe('SourcesPanel', () => {
     await vi.waitFor(() => expect(body).toEqual({ selected: false }));
   });
 
+  it('unticks all sources in one request with the master checkbox', async () => {
+    let body: unknown;
+    server.use(
+      list([source({ title: 'fertig.pdf' })]),
+      http.patch(base, async ({ request }) => {
+        body = await request.json();
+        return HttpResponse.json({ selected: false });
+      })
+    );
+    renderPanel();
+
+    await userEvent
+      .setup()
+      .click(await screen.findByRole('checkbox', { name: 'Alle Quellen auswählen' }));
+
+    await vi.waitFor(() => expect(body).toEqual({ selected: false }));
+  });
+
   it('shows a retry when the list cannot be loaded', async () => {
     server.use(
       http.get(base, () => HttpResponse.json({ code: API_ERROR.INTERNAL }, { status: 500 }))
