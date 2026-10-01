@@ -59,7 +59,38 @@ test('from sign-up to a cited passage, a note and back out', async ({ page }) =>
   // The overview has the same button; the one of the answer is the last.
   await page.getByRole('button', { name: 'In Notiz speichern' }).last().click();
   await expect(page.getByText('In Notiz gespeichert')).toBeVisible();
-  await page.getByRole('button', { name: 'Quellenansicht schließen' }).click();
+  console.log(
+    'DEBUG',
+    JSON.stringify(
+      await page.evaluate(() => {
+        const rect = (e: Element | null) => {
+          const r = e?.getBoundingClientRect();
+          return r && [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)];
+        };
+        return {
+          viewport: [innerWidth, innerHeight],
+          poppers: [...document.querySelectorAll('[data-radix-popper-content-wrapper]')].map((e) =>
+            rect(e)
+          ),
+          close: rect(document.querySelector('[aria-label="Quellenansicht schließen"]')),
+          chips: [...document.querySelectorAll('[aria-label="Quelle 1 anzeigen"]')].map((e) => ({
+            r: rect(e),
+            open: e.getAttribute('data-state'),
+          })),
+          active: document.activeElement?.outerHTML.slice(0, 100),
+          hovered: [...document.querySelectorAll(':hover')]
+            .map(
+              (e) =>
+                e.tagName +
+                ':' +
+                (e.getAttribute('aria-label') ?? e.getAttribute('data-slot') ?? '')
+            )
+            .slice(-4),
+        };
+      })
+    )
+  );
+  await page.getByRole('button', { name: 'Quellenansicht schließen' }).click({ timeout: 3000 });
   const library = page.getByRole('region', { name: 'Erstellte Ausgaben' });
   await expect(
     library.getByRole('button', { name: /^Projekt Nordlicht Dr\. Brandt leitet das Projekt/ })
