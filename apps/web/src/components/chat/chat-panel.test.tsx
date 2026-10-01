@@ -168,6 +168,27 @@ describe('ChatPanel', () => {
     );
   });
 
+  it('does not open the passage after the mouse and the focus have left the chip', async () => {
+    server.use(
+      sources(),
+      history([answer([{ text: 'Aussage.', chunkIds: [CHUNK_ID] }])]),
+      http.get(`${base}/chunks/${CHUNK_ID}`, () => HttpResponse.json(chunkDetail()))
+    );
+    renderChat();
+    const user = userEvent.setup();
+    const chip = await screen.findByRole('button', { name: 'Quelle 1 anzeigen' });
+
+    // Hover and click within the opening delay: the hover and the focus each start a timer, and the
+    // library forgets the first one when the chip loses the focus.
+    await user.hover(chip);
+    await user.click(chip);
+    await user.unhover(chip);
+    await user.click(document.body);
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    expect(screen.queryByText('Dr. Brandt leitet das Projekt Nordlicht.')).toBeNull();
+  });
+
   it('cannot ask while no ready source is selected, and says why', async () => {
     server.use(sources([source({ status: SOURCE_STATUS.PROCESSING })]), history([]));
     renderChat();

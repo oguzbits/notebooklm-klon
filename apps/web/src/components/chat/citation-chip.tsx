@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { SourceText } from '@/components/reader/source-text';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
@@ -18,6 +18,11 @@ interface CitationChipProps {
  */
 export function CitationChip({ notebookId, chunkId, number, onOpen }: CitationChipProps) {
   const [open, setOpen] = useState(false);
+  // Whether the mouse or the focus is on the chip. The hover card starts a timer for the mouse and
+  // another for the focus and forgets the first when it clears them, so a card could open after both
+  // had left. It may only open while one of them is still there.
+  const pointer = useRef(false);
+  const focus = useRef(false);
   const chunk = useChunk(notebookId, chunkId, open);
   // The passage opens on hover and on focus. Opening the source closes it, or it stays on top of the source.
   const show = () => {
@@ -26,11 +31,20 @@ export function CitationChip({ notebookId, chunkId, number, onOpen }: CitationCh
   };
 
   return (
-    <HoverCard open={open} onOpenChange={setOpen} openDelay={150} closeDelay={100}>
+    <HoverCard
+      open={open}
+      onOpenChange={(next) => setOpen(next && (pointer.current || focus.current))}
+      openDelay={150}
+      closeDelay={100}
+    >
       <HoverCardTrigger asChild>
         <button
           type="button"
           onClick={show}
+          onPointerEnter={() => (pointer.current = true)}
+          onPointerLeave={() => (pointer.current = false)}
+          onFocus={() => (focus.current = true)}
+          onBlur={() => (focus.current = false)}
           aria-label={`Quelle ${number} anzeigen`}
           className="veil ml-1 inline-flex size-[22px] items-center justify-center rounded-full bg-secondary align-middle text-[0.6875rem] leading-4 font-[500] text-meta"
         >
