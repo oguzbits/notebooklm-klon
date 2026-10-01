@@ -38,9 +38,9 @@ Gewichte nicht kannte und sie beim Zusammenführen mit einer Textfarbe stillschw
 | Studio, Abstand Kacheln | Raster Lücke 8; danach 12 bis zur Liste                                                                          | 16                                         | 12                                                                  | ✔      |
 | Quellenliste            | Zeile 36 hoch, Radius 8, Innen 0 8, Lücke 12; Zeilenabstand 0                                                    | 65 hoch (mit „Übersicht“-Zeile)            | Übersicht nur im Reader; Zeile 36                                   | ✔      |
 | Quellenkopfzeile        | „Alle auswählen“ links von Sortier-Icon, rechts Checkbox, 40 hoch, Innen 4 8 4 4                                 | rechtsbündig „Alle Quellen auswählen“      | Zeile wie im Original                                               | ✔      |
-| Chat, Seiteneinzug      | 8 (Inhalt) + 12 + 24 (Paar) = 44 je Seite; Text 5 px weiter; Antwort rechts 32 zusätzlich                        | 40                                         | 44                                                                  | ➜      |
-| Nutzerblase             | Fläche `surface-dim`, Radius 40, Innen 20 28, Text 14/24, links 32 Abstand                                       | Text 16, andere Polsterung                 | wie Original                                                        | ➜      |
-| Zeitstempel             | „Heute • 20:51“ 12/16, Gewicht 500, Abstand 0,096, zentriert, Abstand 16 / 12                                    | fehlt                                      | ergänzen (Zeit der Frage)                                           | ➜      |
+| Chat, Seiteneinzug      | 8 (Inhalt) + 12 + 24 (Paar) = 44 je Seite; Text 5 px weiter; Antwort rechts 32 zusätzlich                        | 40                                         | 44 (im Code nicht bestätigt)                                        | ➜      |
+| Nutzerblase             | Fläche `surface-dim`, Radius 40, Innen 20 28, Text 14/24, links 32 Abstand                                       | Text 16, andere Polsterung                 | wie Original                                                        | ✔      |
+| Zeitstempel             | „Heute • 20:51“ 12/16, Gewicht 500, Abstand 0,096, zentriert, Abstand 16 / 12                                    | fehlt                                      | ergänzen (Zeit der Frage)                                           | ✔      |
 | Eingabeleiste           | Container 660 (Innen 0 16) ⇒ Eingabe **628x64**, Radius 32, Schatten `0 0 20px`; Hinweistext 13/17, Innen 12 0   | 660 breit                                  | 628 + Hinweistext am Fensterrand (Chat reicht bis 900)              | ✔      |
 | Chat oben / unten       | 28 px Verlauf oben (Seitenfarbe → transparent); Studio unten 28 px Verlauf                                       | kein Verlauf                               | beide Verläufe                                                      | ✔      |
 
@@ -92,8 +92,8 @@ Gewichte nicht kannte und sie beim Zusammenführen mit einer Textfarbe stillschw
 | Handy 390 px               | Tab-Leiste 12 px unter der Kopfzeile, Bottom-Sheets, Platzhalter wie Desktop. Titel bleibt sichtbar (Original blendet ihn aus Platzmangel aus).                                                                                                                                                                                                                                                                                                           | ◐      |
 | Seite als Ganzes           | Schrift, Fokusring 3 px, Auswahlfarbe, Scrollbalken, `prefers-reduced-motion` (Schimmer steht still).                                                                                                                                                                                                                                                                                                                                                     | ✔      |
 
-**Offen, nicht gebaut** (nicht ohne neuen Umfang möglich): Quelle umbenennen, Filter und Sammlungen
-auf der Startseite.
+**Offen, nicht gebaut** (nicht ohne neuen Umfang möglich): Filter und Sammlungen auf der Startseite,
+Ausgabesprache als Kontoeinstellung, „Alle Notizen als Quelle festlegen“.
 
 ## 3. Reihenfolge und Commits
 
