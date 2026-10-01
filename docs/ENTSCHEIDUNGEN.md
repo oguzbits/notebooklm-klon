@@ -682,3 +682,19 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
   Das Suchfeld für das Web hat 15/20 wie im Original.
 - Noch nicht gemessen: der Dokumenttext in der Quellenansicht (`.source-text`, im Original „Google Sans Text“), Symbolstärke
   (lucide 2 px gegen dünnere Symbole im Original).
+
+## 2026-10-01 (Spaltenbreite einstellbar wie im Original)
+
+- Gemessen im Original: zwei unsichtbare Trenner von 8 px mit `cursor: col-resize`; beim Ziehen ändern sich nur die zwei
+  angrenzenden Spalten (die Breite steht als `flex: 0 1 X%` im Stil), keine Spalte wird schmaler als etwa 285 px, kein
+  Doppelklick, keine Speicherung, keine Tastenbedienung.
+- Bei uns: Quellen und Studio bekommen eine Breite in Prozent der Spaltenfläche (Standard 25 %), der Chat nimmt, was bleibt
+  (`useColumnWidths`, `column-widths.ts` als reine Rechnung mit Tests). Die Breite gilt nur, solange das Notizbuch offen ist
+  (Zustand in React, wie im Original), und wird nicht gespeichert.
+- Untergrenze 285 px für jede Spalte. Zeigt das Studio gerade ein Ergebnis, gilt für das Studio die größere Mindestbreite
+  (`max(285 px, 37,5 %` des Fensters), damit das Ergebnis lesbar bleibt.
+- Ist eine Seite eingeklappt (Leiste), ist ihr Trenner unwirksam (`aria-hidden`); sie behält ihre Breite und hat sie nach dem
+  Aufklappen wieder. Beim Ziehen entfällt die Übergangsanimation (`wide:transition-none`), sonst läuft die Spalte dem Zeiger nach.
+- Über das Original hinaus: Tastatur (Pfeiltasten verschieben die Kante um 16 px) und ein ARIA-Trenner mit Beschriftung
+  („Breite der Quellen ändern“, „Breite des Studios ändern“). Unter 66 rem (schmale Ansicht) gibt es keine Trenner.
+- Geprüft im Browser bei 1720 px: Ziehen, Anschlag am 285-px-Chat, Tastatur, Einklappen und Wiederherstellen.

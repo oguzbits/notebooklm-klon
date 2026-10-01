@@ -11,16 +11,24 @@ import type { Column } from '@/lib/columns';
 const MOTION =
   'wide:transition-[flex-basis,min-width,max-width,margin] wide:duration-200 wide:ease-in-out';
 export const FLEX = {
-  SIDE: 'wide:[flex:0_1_25%]',
+  SOURCES_SIDE: 'wide:[flex:0_1_var(--sources-width,25%)]',
+  STUDIO_SIDE: 'wide:[flex:0_1_var(--studio-width,25%)]',
   RAIL: 'wide:[flex:0_0_56px]',
   CHAT: 'wide:[flex:1_1_48%] wide:max-w-[48%]',
   CHAT_FILLING: 'wide:[flex:1_1_48%] wide:max-w-full',
+  // Once a side column was dragged to a width, the chat is only what is left.
+  CHAT_REST: 'wide:[flex:1_1_0%] wide:max-w-full',
   STUDIO_VIEWING: 'wide:min-w-[37.5vw]',
 } as const;
+
+/** While a strip between two columns is dragged the columns follow at once, without the motion. */
+export const RESIZING = 'wide:transition-none';
 
 /** Below the wide layout only the column that is selected shows. */
 const hiddenBelowWide = (shown: Column, own: Column) => (shown === own ? '' : 'max-wide:hidden');
 
 /** The classes every column has: its visibility below the wide layout, its width and its motion. */
-export const columnClasses = (shown: Column, own: Column) =>
-  [hiddenBelowWide(shown, own), 'w-full wide:w-auto', MOTION].filter(Boolean).join(' ');
+export const columnClasses = (shown: Column, own: Column, resizing = false) =>
+  [hiddenBelowWide(shown, own), 'w-full wide:w-auto', resizing ? RESIZING : MOTION]
+    .filter(Boolean)
+    .join(' ');
