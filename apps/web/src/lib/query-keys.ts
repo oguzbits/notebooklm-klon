@@ -1,6 +1,7 @@
 /** Every TanStack Query key in one place, so a mutation can invalidate exactly what it changed. */
 export const queryKeys = {
   session: ['session'] as const,
+  capabilities: ['capabilities'] as const,
   notebooks: ['notebooks'] as const,
   sources: (notebookId: string) => ['notebooks', notebookId, 'sources'] as const,
   messages: (notebookId: string) => ['notebooks', notebookId, 'messages'] as const,

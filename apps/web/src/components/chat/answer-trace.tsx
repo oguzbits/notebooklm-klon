@@ -49,7 +49,7 @@ export function AnswerTraceView({ trace, statements }: { trace: AnswerTrace; sta
         />
       </button>
       {open && (
-        <ol className="mt-2 flex flex-col gap-3 pl-3 text-ui">
+        <ol className="mt-2 mb-3 flex flex-col gap-3 pl-3 text-ui">
           <li className="flex items-start gap-3">
             <FileSearch className="mt-0.5 size-5 shrink-0 text-muted-foreground" aria-hidden />
             <span>

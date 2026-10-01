@@ -6,6 +6,7 @@ import { QueryBoundary } from '@/components/query-boundary';
 import { SourceRowsSkeleton } from '@/components/skeletons';
 import { AddSourceDialog } from '@/components/sources/add-source-dialog';
 import { SourceRow } from '@/components/sources/source-row';
+import { WebSearchBox } from '@/components/sources/web-search-box';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -51,6 +52,7 @@ export const SourcesPanel = memo(function SourcesPanel({
   return (
     <div className="flex h-full flex-col gap-2 overflow-y-auto pt-4 pb-2">
       <AddSourceDialog notebookId={notebookId} />
+      <WebSearchBox notebookId={notebookId} />
       <QueryBoundary
         query={sources}
         loading={<SourceRowsSkeleton />}
