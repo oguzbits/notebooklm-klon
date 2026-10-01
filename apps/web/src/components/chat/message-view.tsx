@@ -5,6 +5,7 @@ import { CopyAnswerButton } from '@/components/chat/copy-answer-button';
 import { InlineText } from '@/components/chat/inline-text';
 import { SaveNoteButton } from '@/components/chat/save-note-button';
 import { numberCitations } from '@/lib/citations';
+import { formatWeekday } from '@/lib/day';
 import { messageTime } from '@/lib/relative-time';
 
 const NO_ANSWER = 'Dazu habe ich in den ausgewählten Quellen keine belegte Antwort gefunden.';
@@ -38,6 +39,15 @@ export function AnswerView({ notebookId, statements, finished, onOpenCitation }:
           ))}{' '}
         </span>
       ))}
+    </p>
+  );
+}
+
+/** "Mittwoch, 30. September" above the first message of a day, small and in the middle. */
+export function DayDivider({ iso }: { iso: string }) {
+  return (
+    <p className="mt-4 text-center text-[0.75rem] leading-4 font-[500] tracking-[0.006em] text-meta">
+      {formatWeekday(iso)}
     </p>
   );
 }

@@ -430,7 +430,13 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   für freie Notizen, nicht für gespeicherte Antworten. Der Server hatte Titel und Text zuerst verworfen, der E2E-Test hat das
   gefunden. Danach steht „In Notiz gespeichert“, bis es eine neue Zusammenfassung gibt.
 - **Nicht gebaut:** „Notebook anpassen“ (Emoji und Titel ändern, der Titel ist oben im Kopf bearbeitbar), die Daumen („Gute /
-  Schlechte Zusammenfassung“, es gibt sie auch an Antworten nicht), der Tagestrenner, ein vom Modell erzeugter Notizbuch-Titel.
+  Schlechte Zusammenfassung“, es gibt sie auch an Antworten nicht), ein vom Modell erzeugter Notizbuch-Titel.
+- **Tagestrenner im Verlauf:** Über der ersten Nachricht jedes Kalendertags steht „Mittwoch, 30. September“ (12/16, 500, mittig,
+  wie die Zeit darunter), nach der Zeitzone des Lesers. Rein darstellend, ohne Schnittstelle (`formatWeekday`, `isSameDay`
+  in `lib/day.ts`). Gemessen ist nur der Trenner über der ersten Nachricht; dass das Original ihn an jedem Tageswechsel
+  wiederholt, ist eine Annahme.
+- **Keine Daumen („Gute / Schlechte Antwort“):** Sie bräuchten gespeicherte Bewertungen (Tabelle, Schnittstelle, Tests) und
+  zeigen für die Aufgabe nichts, was Zitate, Notizen und Studio nicht schon zeigen. Bewusst weggelassen.
 - **Der leere Chat:** Mit Cover stehen darunter ein Satz zu den Nummern an den Aussagen und die Vorschlagsfragen; die große
   Überschrift „Stelle deine erste Frage“ gibt es nur noch ohne fertige Quelle. Der Demo-Seed macht die Übersicht mit, der erste
   Besuch wartet also nicht auf das Modell.

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse, type JsonBodyType } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { formatWeekday } from '@/lib/day';
 import {
   answer,
   ANSWER_ID,
@@ -101,6 +102,27 @@ describe('ChatPanel', () => {
     expect(screen.getAllByRole('button', { name: 'Quelle 2 anzeigen' })).toHaveLength(1);
   });
 
+  it('starts each day of the conversation with its weekday and date, once', async () => {
+    const asked = (id: string, text: string, at: Date) => ({
+      ...question(text),
+      id,
+      createdAt: at.toISOString(),
+    });
+    server.use(
+      sources(),
+      history([
+        asked('a1111111-1111-4111-8111-111111111111', 'Erste Frage', new Date(2026, 8, 30, 9)),
+        asked('a2222222-2222-4222-8222-222222222222', 'Zweite Frage', new Date(2026, 8, 30, 18)),
+        asked('a3333333-3333-4333-8333-333333333333', 'Dritte Frage', new Date(2026, 9, 1, 8)),
+      ])
+    );
+    renderChat();
+
+    await screen.findByText('Dritte Frage');
+    expect(screen.getAllByText('Mittwoch, 30. September')).toHaveLength(1);
+    expect(screen.getAllByText('Donnerstag, 1. Oktober')).toHaveLength(1);
+  });
+
   it('opens the source when a chip is clicked', async () => {
     server.use(sources(), history([answer([{ text: 'Aussage.', chunkIds: [CHUNK_ID] }])]));
     const onOpen = vi.fn();
@@ -187,6 +209,8 @@ describe('ChatPanel', () => {
 
     expect(await screen.findByText(/Dr\. Brandt leitet es\./)).toBeTruthy();
     expect(screen.getByText('Antwort wird geschrieben …')).toBeTruthy();
+    // The question that is being answered opens the day as well, in an empty conversation.
+    expect(screen.getByText(formatWeekday(new Date().toISOString()))).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Frage senden' })).toHaveProperty('disabled', true);
     expect(screen.getByLabelText('Deine Frage')).toHaveProperty('disabled', true);
 

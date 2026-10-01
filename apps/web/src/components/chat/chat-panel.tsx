@@ -1,9 +1,22 @@
 import { CHAT_ROLE, SOURCE_STATUS } from '@nlm/shared';
 import { ArrowUp, FileText, LoaderCircle, MessageCircleQuestion } from 'lucide-react';
-import { type FormEvent, type KeyboardEvent, memo, useEffect, useRef, useState } from 'react';
+import {
+  type FormEvent,
+  Fragment,
+  type KeyboardEvent,
+  memo,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import { FollowUps } from '@/components/chat/follow-ups';
-import { AnswerView, MessageView, QuestionBubble } from '@/components/chat/message-view';
+import {
+  AnswerView,
+  DayDivider,
+  MessageView,
+  QuestionBubble,
+} from '@/components/chat/message-view';
 import { NotebookOverview } from '@/components/chat/notebook-overview';
 import { ErrorNotice, QueryBoundary } from '@/components/query-boundary';
 import { ChatSkeleton } from '@/components/skeletons';
@@ -12,6 +25,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAskQuestion, useChatHistory } from '@/hooks/use-chat';
 import { type Suggestions, useSuggestedQuestions } from '@/hooks/use-overview';
 import { useSources } from '@/hooks/use-sources';
+import { isSameDay } from '@/lib/day';
+
+/** Whether a message at this time opens a new day of the conversation. */
+const startsDay = (previous: { createdAt: string } | undefined, createdAt: string) =>
+  previous === undefined || !isSameDay(previous.createdAt, createdAt);
 
 /** The questions to start with: while they are made, when that failed, and as buttons. */
 function SuggestionList({
@@ -169,13 +187,17 @@ export const ChatPanel = memo(function ChatPanel({
           >
             {(messages) => (
               <>
-                {messages.map((message) => (
-                  <MessageView
-                    key={message.id}
-                    message={message}
-                    notebookId={notebookId}
-                    onOpenCitation={onOpenCitation}
-                  />
+                {messages.map((message, index) => (
+                  <Fragment key={message.id}>
+                    {startsDay(messages[index - 1], message.createdAt) && (
+                      <DayDivider iso={message.createdAt} />
+                    )}
+                    <MessageView
+                      message={message}
+                      notebookId={notebookId}
+                      onOpenCitation={onOpenCitation}
+                    />
+                  </Fragment>
                 ))}
                 {lastFollowUps.length > 0 && !ask.live && (
                   <div className="pr-8">
@@ -188,6 +210,9 @@ export const ChatPanel = memo(function ChatPanel({
                 )}
                 {ask.live && (
                   <>
+                    {startsDay(lastMessage, ask.live.askedAt) && (
+                      <DayDivider iso={ask.live.askedAt} />
+                    )}
                     <QuestionBubble text={ask.live.question} askedAt={ask.live.askedAt} />
                     <div className="pr-8">
                       <AnswerView
