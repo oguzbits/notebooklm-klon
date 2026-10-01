@@ -488,3 +488,18 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   Gäste kosten dabei kein Kontingent (Kopie ohne Modellaufruf).
 - **Plan B** bleibt Render + Neon (oder Render bezahlt, damit der Dienst nicht einschläft; Preise nicht geprüft).
 - **Offen:** Deploy-Dateien (Compose, Caddyfile, Workflow, Anleitung) sind nicht geschrieben.
+
+## 2026-10-01 (Abgleich, Runde 4: fehlende Kleinigkeiten)
+
+- **Auslöser:** Der Nutzer nennt vier Lücken zum Original: Box „Im Web nach Quellen suchen“, klickbarer Titelblock (öffnet
+  „Notebook anpassen“), Knopf „Nach unten springen“, „Thoughts“ unter jeder Antwort. Diese vier und weitere Lücken werden
+  in dieser Runde abgeglichen (neue Messungen: `spikes/reference/s8-*`, lokal).
+- **Web-Suche:** nur „Web“ mit schneller Recherche. Weggelassen: Drive (bräuchte Google-Anmeldung mit Dateizugriff) und
+  Deep Research (Minuten Laufzeit, teuer). Kein Menü mit nur einem Eintrag. Erst ein Test mit dem echten Modell (Google-Suche
+  als Werkzeug, Verträglichkeit mit dem JSON-Schema, Kosten im kostenlosen Tarif), dann Bau.
+- **Thoughts:** erst ein Test, ob Gedankenzusammenfassungen (`includeThoughts`) mit unserem JSON-Schema-Streaming und dem
+  Lite-Modell brauchbar sind; Gedanken-Tokens zählen als Ausgabe.
+- **Titelbild für „Notebook anpassen“:** S3-kompatibler Speicher (MinIO im Docker Compose, Volume) hinter einem Port in
+  `core` mit einer Implementierung und einem Fake für Tests. Entscheidung des Nutzers, auch um Full-Stack-Können zu zeigen.
+  Kein AWS nötig; bei Plan B (Render) wäre ein Anbieter wie R2 oder S3 nötig, Preise vorher prüfen. Das Volume ist
+  dauerhaft, aber nicht gesichert (wie die Datenbank auf demselben Server). Wird als letzter Schritt dieses Dialogs gebaut.
