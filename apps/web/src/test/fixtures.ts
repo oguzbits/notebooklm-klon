@@ -26,6 +26,7 @@ export const notebook = (
     title: string;
     emoji: string | null;
     customSummary: string | null;
+    pinned: boolean;
     sourceCount: number;
   }> = {}
 ) => ({
@@ -33,6 +34,7 @@ export const notebook = (
   title: 'Steuerrecht',
   emoji: null,
   customSummary: null,
+  pinned: false,
   sourceCount: 2,
   createdAt: CREATED_AT,
   ...overrides,

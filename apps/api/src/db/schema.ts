@@ -60,6 +60,8 @@ export const notebooks = pgTable(
     overviewKey: text('overview_key'),
     // A summary the user wrote. When set, it is shown instead of the one the model makes.
     customSummary: text('custom_summary'),
+    // When the notebook was pinned to the top of the start page; null: not pinned.
+    pinnedAt: timestamp('pinned_at', { withTimezone: true }),
     createdAt: createdAt(),
   },
   (table) => [index('notebooks_user_id_idx').on(table.userId)]

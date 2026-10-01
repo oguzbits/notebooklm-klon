@@ -232,6 +232,24 @@ describe('updateNotebook', () => {
     expect(cleared).toMatchObject({ title: 'Titel', customSummary: null });
   });
 
+  it('pins a notebook to the top of the list and takes the pin back', async () => {
+    const older = await createNotebook(db, USER, 'Älter');
+    const newer = await createNotebook(db, USER, 'Neuer');
+    await pool.query("UPDATE notebooks SET created_at = now() - interval '1 day' WHERE id = $1", [
+      older.id,
+    ]);
+    expect((await listNotebooks(db, USER)).map((n) => n.title)).toEqual(['Neuer', 'Älter']);
+
+    const pinned = await updateNotebook(db, USER, older.id, { pinned: true });
+
+    expect(pinned?.pinned).toBe(true);
+    expect((await listNotebooks(db, USER)).map((n) => n.title)).toEqual(['Älter', 'Neuer']);
+    expect((await findNotebook(db, USER, newer.id))?.pinned).toBe(false);
+
+    await updateNotebook(db, USER, older.id, { pinned: false });
+    expect((await listNotebooks(db, USER)).map((n) => n.title)).toEqual(['Neuer', 'Älter']);
+  });
+
   it("does not change another user's notebook or answer for an unknown ID", async () => {
     const theirs = await createNotebook(db, OTHER, 'Fremd');
 

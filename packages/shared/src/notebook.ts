@@ -26,6 +26,8 @@ export const NotebookSchema = z.object({
   emoji: NotebookOverviewSchema.shape.emoji.nullable(),
   /** The summary the user wrote, shown instead of the model's. Null: the model's summary is shown. */
   customSummary: CustomSummarySchema.nullable(),
+  /** Pinned notebooks stand first on the start page. */
+  pinned: z.boolean(),
   /** How many sources the notebook holds, whatever their state. */
   sourceCount: z.number().int().nonnegative(),
   createdAt: z.iso.datetime(),
@@ -36,15 +38,17 @@ export const CreateNotebookBodySchema = z.object({
 });
 
 /**
- * What can be changed about a notebook: its title (same rules as when it is created) and its own
- * summary (null takes it back). Fields left out stay as they are, and at least one is given.
+ * What can be changed about a notebook: its title (same rules as when it is created), its own
+ * summary (null takes it back) and whether it is pinned. Fields left out stay as they are, and at
+ * least one is given.
  */
 export const UpdateNotebookBodySchema = z
   .object({
     title: CreateNotebookBodySchema.shape.title.optional(),
     customSummary: CustomSummarySchema.nullable().optional(),
+    pinned: z.boolean().optional(),
   })
-  .refine((body) => body.title !== undefined || body.customSummary !== undefined, {
+  .refine((body) => Object.values(body).some((value) => value !== undefined), {
     message: 'Nothing to change.',
   });
 

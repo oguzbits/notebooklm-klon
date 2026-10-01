@@ -25,6 +25,7 @@ describe('notebook contracts', () => {
         title: 'Recherche',
         emoji: null,
         customSummary: null,
+        pinned: false,
         sourceCount: 3,
         createdAt: DATE,
       })
@@ -36,6 +37,7 @@ describe('notebook contracts', () => {
       id: ID,
       title: 'Recherche',
       customSummary: null,
+      pinned: false,
       sourceCount: 1,
       createdAt: DATE,
     };
@@ -47,7 +49,14 @@ describe('notebook contracts', () => {
   });
 
   it('needs a source count that is a whole number of zero or more', () => {
-    const base = { id: ID, title: 'Recherche', emoji: null, customSummary: null, createdAt: DATE };
+    const base = {
+      id: ID,
+      title: 'Recherche',
+      emoji: null,
+      customSummary: null,
+      pinned: false,
+      createdAt: DATE,
+    };
 
     expect(NotebookSchema.safeParse(base).success).toBe(false);
     expect(NotebookSchema.safeParse({ ...base, sourceCount: -1 }).success).toBe(false);
@@ -72,6 +81,8 @@ describe('notebook contracts', () => {
       customSummary: null,
     });
     expect(UpdateNotebookBodySchema.safeParse({ customSummary: '  ' }).success).toBe(false);
+    expect(UpdateNotebookBodySchema.parse({ pinned: true })).toEqual({ pinned: true });
+    expect(UpdateNotebookBodySchema.parse({ pinned: false })).toEqual({ pinned: false });
     expect(UpdateNotebookBodySchema.safeParse({}).success).toBe(false);
   });
 
@@ -84,7 +95,14 @@ describe('notebook contracts', () => {
   });
 
   it('carries the own summary of a notebook, or null', () => {
-    const base = { id: ID, title: 'Recherche', emoji: null, sourceCount: 1, createdAt: DATE };
+    const base = {
+      id: ID,
+      title: 'Recherche',
+      emoji: null,
+      pinned: false,
+      sourceCount: 1,
+      createdAt: DATE,
+    };
 
     expect(NotebookSchema.parse({ ...base, customSummary: 'Mein Text' }).customSummary).toBe(
       'Mein Text'

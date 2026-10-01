@@ -34,6 +34,7 @@ const notebookColumns = {
   title: notebooks.title,
   emoji: emojiOf,
   customSummary: notebooks.customSummary,
+  pinned: sql<boolean>`${notebooks.pinnedAt} is not null`,
   createdAt: notebooks.createdAt,
   sourceCount: sourceCountOf,
 };
@@ -43,6 +44,7 @@ function toNotebook(row: {
   title: string;
   emoji: string | null;
   customSummary: string | null;
+  pinned: boolean;
   createdAt: Date;
   sourceCount: number;
 }): Notebook {
@@ -51,6 +53,7 @@ function toNotebook(row: {
     title: row.title,
     emoji: row.emoji,
     customSummary: row.customSummary,
+    pinned: row.pinned,
     sourceCount: row.sourceCount,
     createdAt: row.createdAt.toISOString(),
   };
@@ -63,7 +66,7 @@ export async function createNotebook(
 ): Promise<Notebook> {
   const [row] = await db.insert(notebooks).values({ userId, title }).returning();
   if (!row) throw new Error('insert returned no row');
-  return toNotebook({ ...row, emoji: null, sourceCount: 0 });
+  return toNotebook({ ...row, emoji: null, pinned: false, sourceCount: 0 });
 }
 
 export async function listNotebooks(db: Database, userId: string): Promise<Notebook[]> {
@@ -71,7 +74,11 @@ export async function listNotebooks(db: Database, userId: string): Promise<Noteb
     .select(notebookColumns)
     .from(notebooks)
     .where(eq(notebooks.userId, userId))
-    .orderBy(desc(notebooks.createdAt), desc(notebooks.id));
+    .orderBy(
+      sql`${notebooks.pinnedAt} desc nulls last`,
+      desc(notebooks.createdAt),
+      desc(notebooks.id)
+    );
   return rows.map(toNotebook);
 }
 
@@ -89,7 +96,7 @@ export async function findNotebook(
 }
 
 /**
- * Changes the title and/or the own summary of the notebook (null takes the summary back); what is
+ * Changes the title, the own summary (null takes it back) and/or the pin of the notebook; what is
  * left out stays. Null when it is not the user's or does not exist.
  */
 export async function updateNotebook(
@@ -104,6 +111,7 @@ export async function updateNotebook(
     .set({
       ...(changes.title !== undefined && { title: changes.title }),
       ...(changes.customSummary !== undefined && { customSummary: changes.customSummary }),
+      ...(changes.pinned !== undefined && { pinnedAt: changes.pinned ? new Date() : null }),
     })
     .where(and(eq(notebooks.id, notebookId), eq(notebooks.userId, userId)))
     .returning({ id: notebooks.id });
