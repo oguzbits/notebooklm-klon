@@ -143,13 +143,18 @@ export const saveUserMessage = (db: Database, userId: string, notebookId: string
     trace: null,
   });
 
+/** What an answer is made of when it is saved: its statements, the questions to ask next, its trace. */
+export interface SavedAnswer {
+  statements: AnswerStatement[];
+  followUps?: string[];
+  trace?: AnswerTrace | null;
+}
+
 export const saveAssistantMessage = (
   db: Database,
   userId: string,
   notebookId: string,
-  statements: AnswerStatement[],
-  followUps: string[] = [],
-  trace: AnswerTrace | null = null
+  { statements, followUps = [], trace = null }: SavedAnswer
 ) =>
   saveMessage(db, userId, notebookId, {
     role: CHAT_ROLE.ASSISTANT,

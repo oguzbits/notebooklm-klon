@@ -111,16 +111,17 @@ export async function registerSource(
   return { sourceId: created.id, action: SUBMIT_ACTION.CREATED };
 }
 
-async function fail(
-  ports: IngestPorts,
-  sourceId: string,
-  failure: SourceFailure,
-  code: IngestErrorCode,
-  message: string,
-  cause?: unknown
-): Promise<never> {
-  await ports.sources.markFailed(sourceId, failure);
-  throw new IngestError(code, message, cause);
+/** Why a source could not be made ready: what the UI shows, the code that is thrown, the cause. */
+interface Problem {
+  failure: SourceFailure;
+  code: IngestErrorCode;
+  message: string;
+  cause?: unknown;
+}
+
+async function fail(ports: IngestPorts, sourceId: string, problem: Problem): Promise<never> {
+  await ports.sources.markFailed(sourceId, problem.failure);
+  throw new IngestError(problem.code, problem.message, problem.cause);
 }
 
 async function embedAll(ports: IngestPorts, chunks: TextChunk[]): Promise<number[][]> {
@@ -156,40 +157,34 @@ export async function processSource(
   try {
     parsed = await ports.parse(input.kind, input.bytes);
   } catch (error) {
-    return fail(
-      ports,
-      sourceId,
-      SOURCE_FAILURE.PARSE_FAILED,
-      INGEST_ERROR.PARSE_FAILED,
-      'The document could not be read.',
-      error
-    );
+    return fail(ports, sourceId, {
+      failure: SOURCE_FAILURE.PARSE_FAILED,
+      code: INGEST_ERROR.PARSE_FAILED,
+      message: 'The document could not be read.',
+      cause: error,
+    });
   }
 
   const canonicalText = toCanonicalText(parsed.text);
   const chunks = chunkText(canonicalText);
   if (chunks.length === 0) {
-    return fail(
-      ports,
-      sourceId,
-      SOURCE_FAILURE.EMPTY_TEXT,
-      INGEST_ERROR.EMPTY_TEXT,
-      'The document has no text.'
-    );
+    return fail(ports, sourceId, {
+      failure: SOURCE_FAILURE.EMPTY_TEXT,
+      code: INGEST_ERROR.EMPTY_TEXT,
+      message: 'The document has no text.',
+    });
   }
 
   let vectors: number[][];
   try {
     vectors = await embedAll(ports, chunks);
   } catch (error) {
-    return fail(
-      ports,
-      sourceId,
-      SOURCE_FAILURE.EMBED_FAILED,
-      INGEST_ERROR.EMBED_FAILED,
-      'The text could not be indexed.',
-      error
-    );
+    return fail(ports, sourceId, {
+      failure: SOURCE_FAILURE.EMBED_FAILED,
+      code: INGEST_ERROR.EMBED_FAILED,
+      message: 'The text could not be indexed.',
+      cause: error,
+    });
   }
 
   await ports.sources.markReady(sourceId, {

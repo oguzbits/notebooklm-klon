@@ -120,6 +120,13 @@ export default defineConfig([
     },
   },
   {
+    // Every function of the database adapters starts with (db, userId, notebookId): the scope that
+    // each query is filtered by (AGENTS.md, retrieval scope). With the payload that makes five.
+    files: ['apps/api/src/db/**/*.ts'],
+    ignores: ['**/*.test.ts'],
+    rules: { 'max-params': ['error', 5] },
+  },
+  {
     // The single place where model IDs may appear.
     files: ['apps/api/src/config/**/*.ts'],
     rules: { 'no-restricted-syntax': ['error', ...sharedRules] },

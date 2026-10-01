@@ -140,7 +140,9 @@ describe('chat messages', () => {
   it('lists the messages of a notebook in the order they were saved', async () => {
     const notebook = await insertNotebook(USER);
     await saveUserMessage(db, USER, notebook.id, 'Wer leitet es?');
-    await saveAssistantMessage(db, USER, notebook.id, [{ text: 'Dr. Brandt.', chunkIds: ['a'] }]);
+    await saveAssistantMessage(db, USER, notebook.id, {
+      statements: [{ text: 'Dr. Brandt.', chunkIds: ['a'] }],
+    });
     await saveUserMessage(db, USER, notebook.id, 'Und wann?');
 
     const messages = await listChatMessages(db, USER, notebook.id);
@@ -156,14 +158,13 @@ describe('chat messages', () => {
 
   it('keeps the questions an answer suggested, and none for an answer without', async () => {
     const notebook = await insertNotebook(USER);
-    await saveAssistantMessage(
-      db,
-      USER,
-      notebook.id,
-      [{ text: 'Dr. Brandt.', chunkIds: ['a'] }],
-      ['Wie lange läuft das Projekt?', 'Wer ist noch beteiligt?']
-    );
-    await saveAssistantMessage(db, USER, notebook.id, [{ text: 'Frau Weiß.', chunkIds: ['a'] }]);
+    await saveAssistantMessage(db, USER, notebook.id, {
+      statements: [{ text: 'Dr. Brandt.', chunkIds: ['a'] }],
+      followUps: ['Wie lange läuft das Projekt?', 'Wer ist noch beteiligt?'],
+    });
+    await saveAssistantMessage(db, USER, notebook.id, {
+      statements: [{ text: 'Frau Weiß.', chunkIds: ['a'] }],
+    });
 
     const [first, second] = await listChatMessages(db, USER, notebook.id);
 

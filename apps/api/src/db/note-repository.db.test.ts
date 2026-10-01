@@ -26,7 +26,7 @@ async function insertNotebook(userId: string) {
 /** Saves a question and its answer, and returns the ID of the answer. */
 async function answered(userId: string, notebookId: string, statements = STATEMENTS) {
   await saveUserMessage(db, userId, notebookId, 'Frage?');
-  await saveAssistantMessage(db, userId, notebookId, statements);
+  await saveAssistantMessage(db, userId, notebookId, { statements });
   const { rows } = await pool.query(
     'SELECT id FROM chat_messages WHERE notebook_id = $1 AND role = $2 ORDER BY seq DESC LIMIT 1',
     [notebookId, CHAT_ROLE.ASSISTANT]

@@ -4,41 +4,13 @@
       "count": 2
     }
   },
-  "apps/api/src/db/note-repository.ts": {
-    "max-params": {
-      "count": 1
-    }
-  },
-  "apps/api/src/db/notebook-overview-repository.ts": {
-    "max-params": {
-      "count": 1
-    }
-  },
   "apps/api/src/db/notebook-repository.ts": {
     "max-lines": {
-      "count": 1
-    },
-    "max-params": {
-      "count": 2
-    }
-  },
-  "apps/api/src/db/reader-repository.ts": {
-    "max-params": {
       "count": 1
     }
   },
   "apps/api/src/db/retrieval.ts": {
     "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "apps/api/src/db/studio-repository.ts": {
-    "max-params": {
-      "count": 2
-    }
-  },
-  "apps/api/src/ingestion/ingest.ts": {
-    "max-params": {
       "count": 1
     }
   },

@@ -70,7 +70,7 @@ export function chatRoutes(deps: AppDeps) {
 
     return streamSSE(c, async (stream) => {
       const recorder = new AnswerRecorder((statements, followUps, trace) =>
-        saveAssistantMessage(deps.db, userId, notebookId, statements, followUps, trace)
+        saveAssistantMessage(deps.db, userId, notebookId, { statements, followUps, trace })
       );
       try {
         for await (const event of answerQuestion(prepared, ports)) {
