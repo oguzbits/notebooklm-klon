@@ -132,6 +132,31 @@ export async function setSourceSelected(
 }
 
 /**
+ * Selects or deselects every ready source of the notebook in one statement, so a failure never
+ * leaves a half-changed selection. False when the notebook is not the user's or does not exist.
+ */
+export async function setReadySourcesSelected(
+  db: Database,
+  userId: string,
+  notebookId: string,
+  selected: boolean
+): Promise<boolean> {
+  if (!UUID.test(notebookId)) return false;
+  const result = await db.execute<{ owned: number }>(sql`
+    WITH owned AS (
+      SELECT id FROM notebooks WHERE id = ${notebookId} AND user_id = ${userId}
+    ), changed AS (
+      UPDATE notebook_sources ns SET selected = ${selected}
+      FROM owned, sources s
+      WHERE ns.notebook_id = owned.id AND s.id = ns.source_id
+        AND s.user_id = ${userId} AND s.status = ${SOURCE_STATUS.READY}
+      RETURNING ns.source_id
+    )
+    SELECT count(*)::int AS owned FROM owned`);
+  return result.rows[0]?.owned === 1;
+}
+
+/**
  * Gives a source of the notebook a new title. The title belongs to the source, so it changes in
  * every notebook of the user that holds it. False when the source is not linked to this notebook of
  * the user.

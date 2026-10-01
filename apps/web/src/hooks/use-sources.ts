@@ -79,6 +79,20 @@ export function useToggleSource(notebookId: string) {
   });
 }
 
+export function useSelectAllSources(notebookId: string) {
+  const refresh = useRefreshSources(notebookId);
+  return useMutation({
+    mutationFn: async (selected: boolean) =>
+      expectOk(
+        await api.api.notebooks[':notebookId'].sources.$patch({
+          param: { notebookId },
+          json: { selected },
+        })
+      ),
+    onSuccess: refresh,
+  });
+}
+
 export function useRenameSource(notebookId: string) {
   const refresh = useRefreshSources(notebookId);
   return useMutation({

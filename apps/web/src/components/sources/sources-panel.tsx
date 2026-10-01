@@ -8,7 +8,12 @@ import { EmptySources, SourceList } from '@/components/sources/source-list';
 import { SourcesToolbar } from '@/components/sources/sources-toolbar';
 import { WebSearchBox } from '@/components/sources/web-search-box';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useRemoveSource, useSources, useToggleSource } from '@/hooks/use-sources';
+import {
+  useRemoveSource,
+  useSelectAllSources,
+  useSources,
+  useToggleSource,
+} from '@/hooks/use-sources';
 import { describeError } from '@/lib/messages';
 import { SOURCE_SORT, type SourceSort } from '@/lib/sort-sources';
 
@@ -23,16 +28,12 @@ export const SourcesPanel = memo(function SourcesPanel({
   const sources = useSources(notebookId);
   const [sort, setSort] = useState<SourceSort>(SOURCE_SORT.ADDED);
   const toggle = useToggleSource(notebookId);
+  const selectAll = useSelectAllSources(notebookId);
   const remove = useRemoveSource(notebookId);
-  const changeError = toggle.error ?? remove.error;
+  const changeError = toggle.error ?? selectAll.error ?? remove.error;
 
   const ready = (sources.data ?? []).filter((source) => source.status === SOURCE_STATUS.READY);
   const allSelected = ready.length > 0 && ready.every((source) => source.selected);
-  const selectAll = (selected: boolean) => {
-    for (const source of ready) {
-      if (source.selected !== selected) toggle.mutate({ sourceId: source.id, selected });
-    }
-  };
 
   return (
     <div className="flex h-full flex-col gap-2 overflow-y-auto pt-4 pb-2">
@@ -51,8 +52,8 @@ export const SourcesPanel = memo(function SourcesPanel({
                 sort={sort}
                 onSort={setSort}
                 allSelected={allSelected}
-                busy={toggle.isPending}
-                onSelectAll={selectAll}
+                busy={toggle.isPending || selectAll.isPending}
+                onSelectAll={selectAll.mutate}
               />
             )}
             <SourceList

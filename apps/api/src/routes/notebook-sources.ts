@@ -12,6 +12,7 @@ import { findNotebook } from '../db/notebook-repository';
 import {
   listNotebookSources,
   renameSource,
+  setReadySourcesSelected,
   setSourceSelected,
   unlinkSource,
 } from '../db/notebook-source-repository';
@@ -27,6 +28,24 @@ const listSourcesRoute = createRoute({
   request: { params: notebookParams },
   responses: {
     [OK]: json(SourceListSchema, 'The sources of the notebook'),
+    401: unauthenticated,
+    [NOT_FOUND]: notFound,
+  },
+});
+
+const selectAllRoute = createRoute({
+  method: 'patch',
+  path: '/{notebookId}/sources',
+  request: {
+    params: notebookParams,
+    body: {
+      content: { 'application/json': { schema: SetSourceSelectionBodySchema } },
+      required: true,
+    },
+  },
+  responses: {
+    [OK]: json(z.object({ selected: z.boolean() }), 'The new selection of all ready sources'),
+    400: invalid,
     401: unauthenticated,
     [NOT_FOUND]: notFound,
   },
@@ -88,6 +107,12 @@ export function notebookSourceRoutes(deps: AppDeps) {
         return c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
       }
       return c.json(await listNotebookSources(deps.db, userId, notebookId), OK);
+    })
+    .openapi(selectAllRoute, async (c) => {
+      const { notebookId } = c.req.valid('param');
+      const { selected } = c.req.valid('json');
+      const changed = await setReadySourcesSelected(deps.db, c.var.userId, notebookId, selected);
+      return changed ? c.json({ selected }, OK) : c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
     })
     .openapi(selectRoute, async (c) => {
       const { notebookId, sourceId } = c.req.valid('param');

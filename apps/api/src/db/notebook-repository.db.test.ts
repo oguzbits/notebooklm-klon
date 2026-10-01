@@ -15,6 +15,7 @@ import {
   listNotebookSources,
   renameSource,
   selectedReadySourceIds,
+  setReadySourcesSelected,
   setSourceSelected,
   unlinkSource,
 } from './notebook-source-repository';
@@ -139,6 +140,33 @@ describe('sources of a notebook', () => {
 
     expect((await listNotebookSources(db, USER, one.id))[0]?.selected).toBe(false);
     expect((await listNotebookSources(db, USER, two.id))[0]?.selected).toBe(true);
+  });
+
+  it('changes the selection of all ready sources of the notebook in one step', async () => {
+    const notebook = await createNotebook(db, USER, 'N');
+    const other = await createNotebook(db, USER, 'M');
+    const ready = await addSource(USER, 'r1', { status: SOURCE_STATUS.READY });
+    const pending = await addSource(USER, 'r2', { status: SOURCE_STATUS.PROCESSING });
+    for (const source of [ready, pending]) {
+      await linkSource(db, USER, notebook.id, source.id);
+    }
+    await linkSource(db, USER, other.id, ready.id);
+
+    expect(await setReadySourcesSelected(db, USER, notebook.id, false)).toBe(true);
+
+    const states = await listNotebookSources(db, USER, notebook.id);
+    expect(states.find((s) => s.id === ready.id)?.selected).toBe(false);
+    expect(states.find((s) => s.id === pending.id)?.selected).toBe(true);
+    expect((await listNotebookSources(db, USER, other.id))[0]?.selected).toBe(true);
+  });
+
+  it('does not change the selection in the notebook of someone else', async () => {
+    const theirs = await createNotebook(db, OTHER, 'F');
+    const source = await addSource(OTHER, 'r3', { status: SOURCE_STATUS.READY });
+    await linkSource(db, OTHER, theirs.id, source.id);
+
+    expect(await setReadySourcesSelected(db, USER, theirs.id, false)).toBe(false);
+    expect((await listNotebookSources(db, OTHER, theirs.id))[0]?.selected).toBe(true);
   });
 
   it('does not change or unlink what belongs to someone else', async () => {

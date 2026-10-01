@@ -630,5 +630,6 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
   Tabellen (Lookup-Objekte) statt verschachtelter Ternaries, Markup als JSX
   (`renderToStaticMarkup`) statt zusammengesetzter Strings, Grenzen aus `packages/shared`
   statt wiederholter Zahlen.
-- Offen: `selectAll` in der Quellenliste stellt eine Anfrage pro Quelle (Sammel-Endpunkt fehlt);
-  `ViewerFrame` hat noch 17 Props; `fetch('/api/…')` steht in vier Hooks.
+- Erledigt: „Alle auswählen“ ruft `PATCH /api/notebooks/:id/sources` auf und ändert alle fertigen
+  Quellen in einer SQL-Anweisung (vorher eine Anfrage pro Quelle, bei Abbruch halb geändert).
+- Offen: `ViewerFrame` hat noch 17 Props; `fetch('/api/…')` steht in vier Hooks.
