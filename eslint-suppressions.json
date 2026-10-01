@@ -101,17 +101,6 @@
       "count": 1
     }
   },
-  "apps/web/src/components/auth/auth-page.tsx": {
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    },
-    "no-nested-ternary": {
-      "count": 1
-    }
-  },
   "apps/web/src/components/chat/answer-trace.tsx": {
     "max-lines-per-function": {
       "count": 1
@@ -123,14 +112,6 @@
     }
   },
   "apps/web/src/components/chat/citation-chip.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "apps/web/src/components/chat/notebook-overview.tsx": {
-    "complexity": {
-      "count": 1
-    },
     "max-lines-per-function": {
       "count": 1
     }
