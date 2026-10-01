@@ -747,3 +747,12 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
   klappt. Jetzt stehen die drei Wahlmöglichkeiten unter der Überschrift „Darstellung“ direkt im Menü, auf jeder Breite.
   Bewusste Abweichung vom Original, das hier ein Untermenü nutzt: ein Codepfad, nichts kann seitlich überstehen.
 - `theme.e2e.ts` prüft das bei 360 px Breite (Menü innerhalb des Fensters, Dunkel wählen, Wahl bleibt nach Neuladen).
+
+## 2026-10-02 (Tooltip blinkt beim Antippen von „Nach unten springen“)
+
+- Auf dem Smartphone erschien beim Antippen des Knopfes kurz der Tooltip (gemessen mit Touch-Emulation: eingefügt und
+  nach rund 35 ms wieder entfernt). Ursache: Radix öffnet den Tooltip bei Touch über den Fokus, und der Knopf verschwindet
+  mit dem Klick, weil das Chat-Ende erreicht ist. Bei Knöpfen, die stehen bleiben („In Notiz speichern“, Kopieren,
+  „Einstellungen“), blieb der Tooltip beim Antippen aus. Das Blinken betrifft also nur diesen einen Knopf.
+- Der Knopf hat jetzt keinen Tooltip mehr; das `aria-label` bleibt. Das Pfeilsymbol erklärt sich selbst, und ein
+  Tooltip ist auf Touch ohnehin nutzlos. Eine globale Touch-Regel wäre mehr Code für einen einzigen Fall.
