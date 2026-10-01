@@ -130,7 +130,7 @@ Kurz: PDFs liest ein Gemini-Modell (Tabellen und Scans bleiben erhalten), die Su
 - `pnpm check`: TypeScript strict, ESLint, Architekturregeln, tote Abhängigkeiten, Duplikate (unter 2 %), Magic-String-Audit.
 - `pnpm test`: Vitest ohne Netzwerk. MSW lehnt jede nicht abgefangene Anfrage ab, kein Test kann Kontingent verbrauchen.
 - `pnpm test:db`: Tests gegen Postgres mit pgvector (`pnpm db:up`), darunter alle Zugriffsregeln: jede Abfrage filtert nach Nutzer, Notizbuch und gewählten Quellen.
-- `pnpm e2e`: Playwright-Nutzerreisen gegen den Offline-Server (Konto, Notizbücher, Quellen, Trennung der Konten, Studio; echte Datenbank, echte App, gefälschte Modelle, keine Token).
+- `pnpm e2e`: Playwright-Nutzerreisen gegen den Offline-Server (Konto, Notizbücher, Quellen, Trennung der Konten, Studio mit Quiz, Mindmap und Bericht, Darstellung auf dem Telefon; echte Datenbank, echte App, gefälschte Modelle, keine Token).
 - `pnpm eval:live`: die 18 Golden Questions gegen die echten Modelle, mit Trefferquote der Suche, Fakten in der Antwort und im zitierten Abschnitt und der Zahl der vom Server verworfenen Aussagen. Kostet Kontingent, läuft nicht in CI.
 - CI (GitHub Actions): Qualität, Unit-Tests, Datenbank-Tests, Browser-Test, Build, Semgrep.
 

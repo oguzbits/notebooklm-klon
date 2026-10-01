@@ -732,7 +732,18 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
   Notizbuchseite ohne Anmeldung; Notizbücher suchen, umbenennen, anpinnen, löschen (mit Abbrechen) und unbekannte Seite;
   Quellenauswahl bestimmt die Antwort samt Zitat in der Quellenansicht, Umbenennen, Entfernen, gleicher Inhalt nur einmal,
   private Adresse wird abgelehnt (SSRF); ein Konto sieht und öffnet nie das Notizbuch eines anderen.
+- Studio in `studio.e2e.ts`: Quiz (Tipp, falsche Antwort mit richtiger Lösung, Zitat öffnet die Quelle, Ergebnis, noch
+  einmal), Mindmap (alle Knoten auf- und zuklappen, einzelner Zweig, Zoom, Zitat, Speichern als PNG) und Bericht aus einer
+  Vorlage (Abschnitte, Zitat, Schließen). Notizen, Lernkarten und Datentabelle deckt `smoke` ab.
 - Nicht abgedeckt: echtes Modell und echte Websuche (nur `pnpm eval:live`), PDF-Verarbeitung (der Offline-Server kann sie
-  nicht), Quiz, Mindmap, Bericht und Notizen als eigene Reisen.
+  nicht), Fehlerzustände der einzelnen Studio-Ansichten.
 - Die Quellenkästchen ändern sich erst nach der Antwort des Servers: Die Tests klicken und prüfen den Zustand, statt
   `uncheck()` zu nutzen, das auf einen sofortigen Wechsel wartet.
+
+## 2026-10-01 (Darstellungsmenü auf dem Smartphone)
+
+- Das Untermenü „Gerätestandard / Hell / Dunkel“ ragte bei 390 px Breite links aus dem Fenster (gemessen: x = -78), weil
+  das Menü (240 px) und das Untermenü (176 px) nebeneinander nicht in ein Telefon passen und Radix das Untermenü nach links
+  klappt. Jetzt stehen die drei Wahlmöglichkeiten unter der Überschrift „Darstellung“ direkt im Menü, auf jeder Breite.
+  Bewusste Abweichung vom Original, das hier ein Untermenü nutzt: ein Codepfad, nichts kann seitlich überstehen.
+- `theme.e2e.ts` prüft das bei 360 px Breite (Menü innerhalb des Fensters, Dunkel wählen, Wahl bleibt nach Neuladen).

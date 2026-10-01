@@ -16,24 +16,24 @@ describe('SettingsMenu', () => {
     const user = userEvent.setup();
 
     await user.click(screen.getByRole('button', { name: 'Einstellungen' }));
-    // With the keyboard, because a submenu of Radix also closes when the pointer of a test jumps.
-    (await screen.findByRole('menuitem', { name: 'Gerätestandard' })).focus();
-    await user.keyboard('{ArrowRight}');
     expect(await screen.findByRole('menuitemradio', { name: 'Gerätestandard' })).toHaveProperty(
       'ariaChecked',
       'true'
     );
-    await user.keyboard('{ArrowDown}{ArrowDown}{Enter}');
+    await user.click(screen.getByRole('menuitemradio', { name: 'Dunkel' }));
 
     expect(document.cookie).toContain('nlm-theme=DARK');
   });
 
-  it('shows the current choice on the entry', async () => {
+  it('marks the current choice', async () => {
     document.cookie = 'nlm-theme=LIGHT; path=/';
     renderWithProviders(<SettingsMenu />);
 
     await userEvent.setup().click(screen.getByRole('button', { name: 'Einstellungen' }));
 
-    expect(await screen.findByRole('menuitem', { name: 'Hell' })).toBeTruthy();
+    expect(await screen.findByRole('menuitemradio', { name: 'Hell' })).toHaveProperty(
+      'ariaChecked',
+      'true'
+    );
   });
 });
