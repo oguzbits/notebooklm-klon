@@ -108,6 +108,48 @@ async function readBody(response: Response): Promise<Uint8Array> {
   return body;
 }
 
+/** One request to the checked address; running out of time is a stable error of its own. */
+async function requestOnce(
+  url: URL,
+  address: string,
+  deps: FetchDeps,
+  signal: AbortSignal
+): Promise<Response> {
+  try {
+    return await deps.request(url, address, signal);
+  } catch (error) {
+    if (error instanceof DOMException && ['TimeoutError', 'AbortError'].includes(error.name)) {
+      throw new ImportError(IMPORT_ERROR.TIMEOUT, 'The page took too long to answer.');
+    }
+    throw error;
+  }
+}
+
+/** Where a redirect leads, as an address; a redirect without a target is an error. */
+async function redirectTarget(response: Response, from: URL): Promise<string> {
+  const location = response.headers.get('location');
+  await response.body?.cancel();
+  if (location === null) {
+    throw new ImportError(IMPORT_ERROR.HTTP_STATUS, 'A redirect had no target.');
+  }
+  return new URL(location, from).href;
+}
+
+/** The media type of an answer that may be imported (lower case, no parameters); anything else is refused. */
+async function acceptedContentType(response: Response): Promise<string> {
+  const ok = response.status >= HTTP_OK_MIN && response.status <= HTTP_OK_MAX;
+  if (!ok) {
+    await response.body?.cancel();
+    throw new ImportError(IMPORT_ERROR.HTTP_STATUS, `The page answered with ${response.status}.`);
+  }
+  const contentType = (response.headers.get('content-type') ?? '').split(';')[0]?.trim() ?? '';
+  if (!ACCEPTED_TYPES.has(contentType.toLowerCase())) {
+    await response.body?.cancel();
+    throw new ImportError(IMPORT_ERROR.UNSUPPORTED_CONTENT_TYPE, 'The page is not text.');
+  }
+  return contentType.toLowerCase();
+}
+
 /**
  * Fetches a public web page. Every hop, the first request and each redirect, goes through the same
  * checks: http(s) only, no credentials, and every address the host resolves to must be public.
@@ -121,41 +163,14 @@ export async function fetchPublicUrl(input: string, deps: FetchDeps): Promise<Fe
     const parsed = parseImportUrl(target);
     if (!parsed.ok) throw rejectionToError(parsed.reason);
     const address = await publicAddress(parsed.url, deps);
-
-    let response: Response;
-    try {
-      response = await deps.request(parsed.url, address, signal);
-    } catch (error) {
-      if (error instanceof DOMException && ['TimeoutError', 'AbortError'].includes(error.name)) {
-        throw new ImportError(IMPORT_ERROR.TIMEOUT, 'The page took too long to answer.');
-      }
-      throw error;
-    }
+    const response = await requestOnce(parsed.url, address, deps, signal);
 
     if (REDIRECT_STATUSES.has(response.status)) {
-      const location = response.headers.get('location');
-      await response.body?.cancel();
-      if (location === null) {
-        throw new ImportError(IMPORT_ERROR.HTTP_STATUS, 'A redirect had no target.');
-      }
-      target = new URL(location, parsed.url).href;
+      target = await redirectTarget(response, parsed.url);
       continue;
     }
-    if (response.status < HTTP_OK_MIN || response.status > HTTP_OK_MAX) {
-      await response.body?.cancel();
-      throw new ImportError(IMPORT_ERROR.HTTP_STATUS, `The page answered with ${response.status}.`);
-    }
-
-    const contentType = (response.headers.get('content-type') ?? '').split(';')[0]?.trim() ?? '';
-    if (!ACCEPTED_TYPES.has(contentType.toLowerCase())) {
-      await response.body?.cancel();
-      throw new ImportError(IMPORT_ERROR.UNSUPPORTED_CONTENT_TYPE, 'The page is not text.');
-    }
-    return {
-      finalUrl: parsed.url.href,
-      contentType: contentType.toLowerCase(),
-      body: await readBody(response),
-    };
+    const contentType = await acceptedContentType(response);
+    return { finalUrl: parsed.url.href, contentType, body: await readBody(response) };
   }
   throw new ImportError(IMPORT_ERROR.TOO_MANY_REDIRECTS, 'Too many redirects.');
 }

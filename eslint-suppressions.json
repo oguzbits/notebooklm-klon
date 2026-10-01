@@ -37,19 +37,9 @@
       "count": 2
     }
   },
-  "apps/api/src/import/fetch-url.ts": {
-    "complexity": {
-      "count": 1
-    }
-  },
   "apps/api/src/ingestion/ingest.ts": {
     "max-params": {
       "count": 1
-    }
-  },
-  "apps/api/src/parsing/html-text.ts": {
-    "complexity": {
-      "count": 2
     }
   },
   "apps/api/src/routes/cover.ts": {

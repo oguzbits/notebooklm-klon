@@ -160,17 +160,8 @@ function link(node: DomNode, inner: string, context: Context): string {
   return `[${label.replace(/[[\]]/g, '\\$&')}](${encodeLinkTarget(target)})`;
 }
 
-/** Text of a node as one line with its inline marks: bold, italic, code and links; `<br>` kept as a mark. */
-function inlineText(node: DomNode, context: Context): string {
-  if (node.nodeType === TEXT_NODE) return escapeMarkdownText(node.data ?? '');
-  if (node.nodeType !== ELEMENT_NODE || SKIPPED.has(tag(node))) return '';
-  const name = tag(node);
-  if (name === 'br') return LINE_BREAK_MARK;
-  const inner = children(node)
-    .map((child) => inlineText(child, context))
-    .join('');
-  if (BLOCKS.has(name)) return ` ${inner} `;
-  if (context.plain) return inner;
+/** The marks of an inline element around its text: links, bold, italic, code. */
+function markInline(name: string, node: DomNode, inner: string, context: Context): string {
   switch (name) {
     case 'a':
       return link(node, inner, context);
@@ -185,6 +176,19 @@ function inlineText(node: DomNode, context: Context): string {
     default:
       return inner;
   }
+}
+
+/** Text of a node as one line with its inline marks: bold, italic, code and links; `<br>` kept as a mark. */
+function inlineText(node: DomNode, context: Context): string {
+  if (node.nodeType === TEXT_NODE) return escapeMarkdownText(node.data ?? '');
+  if (node.nodeType !== ELEMENT_NODE || SKIPPED.has(tag(node))) return '';
+  const name = tag(node);
+  if (name === 'br') return LINE_BREAK_MARK;
+  const inner = children(node)
+    .map((child) => inlineText(child, context))
+    .join('');
+  if (BLOCKS.has(name)) return ` ${inner} `;
+  return context.plain ? inner : markInline(name, node, inner, context);
 }
 
 /**
@@ -258,6 +262,35 @@ function codeBlock(pre: DomNode): string {
   return `${fence}\n${code}\n${fence}`;
 }
 
+/** A quotation: its blocks with a mark in front of each line. */
+function blockquoteBlock(node: DomNode, context: Context): string {
+  const quoted: string[] = [];
+  collectBlocks(node, quoted, context);
+  if (quoted.length === 0) return '';
+  const lines = quoted.join('\n\n').split('\n');
+  return lines.map((line) => (line === '' ? '>' : `> ${line}`)).join('\n');
+}
+
+/** A heading without links or emphasis. */
+function headingBlock(node: DomNode, name: string, context: Context): string {
+  const level = Number(HEADING.exec(name)?.[1]);
+  const text = tidy(inlineText(node, { ...context, plain: true }), false);
+  return text === '' ? '' : `${'#'.repeat(level)} ${text}`;
+}
+
+/**
+ * The element as a block of its own (table, list, code, quotation, heading), or null when it is
+ * not one of those. An empty string is a block with nothing in it.
+ */
+function structuredBlock(node: DomNode, name: string, context: Context): string | null {
+  if (name === 'table') return tableBlock(node, context);
+  if (LIST.has(name)) return listBlock(node, context);
+  if (name === 'pre') return codeBlock(node);
+  if (name === 'blockquote') return blockquoteBlock(node, context);
+  if (HEADING.test(name)) return headingBlock(node, name, context);
+  return null;
+}
+
 function collectBlocks(node: DomNode, out: string[], context: Context): void {
   let run = '';
   const flush = (): void => {
@@ -267,36 +300,16 @@ function collectBlocks(node: DomNode, out: string[], context: Context): void {
   };
 
   for (const child of children(node)) {
-    const name = child.nodeType === ELEMENT_NODE ? tag(child) : '';
     if (child.nodeType === TEXT_NODE) {
       run += escapeMarkdownText(child.data ?? '');
-    } else if (child.nodeType !== ELEMENT_NODE || SKIPPED.has(name)) {
       continue;
-    } else if (name === 'table') {
+    }
+    if (child.nodeType !== ELEMENT_NODE || SKIPPED.has(tag(child))) continue;
+    const name = tag(child);
+    const block = structuredBlock(child, name, context);
+    if (block !== null) {
       flush();
-      const table = tableBlock(child, context);
-      if (table !== '') out.push(table);
-    } else if (LIST.has(name)) {
-      flush();
-      const list = listBlock(child, context);
-      if (list !== '') out.push(list);
-    } else if (name === 'pre') {
-      flush();
-      const code = codeBlock(child);
-      if (code !== '') out.push(code);
-    } else if (name === 'blockquote') {
-      flush();
-      const quoted: string[] = [];
-      collectBlocks(child, quoted, context);
-      if (quoted.length > 0) {
-        const lines = quoted.join('\n\n').split('\n');
-        out.push(lines.map((line) => (line === '' ? '>' : `> ${line}`)).join('\n'));
-      }
-    } else if (HEADING.test(name)) {
-      flush();
-      const level = Number(HEADING.exec(name)?.[1]);
-      const text = tidy(inlineText(child, { ...context, plain: true }), false);
-      if (text !== '') out.push(`${'#'.repeat(level)} ${text}`);
+      if (block !== '') out.push(block);
     } else if (BLOCKS.has(name)) {
       flush();
       collectBlocks(child, out, context);
