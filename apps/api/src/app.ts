@@ -5,6 +5,7 @@ import { HTTPException } from 'hono/http-exception';
 import { GeminiError } from './ai/gemini-error';
 import type { AppDeps } from './app-deps';
 import { type AuthVariables, requireUser } from './auth/session';
+import { HTTP_STATUS } from './http-status';
 import { ImportError } from './import/fetch-url';
 import { QuotaExceededError } from './ingestion/ingest';
 import { log } from './logger';
@@ -22,10 +23,6 @@ import { sourceRoutes } from './routes/sources';
 import { studioRoutes } from './routes/studio';
 import { capabilityRoutes, webSearchRoutes } from './routes/web-search';
 
-const BAD_REQUEST = 400;
-const TOO_MANY_REQUESTS = 429;
-const INTERNAL_ERROR = 500;
-
 const errorBody = (code: ApiError['code'], detail?: string): ApiError =>
   detail === undefined ? { code } : { code, detail };
 
@@ -35,7 +32,10 @@ export function createApp(deps: AppDeps) {
     defaultHook: (result, c) => {
       if (!result.success) {
         const field = result.error.issues[0]?.path.join('.');
-        return c.json(errorBody(API_ERROR.INVALID_REQUEST, field || undefined), BAD_REQUEST);
+        return c.json(
+          errorBody(API_ERROR.INVALID_REQUEST, field || undefined),
+          HTTP_STATUS.BAD_REQUEST
+        );
       }
       return undefined;
     },
@@ -43,13 +43,13 @@ export function createApp(deps: AppDeps) {
 
   app.onError((error, c) => {
     if (error instanceof QuotaExceededError) {
-      return c.json(errorBody(API_ERROR.UPLOAD_LIMIT_REACHED), TOO_MANY_REQUESTS);
+      return c.json(errorBody(API_ERROR.UPLOAD_LIMIT_REACHED), HTTP_STATUS.TOO_MANY_REQUESTS);
     }
     if (error instanceof ImportError) {
-      return c.json(errorBody(API_ERROR.INVALID_URL, error.code), BAD_REQUEST);
+      return c.json(errorBody(API_ERROR.INVALID_URL, error.code), HTTP_STATUS.BAD_REQUEST);
     }
-    if (error instanceof GeminiError && error.status === TOO_MANY_REQUESTS) {
-      return c.json(errorBody(API_ERROR.CHAT_LIMIT_REACHED), TOO_MANY_REQUESTS);
+    if (error instanceof GeminiError && error.status === HTTP_STATUS.TOO_MANY_REQUESTS) {
+      return c.json(errorBody(API_ERROR.CHAT_LIMIT_REACHED), HTTP_STATUS.TOO_MANY_REQUESTS);
     }
     if (error instanceof HTTPException) return error.getResponse();
     // Log the kind of error and the route, never the message: it could carry document content.
@@ -59,7 +59,7 @@ export function createApp(deps: AppDeps) {
       name: error.name,
       path: new URL(c.req.url).pathname,
     });
-    return c.json(errorBody(API_ERROR.INTERNAL), INTERNAL_ERROR);
+    return c.json(errorBody(API_ERROR.INTERNAL), HTTP_STATUS.INTERNAL_SERVER_ERROR);
   });
 
   app.get('/health', (c) => c.json(HealthSchema.parse({ status: 'ok' })));

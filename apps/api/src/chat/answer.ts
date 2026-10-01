@@ -13,8 +13,7 @@ import { buildChatContext, type ChatContext, resolveCitations } from '../core/ch
 import { ANSWER_JSON_SCHEMA, buildUserMessage, chatSystemPrompt } from '../core/chat-prompt';
 import { cleanFollowUps } from '../core/follow-ups';
 import { StatementStream } from '../core/statement-stream';
-
-const QUOTA_STATUS = 429;
+import { HTTP_STATUS } from '../http-status';
 
 /** The user has no ready, selected source in this notebook, so there is nothing to answer from. */
 export class NoSourcesSelectedError extends Error {
@@ -131,7 +130,7 @@ async function* streamStatements(
 const errorEvent = (error: unknown): ChatEvent => ({
   type: CHAT_EVENT.ERROR,
   code:
-    error instanceof GeminiError && error.status === QUOTA_STATUS
+    error instanceof GeminiError && error.status === HTTP_STATUS.TOO_MANY_REQUESTS
       ? API_ERROR.CHAT_LIMIT_REACHED
       : API_ERROR.INTERNAL,
 });

@@ -16,20 +16,17 @@ import {
   setSourceSelected,
   unlinkSource,
 } from '../db/notebook-source-repository';
+import { HTTP_STATUS } from '../http-status';
 import { invalid, json, notebookParams, notFound, sourceParams, unauthenticated } from './openapi';
-
-const OK = 200;
-const NO_CONTENT = 204;
-const NOT_FOUND = 404;
 
 const listSourcesRoute = createRoute({
   method: 'get',
   path: '/{notebookId}/sources',
   request: { params: notebookParams },
   responses: {
-    [OK]: json(SourceListSchema, 'The sources of the notebook'),
+    [HTTP_STATUS.OK]: json(SourceListSchema, 'The sources of the notebook'),
     401: unauthenticated,
-    [NOT_FOUND]: notFound,
+    [HTTP_STATUS.NOT_FOUND]: notFound,
   },
 });
 
@@ -44,10 +41,13 @@ const selectAllRoute = createRoute({
     },
   },
   responses: {
-    [OK]: json(z.object({ selected: z.boolean() }), 'The new selection of all ready sources'),
+    [HTTP_STATUS.OK]: json(
+      z.object({ selected: z.boolean() }),
+      'The new selection of all ready sources'
+    ),
     400: invalid,
     401: unauthenticated,
-    [NOT_FOUND]: notFound,
+    [HTTP_STATUS.NOT_FOUND]: notFound,
   },
 });
 
@@ -62,10 +62,10 @@ const selectRoute = createRoute({
     },
   },
   responses: {
-    [OK]: json(z.object({ selected: z.boolean() }), 'The new selection'),
+    [HTTP_STATUS.OK]: json(z.object({ selected: z.boolean() }), 'The new selection'),
     400: invalid,
     401: unauthenticated,
-    [NOT_FOUND]: notFound,
+    [HTTP_STATUS.NOT_FOUND]: notFound,
   },
 });
 
@@ -77,10 +77,10 @@ const renameSourceRoute = createRoute({
     body: { content: { 'application/json': { schema: RenameSourceBodySchema } }, required: true },
   },
   responses: {
-    [OK]: json(z.object({ title: z.string() }), 'The new title of the source'),
+    [HTTP_STATUS.OK]: json(z.object({ title: z.string() }), 'The new title of the source'),
     400: invalid,
     401: unauthenticated,
-    [NOT_FOUND]: notFound,
+    [HTTP_STATUS.NOT_FOUND]: notFound,
   },
 });
 
@@ -89,9 +89,9 @@ const removeRoute = createRoute({
   path: '/{notebookId}/sources/{sourceId}',
   request: { params: sourceParams },
   responses: {
-    [NO_CONTENT]: { description: 'The source is no longer part of the notebook' },
+    [HTTP_STATUS.NO_CONTENT]: { description: 'The source is no longer part of the notebook' },
     401: unauthenticated,
-    [NOT_FOUND]: notFound,
+    [HTTP_STATUS.NOT_FOUND]: notFound,
   },
 });
 
@@ -104,15 +104,17 @@ export function notebookSourceRoutes(deps: AppDeps) {
       const { notebookId } = c.req.valid('param');
       const { userId } = c.var;
       if (!(await findNotebook(deps.db, userId, notebookId))) {
-        return c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
+        return c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);
       }
-      return c.json(await listNotebookSources(deps.db, userId, notebookId), OK);
+      return c.json(await listNotebookSources(deps.db, userId, notebookId), HTTP_STATUS.OK);
     })
     .openapi(selectAllRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
       const { selected } = c.req.valid('json');
       const changed = await setReadySourcesSelected(deps.db, c.var.userId, notebookId, selected);
-      return changed ? c.json({ selected }, OK) : c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
+      return changed
+        ? c.json({ selected }, HTTP_STATUS.OK)
+        : c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);
     })
     .openapi(selectRoute, async (c) => {
       const { notebookId, sourceId } = c.req.valid('param');
@@ -124,17 +126,23 @@ export function notebookSourceRoutes(deps: AppDeps) {
         sourceId,
         selected
       );
-      return changed ? c.json({ selected }, OK) : c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
+      return changed
+        ? c.json({ selected }, HTTP_STATUS.OK)
+        : c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);
     })
     .openapi(renameSourceRoute, async (c) => {
       const { notebookId, sourceId } = c.req.valid('param');
       const { title } = c.req.valid('json');
       const renamed = await renameSource(deps.db, c.var.userId, notebookId, sourceId, title);
-      return renamed ? c.json({ title }, OK) : c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
+      return renamed
+        ? c.json({ title }, HTTP_STATUS.OK)
+        : c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);
     })
     .openapi(removeRoute, async (c) => {
       const { notebookId, sourceId } = c.req.valid('param');
       const removed = await unlinkSource(deps.db, c.var.userId, notebookId, sourceId);
-      return removed ? c.body(null, NO_CONTENT) : c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
+      return removed
+        ? c.body(null, HTTP_STATUS.NO_CONTENT)
+        : c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);
     });
 }

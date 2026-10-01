@@ -22,24 +22,18 @@ import {
   loadStudioChunks,
   updateStudioOutput,
 } from '../db/studio-repository';
+import { HTTP_STATUS } from '../http-status';
 import { generateStudioOutput } from '../studio/generate';
 import { json, notebookParams, notFound, unauthenticated } from './openapi';
-
-const OK = 200;
-const CREATED = 201;
-const NO_CONTENT = 204;
-const CONFLICT = 409;
-const UNPROCESSABLE = 422;
-const NOT_FOUND = 404;
 
 const listRoute = createRoute({
   method: 'get',
   path: '/{notebookId}/studio',
   request: { params: notebookParams },
   responses: {
-    [OK]: json(StudioOutputListSchema, 'The outputs of the Studio, newest first'),
+    [HTTP_STATUS.OK]: json(StudioOutputListSchema, 'The outputs of the Studio, newest first'),
     401: unauthenticated,
-    [NOT_FOUND]: notFound,
+    [HTTP_STATUS.NOT_FOUND]: notFound,
   },
 });
 
@@ -51,12 +45,15 @@ const createStudioRoute = createRoute({
     body: { content: { 'application/json': { schema: CreateStudioBodySchema } }, required: true },
   },
   responses: {
-    [CREATED]: json(StudioOutputSchema, 'The output made from the selected sources'),
+    [HTTP_STATUS.CREATED]: json(StudioOutputSchema, 'The output made from the selected sources'),
     400: json(ApiErrorSchema, 'The request is invalid'),
     401: unauthenticated,
-    [NOT_FOUND]: notFound,
-    [CONFLICT]: json(ApiErrorSchema, 'No source is selected and ready'),
-    [UNPROCESSABLE]: json(ApiErrorSchema, 'The sources support no part of the output'),
+    [HTTP_STATUS.NOT_FOUND]: notFound,
+    [HTTP_STATUS.CONFLICT]: json(ApiErrorSchema, 'No source is selected and ready'),
+    [HTTP_STATUS.UNPROCESSABLE_ENTITY]: json(
+      ApiErrorSchema,
+      'The sources support no part of the output'
+    ),
   },
 });
 
@@ -68,10 +65,10 @@ const updateRoute = createRoute({
     body: { content: { 'application/json': { schema: StudioUpdateBodySchema } }, required: true },
   },
   responses: {
-    [OK]: json(StudioOutputSchema, 'The output after the change'),
+    [HTTP_STATUS.OK]: json(StudioOutputSchema, 'The output after the change'),
     400: json(ApiErrorSchema, 'The request is invalid'),
     401: unauthenticated,
-    [NOT_FOUND]: notFound,
+    [HTTP_STATUS.NOT_FOUND]: notFound,
   },
 });
 
@@ -80,17 +77,15 @@ const deleteRoute = createRoute({
   path: '/{notebookId}/studio/{outputId}',
   request: { params: notebookParams.extend({ outputId: z.string().min(1) }) },
   responses: {
-    [NO_CONTENT]: { description: 'The output is deleted' },
+    [HTTP_STATUS.NO_CONTENT]: { description: 'The output is deleted' },
     401: unauthenticated,
-    [NOT_FOUND]: notFound,
+    [HTTP_STATUS.NOT_FOUND]: notFound,
   },
 });
 
-/** The Studio: reports, flashcards, quizzes and mind maps made from the selected sources. */
-export function studioRoutes(deps: AppDeps) {
-  const app = new OpenAPIHono<{ Variables: AuthVariables }>();
-  const missing = { code: API_ERROR.NOT_FOUND };
-  const ports = {
+/** The database and model calls the Studio logic runs on. */
+function studioPorts(deps: AppDeps) {
+  return {
     chatConfig: (userId: string, notebookId: string) => getChatConfig(deps.db, userId, notebookId),
     listSources: (userId: string, notebookId: string, sourceIds?: readonly string[]) =>
       listStudioSources(deps.db, userId, notebookId, sourceIds),
@@ -104,13 +99,21 @@ export function studioRoutes(deps: AppDeps) {
       createStudioOutput(deps.db, userId, notebookId, output),
     stream: deps.chat.stream,
   };
+}
+
+/** The Studio: reports, flashcards, quizzes and mind maps made from the selected sources. */
+export function studioRoutes(deps: AppDeps) {
+  const app = new OpenAPIHono<{ Variables: AuthVariables }>();
+  const missing = { code: API_ERROR.NOT_FOUND };
+  const ports = studioPorts(deps);
 
   return app
     .openapi(listRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
       const { userId } = c.var;
-      if (!(await findNotebook(deps.db, userId, notebookId))) return c.json(missing, NOT_FOUND);
-      return c.json(await listStudioOutputs(deps.db, userId, notebookId), OK);
+      if (!(await findNotebook(deps.db, userId, notebookId)))
+        return c.json(missing, HTTP_STATUS.NOT_FOUND);
+      return c.json(await listStudioOutputs(deps.db, userId, notebookId), HTTP_STATUS.OK);
     })
     .openapi(createStudioRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
@@ -119,13 +122,15 @@ export function studioRoutes(deps: AppDeps) {
           { userId: c.var.userId, notebookId, body: c.req.valid('json') },
           ports
         );
-        return output ? c.json(output, CREATED) : c.json(missing, NOT_FOUND);
+        return output
+          ? c.json(output, HTTP_STATUS.CREATED)
+          : c.json(missing, HTTP_STATUS.NOT_FOUND);
       } catch (error) {
         if (error instanceof NoSourcesSelectedError) {
-          return c.json({ code: API_ERROR.NO_SOURCES_SELECTED }, CONFLICT);
+          return c.json({ code: API_ERROR.NO_SOURCES_SELECTED }, HTTP_STATUS.CONFLICT);
         }
         if (error instanceof EmptyStudioOutputError) {
-          return c.json({ code: API_ERROR.STUDIO_EMPTY }, UNPROCESSABLE);
+          return c.json({ code: API_ERROR.STUDIO_EMPTY }, HTTP_STATUS.UNPROCESSABLE_ENTITY);
         }
         throw error;
       }
@@ -139,11 +144,13 @@ export function studioRoutes(deps: AppDeps) {
         outputId,
         c.req.valid('json')
       );
-      return output ? c.json(output, OK) : c.json(missing, NOT_FOUND);
+      return output ? c.json(output, HTTP_STATUS.OK) : c.json(missing, HTTP_STATUS.NOT_FOUND);
     })
     .openapi(deleteRoute, async (c) => {
       const { notebookId, outputId } = c.req.valid('param');
       const deleted = await deleteStudioOutput(deps.db, c.var.userId, notebookId, outputId);
-      return deleted ? c.body(null, NO_CONTENT) : c.json(missing, NOT_FOUND);
+      return deleted
+        ? c.body(null, HTTP_STATUS.NO_CONTENT)
+        : c.json(missing, HTTP_STATUS.NOT_FOUND);
     });
 }

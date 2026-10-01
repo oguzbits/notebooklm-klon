@@ -4,19 +4,17 @@ import { API_ERROR, ApiErrorSchema, ChatConfigSchema } from '@nlm/shared';
 import type { AppDeps } from '../app-deps';
 import type { AuthVariables } from '../auth/session';
 import { getChatConfig, setChatConfig } from '../db/chat-config-repository';
+import { HTTP_STATUS } from '../http-status';
 import { json, notebookParams, notFound, unauthenticated } from './openapi';
-
-const OK = 200;
-const NOT_FOUND = 404;
 
 const readRoute = createRoute({
   method: 'get',
   path: '/{notebookId}/chat-config',
   request: { params: notebookParams },
   responses: {
-    [OK]: json(ChatConfigSchema, 'How the assistant talks in this notebook'),
+    [HTTP_STATUS.OK]: json(ChatConfigSchema, 'How the assistant talks in this notebook'),
     401: unauthenticated,
-    [NOT_FOUND]: notFound,
+    [HTTP_STATUS.NOT_FOUND]: notFound,
   },
 });
 
@@ -28,10 +26,10 @@ const writeRoute = createRoute({
     body: { content: { 'application/json': { schema: ChatConfigSchema } }, required: true },
   },
   responses: {
-    [OK]: json(ChatConfigSchema, 'The saved config'),
+    [HTTP_STATUS.OK]: json(ChatConfigSchema, 'The saved config'),
     400: json(ApiErrorSchema, 'The config is invalid'),
     401: unauthenticated,
-    [NOT_FOUND]: notFound,
+    [HTTP_STATUS.NOT_FOUND]: notFound,
   },
 });
 
@@ -43,11 +41,11 @@ export function chatConfigRoutes(deps: AppDeps) {
   return app
     .openapi(readRoute, async (c) => {
       const config = await getChatConfig(deps.db, c.var.userId, c.req.valid('param').notebookId);
-      return config ? c.json(config, OK) : c.json(missing, NOT_FOUND);
+      return config ? c.json(config, HTTP_STATUS.OK) : c.json(missing, HTTP_STATUS.NOT_FOUND);
     })
     .openapi(writeRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
       const saved = await setChatConfig(deps.db, c.var.userId, notebookId, c.req.valid('json'));
-      return saved ? c.json(saved, OK) : c.json(missing, NOT_FOUND);
+      return saved ? c.json(saved, HTTP_STATUS.OK) : c.json(missing, HTTP_STATUS.NOT_FOUND);
     });
 }

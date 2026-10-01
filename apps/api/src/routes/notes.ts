@@ -19,21 +19,17 @@ import {
   updateNote,
 } from '../db/note-repository';
 import { findNotebook } from '../db/notebook-repository';
+import { HTTP_STATUS } from '../http-status';
 import { json, notebookParams, notFound, unauthenticated } from './openapi';
-
-const OK = 200;
-const CREATED = 201;
-const NO_CONTENT = 204;
-const NOT_FOUND = 404;
 
 const listRoute = createRoute({
   method: 'get',
   path: '/{notebookId}/notes',
   request: { params: notebookParams },
   responses: {
-    [OK]: json(NoteListSchema, 'The notes, newest first'),
+    [HTTP_STATUS.OK]: json(NoteListSchema, 'The notes, newest first'),
     401: unauthenticated,
-    [NOT_FOUND]: notFound,
+    [HTTP_STATUS.NOT_FOUND]: notFound,
   },
 });
 
@@ -45,10 +41,13 @@ const createNoteRoute = createRoute({
     body: { content: { 'application/json': { schema: CreateNoteBodySchema } }, required: true },
   },
   responses: {
-    [CREATED]: json(NoteSchema, 'The note made from a saved answer, or an empty one to write'),
+    [HTTP_STATUS.CREATED]: json(
+      NoteSchema,
+      'The note made from a saved answer, or an empty one to write'
+    ),
     400: json(ApiErrorSchema, 'The request is invalid'),
     401: unauthenticated,
-    [NOT_FOUND]: notFound,
+    [HTTP_STATUS.NOT_FOUND]: notFound,
   },
 });
 
@@ -60,10 +59,10 @@ const updateRoute = createRoute({
     body: { content: { 'application/json': { schema: NoteUpdateBodySchema } }, required: true },
   },
   responses: {
-    [OK]: json(NoteSchema, 'The note after the change'),
+    [HTTP_STATUS.OK]: json(NoteSchema, 'The note after the change'),
     400: json(ApiErrorSchema, 'The request is invalid'),
     401: unauthenticated,
-    [NOT_FOUND]: notFound,
+    [HTTP_STATUS.NOT_FOUND]: notFound,
   },
 });
 
@@ -72,9 +71,9 @@ const deleteRoute = createRoute({
   path: '/{notebookId}/notes/{noteId}',
   request: { params: notebookParams.extend({ noteId: z.string().min(1) }) },
   responses: {
-    [NO_CONTENT]: { description: 'The note is deleted' },
+    [HTTP_STATUS.NO_CONTENT]: { description: 'The note is deleted' },
     401: unauthenticated,
-    [NOT_FOUND]: notFound,
+    [HTTP_STATUS.NOT_FOUND]: notFound,
   },
 });
 
@@ -90,8 +89,9 @@ export function noteRoutes(deps: AppDeps) {
     .openapi(listRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
       const { userId } = c.var;
-      if (!(await findNotebook(deps.db, userId, notebookId))) return c.json(missing, NOT_FOUND);
-      return c.json(await listNotes(deps.db, userId, notebookId), OK);
+      if (!(await findNotebook(deps.db, userId, notebookId)))
+        return c.json(missing, HTTP_STATUS.NOT_FOUND);
+      return c.json(await listNotes(deps.db, userId, notebookId), HTTP_STATUS.OK);
     })
     .openapi(createNoteRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
@@ -103,16 +103,18 @@ export function noteRoutes(deps: AppDeps) {
               title: body.title,
               body: body.body,
             });
-      return note ? c.json(note, CREATED) : c.json(missing, NOT_FOUND);
+      return note ? c.json(note, HTTP_STATUS.CREATED) : c.json(missing, HTTP_STATUS.NOT_FOUND);
     })
     .openapi(updateRoute, async (c) => {
       const { notebookId, noteId } = c.req.valid('param');
       const note = await updateNote(deps.db, c.var.userId, notebookId, noteId, c.req.valid('json'));
-      return note ? c.json(note, OK) : c.json(missing, NOT_FOUND);
+      return note ? c.json(note, HTTP_STATUS.OK) : c.json(missing, HTTP_STATUS.NOT_FOUND);
     })
     .openapi(deleteRoute, async (c) => {
       const { notebookId, noteId } = c.req.valid('param');
       const deleted = await deleteNote(deps.db, c.var.userId, notebookId, noteId);
-      return deleted ? c.body(null, NO_CONTENT) : c.json(missing, NOT_FOUND);
+      return deleted
+        ? c.body(null, HTTP_STATUS.NO_CONTENT)
+        : c.json(missing, HTTP_STATUS.NOT_FOUND);
     });
 }

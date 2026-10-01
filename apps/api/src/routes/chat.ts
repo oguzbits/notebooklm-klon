@@ -17,10 +17,7 @@ import { findNotebook } from '../db/notebook-repository';
 import { selectedReadySourceIds } from '../db/notebook-source-repository';
 import { saveAssistantMessage, saveUserMessage } from '../db/reader-repository';
 import { searchChunks } from '../db/retrieval';
-
-const BAD_REQUEST = 400;
-const NOT_FOUND = 404;
-const CONFLICT = 409;
+import { HTTP_STATUS } from '../http-status';
 
 const error = (code: (typeof API_ERROR)[keyof typeof API_ERROR]) => ({ code });
 
@@ -53,18 +50,18 @@ export function chatRoutes(deps: AppDeps) {
     const { userId } = c.var;
     const notebookId = c.req.param('notebookId');
     if (!(await findNotebook(deps.db, userId, notebookId))) {
-      return c.json(error(API_ERROR.NOT_FOUND), NOT_FOUND);
+      return c.json(error(API_ERROR.NOT_FOUND), HTTP_STATUS.NOT_FOUND);
     }
 
     const parsed = ChatRequestSchema.safeParse(await c.req.json().catch(() => null));
-    if (!parsed.success) return c.json(error(API_ERROR.INVALID_REQUEST), BAD_REQUEST);
+    if (!parsed.success) return c.json(error(API_ERROR.INVALID_REQUEST), HTTP_STATUS.BAD_REQUEST);
 
     const prepared = await tryPrepare(deps, ports, {
       userId,
       notebookId,
       question: parsed.data.question,
     });
-    if (!prepared) return c.json(error(API_ERROR.NO_SOURCES_SELECTED), CONFLICT);
+    if (!prepared) return c.json(error(API_ERROR.NO_SOURCES_SELECTED), HTTP_STATUS.CONFLICT);
 
     // Saved only now: a rejected question (no source ready, quota) leaves no trace in the history.
     await saveUserMessage(deps.db, userId, notebookId, parsed.data.question);
