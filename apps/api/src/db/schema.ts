@@ -183,7 +183,9 @@ export const notes = pgTable(
 
 // What the Studio made from the selected sources: a report, flashcards, a quiz or a mind map. The
 // content is validated with StudioOutputSchema when read and holds only citations the server
-// checked. format is set for reports only.
+// checked. format is set for reports only. request is how it was asked for (the prompt in words and
+// the titles of the sources), unread is the blue dot until the output is opened (false for the
+// outputs made before it existed) and feedback is what the reader thought of it.
 export const studioOutputs = pgTable(
   'studio_outputs',
   {
@@ -198,6 +200,9 @@ export const studioOutputs = pgTable(
     format: text('format'),
     title: text('title').notNull(),
     content: jsonb('content').notNull(),
+    request: jsonb('request'),
+    unread: boolean('unread').notNull().default(false),
+    feedback: text('feedback'),
     createdAt: createdAt(),
   },
   (table) => [index('studio_outputs_notebook_idx').on(table.notebookId, table.createdAt)]

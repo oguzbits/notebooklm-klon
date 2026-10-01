@@ -1,7 +1,9 @@
 import {
   API_ERROR,
   REPORT_FORMAT,
+  STUDIO_DIFFICULTY,
   STUDIO_KIND,
+  STUDIO_SIZE,
   type StudioOutput,
   SUBMIT_ACTION,
 } from '@nlm/shared';
@@ -64,6 +66,14 @@ function renderPanel(onOpenCitation: (chunkId: string) => void = () => {}) {
   );
 }
 
+/** The row of an output or note in the list, found by what it says (the tiles above have names too). */
+const row = (name: RegExp) =>
+  within(screen.getByRole('region', { name: 'Erstellte Ausgaben' })).getByRole('button', { name });
+const waitForRow = async (name: RegExp) =>
+  within(await screen.findByRole('region', { name: 'Erstellte Ausgaben' })).findByRole('button', {
+    name,
+  });
+
 describe('StudioPanel', () => {
   it('says what appears here while nothing has been made', async () => {
     serve();
@@ -102,17 +112,52 @@ describe('StudioPanel', () => {
     serve({ outputs: [flashcardsOutput()] });
     renderPanel();
 
-    expect(await screen.findByText(/Karteikarten · 2 Karten · /)).toBeTruthy();
+    // A row says how many sources it was made from and when, like "2 Quellen · Vor 1 Min.".
+    expect(await screen.findByText(/^1 Quelle · /)).toBeTruthy();
   });
 
-  it('makes flashcards, shows that it works and opens them when they are ready', async () => {
+  it('keeps the order of the tiles of the original', async () => {
+    serve();
+    renderPanel();
+
+    await screen.findByRole('button', { name: 'Quiz' });
+    const names = screen
+      .getAllByRole('button')
+      .map((button) => button.textContent)
+      .filter((text) => ['Mindmap', 'Berichte', 'Karteikarten', 'Quiz'].includes(text ?? ''));
+    expect(names).toEqual(['Mindmap', 'Berichte', 'Karteikarten', 'Quiz']);
+  });
+
+  it('shows a blue dot on an output nobody opened and clears it when it is opened', async () => {
+    let unread = true;
+    serve({ outputs: [flashcardsOutput()] });
+    server.use(
+      http.get(`${base}/studio`, () => HttpResponse.json([{ ...flashcardsOutput(), unread }])),
+      http.patch(`${base}/studio/${OUTPUT_ID}`, async ({ request }) => {
+        expect(await request.json()).toEqual({ read: true });
+        unread = false;
+        return HttpResponse.json({ ...flashcardsOutput(), unread });
+      })
+    );
+    renderPanel();
+    const user = userEvent.setup();
+
+    const unopened = await screen.findByRole('button', { name: /^Ungelesen: Karteikarten/ });
+    await user.click(unopened);
+
+    await user.click(await screen.findByRole('button', { name: 'Zurück zum Studio' }));
+    expect(await screen.findByRole('button', { name: /^Karteikarten, 1 Quelle/ })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^Ungelesen:/ })).toBeNull();
+  });
+
+  it('makes flashcards, shows that it works and adds them to the list when they are ready', async () => {
     let body: unknown;
     let release: () => void = () => {};
     const gate = new Promise<void>((resolve) => {
       release = resolve;
     });
     serve();
-    serveMaking(flashcardsOutput(), async (sent) => {
+    serveMaking({ ...flashcardsOutput(), unread: true }, async (sent) => {
       body = sent;
       await gate;
     });
@@ -120,6 +165,7 @@ describe('StudioPanel', () => {
     const user = userEvent.setup();
 
     await user.click(await screen.findByRole('button', { name: 'Karteikarten' }));
+    await user.click(await screen.findByRole('button', { name: 'Generieren' }));
 
     expect(await screen.findByRole('status')).toHaveProperty(
       'textContent',
@@ -127,11 +173,17 @@ describe('StudioPanel', () => {
     );
     expect(screen.getByRole('button', { name: 'Quiz' })).toHaveProperty('disabled', true);
     release();
-    expect(await screen.findByText('Karte 1 von 2')).toBeTruthy();
-    expect(body).toEqual({ kind: STUDIO_KIND.FLASHCARDS });
+    // The result joins the list with a dot; it is not opened for the reader.
+    expect(await screen.findByRole('button', { name: /^Ungelesen: Karteikarten/ })).toBeTruthy();
+    expect(screen.queryByText('Karte 1 von 2')).toBeNull();
+    expect(body).toEqual({
+      kind: STUDIO_KIND.FLASHCARDS,
+      size: STUDIO_SIZE.DEFAULT,
+      difficulty: STUDIO_DIFFICULTY.MEDIUM,
+    });
   });
 
-  it('asks for the format when a report is made', async () => {
+  it('asks for the template when a report is made', async () => {
     let body: unknown;
     serve();
     serveMaking(quizOutput(), (sent) => {
@@ -144,7 +196,7 @@ describe('StudioPanel', () => {
     await user.click(await screen.findByRole('radio', { name: /Häufige Fragen/ }));
     await user.click(screen.getByRole('button', { name: 'Generieren' }));
 
-    await screen.findByText('Frage 1 von 1');
+    await waitForRow(/^Quiz/);
     expect(body).toEqual({ kind: STUDIO_KIND.REPORT, format: REPORT_FORMAT.FAQ });
   });
 
@@ -175,10 +227,11 @@ describe('StudioPanel', () => {
     const user = userEvent.setup();
 
     await user.click(await screen.findByRole('button', { name: 'Karteikarten' }));
+    await user.click(await screen.findByRole('button', { name: 'Generieren' }));
     expect(await screen.findByText(/nichts Belegbares erstellen/)).toBeTruthy();
     await user.click(screen.getByRole('button', { name: /Erneut versuchen/ }));
 
-    expect(await screen.findByText('Karte 1 von 2')).toBeTruthy();
+    expect(await screen.findByRole('button', { name: /^Karteikarten, 1 Quelle/ })).toBeTruthy();
   });
 
   it('opens an output from the list, goes back and deletes it', async () => {
@@ -194,7 +247,7 @@ describe('StudioPanel', () => {
     renderPanel();
     const user = userEvent.setup();
 
-    await user.click(await screen.findByRole('button', { name: /Karteikarten · 2 Karten/ }));
+    await user.click(await waitForRow(/^Karteikarten/));
     await user.click(await screen.findByRole('button', { name: 'Zurück zum Studio' }));
     const list = screen.getByRole('region', { name: 'Erstellte Ausgaben' });
     await user.click(
@@ -218,7 +271,7 @@ describe('StudioPanel', () => {
     renderPanel();
     const user = userEvent.setup();
 
-    await user.click(await screen.findByRole('button', { name: /Karteikarten · 2 Karten/ }));
+    await user.click(await waitForRow(/^Karteikarten/));
     await user.click(await screen.findByRole('button', { name: 'Weitere Aktionen' }));
     await user.click(await screen.findByRole('menuitem', { name: 'Löschen' }));
 
@@ -230,7 +283,7 @@ describe('StudioPanel', () => {
     renderPanel();
     const user = userEvent.setup();
 
-    await user.click(await screen.findByRole('button', { name: /Karteikarten · 2 Karten/ }));
+    await user.click(await waitForRow(/^Karteikarten/));
 
     const path = screen.getByRole('navigation', { name: 'Pfad' });
     expect(path.textContent).toContain('Studio');
@@ -238,7 +291,7 @@ describe('StudioPanel', () => {
     // The fold button gives way to the one that closes the view.
     expect(screen.queryByRole('button', { name: 'Studio ausblenden' })).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Karteikartenansicht schließen' }));
-    expect(await screen.findByText(/Karteikarten · 2 Karten/)).toBeTruthy();
+    expect(await waitForRow(/^Karteikarten/)).toBeTruthy();
   });
 
   it('tells the page at once that something is open, so the column can grow while it renders', async () => {
@@ -255,9 +308,7 @@ describe('StudioPanel', () => {
       />
     );
 
-    await userEvent
-      .setup()
-      .click(await screen.findByRole('button', { name: /Karteikarten · 2 Karten/ }));
+    await userEvent.setup().click(await waitForRow(/^Karteikarten/));
 
     expect(onViewingChange).toHaveBeenCalledWith(true);
   });
@@ -283,12 +334,12 @@ describe('StudioPanel', () => {
       renderPanel(onOpen);
       const user = userEvent.setup();
 
-      await user.click(await screen.findByRole('button', { name: /Notiz · / }));
+      await user.click(await waitForRow(/^Dr\. Brandt leitet es\./));
       await user.click(await screen.findByRole('button', { name: 'Quelle 1 anzeigen' }));
 
       expect(onOpen).toHaveBeenCalledWith(CHUNK_ID);
       await user.click(screen.getByRole('button', { name: 'Zurück zum Studio' }));
-      expect(await screen.findByRole('button', { name: /Notiz · / })).toBeTruthy();
+      expect(await waitForRow(/^Dr\. Brandt leitet es\./)).toBeTruthy();
     });
 
     it('puts the text of a note among the sources as a text file', async () => {
@@ -310,7 +361,7 @@ describe('StudioPanel', () => {
       renderPanel();
       const user = userEvent.setup();
 
-      await user.click(await screen.findByRole('button', { name: /Notiz · / }));
+      await user.click(await waitForRow(/^Dr\. Brandt leitet es\./));
       await user.click(await screen.findByRole('button', { name: 'Als Quelle festlegen' }));
 
       expect(await screen.findByText('Als Quelle hinzugefügt')).toBeTruthy();
@@ -350,7 +401,7 @@ describe('StudioPanel', () => {
       renderPanel();
 
       expect(await screen.findByRole('alert')).toBeTruthy();
-      expect(screen.getByRole('button', { name: /Karteikarten · 2 Karten/ })).toBeTruthy();
+      expect(row(/^Karteikarten/)).toBeTruthy();
     });
   });
 });

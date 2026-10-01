@@ -5,6 +5,7 @@ import {
   CreateStudioBodySchema,
   StudioOutputListSchema,
   StudioOutputSchema,
+  StudioUpdateBodySchema,
 } from '@nlm/shared';
 
 import type { AppDeps } from '../app-deps';
@@ -17,7 +18,9 @@ import {
   createStudioOutput,
   deleteStudioOutput,
   listStudioOutputs,
+  listStudioSources,
   loadStudioChunks,
+  updateStudioOutput,
 } from '../db/studio-repository';
 import { generateStudioOutput } from '../studio/generate';
 import { json, notFound, unauthenticated } from './openapi';
@@ -59,6 +62,21 @@ const createStudioRoute = createRoute({
   },
 });
 
+const updateRoute = createRoute({
+  method: 'patch',
+  path: '/{notebookId}/studio/{outputId}',
+  request: {
+    params: notebookParams.extend({ outputId: z.string().min(1) }),
+    body: { content: { 'application/json': { schema: StudioUpdateBodySchema } }, required: true },
+  },
+  responses: {
+    [OK]: json(StudioOutputSchema, 'The output after the change'),
+    400: json(ApiErrorSchema, 'The request is invalid'),
+    401: unauthenticated,
+    [NOT_FOUND]: notFound,
+  },
+});
+
 const deleteRoute = createRoute({
   method: 'delete',
   path: '/{notebookId}/studio/{outputId}',
@@ -76,8 +94,14 @@ export function studioRoutes(deps: AppDeps) {
   const missing = { code: API_ERROR.NOT_FOUND };
   const ports = {
     chatConfig: (userId: string, notebookId: string) => getChatConfig(deps.db, userId, notebookId),
-    loadChunks: (userId: string, notebookId: string, maxChars: number) =>
-      loadStudioChunks(deps.db, userId, notebookId, maxChars),
+    listSources: (userId: string, notebookId: string, sourceIds?: readonly string[]) =>
+      listStudioSources(deps.db, userId, notebookId, sourceIds),
+    loadChunks: (
+      userId: string,
+      notebookId: string,
+      maxChars: number,
+      sourceIds: readonly string[]
+    ) => loadStudioChunks(deps.db, userId, notebookId, maxChars, sourceIds),
     save: (userId: string, notebookId: string, output: Parameters<typeof createStudioOutput>[3]) =>
       createStudioOutput(deps.db, userId, notebookId, output),
     stream: deps.chat.stream,
@@ -107,6 +131,17 @@ export function studioRoutes(deps: AppDeps) {
         }
         throw error;
       }
+    })
+    .openapi(updateRoute, async (c) => {
+      const { notebookId, outputId } = c.req.valid('param');
+      const output = await updateStudioOutput(
+        deps.db,
+        c.var.userId,
+        notebookId,
+        outputId,
+        c.req.valid('json')
+      );
+      return output ? c.json(output, OK) : c.json(missing, NOT_FOUND);
     })
     .openapi(deleteRoute, async (c) => {
       const { notebookId, outputId } = c.req.valid('param');

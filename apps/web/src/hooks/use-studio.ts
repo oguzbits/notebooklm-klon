@@ -1,4 +1,10 @@
-import { type CreateStudioBody, StudioOutputListSchema, StudioOutputSchema } from '@nlm/shared';
+import {
+  type CreateStudioBody,
+  type StudioOutput,
+  StudioOutputListSchema,
+  StudioOutputSchema,
+  type StudioUpdateBody,
+} from '@nlm/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { api, expectOk, readJson } from '@/lib/api';
@@ -41,5 +47,27 @@ export function useDeleteStudioOutput(notebookId: string) {
         })
       ),
     onSuccess: () => client.invalidateQueries({ queryKey: queryKeys.studio(notebookId) }),
+  });
+}
+
+/**
+ * Renames an output, rates it or marks it read. The answer replaces the output in the list at once,
+ * so the title or the dot changes without waiting for a second request.
+ */
+export function useUpdateStudioOutput(notebookId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ outputId, changes }: { outputId: string; changes: StudioUpdateBody }) =>
+      readJson(
+        await api.api.notebooks[':notebookId'].studio[':outputId'].$patch({
+          param: { notebookId, outputId },
+          json: changes,
+        }),
+        StudioOutputSchema
+      ),
+    onSuccess: (updated) =>
+      client.setQueryData<StudioOutput[]>(queryKeys.studio(notebookId), (list) =>
+        list?.map((output) => (output.id === updated.id ? updated : output))
+      ),
   });
 }

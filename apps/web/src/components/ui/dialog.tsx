@@ -22,9 +22,13 @@ function DialogClose(props: React.ComponentProps<typeof DialogPrimitive.Close>) 
  */
 function DialogContent({
   className,
+  closeClassName,
   children,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content>) {
+}: React.ComponentProps<typeof DialogPrimitive.Content> & {
+  /** Changes how the close button sits and looks (the Studio dialogs have a round, filled one). */
+  closeClassName?: string;
+}) {
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay
@@ -43,7 +47,10 @@ function DialogContent({
         {children}
         <DialogPrimitive.Close
           aria-label="Schließen"
-          className="veil absolute top-4 right-4 inline-flex size-10 items-center justify-center rounded-full text-muted-foreground"
+          className={cn(
+            'veil absolute top-4 right-4 inline-flex size-10 items-center justify-center rounded-full text-muted-foreground',
+            closeClassName
+          )}
         >
           <X className="size-6" aria-hidden />
         </DialogPrimitive.Close>

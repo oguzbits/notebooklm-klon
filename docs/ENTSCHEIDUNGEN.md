@@ -302,3 +302,27 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   (`chat_messages.follow_ups`, Migration `0008`), damit sie nach dem Neuladen noch da sind; ältere Antworten haben keine. Die
   Karten erscheinen nur unter der letzten Nachricht und nur, wenn sie eine Antwort ist. Ohne fertige Quelle sind sie gesperrt.
   `pnpm eval:live` wurde nach dem längeren Prompt nicht neu ausgeführt.
+- **Studio-Aktionen fragen vorher, wie das Original (2026-10-01):** Jede Kachel öffnet einen Dialog (gemessen am echten
+  Notizbuch: 894 px breit, Radius 28, runder Schließen-Knopf, Fuß mit Trennlinie und „Generieren“). Karteikarten und Quiz
+  fragen nach Umfang (Weniger / Standard / Mehr) und Schwierigkeit (Einfach / Mittel / Schwierig), alle vier nach den Quellen
+  (Auswahl unter den ausgewählten, fertigen Quellen) und nach einem Thema, der Bericht zusätzlich nach der Vorlage. Der Vertrag
+  (`CreateStudioBodySchema`) trägt `size`, `difficulty`, `sourceIds` und `focus`; der Server prüft die Quellenauswahl wie jede
+  Abfrage in SQL (nur eigene, ausgewählte, fertige Quellen des Notizbuchs, Fremdes wird ignoriert, Retrieval-Scope bleibt
+  gewahrt). Der Umfang steuert die Zahl (Karten 6–8 / 10–15 / 18–25, Fragen 4–5 / 8–10 / 14–18), die Schwierigkeit einen
+  Satz im Prompt, das Thema steht **hinter** den Regeln für die Zitate und kann sie nicht aufheben.
+- **Berichtsvorlagen:** Eigenen Bericht erstellen (der Text ist die Anweisung, Pflicht), Überblick (früher Briefing), Lernplan
+  (Fragen mit kurzen Antworten, Essay-Fragen, Glossar), Blogpost und Häufige Fragen. „Format: Interaktiv / Dokument“ und
+  „Vorgeschlagene Vorlage“ gibt es nicht (wir haben keine interaktiven Berichte, und vorgeschlagene Vorlagen bräuchten einen
+  weiteren Modellaufruf je Dialog). Die Vorlage ist beim Öffnen nicht gewählt, „Generieren“ bleibt grau, bis sie es ist.
+- **Quiz mit Tipp und einer Begründung je Antwort:** Das Original zeigt nach der Antwort bei jeder Option, warum sie stimmt
+  oder nicht, und bietet einen Tipp an. Die Modellantwort liefert dafür `hint` und `rationales` (vier Sätze in der
+  Reihenfolge der Optionen). Gespeicherte Quizze von vorher haben beides nicht (die Felder sind im gespeicherten Schema
+  optional), die Ansicht zeigt dann wie bisher die eine Erklärung. Karteikarten und Quiz bekommen ihren Titel vom Modell
+  („Jev Lernkarten“ statt „Karteikarten“).
+- **Wie eine Ausgabe entstand, bleibt bei ihr (`request`):** Der Prompt in Worten (deutsch, wie ihn der Leser geschrieben haben
+  könnte) und die Titel der verwendeten Quellen, für „Prompt und n Quellen ansehen“. Die Titel stehen als Abdruck da, die Quelle kann später
+  fehlen. Ausgaben von vorher haben das nicht und zeigen keine Quellenzahl in der Zeile.
+- **Ausgaben werden nicht von selbst geöffnet, sie haben einen blauen Punkt:** Wie im Original landet das Ergebnis mit „n Quellen ·
+  Gerade eben“ in der Liste, ein Punkt steht, bis man es öffnet (`unread`, Standard `false`, damit bestehende Ausgaben
+  keinen Punkt bekommen und keine Datenmigration nötig ist). Außerdem lassen sich Titel (umbenennen), Bewertung und der
+  Lesestatus per `PATCH /api/notebooks/:id/studio/:outputId` ändern.

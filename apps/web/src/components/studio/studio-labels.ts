@@ -33,33 +33,52 @@ export const TILE_LABEL: Record<StudioKind, string> = {
   [STUDIO_KIND.REPORT]: 'Berichte',
 };
 
+/** The templates of a report in the order of the dialog (the one the reader writes comes first). */
+export const REPORT_TEMPLATES: readonly ReportFormat[] = [
+  REPORT_FORMAT.CUSTOM,
+  REPORT_FORMAT.BRIEFING,
+  REPORT_FORMAT.STUDY_GUIDE,
+  REPORT_FORMAT.BLOG,
+  REPORT_FORMAT.FAQ,
+];
+
 export const FORMAT_LABEL: Record<ReportFormat, string> = {
-  [REPORT_FORMAT.BRIEFING]: 'Briefing',
+  [REPORT_FORMAT.BRIEFING]: 'Überblick',
   [REPORT_FORMAT.FAQ]: 'Häufige Fragen',
-  [REPORT_FORMAT.STUDY_GUIDE]: 'Lernleitfaden',
+  [REPORT_FORMAT.STUDY_GUIDE]: 'Lernplan',
+  [REPORT_FORMAT.BLOG]: 'Blogpost',
+  [REPORT_FORMAT.CUSTOM]: 'Eigenen Bericht erstellen',
 };
 
-/** One line under each template in the dialog of a report. */
+/** What the row of a report in the list says about its template ("Briefing Doc" in the original). */
+export const FORMAT_KIND: Record<ReportFormat, string> = {
+  ...FORMAT_LABEL,
+  [REPORT_FORMAT.CUSTOM]: 'Eigener Bericht',
+};
+
+/** One line under each template in the dialog of a report, worded like the original. */
 export const FORMAT_DESCRIPTION: Record<ReportFormat, string> = {
-  [REPORT_FORMAT.BRIEFING]: 'Überblick über die Quellen mit den wichtigsten Informationen',
+  [REPORT_FORMAT.BRIEFING]: 'Übersicht über deine Quellen mit wichtigen Informationen und Zitaten',
   [REPORT_FORMAT.FAQ]: 'Die häufigsten Fragen, beantwortet aus den Quellen',
-  [REPORT_FORMAT.STUDY_GUIDE]: 'Kernbegriffe und Fragen, um den Stoff zu lernen',
+  [REPORT_FORMAT.STUDY_GUIDE]:
+    'Quiz mit kurzen Antworten, vorgeschlagene Essay-Fragestellungen und Glossar wichtiger Begriffe',
+  [REPORT_FORMAT.BLOG]:
+    'Aufschlussreiche Kernpunkte, zusammengefasst in einem leicht verständlichen Artikel',
+  [REPORT_FORMAT.CUSTOM]:
+    'Berichte nach eigenen Vorstellungen erstellen und Angaben zu Aufbau, Stil, Ton und mehr machen',
 };
 
 const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
 
-/** The line under the title of an output in the list. */
+/**
+ * What a row of the list says before the time: for a report its template, then how many sources it
+ * was made from ("Briefing Doc · 2 Quellen"). An output from before the sources were kept has no count.
+ */
 export function describeOutput(output: StudioOutput): string {
-  switch (output.kind) {
-    case STUDIO_KIND.REPORT:
-      return `Bericht · ${FORMAT_LABEL[output.format]}`;
-    case STUDIO_KIND.FLASHCARDS:
-      return `Karteikarten · ${plural(output.content.cards.length, 'Karte', 'Karten')}`;
-    case STUDIO_KIND.QUIZ:
-      return `Quiz · ${plural(output.content.questions.length, 'Frage', 'Fragen')}`;
-    case STUDIO_KIND.MINDMAP:
-      return `Mindmap · ${plural(output.content.branches.length, 'Ast', 'Äste')}`;
-  }
+  const parts: string[] = [];
+  if (output.kind === STUDIO_KIND.REPORT) parts.push(FORMAT_KIND[output.format]);
+  if (output.request) parts.push(plural(output.request.sources.length, 'Quelle', 'Quellen'));
+  return parts.join(' · ');
 }
 
 /** What a note is called in the list: the start of its text, since a note has no title of its own. */

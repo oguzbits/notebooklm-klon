@@ -115,6 +115,7 @@ export function fakeStudio(schema: Record<string, unknown>, userMessage: string)
 
   if (properties.includes('cards')) {
     return JSON.stringify({
+      title,
       cards: passages.map((p) => ({
         front: `Was steht hier: ${firstWords(p.sentence, STUDIO_TITLE_WORDS)} …?`,
         back: p.sentence,
@@ -124,11 +125,19 @@ export function fakeStudio(schema: Record<string, unknown>, userMessage: string)
   }
   if (properties.includes('questions')) {
     return JSON.stringify({
+      title,
       questions: passages.map((p) => ({
         question: `Welche Aussage passt zur Quelle (${p.label})?`,
         options: [p.sentence, 'Das steht nirgends.', 'Keine der Antworten.', 'Das ist offen.'],
         correctIndex: 0,
         explanation: p.sentence,
+        hint: `Lies die Stelle (${p.label}) noch einmal.`,
+        rationales: [
+          'Das steht so in der Quelle.',
+          'Doch, es steht in der Quelle.',
+          'Eine der Antworten stimmt.',
+          'Die Quelle ist eindeutig.',
+        ],
         chunkIds: [p.label],
       })),
     });

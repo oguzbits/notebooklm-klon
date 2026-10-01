@@ -85,6 +85,8 @@
   --tooltip-foreground: #f2f2f2;
   /* The notification card while the Studio works. */
   --callout: linear-gradient(268deg, rgb(169 168 255 / 0.15), rgb(49 134 255 / 0.15));
+  /* The dot of something new (an output nobody has opened yet). */
+  --dot: #3186ff;
 }
 
 .dark {
@@ -140,6 +142,7 @@
   --node-root: #3a3f99;
   --node-branch: #2b3a5c;
   --callout: linear-gradient(268deg, rgb(169 168 255 / 0.12), rgb(49 134 255 / 0.12));
+  --dot: #76a0ff;
 }
 
 @theme inline {
@@ -191,6 +194,7 @@
   --color-studio-blue: var(--studio-blue);
   --color-studio-green: var(--studio-green);
   --color-tile: var(--tile);
+  --color-dot: var(--dot);
   --color-tooltip: var(--tooltip);
   --color-tooltip-foreground: var(--tooltip-foreground);
   --color-flashcard: var(--flashcard);

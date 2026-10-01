@@ -1,10 +1,4 @@
-import {
-  type CreateStudioBody,
-  type Note,
-  SOURCE_STATUS,
-  STUDIO_KIND,
-  type StudioOutput,
-} from '@nlm/shared';
+import { type CreateStudioBody, type Note, SOURCE_STATUS, type StudioOutput } from '@nlm/shared';
 import {
   ChevronRight,
   LoaderCircle,
@@ -19,10 +13,10 @@ import { type ReactNode, useEffect, useState, useTransition } from 'react';
 import { Panel } from '@/components/notebook/panel';
 import { QueryBoundary } from '@/components/query-boundary';
 import { OutputRowsSkeleton } from '@/components/skeletons';
+import { CreateDialog } from '@/components/studio/create-dialog';
 import { LibraryRow } from '@/components/studio/library-row';
 import { NoteViewer } from '@/components/studio/note-viewer';
 import { OutputViewer } from '@/components/studio/output-viewer';
-import { ReportDialog } from '@/components/studio/report-dialog';
 import {
   CLOSE_NOTE_LABEL,
   CLOSE_VIEW_LABEL,
@@ -37,7 +31,12 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDeleteNote, useNotes } from '@/hooks/use-notes';
 import { useSources } from '@/hooks/use-sources';
-import { useCreateStudioOutput, useDeleteStudioOutput, useStudioOutputs } from '@/hooks/use-studio';
+import {
+  useCreateStudioOutput,
+  useDeleteStudioOutput,
+  useStudioOutputs,
+  useUpdateStudioOutput,
+} from '@/hooks/use-studio';
 import { describeError } from '@/lib/messages';
 import { relativeTime } from '@/lib/relative-time';
 import { cn } from '@/lib/utils';
@@ -129,15 +128,17 @@ export function StudioPanel({
   const sources = useSources(notebookId);
   const create = useCreateStudioOutput(notebookId);
   const remove = useDeleteStudioOutput(notebookId);
+  const update = useUpdateStudioOutput(notebookId);
   const notes = useNotes(notebookId);
   const removeNote = useDeleteNote(notebookId);
   const [open, setOpen] = useState<OpenEntry | null>(null);
   const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
-  const usableCount = (sources.data ?? []).filter(
+  const usableSources = (sources.data ?? []).filter(
     (source) => source.selected && source.status === SOURCE_STATUS.READY
-  ).length;
+  );
+  const usableCount = usableSources.length;
   const usable = usableCount > 0;
   const openedOutput =
     open?.type === ENTRY.OUTPUT ? outputs.data?.find((output) => output.id === open.id) : undefined;
@@ -155,8 +156,8 @@ export function StudioPanel({
     startTransition(() => setOpen(entry));
   };
 
-  const make = (body: CreateStudioBody) =>
-    create.mutate(body, { onSuccess: (output) => show({ type: ENTRY.OUTPUT, id: output.id }) });
+  // The result is not opened by itself: it joins the list with a blue dot, and the reader opens it.
+  const make = (body: CreateStudioBody) => create.mutate(body);
   const blocked = !usable || create.isPending;
 
   const entries: LibraryEntry[] = [
@@ -164,20 +165,11 @@ export function StudioPanel({
     ...(notes.data ?? []).map((note): LibraryEntry => ({ type: ENTRY.NOTE, note })),
   ].sort((a, b) => entryTime(b).localeCompare(entryTime(a)));
 
-  const tile = (kind: (typeof TILE_ORDER)[number], compact: boolean) =>
-    kind === STUDIO_KIND.REPORT ? (
-      <ReportDialog key={kind} onCreate={(format) => make({ kind, format })}>
-        <Tile kind={kind} compact={compact} disabled={blocked} />
-      </ReportDialog>
-    ) : (
-      <Tile
-        key={kind}
-        kind={kind}
-        compact={compact}
-        disabled={blocked}
-        onClick={() => make({ kind })}
-      />
-    );
+  const tile = (kind: (typeof TILE_ORDER)[number], compact: boolean) => (
+    <CreateDialog key={kind} kind={kind} sources={usableSources} onCreate={make}>
+      <Tile kind={kind} compact={compact} disabled={blocked} />
+    </CreateDialog>
+  );
 
   const deleteNoteDialog = (
     <ConfirmDialog
@@ -201,6 +193,10 @@ export function StudioPanel({
   const openEntry = (entry: OpenEntry) => {
     onExpand();
     show(entry);
+    // The blue dot goes out once the output was opened.
+    const output =
+      entry.type === ENTRY.OUTPUT ? outputs.data?.find((item) => item.id === entry.id) : undefined;
+    if (output?.unread) update.mutate({ outputId: output.id, changes: { read: true } });
   };
   const back = () => show(null);
 
@@ -310,7 +306,13 @@ export function StudioPanel({
                         icon={KIND_ICON[entry.output.kind]}
                         iconClassName={KIND_COLOR[entry.output.kind]}
                         title={entry.output.title}
-                        subtitle={`${describeOutput(entry.output)} · ${relativeTime(entry.output.createdAt)}`}
+                        subtitle={[
+                          describeOutput(entry.output),
+                          relativeTime(entry.output.createdAt),
+                        ]
+                          .filter((part) => part !== '')
+                          .join(' · ')}
+                        unread={entry.output.unread}
                         deleting={remove.isPending && remove.variables === entry.output.id}
                         onOpen={() => openEntry({ type: ENTRY.OUTPUT, id: entry.output.id })}
                         onDelete={() => remove.mutate(entry.output.id)}
@@ -321,7 +323,7 @@ export function StudioPanel({
                         icon={NotebookText}
                         iconClassName="text-foreground"
                         title={noteTitle(entry.note)}
-                        subtitle={`Notiz · ${relativeTime(entry.note.createdAt)}`}
+                        subtitle={relativeTime(entry.note.createdAt)}
                         deleting={removeNote.isPending && noteToDelete === entry.note.id}
                         onOpen={() => openEntry({ type: ENTRY.NOTE, id: entry.note.id })}
                         onDelete={() => setNoteToDelete(entry.note.id)}

@@ -1,13 +1,15 @@
 import {
   AnswerSchema,
   CHAT_LANGUAGE,
-  FlashcardsSchema,
+  FlashcardsReplySchema,
   MindmapSchema,
-  QuizSchema,
+  QuizReplySchema,
   REPORT_FORMAT,
   ReportSchema,
   SourceOverviewSchema,
+  STUDIO_DIFFICULTY,
   STUDIO_KIND,
+  STUDIO_SIZE,
 } from '@nlm/shared';
 import { describe, expect, it } from 'vitest';
 
@@ -92,8 +94,18 @@ describe('fakeStudio', () => {
   ];
   const kinds = [
     [{ kind: STUDIO_KIND.REPORT, format: REPORT_FORMAT.BRIEFING }, ReportSchema],
-    [{ kind: STUDIO_KIND.FLASHCARDS }, FlashcardsSchema],
-    [{ kind: STUDIO_KIND.QUIZ }, QuizSchema],
+    [
+      {
+        kind: STUDIO_KIND.FLASHCARDS,
+        size: STUDIO_SIZE.DEFAULT,
+        difficulty: STUDIO_DIFFICULTY.MEDIUM,
+      },
+      FlashcardsReplySchema,
+    ],
+    [
+      { kind: STUDIO_KIND.QUIZ, size: STUDIO_SIZE.DEFAULT, difficulty: STUDIO_DIFFICULTY.MEDIUM },
+      QuizReplySchema,
+    ],
     [{ kind: STUDIO_KIND.MINDMAP }, MindmapSchema],
   ] as const;
 

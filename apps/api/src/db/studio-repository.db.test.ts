@@ -5,6 +5,7 @@ import {
   REPORT_FORMAT,
   SOURCE_KIND,
   SOURCE_STATUS,
+  STUDIO_FEEDBACK,
   STUDIO_KIND,
 } from '@nlm/shared';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
@@ -15,7 +16,9 @@ import {
   createStudioOutput,
   deleteStudioOutput,
   listStudioOutputs,
+  listStudioSources,
   loadStudioChunks,
+  updateStudioOutput,
 } from './studio-repository';
 import { createTestDb, ensureUsers } from './testing/test-db';
 
@@ -29,6 +32,7 @@ const CHUNK_ID = '9b2c7d6e-1f43-4c8a-8a3b-5e7a8f0c1d22';
 const flashcards: NewStudioOutput = {
   kind: STUDIO_KIND.FLASHCARDS,
   title: 'Karteikarten',
+  request: null,
   content: { cards: [{ front: 'F', back: 'B', chunkIds: [CHUNK_ID] }] },
 };
 
@@ -84,6 +88,7 @@ describe('studio outputs', () => {
       kind: STUDIO_KIND.REPORT,
       format: REPORT_FORMAT.FAQ,
       title: FAQ_TITLE,
+      request: null,
       content: {
         title: FAQ_TITLE,
         sections: [{ heading: 'H', statements: [{ text: 'T.', chunkIds: [CHUNK_ID] }] }],
@@ -95,6 +100,52 @@ describe('studio outputs', () => {
     expect(list.map((output) => output.id)).toEqual([second?.id, first?.id]);
     expect(list[1]).toMatchObject(flashcards);
     expect(list[0]).toMatchObject({ kind: STUDIO_KIND.REPORT, format: REPORT_FORMAT.FAQ });
+  });
+
+  it('keeps how an output was asked for, and marks it unread until it is opened', async () => {
+    const notebook = await insertNotebook(USER);
+    const request = {
+      prompt: 'Erstelle Karteikarten.',
+      sources: [{ id: CHUNK_ID, title: 'a.pdf' }],
+    };
+
+    const made = await createStudioOutput(db, USER, notebook.id, { ...flashcards, request });
+    const [listed] = await listStudioOutputs(db, USER, notebook.id);
+
+    expect(made).toMatchObject({ request, unread: true, feedback: null });
+    expect(listed).toMatchObject({ request, unread: true, feedback: null });
+  });
+
+  it('renames an output, keeps the feedback and clears the unread mark', async () => {
+    const notebook = await insertNotebook(USER);
+    const output = await createStudioOutput(db, USER, notebook.id, flashcards);
+    if (!output) throw new Error('no output');
+
+    const renamed = await updateStudioOutput(db, USER, notebook.id, output.id, { title: 'Neu' });
+    const rated = await updateStudioOutput(db, USER, notebook.id, output.id, {
+      feedback: STUDIO_FEEDBACK.GOOD,
+    });
+    const read = await updateStudioOutput(db, USER, notebook.id, output.id, { read: true });
+    const cleared = await updateStudioOutput(db, USER, notebook.id, output.id, { feedback: null });
+
+    expect(renamed).toMatchObject({ title: 'Neu', unread: true, feedback: null });
+    expect(rated).toMatchObject({ title: 'Neu', feedback: STUDIO_FEEDBACK.GOOD });
+    expect(read).toMatchObject({ unread: false, feedback: STUDIO_FEEDBACK.GOOD });
+    expect(cleared).toMatchObject({ unread: false, feedback: null });
+    expect(await listStudioOutputs(db, USER, notebook.id)).toMatchObject([{ title: 'Neu' }]);
+  });
+
+  it('changes nothing of another user and answers null for an output that is not there', async () => {
+    const notebook = await insertNotebook(USER);
+    const output = await createStudioOutput(db, USER, notebook.id, flashcards);
+    if (!output) throw new Error('no output');
+
+    expect(
+      await updateStudioOutput(db, OTHER_USER, notebook.id, output.id, { title: 'X' })
+    ).toBeNull();
+    expect(await updateStudioOutput(db, USER, notebook.id, UNKNOWN_ID, { title: 'X' })).toBeNull();
+    expect(await updateStudioOutput(db, USER, 'kein-uuid', output.id, { title: 'X' })).toBeNull();
+    expect((await listStudioOutputs(db, USER, notebook.id))[0]?.title).toBe('Karteikarten');
   });
 
   it('does not save into, list from or delete in a notebook of another user', async () => {
@@ -120,7 +171,46 @@ describe('studio outputs', () => {
   });
 });
 
+describe('listStudioSources', () => {
+  it('lists the selected, ready sources of the notebook, or only the asked-for ones among them', async () => {
+    const notebook = await insertNotebook(USER);
+    const first = await insertSource(USER, notebook.id, { texts: ['A'] });
+    const second = await insertSource(USER, notebook.id, { texts: ['B'] });
+    await insertSource(USER, notebook.id, { texts: ['nicht gewählt'], selected: false });
+    await insertSource(USER, notebook.id, { texts: ['offen'], status: SOURCE_STATUS.PENDING });
+
+    const all = await listStudioSources(db, USER, notebook.id);
+    const some = await listStudioSources(db, USER, notebook.id, [second.id]);
+
+    expect(all.map((source) => source.id).sort()).toEqual([first.id, second.id].sort());
+    expect(some).toEqual([{ id: second.id, title: 'Quelle' }]);
+  });
+
+  it('ignores an asked-for source that is not selected, not ready, foreign or unknown', async () => {
+    const notebook = await insertNotebook(USER);
+    const other = await insertNotebook(OTHER_USER);
+    const unselected = await insertSource(USER, notebook.id, { texts: ['x'], selected: false });
+    const foreign = await insertSource(OTHER_USER, other.id, { texts: ['fremd'] });
+
+    expect(
+      await listStudioSources(db, USER, notebook.id, [unselected.id, foreign.id, UNKNOWN_ID])
+    ).toEqual([]);
+    expect(await listStudioSources(db, OTHER_USER, notebook.id)).toEqual([]);
+    expect(await listStudioSources(db, USER, 'kein-uuid')).toEqual([]);
+  });
+});
+
 describe('loadStudioChunks', () => {
+  it('returns only the chunks of the sources that were asked for', async () => {
+    const notebook = await insertNotebook(USER);
+    await insertSource(USER, notebook.id, { texts: ['A1'] });
+    const second = await insertSource(USER, notebook.id, { texts: ['B1', 'B2'] });
+
+    const found = await loadStudioChunks(db, USER, notebook.id, 10_000, [second.id]);
+
+    expect(found.map((chunk) => chunk.text)).toEqual(['B1', 'B2']);
+  });
+
   it('returns the chunks of the selected, ready sources in reading order', async () => {
     const notebook = await insertNotebook(USER);
     await insertSource(USER, notebook.id, { texts: ['A1', 'A2'] });

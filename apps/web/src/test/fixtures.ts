@@ -9,6 +9,7 @@ import {
   type SourceSummary,
   STUDIO_KIND,
   type StudioOutput,
+  type StudioRequest,
 } from '@nlm/shared';
 
 export const NOTEBOOK_ID = '3f0f4a4e-6c1e-4a52-9a53-0d6d1c6f2a10';
@@ -88,11 +89,22 @@ export const note = (overrides: Partial<Note> = {}): Note => ({
 
 export const OUTPUT_ID = '5e3d8f0a-3b69-4c2d-8e45-7f9a1b2c3d44';
 
+/** What every output carries besides its content: how it was asked for, read or not, rated or not. */
+const OUTPUT_META: { request: StudioRequest; unread: boolean; feedback: null } = {
+  request: {
+    prompt: 'Erstelle Karteikarten zu den Quellen.',
+    sources: [{ id: SOURCE_ID, title: 'projekt.pdf' }],
+  },
+  unread: false,
+  feedback: null,
+};
+
 export const flashcardsOutput = (): StudioOutput => ({
   id: OUTPUT_ID,
   kind: STUDIO_KIND.FLASHCARDS,
   title: 'Karteikarten',
   createdAt: CREATED_AT,
+  ...OUTPUT_META,
   content: {
     cards: [
       { front: 'Wer leitet das Projekt?', back: 'Dr. Brandt', chunkIds: [CHUNK_ID] },
@@ -106,6 +118,7 @@ export const quizOutput = (): StudioOutput => ({
   kind: STUDIO_KIND.QUIZ,
   title: 'Quiz',
   createdAt: CREATED_AT,
+  ...OUTPUT_META,
   content: {
     questions: [
       {
@@ -124,6 +137,7 @@ export const mindmapOutput = (): StudioOutput => ({
   kind: STUDIO_KIND.MINDMAP,
   title: 'Nordlicht',
   createdAt: CREATED_AT,
+  ...OUTPUT_META,
   content: {
     title: 'Nordlicht',
     branches: [
