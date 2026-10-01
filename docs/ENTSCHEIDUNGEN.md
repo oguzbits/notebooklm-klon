@@ -555,3 +555,31 @@ Bewusst nicht geändert (Notiz):
 - **Oberfläche:** Bedienflächen von 36 bis 40 px und Reiter mit 28 px Höhe folgen dem Original, nicht den 44 px der Empfehlung.
   `prefers-reduced-motion` setzt alle Übergänge auf 0,01 ms (`index.css`), ohne Ersatz für die Rückmeldung. Weder `PRODUCT.md` noch
   `DESIGN.md` gibt es; der Abgleich liegt in [DESIGN-ABGLEICH.md](DESIGN-ABGLEICH.md).
+
+### Prüfung auf Redundanz und Ersatz durch Pakete (2026-10-01)
+
+Gemessen an Zeilen: Frontend-Komponenten 8.000, Datenbank-Schicht 1.900, Routen 1.300, `core` 950, Gemini-Schicht 360. Die
+Duplikat-Quote von `jscpd` liegt bei 0,74 % (15 kleine Treffer, vor allem Testläufe und Schema), kein Ersatz nötig. Geprüft wurde, ob
+eigener Code durch ein Paket ersetzbar ist. Ergebnis: Es bleibt, wie es ist.
+
+- **HTML nach Markdown (`parsing/html-text.ts`, 324 Zeilen) bleibt.** Versuch mit `turndown` plus `turndown-plugin-gfm` und denselben
+  23 Fällen wie in `html-text.test.ts`: nur 8 gleich. Die Abweichungen sind nicht nur Schönheit: `javascript:`- und `mailto:`-Links
+  bleiben erhalten, `data:`-Bilder erscheinen, relative Links werden nicht aufgelöst (kein Basis-Link), Tabellen ohne Kopfzeile bleiben
+  rohes HTML, `<pre>` wird kein Codeblock, der Strich in einer Zelle wird nicht maskiert und Überschriften behalten Links. Jede Angleichung
+  wäre eine eigene `turndown`-Regel; am Ende stünde etwa derselbe Umfang plus eine Abhängigkeit. Außerdem hängt der Inhalts-Hash der Quelle
+  (Regel „idempotente Aufnahme“) vom Text, den dieser Schritt erzeugt.
+- **SSRF-Schutz (`core/ssrf.ts`, `import/fetch-url.ts`) bleibt.** Er nutzt schon `node:net` (`BlockList`, `isIP`), und die Pakete für
+  diesen Zweck prüfen nicht erneut nach jedem Redirect und passen nicht zu `undici` mit festgelegter Adresse.
+- **Zwei gleitende Fenster bleiben getrennt.** `RateLimiter` (blockiert, gewichtet nach Tokens, für Gemini) und `createWindowLimit`
+  (nimmt oder lehnt ab, je Nutzer) haben verschiedene Aufgaben; ein Paket (`rate-limiter-flexible`, `bottleneck`) deckt keins der beiden
+  mit Uhr zum Testen ab (siehe Eintrag oben zum Limiter).
+- **Bildtyp (`core/image-type.ts`, 25 Zeilen) bleibt.** `file-type` erkennt Hunderte Typen und lädt viel; wir erlauben drei.
+- **Kleines bleibt klein:** `relative-time.ts` und `use-wide-layout.ts` nutzen schon `Intl` und `useSyncExternalStore`. Der
+  SSE-Leser im Browser (`chat-stream.ts`, 49 Zeilen) ließe sich durch `eventsource-parser` ersetzen; der Gewinn wäre etwa 15 Zeilen.
+  `pdf-lib` dient nur dem Seitenzählen (7 Zeilen), ist aber der kleinste verlässliche Weg ohne Anbieteraufruf.
+- **Abweichung vom Plan, nachgetragen:** [PLAN.md](PLAN.md) nennt für die LLM-Schicht das Vercel AI SDK. Gebaut ist ein eigener
+  schlanker Client (`ai/gemini-http.ts`, `gemini-chat.ts`, `gemini-pdf-parser.ts`, `gemini-embedder.ts`, zusammen 360 Zeilen) mit Wiederholung bei
+  429/503 und dem Ratenbegrenzer davor. Das wurde damals nicht eingetragen. Ein Wechsel würde Zeilen sparen, aber die Tests, die auf der
+  Form der HTTP-Antworten beruhen (MSW), und den Strom der Aussagen (`core/statement-stream.ts`) neu fassen, und die in den Spikes
+  gemessenen Eigenheiten (Gedankenzusammenfassungen, `thinkingLevel`) laufen heute über rohe Felder. Nicht jetzt; wenn das Studio mit
+  mehreren Modellen arbeiten soll, lohnt ein neuer Blick.
