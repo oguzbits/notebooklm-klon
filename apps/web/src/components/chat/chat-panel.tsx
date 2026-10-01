@@ -1,5 +1,5 @@
 import { CHAT_ROLE, SOURCE_STATUS } from '@nlm/shared';
-import { ArrowUp, FileText, LoaderCircle, MessageCircleQuestion } from 'lucide-react';
+import { ArrowDown, ArrowUp, FileText, LoaderCircle, MessageCircleQuestion } from 'lucide-react';
 import {
   type FormEvent,
   Fragment,
@@ -26,6 +26,9 @@ import { useAskQuestion, useChatHistory } from '@/hooks/use-chat';
 import { type Suggestions, useSuggestedQuestions } from '@/hooks/use-overview';
 import { useSources } from '@/hooks/use-sources';
 import { isSameDay } from '@/lib/day';
+
+/** How far from the end (in px) the chat may be and still count as being at its end. */
+const END_TOLERANCE = 48;
 
 /** Whether a message at this time opens a new day of the conversation. */
 const startsDay = (previous: { createdAt: string } | undefined, createdAt: string) =>
@@ -89,6 +92,8 @@ export const ChatPanel = memo(function ChatPanel({
   const ask = useAskQuestion(notebookId);
   const suggestions = useSuggestedQuestions(notebookId, sources.data ?? []);
   const bottom = useRef<HTMLDivElement>(null);
+  const scroller = useRef<HTMLDivElement>(null);
+  const [atEnd, setAtEnd] = useState(true);
   const [question, setQuestion] = useState('');
   const handled = useRef(0);
 
@@ -116,6 +121,17 @@ export const ChatPanel = memo(function ChatPanel({
     handled.current = incoming.id;
     if (canAsk) ask.mutate(incoming.question);
   }, [incoming, canAsk, ask]);
+
+  const trackEnd = () => {
+    const area = scroller.current;
+    if (!area) return;
+    setAtEnd(area.scrollHeight - area.scrollTop - area.clientHeight <= END_TOLERANCE);
+  };
+
+  const jumpToEnd = () => {
+    const area = scroller.current;
+    area?.scrollTo({ top: area.scrollHeight, behavior: 'smooth' });
+  };
 
   const send = (form: HTMLFormElement) => {
     const text = String(new FormData(form).get('question') ?? '').trim();
@@ -148,101 +164,121 @@ export const ChatPanel = memo(function ChatPanel({
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 z-10 h-7 bg-gradient-to-b from-background from-0% via-background/98 via-10% to-transparent"
       />
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5">
-        <div className="mx-auto flex max-w-[756px] flex-col gap-3 px-6 pt-2">
-          <NotebookOverview notebookId={notebookId} sources={sources.data} />
-          <QueryBoundary
-            query={history}
-            // The overview has placeholders of its own while it loads, a second set would double them.
-            loading={hasReady ? null : <ChatSkeleton />}
-            isEmpty={(messages) => messages.length === 0 && !ask.live}
-            empty={
-              hasReady ? (
-                <div className="flex flex-col items-center gap-2 py-2 text-center">
-                  <p className="max-w-sm text-ui text-muted-foreground">
-                    Jede Aussage einer Antwort hat eine Nummer, die zur Textstelle führt.
-                  </p>
-                  <SuggestionList
-                    suggestions={suggestions}
-                    canAsk={canAsk}
-                    onAsk={(text) => ask.mutate(text)}
-                  />
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-2 py-16 text-center">
-                  <MessageCircleQuestion className="size-12 text-muted-foreground" aria-hidden />
-                  <p className="text-xl font-title">Stelle deine erste Frage</p>
-                  <p className="max-w-sm text-read text-muted-foreground">
-                    Die Antwort stützt sich nur auf deine ausgewählten Quellen. Jede Aussage hat
-                    eine Nummer, die zur Textstelle führt.
-                  </p>
-                  <SuggestionList
-                    suggestions={suggestions}
-                    canAsk={canAsk}
-                    onAsk={(text) => ask.mutate(text)}
-                  />
-                </div>
-              )
-            }
-          >
-            {(messages) => (
-              <>
-                {messages.map((message, index) => (
-                  <Fragment key={message.id}>
-                    {startsDay(messages[index - 1], message.createdAt) && (
-                      <DayDivider iso={message.createdAt} />
-                    )}
-                    <MessageView
-                      message={message}
-                      notebookId={notebookId}
-                      onOpenCitation={onOpenCitation}
-                    />
-                  </Fragment>
-                ))}
-                {lastFollowUps.length > 0 && !ask.live && (
-                  <div className="pr-8">
-                    <FollowUps
-                      questions={lastFollowUps}
-                      disabled={!canAsk}
-                      onAsk={(suggestion) => ask.mutate(suggestion)}
+      <div className="relative min-h-0 flex-1">
+        <div
+          ref={scroller}
+          data-testid="chat-scroll"
+          onScroll={trackEnd}
+          className="h-full overflow-y-auto px-5 pb-5"
+        >
+          <div className="mx-auto flex max-w-[756px] flex-col gap-3 px-6 pt-2">
+            <NotebookOverview notebookId={notebookId} sources={sources.data} />
+            <QueryBoundary
+              query={history}
+              // The overview has placeholders of its own while it loads, a second set would double them.
+              loading={hasReady ? null : <ChatSkeleton />}
+              isEmpty={(messages) => messages.length === 0 && !ask.live}
+              empty={
+                hasReady ? (
+                  <div className="flex flex-col items-center gap-2 py-2 text-center">
+                    <p className="max-w-sm text-ui text-muted-foreground">
+                      Jede Aussage einer Antwort hat eine Nummer, die zur Textstelle führt.
+                    </p>
+                    <SuggestionList
+                      suggestions={suggestions}
+                      canAsk={canAsk}
+                      onAsk={(text) => ask.mutate(text)}
                     />
                   </div>
-                )}
-                {ask.live && (
-                  <>
-                    {startsDay(lastMessage, ask.live.askedAt) && (
-                      <DayDivider iso={ask.live.askedAt} />
-                    )}
-                    <QuestionBubble text={ask.live.question} askedAt={ask.live.askedAt} />
-                    <div className="pr-8">
-                      <AnswerView
+                ) : (
+                  <div className="flex flex-col items-center gap-2 py-16 text-center">
+                    <MessageCircleQuestion className="size-12 text-muted-foreground" aria-hidden />
+                    <p className="text-xl font-title">Stelle deine erste Frage</p>
+                    <p className="max-w-sm text-read text-muted-foreground">
+                      Die Antwort stützt sich nur auf deine ausgewählten Quellen. Jede Aussage hat
+                      eine Nummer, die zur Textstelle führt.
+                    </p>
+                    <SuggestionList
+                      suggestions={suggestions}
+                      canAsk={canAsk}
+                      onAsk={(text) => ask.mutate(text)}
+                    />
+                  </div>
+                )
+              }
+            >
+              {(messages) => (
+                <>
+                  {messages.map((message, index) => (
+                    <Fragment key={message.id}>
+                      {startsDay(messages[index - 1], message.createdAt) && (
+                        <DayDivider iso={message.createdAt} />
+                      )}
+                      <MessageView
+                        message={message}
                         notebookId={notebookId}
-                        statements={ask.live.statements}
-                        finished={false}
                         onOpenCitation={onOpenCitation}
                       />
-                      <p
-                        className="mt-2 flex items-center gap-2 text-ui text-muted-foreground"
-                        role="status"
-                      >
-                        <LoaderCircle className="size-4 animate-spin" aria-hidden />
-                        Antwort wird geschrieben …
-                      </p>
+                    </Fragment>
+                  ))}
+                  {lastFollowUps.length > 0 && !ask.live && (
+                    <div className="pr-8">
+                      <FollowUps
+                        questions={lastFollowUps}
+                        disabled={!canAsk}
+                        onAsk={(suggestion) => ask.mutate(suggestion)}
+                      />
                     </div>
-                  </>
-                )}
-              </>
+                  )}
+                  {ask.live && (
+                    <>
+                      {startsDay(lastMessage, ask.live.askedAt) && (
+                        <DayDivider iso={ask.live.askedAt} />
+                      )}
+                      <QuestionBubble text={ask.live.question} askedAt={ask.live.askedAt} />
+                      <div className="pr-8">
+                        <AnswerView
+                          notebookId={notebookId}
+                          statements={ask.live.statements}
+                          finished={false}
+                          onOpenCitation={onOpenCitation}
+                        />
+                        <p
+                          className="mt-2 flex items-center gap-2 text-ui text-muted-foreground"
+                          role="status"
+                        >
+                          <LoaderCircle className="size-4 animate-spin" aria-hidden />
+                          Antwort wird geschrieben …
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+            </QueryBoundary>
+            {ask.isError && (
+              <ErrorNotice
+                error={ask.error}
+                onRetry={() => ask.variables && ask.mutate(ask.variables)}
+                retrying={ask.isPending}
+              />
             )}
-          </QueryBoundary>
-          {ask.isError && (
-            <ErrorNotice
-              error={ask.error}
-              onRetry={() => ask.variables && ask.mutate(ask.variables)}
-              retrying={ask.isPending}
-            />
-          )}
-          <div ref={bottom} />
+            <div ref={bottom} />
+          </div>
         </div>
+        {!atEnd && (
+          <Button
+            type="button"
+            size="icon"
+            variant="secondary"
+            tooltip="Nach unten springen"
+            aria-label="Nach unten springen"
+            onClick={jumpToEnd}
+            className="absolute bottom-3 left-1/2 size-9 -translate-x-1/2 rounded-full bg-card shadow-glow"
+          >
+            <ArrowDown />
+          </Button>
+        )}
       </div>
 
       <div>

@@ -1,5 +1,5 @@
 import { API_ERROR, CHAT_EVENT, type ChatEvent, NOTE_KIND, SOURCE_STATUS } from '@nlm/shared';
-import { screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse, type JsonBodyType } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -359,6 +359,45 @@ describe('ChatPanel', () => {
 
     expect(await screen.findByText(/Vorschläge konnten nicht erstellt werden/)).toBeTruthy();
     expect(screen.getByLabelText('Deine Frage').hasAttribute('disabled')).toBe(false);
+  });
+
+  describe('the jump to the end', () => {
+    // jsdom has no layout: the scroll area gets the sizes of a long conversation by hand.
+    function scrollArea(position: number) {
+      const area = screen.getByTestId('chat-scroll');
+      Object.defineProperty(area, 'scrollHeight', { configurable: true, value: 1000 });
+      Object.defineProperty(area, 'clientHeight', { configurable: true, value: 400 });
+      area.scrollTop = position;
+      area.scrollTo = vi.fn();
+      fireEvent.scroll(area);
+      return area;
+    }
+
+    it('shows a button when the chat is not at its end and scrolls down on click', async () => {
+      server.use(sources(), history([answer([{ text: 'Aussage.', chunkIds: [CHUNK_ID] }])]));
+      renderChat();
+      await screen.findByText('Aussage.');
+      const user = userEvent.setup();
+
+      const area = scrollArea(0);
+      await user.click(await screen.findByRole('button', { name: 'Nach unten springen' }));
+
+      expect(area.scrollTo).toHaveBeenCalledWith({ top: 1000, behavior: 'smooth' });
+    });
+
+    it('hides the button again at the end of the chat', async () => {
+      server.use(sources(), history([answer([{ text: 'Aussage.', chunkIds: [CHUNK_ID] }])]));
+      renderChat();
+      await screen.findByText('Aussage.');
+
+      scrollArea(0);
+      await screen.findByRole('button', { name: 'Nach unten springen' });
+      scrollArea(590);
+
+      await waitFor(() =>
+        expect(screen.queryByRole('button', { name: 'Nach unten springen' })).toBeNull()
+      );
+    });
   });
 
   it('saves an answer as a note and then shows that it is saved', async () => {
