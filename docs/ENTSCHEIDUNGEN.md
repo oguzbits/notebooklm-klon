@@ -503,3 +503,18 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   `core` mit einer Implementierung und einem Fake für Tests. Entscheidung des Nutzers, auch um Full-Stack-Können zu zeigen.
   Kein AWS nötig; bei Plan B (Render) wäre ein Anbieter wie R2 oder S3 nötig, Preise vorher prüfen. Das Volume ist
   dauerhaft, aber nicht gesichert (wie die Datenbank auf demselben Server). Wird als letzter Schritt dieses Dialogs gebaut.
+
+- **Gebaut in dieser Runde** (je ein Commit auf `feat/gaps-round-4`): Knopf „Nach unten springen“ (sichtbar ab 48 px Abstand zum Ende);
+  „Notizbuch anpassen“ (Titelblock und Menü öffnen den Dialog: Titel und eigene Zusammenfassung; die eigene Zusammenfassung ersetzt die
+  des Modells, kostet keinen Modellaufruf, das Emoji bleibt; Spalte `custom_summary`, Migration 0013); Reihenfolge der Aktionsleiste
+  (In Notiz speichern vor Kopieren); Quellen sortieren (Letzte, Titel, Typ; ohne Auswahl bleibt die Reihenfolge des Servers); Quelle
+  umbenennen (der Titel gehört zur Quelle und gilt in allen Notizbüchern des Nutzers); Studio-Ausgabe umbenennen (ein gemeinsamer
+  `RenameDialog`; „Prompt und Quellen ansehen“ gibt es schon als Chip in der Ansicht); Notizbuch kopieren (verknüpft dieselben
+  Quellen, es wird nichts neu gelesen oder berechnet, weil ein Inhalt pro Nutzer nur einmal vorkommen darf; Chat, Notizen und
+  Studio-Ausgaben bleiben beim Original); Startseite: Titel bearbeiten und Oben anpinnen (Spalte `pinned_at`, Migration 0014).
+- **Korrigiert:** Die Bestätigen-Dialoge schlossen sich beim Klick, bevor ein Fehler zu lesen war. Der Knopf schließt jetzt nicht mehr
+  selbst, die Aufrufer schließen bei Erfolg.
+- **Bewusst nicht gebaut:** Handy-Eingabeleiste mit Dokument-Symbol (gibt es schon), Ausgabesprache als Konto-Einstellung (die Sprache
+  der Antworten lässt sich je Notizbuch unter „Chat konfigurieren“ wählen), „Alle Notizen als Quelle festlegen“.
+- **Offen:** Titelbild mit S3-kompatiblem Speicher; Thoughts und Web-Suche warten auf die Entscheidung des Nutzers (Ergebnisse in
+  [SPIKE-ERGEBNISSE.md](SPIKE-ERGEBNISSE.md), Abschnitt 5).
