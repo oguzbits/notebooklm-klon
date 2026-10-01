@@ -646,3 +646,16 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
   Quellen in einer SQL-Anweisung (vorher eine Anfrage pro Quelle, bei Abbruch halb geändert).
 - Erledigt: `ViewerFrame` nimmt acht Props statt 17 (Titel, Prompt, Bewertung und Löschen als Gruppen).
 - Geprüft, bleibt: Die rohen `fetch`-Aufrufe sind begründet. Better Auth (`auth.ts`) steht nicht im `AppType`, der Chat-Stream wird als Stream gelesen, und die beiden Uploads (Cover, Datei) sind Multipart, das der typisierte Client nicht beschreibt.
+
+## 2026-10-01 (Titelblock im Chat: Hover wie im Original)
+
+- Gemessen im Original (hell und dunkel, 0,2 s Übergang): Der Titelblock ragt 24 px über den Text hinaus. Ohne Titelbild wird
+  die Fläche `surface-dim` (bei uns `--muted`) und eine 192 px große Landschaft (Sonne und Berg) blendet unten rechts ein
+  (Deckkraft 12 % dunkel, 8 % hell, ohne Zeigerereignisse, vom Block abgeschnitten). Mit Titelbild liegt ein weißer Schleier
+  mit 8 % Deckkraft darüber.
+- Umsetzung in `notebook-overview.tsx`: `group` auf dem Kopf, Fläche per `hover:bg-muted`, Symbol `Mountain` aus lucide
+  (gefüllt, `text-foreground/10`) statt des Material-Symbols, Schleier per `group-hover`. Der Block ist jetzt auch mit Bild
+  `-mx-6 px-6`, der Titel steht damit bündig mit dem Fließtext (vorher 24 px eingerückt). Nur Tokens, keine Palettenfarben.
+- Bewusst nicht übernommen: die genaue Form des Material-Symbols (die Sonne fehlt). Der Zweck ist eine ruhige Andeutung.
+- Geprüft im Browser: hell, dunkel, 390 px (kein horizontaler Überlauf). Der Test prüft die Klassen, nicht den Hover selbst
+  (jsdom kennt kein `:hover`).

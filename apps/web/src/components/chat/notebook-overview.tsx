@@ -1,5 +1,5 @@
 import type { Notebook, SourceSummary } from '@nlm/shared';
-import { Check, Pin } from 'lucide-react';
+import { Check, Mountain, Pin } from 'lucide-react';
 import { useState } from 'react';
 
 import { InlineText } from '@/components/chat/inline-text';
@@ -19,6 +19,45 @@ import { cn } from '@/lib/utils';
 
 const SUMMARY_NOTE_TITLE = 'Zusammenfassung';
 
+/** What lies behind the title: the picture with its fade, or the symbol; both react to the pointer. */
+function CoverBackdrop({ emoji, cover }: { emoji: string; cover: string | null }) {
+  return (
+    <>
+      {cover ? (
+        <>
+          {/* The picture of the reader fills the cover; the fade keeps the title readable on it. */}
+          <img src={cover} alt="" className="absolute inset-0 size-full object-cover" />
+          <span
+            aria-hidden
+            className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent"
+          />
+          <span
+            aria-hidden
+            data-cover-hover="veil"
+            className="pointer-events-none absolute inset-0 bg-background opacity-0 transition-opacity duration-200 group-hover:opacity-[0.08]"
+          />
+        </>
+      ) : (
+        <>
+          <Mountain
+            aria-hidden
+            data-cover-hover="landscape"
+            fill="currentColor"
+            strokeWidth={0}
+            className="pointer-events-none absolute right-0 -bottom-8 size-48 text-foreground/10 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+          />
+          <span
+            aria-hidden
+            className="absolute top-6 left-6 flex size-10 items-center justify-center text-[40px] leading-10"
+          >
+            {emoji}
+          </span>
+        </>
+      )}
+    </>
+  );
+}
+
 /** The cover: the picture or the symbol of the notebook, its title and how many sources it holds. */
 function OverviewCover({
   notebook,
@@ -32,36 +71,21 @@ function OverviewCover({
   onCustomize: () => void;
 }) {
   return (
-    // 265 high like in the original; on a phone, which was not measured, a good deal shorter.
+    // 265 high like in the original; on a phone, which was not measured, a good deal shorter. The
+    // panel reaches 24 px beyond the text on each side; on hover it fills (no picture) or gets a veil.
     <header
       className={cn(
-        'relative flex min-h-[200px] flex-col justify-end pb-6 sm:min-h-[265px]',
-        cover && 'overflow-hidden rounded-3xl px-6'
+        'group relative -mx-6 flex min-h-[200px] flex-col justify-end overflow-hidden rounded-panel px-6 pb-6 sm:min-h-[265px]',
+        !cover && 'transition-colors duration-200 hover:bg-muted'
       )}
     >
-      {cover ? (
-        <>
-          {/* The picture of the reader fills the cover; the fade keeps the title readable on it. */}
-          <img src={cover} alt="" className="absolute inset-0 size-full object-cover" />
-          <span
-            aria-hidden
-            className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent"
-          />
-        </>
-      ) : (
-        <span
-          aria-hidden
-          className="absolute top-6 left-0 flex size-10 items-center justify-center text-[40px] leading-10"
-        >
-          {emoji}
-        </span>
-      )}
+      <CoverBackdrop emoji={emoji} cover={cover} />
       {/* Like the original: the whole cover is one invisible control that opens "Notebook anpassen". */}
       <button
         type="button"
         aria-label="Notizbuch anpassen"
         onClick={onCustomize}
-        className="absolute inset-0 rounded-3xl"
+        className="absolute inset-0 cursor-pointer rounded-panel"
       />
       {notebook && (
         <>

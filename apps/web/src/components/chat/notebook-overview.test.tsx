@@ -96,6 +96,30 @@ describe('NotebookOverview', () => {
     expect(screen.queryByText('🤖')).toBeNull();
   });
 
+  it('fades in a landscape on the cover without a picture and a veil on a cover with one', async () => {
+    const version = '9b2c7d6e-1f43-4c8a-8a3b-5e7a8f0c1d22';
+    serve();
+    const bare = renderOverview();
+    await screen.findByRole('heading', { name: 'Jev: ein Modell' });
+    const landscape = bare.container.querySelector('[data-cover-hover="landscape"]');
+    expect(landscape?.getAttribute('aria-hidden')).toBe('true');
+    expect(landscape?.getAttribute('class')).toContain('group-hover:opacity-100');
+    expect(landscape?.getAttribute('class')).toContain('pointer-events-none');
+    expect(bare.container.querySelector('[data-cover-hover="veil"]')).toBeNull();
+    bare.unmount();
+
+    server.use(
+      http.get('*/api/notebooks', () =>
+        HttpResponse.json([notebook({ title: 'Jev: ein Modell', coverVersion: version })])
+      )
+    );
+    const pictured = renderOverview();
+    await waitFor(() => expect(pictured.container.querySelector('img')).not.toBeNull());
+    const veil = pictured.container.querySelector('[data-cover-hover="veil"]');
+    expect(veil?.className).toContain('group-hover:opacity-[0.08]');
+    expect(pictured.container.querySelector('[data-cover-hover="landscape"]')).toBeNull();
+  });
+
   it('opens the customizing of the notebook when the cover is clicked', async () => {
     serve();
     renderOverview();
