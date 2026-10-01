@@ -6,6 +6,8 @@ export {
   ApiErrorSchema,
 } from './api-error';
 export {
+  type AnswerTrace,
+  AnswerTraceSchema,
   CHAT_EVENT,
   type ChatEvent,
   ChatEventSchema,

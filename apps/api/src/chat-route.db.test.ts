@@ -2,8 +2,10 @@ import {
   API_ERROR,
   ApiErrorSchema,
   CHAT_EVENT,
+  CHAT_ROLE,
   type ChatEvent,
   ChatEventSchema,
+  ChatMessageListSchema,
   NotebookSchema,
   SubmitSourceResultSchema,
 } from '@nlm/shared';
@@ -168,6 +170,26 @@ describe('POST /api/notebooks/:id/chat', () => {
     ]);
     expect(harness.modelInputs[0]?.user).toContain('Dr. Brandt leitet das Projekt Nordlicht.');
     expect(harness.modelInputs[0]?.user).toContain('Question: Wer leitet es?');
+  });
+
+  it('keeps how the answer came about, so the history can show it', async () => {
+    const notebook = await createNotebook(alice);
+    await addText(alice, notebook, 'projekt.txt', 'Dr. Brandt leitet das Projekt Nordlicht.');
+    await harness.runJobs();
+    await (
+      await app.request(`/api/notebooks/${notebook}/chat`, post(alice, { question: 'Wer?' }))
+    ).text();
+
+    const history = ChatMessageListSchema.parse(
+      await (
+        await app.request(`/api/notebooks/${notebook}/messages`, { headers: { cookie: alice } })
+      ).json()
+    );
+
+    const answer = history.find((message) => message.role === CHAT_ROLE.ASSISTANT);
+    expect(answer).toMatchObject({
+      trace: { sourcesSearched: 1, passagesFound: 1, droppedStatements: 0, strippedCitations: 0 },
+    });
   });
 
   it('never gives the model text of a deselected source or of another user', async () => {

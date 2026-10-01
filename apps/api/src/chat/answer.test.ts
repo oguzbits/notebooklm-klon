@@ -137,6 +137,8 @@ describe('answerQuestion', () => {
       {
         type: CHAT_EVENT.DONE,
         statements: 1,
+        sourcesSearched: 1,
+        passagesFound: 2,
         droppedStatements: 0,
         strippedCitations: 0,
         followUps: [],
@@ -214,6 +216,8 @@ describe('answerQuestion', () => {
       {
         type: CHAT_EVENT.DONE,
         statements: 1,
+        sourcesSearched: 1,
+        passagesFound: 2,
         droppedStatements: 2,
         strippedCitations: 2,
         followUps: [],
@@ -299,6 +303,8 @@ describe('answerQuestion', () => {
       {
         type: CHAT_EVENT.DONE,
         statements: 0,
+        sourcesSearched: 1,
+        passagesFound: 0,
         droppedStatements: 0,
         strippedCitations: 0,
         followUps: [],

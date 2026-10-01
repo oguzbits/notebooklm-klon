@@ -164,6 +164,9 @@ export const chatMessages = pgTable(
     // The questions the assistant suggested after an answer (FollowUpsSchema). Null: none, or an
     // answer from before they existed.
     followUps: jsonb('follow_ups'),
+    // How the answer came about (AnswerTraceSchema). Null: an answer from before it was kept, or one
+    // that was cut off before it finished.
+    trace: jsonb('trace'),
     createdAt: createdAt(),
   },
   (table) => [index('chat_messages_notebook_seq_idx').on(table.notebookId, table.seq)]

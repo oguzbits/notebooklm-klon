@@ -1,5 +1,6 @@
 import {
   type AnswerStatement,
+  type AnswerTrace,
   CHAT_ROLE,
   type ChatMessage,
   ChatMessageSchema,
@@ -99,6 +100,7 @@ export async function listChatMessages(
       text: row.text ?? undefined,
       statements: row.statements ?? undefined,
       followUps: row.followUps ?? undefined,
+      trace: row.trace ?? undefined,
       createdAt: row.createdAt.toISOString(),
     })
   );
@@ -109,6 +111,7 @@ interface NewMessage {
   text: string | null;
   statements: AnswerStatement[] | null;
   followUps: string[];
+  trace: AnswerTrace | null;
 }
 
 /** Inserts only into a notebook of the user; throws when there is none. */
@@ -120,10 +123,11 @@ async function saveMessage(
 ): Promise<void> {
   const statements = message.statements === null ? null : JSON.stringify(message.statements);
   const followUps = message.followUps.length === 0 ? null : JSON.stringify(message.followUps);
+  const trace = message.trace === null ? null : JSON.stringify(message.trace);
   const result = await db.execute(sql`
-    INSERT INTO chat_messages (notebook_id, user_id, role, text, statements, follow_ups)
+    INSERT INTO chat_messages (notebook_id, user_id, role, text, statements, follow_ups, trace)
     SELECT n.id, n.user_id, ${message.role}::chat_role, ${message.text}, ${statements}::jsonb,
-      ${followUps}::jsonb
+      ${followUps}::jsonb, ${trace}::jsonb
     FROM notebooks n
     WHERE n.id = ${notebookId} AND n.user_id = ${userId}
     RETURNING id`);
@@ -136,6 +140,7 @@ export const saveUserMessage = (db: Database, userId: string, notebookId: string
     text,
     statements: null,
     followUps: [],
+    trace: null,
   });
 
 export const saveAssistantMessage = (
@@ -143,13 +148,15 @@ export const saveAssistantMessage = (
   userId: string,
   notebookId: string,
   statements: AnswerStatement[],
-  followUps: string[] = []
+  followUps: string[] = [],
+  trace: AnswerTrace | null = null
 ) =>
   saveMessage(db, userId, notebookId, {
     role: CHAT_ROLE.ASSISTANT,
     text: null,
     statements,
     followUps,
+    trace,
   });
 
 /** Deletes the whole chat history of a notebook. False when it is not the user's or does not exist. */

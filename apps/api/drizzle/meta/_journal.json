@@ -106,6 +106,13 @@
       "when": 1790862538419,
       "tag": "0014_thin_green_goblin",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1790864034222,
+      "tag": "0015_luxuriant_deathstrike",
+      "breakpoints": true
     }
   ]
 }

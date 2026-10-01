@@ -66,8 +66,29 @@ describe('reader contract', () => {
     };
 
     expect(ChatMessageSchema.parse(question)).toEqual(question);
-    expect(ChatMessageSchema.parse(answer)).toEqual({ ...answer, followUps: [] });
+    expect(ChatMessageSchema.parse(answer)).toEqual({ ...answer, followUps: [], trace: null });
     expect(ChatMessageListSchema.parse([question, answer])).toHaveLength(2);
+  });
+
+  it('keeps how an answer came about, and gives an older answer none', () => {
+    const answer = {
+      id: OTHER_ID,
+      role: CHAT_ROLE.ASSISTANT,
+      statements: [{ text: 'Dr. Brandt.', chunkIds: [ID] }],
+      createdAt: CREATED_AT,
+    };
+    const trace = {
+      sourcesSearched: 2,
+      passagesFound: 5,
+      droppedStatements: 1,
+      strippedCitations: 0,
+    };
+
+    expect(ChatMessageSchema.parse({ ...answer, trace })).toMatchObject({ trace });
+    expect(ChatMessageSchema.parse(answer)).toMatchObject({ trace: null });
+    expect(ChatMessageSchema.safeParse({ ...answer, trace: { sourcesSearched: -1 } }).success).toBe(
+      false
+    );
   });
 
   it('keeps the questions an answer suggested, and gives an older answer none', () => {

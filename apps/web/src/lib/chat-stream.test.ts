@@ -11,6 +11,8 @@ const STATEMENT: ChatEvent = { type: CHAT_EVENT.STATEMENT, text: 'Aussage.', chu
 const DONE: ChatEvent = {
   type: CHAT_EVENT.DONE,
   statements: 1,
+  sourcesSearched: 1,
+  passagesFound: 2,
   droppedStatements: 0,
   strippedCitations: 0,
   followUps: [],

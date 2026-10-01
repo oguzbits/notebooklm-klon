@@ -170,6 +170,8 @@ describe('ChatPanel', () => {
     const done: ChatEvent = {
       type: CHAT_EVENT.DONE,
       statements: 1,
+      sourcesSearched: 1,
+      passagesFound: 2,
       droppedStatements: 0,
       strippedCitations: 0,
       followUps: [],
@@ -434,6 +436,28 @@ describe('ChatPanel', () => {
     const copy = copies[copies.length - 1]!;
 
     expect(save.compareDocumentPosition(copy) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('offers the steps of an answer that kept them, and nothing for an older one', async () => {
+    server.use(
+      sources(),
+      history([
+        answer([{ text: 'Neu.', chunkIds: [CHUNK_ID] }], [], {
+          sourcesSearched: 1,
+          passagesFound: 3,
+          droppedStatements: 0,
+          strippedCitations: 0,
+        }),
+        {
+          ...answer([{ text: 'Alt.', chunkIds: [CHUNK_ID] }]),
+          id: '55555555-5555-4555-8555-555555555555',
+        },
+      ])
+    );
+    renderChat();
+
+    await screen.findByText('Neu.');
+    expect(screen.getAllByRole('button', { name: 'Vorgehen' })).toHaveLength(1);
   });
 
   it('shows an answer that is already a note as saved', async () => {

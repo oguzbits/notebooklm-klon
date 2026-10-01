@@ -1,5 +1,6 @@
 import {
   type AnswerNote,
+  type AnswerTrace,
   CHAT_ROLE,
   type ChatMessage,
   type ChunkDetail,
@@ -72,12 +73,14 @@ export const question = (text: string): ChatMessage => ({
 
 export const answer = (
   statements: { text: string; chunkIds: string[] }[],
-  followUps: string[] = []
+  followUps: string[] = [],
+  trace: AnswerTrace | null = null
 ): ChatMessage => ({
   id: '22222222-2222-4222-8222-222222222222',
   role: CHAT_ROLE.ASSISTANT,
   statements,
   followUps,
+  trace,
   createdAt: CREATED_AT,
 });
 
