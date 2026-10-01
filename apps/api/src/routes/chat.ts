@@ -1,10 +1,4 @@
-import {
-  type AnswerStatement,
-  type AnswerTrace,
-  API_ERROR,
-  CHAT_EVENT,
-  ChatRequestSchema,
-} from '@nlm/shared';
+import { API_ERROR, CHAT_EVENT, ChatRequestSchema } from '@nlm/shared';
 import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
 
@@ -15,7 +9,9 @@ import {
   type ChatPorts,
   NoSourcesSelectedError,
   prepareAnswer,
+  type PreparedAnswer,
 } from '../chat/answer';
+import { AnswerRecorder } from '../chat/answer-recorder';
 import { getChatConfig } from '../db/chat-config-repository';
 import { findNotebook, selectedReadySourceIds } from '../db/notebook-repository';
 import { saveAssistantMessage, saveUserMessage } from '../db/reader-repository';
@@ -26,6 +22,21 @@ const NOT_FOUND = 404;
 const CONFLICT = 409;
 
 const error = (code: (typeof API_ERROR)[keyof typeof API_ERROR]) => ({ code });
+
+/** The answer prepared for a question, or null when no source is selected to answer from. */
+async function tryPrepare(
+  deps: AppDeps,
+  ports: ChatPorts,
+  input: { userId: string; notebookId: string; question: string }
+): Promise<PreparedAnswer | null> {
+  try {
+    const config = await getChatConfig(deps.db, input.userId, input.notebookId);
+    return await prepareAnswer({ ...input, config: config ?? undefined }, ports);
+  } catch (caught) {
+    if (caught instanceof NoSourcesSelectedError) return null;
+    throw caught;
+  }
+}
 
 /** Asking a question about the selected sources of a notebook, answered as a stream of events. */
 export function chatRoutes(deps: AppDeps) {
@@ -47,61 +58,31 @@ export function chatRoutes(deps: AppDeps) {
     const parsed = ChatRequestSchema.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json(error(API_ERROR.INVALID_REQUEST), BAD_REQUEST);
 
-    let prepared;
-    try {
-      prepared = await prepareAnswer(
-        {
-          userId,
-          notebookId,
-          question: parsed.data.question,
-          config: (await getChatConfig(deps.db, userId, notebookId)) ?? undefined,
-        },
-        ports
-      );
-    } catch (caught) {
-      if (caught instanceof NoSourcesSelectedError) {
-        return c.json(error(API_ERROR.NO_SOURCES_SELECTED), CONFLICT);
-      }
-      throw caught;
-    }
+    const prepared = await tryPrepare(deps, ports, {
+      userId,
+      notebookId,
+      question: parsed.data.question,
+    });
+    if (!prepared) return c.json(error(API_ERROR.NO_SOURCES_SELECTED), CONFLICT);
 
     // Saved only now: a rejected question (no source ready, quota) leaves no trace in the history.
     await saveUserMessage(deps.db, userId, notebookId, parsed.data.question);
 
     return streamSSE(c, async (stream) => {
-      const statements: AnswerStatement[] = [];
-      let followUps: string[] = [];
-      let trace: AnswerTrace | null = null;
-      let saved = false;
-      // An answer is saved once, before its last event goes out, so the client can read it back at
-      // once. An answer with no statements is saved only if the model finished (it found nothing).
-      const saveAnswer = async (finished: boolean) => {
-        if (saved || (!finished && statements.length === 0)) return;
-        saved = true;
-        await saveAssistantMessage(deps.db, userId, notebookId, statements, followUps, trace);
-      };
-
+      const recorder = new AnswerRecorder((statements, followUps, trace) =>
+        saveAssistantMessage(deps.db, userId, notebookId, statements, followUps, trace)
+      );
       try {
         for await (const event of answerQuestion(prepared, ports)) {
-          if (event.type === CHAT_EVENT.STATEMENT) {
-            statements.push({ text: event.text, chunkIds: event.chunkIds });
-          } else {
-            if (event.type === CHAT_EVENT.DONE) {
-              followUps = event.followUps;
-              trace = {
-                sourcesSearched: event.sourcesSearched,
-                passagesFound: event.passagesFound,
-                droppedStatements: event.droppedStatements,
-                strippedCitations: event.strippedCitations,
-              };
-            }
-            await saveAnswer(event.type === CHAT_EVENT.DONE);
+          recorder.note(event);
+          if (event.type !== CHAT_EVENT.STATEMENT) {
+            await recorder.saveOnce(event.type === CHAT_EVENT.DONE);
           }
           await stream.writeSSE({ event: event.type, data: JSON.stringify(event) });
         }
       } finally {
         // The client left midway: keep what it already saw.
-        await saveAnswer(false);
+        await recorder.saveOnce(false);
       }
     });
   });

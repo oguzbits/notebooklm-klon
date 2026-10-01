@@ -52,14 +52,6 @@
       "count": 2
     }
   },
-  "apps/api/src/routes/chat.ts": {
-    "max-depth": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "apps/api/src/routes/cover.ts": {
     "max-lines-per-function": {
       "count": 1
