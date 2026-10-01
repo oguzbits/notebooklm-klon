@@ -1,7 +1,7 @@
 import type { Notebook } from '@nlm/shared';
 
 import { EditableTitle } from '@/components/ui/editable-title';
-import { useRenameNotebook } from '@/hooks/use-notebooks';
+import { useUpdateNotebook } from '@/hooks/use-notebooks';
 import { describeError } from '@/lib/messages';
 
 /**
@@ -10,7 +10,7 @@ import { describeError } from '@/lib/messages';
  * that changed elsewhere is taken over.
  */
 export function NotebookTitle({ notebook }: { notebook: Notebook }) {
-  const rename = useRenameNotebook(notebook.id);
+  const rename = useUpdateNotebook(notebook.id);
 
   return (
     <div className="flex min-w-0 flex-1 px-2">
@@ -20,7 +20,7 @@ export function NotebookTitle({ notebook }: { notebook: Notebook }) {
         label="Titel des Notizbuchs"
         saving={rename.isPending}
         error={rename.isError ? describeError(rename.error) : null}
-        onSave={(title, revert) => rename.mutate(title, { onError: revert })}
+        onSave={(title, revert) => rename.mutate({ title }, { onError: revert })}
         className="h-10 max-w-[590px] px-2 text-[1.375rem] leading-9"
       />
     </div>

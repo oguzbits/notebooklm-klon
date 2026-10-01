@@ -1,4 +1,4 @@
-import { NotebookListSchema, NotebookSchema } from '@nlm/shared';
+import { NotebookListSchema, NotebookSchema, type UpdateNotebookBody } from '@nlm/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { api, expectOk, readJson } from '@/lib/api';
@@ -34,14 +34,19 @@ export function useDeleteNotebook() {
   });
 }
 
-export function useRenameNotebook(notebookId: string) {
+/** Changes the title and/or the own summary of the notebook. The summary on the page follows. */
+export function useUpdateNotebook(notebookId: string) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: async (title: string) =>
+    mutationFn: async (changes: UpdateNotebookBody) =>
       readJson(
-        await api.api.notebooks[':notebookId'].$patch({ param: { notebookId }, json: { title } }),
+        await api.api.notebooks[':notebookId'].$patch({ param: { notebookId }, json: changes }),
         NotebookSchema
       ),
-    onSuccess: () => client.invalidateQueries({ queryKey: queryKeys.notebooks }),
+    onSuccess: async () => {
+      await client.invalidateQueries({ queryKey: queryKeys.notebooks, exact: true });
+      // Whatever sources it was made from, the summary on the page may have changed.
+      await client.invalidateQueries({ queryKey: ['notebooks', notebookId, 'overview'] });
+    },
   });
 }

@@ -3,13 +3,13 @@ import { describe, expect, it } from 'vitest';
 import {
   CreateNotebookBodySchema,
   NotebookSchema,
-  RenameNotebookBodySchema,
   SetSourceSelectionBodySchema,
   SOURCE_KIND,
   SOURCE_STATUS,
   SourceSummarySchema,
   SUBMIT_ACTION,
   SubmitSourceResultSchema,
+  UpdateNotebookBodySchema,
   UrlSourceBodySchema,
 } from './index';
 
@@ -23,6 +23,7 @@ describe('notebook contracts', () => {
         id: ID,
         title: 'Recherche',
         emoji: null,
+        customSummary: null,
         sourceCount: 3,
         createdAt: DATE,
       })
@@ -30,7 +31,13 @@ describe('notebook contracts', () => {
   });
 
   it('carries the symbol of its overview, or null while there is none', () => {
-    const base = { id: ID, title: 'Recherche', sourceCount: 1, createdAt: DATE };
+    const base = {
+      id: ID,
+      title: 'Recherche',
+      customSummary: null,
+      sourceCount: 1,
+      createdAt: DATE,
+    };
 
     expect(NotebookSchema.parse({ ...base, emoji: '🔬' }).emoji).toBe('🔬');
     expect(NotebookSchema.parse({ ...base, emoji: null }).emoji).toBeNull();
@@ -39,7 +46,7 @@ describe('notebook contracts', () => {
   });
 
   it('needs a source count that is a whole number of zero or more', () => {
-    const base = { id: ID, title: 'Recherche', emoji: null, createdAt: DATE };
+    const base = { id: ID, title: 'Recherche', emoji: null, customSummary: null, createdAt: DATE };
 
     expect(NotebookSchema.safeParse(base).success).toBe(false);
     expect(NotebookSchema.safeParse({ ...base, sourceCount: -1 }).success).toBe(false);
@@ -51,8 +58,29 @@ describe('notebook contracts', () => {
     expect(CreateNotebookBodySchema.parse({ title: '  Idee  ' })).toEqual({ title: 'Idee' });
     expect(CreateNotebookBodySchema.safeParse({ title: '   ' }).success).toBe(false);
     expect(CreateNotebookBodySchema.safeParse({ title: 'x'.repeat(201) }).success).toBe(false);
-    expect(RenameNotebookBodySchema.parse({ title: ' Neu ' })).toEqual({ title: 'Neu' });
-    expect(RenameNotebookBodySchema.safeParse({ title: '' }).success).toBe(false);
+  });
+
+  it('updates the title, the own summary or both, and needs at least one of them', () => {
+    expect(UpdateNotebookBodySchema.parse({ title: ' Neu ' })).toEqual({ title: 'Neu' });
+    expect(UpdateNotebookBodySchema.safeParse({ title: '' }).success).toBe(false);
+    expect(UpdateNotebookBodySchema.parse({ customSummary: ' Mein Text ' })).toEqual({
+      customSummary: 'Mein Text',
+    });
+    // null takes the own summary back
+    expect(UpdateNotebookBodySchema.parse({ customSummary: null })).toEqual({
+      customSummary: null,
+    });
+    expect(UpdateNotebookBodySchema.safeParse({ customSummary: '  ' }).success).toBe(false);
+    expect(UpdateNotebookBodySchema.safeParse({}).success).toBe(false);
+  });
+
+  it('carries the own summary of a notebook, or null', () => {
+    const base = { id: ID, title: 'Recherche', emoji: null, sourceCount: 1, createdAt: DATE };
+
+    expect(NotebookSchema.parse({ ...base, customSummary: 'Mein Text' }).customSummary).toBe(
+      'Mein Text'
+    );
+    expect(NotebookSchema.safeParse(base).success).toBe(false);
   });
 
   it('parses a source summary with and without a failure', () => {

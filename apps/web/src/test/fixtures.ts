@@ -21,11 +21,18 @@ export const OTHER_CHUNK_ID = '6e2f9d3b-8c45-4a7e-8d16-3b9f7c2a4d58';
 const CREATED_AT = '2026-09-30T12:00:00.000Z';
 
 export const notebook = (
-  overrides: Partial<{ id: string; title: string; emoji: string | null; sourceCount: number }> = {}
+  overrides: Partial<{
+    id: string;
+    title: string;
+    emoji: string | null;
+    customSummary: string | null;
+    sourceCount: number;
+  }> = {}
 ) => ({
   id: NOTEBOOK_ID,
   title: 'Steuerrecht',
   emoji: null,
+  customSummary: null,
   sourceCount: 2,
   createdAt: CREATED_AT,
   ...overrides,

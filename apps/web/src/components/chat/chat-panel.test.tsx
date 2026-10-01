@@ -33,7 +33,7 @@ const frame = (event: ChatEvent) => `event: ${event.type}\ndata: ${JSON.stringif
 
 function renderChat(onOpenCitation: (chunkId: string) => void = () => {}) {
   return renderWithProviders(
-    <ChatPanel notebookId={NOTEBOOK_ID} onOpenCitation={onOpenCitation} />
+    <ChatPanel notebookId={NOTEBOOK_ID} onOpenCitation={onOpenCitation} onCustomize={() => {}} />
   );
 }
 

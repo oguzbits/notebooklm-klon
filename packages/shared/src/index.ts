@@ -48,7 +48,6 @@ export {
   type Notebook,
   NotebookListSchema,
   NotebookSchema,
-  RenameNotebookBodySchema,
   SetSourceSelectionBodySchema,
   SourceListSchema,
   type SourceSummary,
@@ -58,9 +57,12 @@ export {
   SubmitActionSchema,
   type SubmitSourceResult,
   SubmitSourceResultSchema,
+  type UpdateNotebookBody,
+  UpdateNotebookBodySchema,
   UrlSourceBodySchema,
 } from './notebook';
 export {
+  CustomSummarySchema,
   type NotebookOverview,
   NotebookOverviewResponseSchema,
   NotebookOverviewSchema,

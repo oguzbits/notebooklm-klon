@@ -80,10 +80,13 @@ function SuggestionList({
 export const ChatPanel = memo(function ChatPanel({
   notebookId,
   onOpenCitation,
+  onCustomize,
   incoming = null,
 }: {
   notebookId: string;
   onOpenCitation: (chunkId: string) => void;
+  /** The cover of the notebook was clicked: open the dialog to customize it. */
+  onCustomize: () => void;
   /** A question from elsewhere on the page, asked once when it is new (its ID counts up). */
   incoming?: { id: number; question: string } | null;
 }) {
@@ -172,7 +175,11 @@ export const ChatPanel = memo(function ChatPanel({
           className="h-full overflow-y-auto px-5 pb-5"
         >
           <div className="mx-auto flex max-w-[756px] flex-col gap-3 px-6 pt-2">
-            <NotebookOverview notebookId={notebookId} sources={sources.data} />
+            <NotebookOverview
+              notebookId={notebookId}
+              sources={sources.data}
+              onCustomize={onCustomize}
+            />
             <QueryBoundary
               query={history}
               // The overview has placeholders of its own while it loads, a second set would double them.

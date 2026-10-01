@@ -9,10 +9,10 @@ import {
   linkSource,
   listNotebooks,
   listNotebookSources,
-  renameNotebook,
   selectedReadySourceIds,
   setSourceSelected,
   unlinkSource,
+  updateNotebook,
 } from './notebook-repository';
 import { sources } from './schema';
 import { createTestDb, ensureUsers } from './testing/test-db';
@@ -210,21 +210,31 @@ describe('the number of sources of a notebook', () => {
   });
 });
 
-describe('renameNotebook', () => {
+describe('updateNotebook', () => {
   it('changes the title and returns the notebook', async () => {
     const notebook = await createNotebook(db, USER, 'Alt');
 
-    const renamed = await renameNotebook(db, USER, notebook.id, 'Neu');
+    const renamed = await updateNotebook(db, USER, notebook.id, { title: 'Neu' });
 
     expect(renamed).toEqual({ ...notebook, title: 'Neu' });
     expect((await findNotebook(db, USER, notebook.id))?.title).toBe('Neu');
   });
 
-  it("does not rename another user's notebook or answer for an unknown ID", async () => {
+  it('sets and takes back the own summary and leaves the title alone', async () => {
+    const notebook = await createNotebook(db, USER, 'Titel');
+
+    const written = await updateNotebook(db, USER, notebook.id, { customSummary: 'Mein Text' });
+    expect(written).toMatchObject({ title: 'Titel', customSummary: 'Mein Text' });
+
+    const cleared = await updateNotebook(db, USER, notebook.id, { customSummary: null });
+    expect(cleared).toMatchObject({ title: 'Titel', customSummary: null });
+  });
+
+  it("does not change another user's notebook or answer for an unknown ID", async () => {
     const theirs = await createNotebook(db, OTHER, 'Fremd');
 
-    expect(await renameNotebook(db, USER, theirs.id, 'Meins')).toBeNull();
-    expect(await renameNotebook(db, USER, 'kein-uuid', 'X')).toBeNull();
+    expect(await updateNotebook(db, USER, theirs.id, { title: 'Meins' })).toBeNull();
+    expect(await updateNotebook(db, USER, 'kein-uuid', { title: 'X' })).toBeNull();
     expect((await findNotebook(db, OTHER, theirs.id))?.title).toBe('Fremd');
   });
 });

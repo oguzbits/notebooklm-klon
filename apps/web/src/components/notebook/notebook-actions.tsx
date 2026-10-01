@@ -1,5 +1,5 @@
 import type { Notebook } from '@nlm/shared';
-import { EllipsisVertical, Plus, SlidersHorizontal, Trash2 } from 'lucide-react';
+import { EllipsisVertical, Paintbrush, Plus, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
@@ -22,7 +22,13 @@ const DIALOG = { CHAT: 'CHAT', CLEAR: 'CLEAR', DELETE: 'DELETE' } as const;
 type Dialog = (typeof DIALOG)[keyof typeof DIALOG];
 
 /** What the header offers for one notebook: make a new one, and the menu with its settings. */
-export function NotebookActions({ notebook }: { notebook: Notebook }) {
+export function NotebookActions({
+  notebook,
+  onCustomize,
+}: {
+  notebook: Notebook;
+  onCustomize: () => void;
+}) {
   const navigate = useNavigate();
   const clear = useClearChat(notebook.id);
   const remove = useDeleteNotebook();
@@ -56,6 +62,10 @@ export function NotebookActions({ notebook }: { notebook: Notebook }) {
           <DropdownMenuItem onSelect={() => setDialog(DIALOG.CHAT)}>
             <SlidersHorizontal aria-hidden />
             Chat konfigurieren
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={onCustomize}>
+            <Paintbrush aria-hidden />
+            Notizbuch anpassen
           </DropdownMenuItem>
           <DropdownMenuItem className="h-auto py-2" onSelect={() => setDialog(DIALOG.CLEAR)}>
             <Trash2 aria-hidden />

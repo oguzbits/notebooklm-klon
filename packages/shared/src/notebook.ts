@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { NotebookOverviewSchema } from './overview';
+import { CustomSummarySchema, NotebookOverviewSchema } from './overview';
 import { SourceFailureSchema, SourceKindSchema, SourceStatusSchema } from './source';
 
 const MAX_TITLE_CHARS = 200;
@@ -24,6 +24,8 @@ export const NotebookSchema = z.object({
   title: z.string(),
   /** The symbol its overview chose, null until the overview was made. */
   emoji: NotebookOverviewSchema.shape.emoji.nullable(),
+  /** The summary the user wrote, shown instead of the model's. Null: the model's summary is shown. */
+  customSummary: CustomSummarySchema.nullable(),
   /** How many sources the notebook holds, whatever their state. */
   sourceCount: z.number().int().nonnegative(),
   createdAt: z.iso.datetime(),
@@ -33,8 +35,18 @@ export const CreateNotebookBodySchema = z.object({
   title: z.string().trim().min(1).max(MAX_TITLE_CHARS),
 });
 
-/** A notebook is renamed with a title under the same rules as when it is created. */
-export const RenameNotebookBodySchema = CreateNotebookBodySchema;
+/**
+ * What can be changed about a notebook: its title (same rules as when it is created) and its own
+ * summary (null takes it back). Fields left out stay as they are, and at least one is given.
+ */
+export const UpdateNotebookBodySchema = z
+  .object({
+    title: CreateNotebookBodySchema.shape.title.optional(),
+    customSummary: CustomSummarySchema.nullable().optional(),
+  })
+  .refine((body) => body.title !== undefined || body.customSummary !== undefined, {
+    message: 'Nothing to change.',
+  });
 
 export const SourceSummarySchema = z.object({
   id: z.uuid(),
@@ -65,5 +77,6 @@ export const SourceListSchema = z.array(SourceSummarySchema);
 
 export type SubmitAction = z.infer<typeof SubmitActionSchema>;
 export type Notebook = z.infer<typeof NotebookSchema>;
+export type UpdateNotebookBody = z.infer<typeof UpdateNotebookBodySchema>;
 export type SourceSummary = z.infer<typeof SourceSummarySchema>;
 export type SubmitSourceResult = z.infer<typeof SubmitSourceResultSchema>;

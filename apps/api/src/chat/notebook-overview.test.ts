@@ -32,17 +32,24 @@ function setup(
     sources?: NotebookOverviewSource[];
     stored?: StoredNotebookOverview | null;
     reply?: string;
+    customSummary?: string | null;
     found?: boolean;
   } = {}
 ) {
-  const { sources = [projekt], stored = null, reply = REPLY, found = true } = options;
+  const {
+    sources = [projekt],
+    stored = null,
+    reply = REPLY,
+    customSummary = null,
+    found = true,
+  } = options;
   const saved: { overview: NotebookOverview; key: string }[] = [];
   const modelInputs: ChatInput[] = [];
   const asked: { userId: string; notebookId: string }[] = [];
   const ports: NotebookOverviewPorts = {
     find: async (userId, notebookId) => {
       asked.push({ userId, notebookId });
-      return found ? { sources, stored } : null;
+      return found ? { sources, stored, customSummary } : null;
     },
     save: async (_userId, _notebookId, overview, key) => {
       saved.push({ overview, key });
@@ -68,6 +75,42 @@ describe('getOrCreateNotebookOverview', () => {
     expect(modelInputs[0]?.schema).toBe(NOTEBOOK_OVERVIEW_JSON_SCHEMA);
     expect(modelInputs[0]?.user).toContain('projekt.pdf');
     expect(modelInputs[0]?.user).toContain('Dr. Brandt leitet Nordlicht.');
+  });
+
+  describe('with a summary the user wrote', () => {
+    const MINE = 'Meine eigene **Zusammenfassung**.';
+    const key = notebookOverviewKey([projekt.id]);
+
+    it('shows it instead of the summary of the model, with the symbol that was chosen, and asks no model', async () => {
+      const stored = { overview: OVERVIEW, key };
+      const { ports, saved, modelInputs } = setup({ stored, customSummary: MINE });
+
+      expect(await getOrCreateNotebookOverview(INPUT, ports)).toEqual({
+        overview: { emoji: '🔬', summary: MINE },
+      });
+      expect(modelInputs).toHaveLength(0);
+      expect(saved).toHaveLength(0);
+    });
+
+    it('does not make a new summary when the sources changed', async () => {
+      const stored = { overview: OVERVIEW, key: 'older-key' };
+      const { ports, modelInputs } = setup({ stored, customSummary: MINE });
+
+      await getOrCreateNotebookOverview(INPUT, ports);
+
+      expect(modelInputs).toHaveLength(0);
+    });
+
+    it('makes the overview once when there is none yet, for the symbol, and shows the own summary', async () => {
+      const { ports, saved, modelInputs } = setup({ customSummary: MINE });
+
+      expect(await getOrCreateNotebookOverview(INPUT, ports)).toEqual({
+        overview: { emoji: '🔬', summary: MINE },
+      });
+      expect(modelInputs).toHaveLength(1);
+      // The summary of the model is kept: it is shown again when the own one is taken back.
+      expect(saved).toEqual([{ overview: OVERVIEW, key }]);
+    });
   });
 
   it('reads the notebook of the user from the session, never from the request', async () => {

@@ -4,6 +4,7 @@ import {
   SOURCE_STATUS,
   type SourceFailure,
   type SourceSummary,
+  type UpdateNotebookBody,
 } from '@nlm/shared';
 import { and, asc, count, desc, eq, gte, sql } from 'drizzle-orm';
 
@@ -30,6 +31,7 @@ const notebookColumns = {
   id: notebooks.id,
   title: notebooks.title,
   emoji: emojiOf,
+  customSummary: notebooks.customSummary,
   createdAt: notebooks.createdAt,
   sourceCount: sourceCountOf,
 };
@@ -38,6 +40,7 @@ function toNotebook(row: {
   id: string;
   title: string;
   emoji: string | null;
+  customSummary: string | null;
   createdAt: Date;
   sourceCount: number;
 }): Notebook {
@@ -45,6 +48,7 @@ function toNotebook(row: {
     id: row.id,
     title: row.title,
     emoji: row.emoji,
+    customSummary: row.customSummary,
     sourceCount: row.sourceCount,
     createdAt: row.createdAt.toISOString(),
   };
@@ -82,20 +86,26 @@ export async function findNotebook(
   return row ? toNotebook(row) : null;
 }
 
-/** Gives the notebook a new title. Null when it is not the user's or does not exist. */
-export async function renameNotebook(
+/**
+ * Changes the title and/or the own summary of the notebook (null takes the summary back); what is
+ * left out stays. Null when it is not the user's or does not exist.
+ */
+export async function updateNotebook(
   db: Database,
   userId: string,
   notebookId: string,
-  title: string
+  changes: UpdateNotebookBody
 ): Promise<Notebook | null> {
   if (!UUID.test(notebookId)) return null;
-  const renamed = await db
+  const updated = await db
     .update(notebooks)
-    .set({ title })
+    .set({
+      ...(changes.title !== undefined && { title: changes.title }),
+      ...(changes.customSummary !== undefined && { customSummary: changes.customSummary }),
+    })
     .where(and(eq(notebooks.id, notebookId), eq(notebooks.userId, userId)))
     .returning({ id: notebooks.id });
-  return renamed.length === 1 ? findNotebook(db, userId, notebookId) : null;
+  return updated.length === 1 ? findNotebook(db, userId, notebookId) : null;
 }
 
 /** Deletes the notebook with its links and chat history. The sources stay: they are the user's. */

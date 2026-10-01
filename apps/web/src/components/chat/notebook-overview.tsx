@@ -27,9 +27,11 @@ const SUMMARY_NOTE_TITLE = 'Zusammenfassung';
 export function NotebookOverview({
   notebookId,
   sources,
+  onCustomize,
 }: {
   notebookId: string;
   sources: SourceSummary[] | undefined;
+  onCustomize: () => void;
 }) {
   const notebook = useNotebook(notebookId).data;
   const { overview, ready, loading, isError, error, retry, retrying } = useNotebookOverview(
@@ -53,6 +55,13 @@ export function NotebookOverview({
         >
           {emoji}
         </span>
+        {/* Like the original: the whole cover is one invisible control that opens "Notebook anpassen". */}
+        <button
+          type="button"
+          aria-label="Notizbuch anpassen"
+          onClick={onCustomize}
+          className="absolute inset-0 rounded-3xl"
+        />
         {notebook && (
           <>
             <h3

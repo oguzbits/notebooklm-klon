@@ -5,9 +5,9 @@ import {
   CreateNotebookBodySchema,
   NotebookListSchema,
   NotebookSchema,
-  RenameNotebookBodySchema,
   SetSourceSelectionBodySchema,
   SourceListSchema,
+  UpdateNotebookBodySchema,
 } from '@nlm/shared';
 
 import type { AppDeps } from '../app-deps';
@@ -18,9 +18,9 @@ import {
   findNotebook,
   listNotebooks,
   listNotebookSources,
-  renameNotebook,
   setSourceSelected,
   unlinkSource,
+  updateNotebook,
 } from '../db/notebook-repository';
 import { json, notFound, unauthenticated } from './openapi';
 
@@ -53,15 +53,15 @@ const createRoute_ = createRoute({
   },
 });
 
-const renameRoute = createRoute({
+const updateRoute = createRoute({
   method: 'patch',
   path: '/{notebookId}',
   request: {
     params: notebookParams,
-    body: { content: { 'application/json': { schema: RenameNotebookBodySchema } }, required: true },
+    body: { content: { 'application/json': { schema: UpdateNotebookBodySchema } }, required: true },
   },
   responses: {
-    [OK]: json(NotebookSchema, 'The notebook with its new title'),
+    [OK]: json(NotebookSchema, 'The changed notebook'),
     400: invalid,
     401: unauthenticated,
     [NOT_FOUND]: notFound,
@@ -129,11 +129,11 @@ export function notebookRoutes(deps: AppDeps) {
       const { title } = c.req.valid('json');
       return c.json(await createNotebook(deps.db, c.var.userId, title), CREATED);
     })
-    .openapi(renameRoute, async (c) => {
+    .openapi(updateRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
-      const { title } = c.req.valid('json');
-      const renamed = await renameNotebook(deps.db, c.var.userId, notebookId, title);
-      return renamed ? c.json(renamed, OK) : c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
+      const changes = c.req.valid('json');
+      const updated = await updateNotebook(deps.db, c.var.userId, notebookId, changes);
+      return updated ? c.json(updated, OK) : c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
     })
     .openapi(deleteRoute, async (c) => {
       const { notebookId } = c.req.valid('param');

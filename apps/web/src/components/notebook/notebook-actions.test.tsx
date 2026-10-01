@@ -13,11 +13,16 @@ import { NotebookActions } from './notebook-actions';
 
 const base = `*/api/notebooks/${NOTEBOOK_ID}`;
 
+const onCustomize = vi.fn();
+
 /** Stands in for the notebook page: the notebook of the test shows its actions, any other one says so. */
 function Page() {
   const { notebookId } = useParams();
   return notebookId === NOTEBOOK_ID ? (
-    <NotebookActions notebook={notebook({ id: NOTEBOOK_ID, title: 'Forschung' })} />
+    <NotebookActions
+      notebook={notebook({ id: NOTEBOOK_ID, title: 'Forschung' })}
+      onCustomize={onCustomize}
+    />
   ) : (
     <p>Neues Notizbuch offen</p>
   );
@@ -37,6 +42,16 @@ const openMenu = async (user: ReturnType<typeof userEvent.setup>) =>
   user.click(screen.getByRole('button', { name: 'Notizbuch-Konfiguration' }));
 
 describe('NotebookActions', () => {
+  it('offers to customize the notebook', async () => {
+    renderActions();
+    const user = userEvent.setup();
+
+    await openMenu(user);
+    await user.click(await screen.findByRole('menuitem', { name: 'Notizbuch anpassen' }));
+
+    expect(onCustomize).toHaveBeenCalledOnce();
+  });
+
   it('opens the chat settings from the menu', async () => {
     server.use(http.get(`${base}/chat-config`, () => HttpResponse.json(DEFAULT_CHAT_CONFIG)));
     renderActions();

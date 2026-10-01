@@ -137,12 +137,23 @@ describe('the sources an overview is made from', () => {
     expect(await findNotebookForOverview(db, USER, 'kein-uuid')).toBeNull();
   });
 
+  it('reports the own summary of the notebook', async () => {
+    const notebook = await insertNotebook(USER);
+    await db
+      .update(notebooks)
+      .set({ customSummary: 'Mein Text' })
+      .where(eq(notebooks.id, notebook.id));
+
+    expect((await findNotebookForOverview(db, USER, notebook.id))?.customSummary).toBe('Mein Text');
+  });
+
   it('gives an empty list for a notebook without sources', async () => {
     const notebook = await insertNotebook(USER);
 
     expect(await findNotebookForOverview(db, USER, notebook.id)).toEqual({
       sources: [],
       stored: null,
+      customSummary: null,
     });
   });
 });
