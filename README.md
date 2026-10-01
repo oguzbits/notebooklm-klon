@@ -154,6 +154,8 @@ pnpm --filter @nlm/api dev:offline   # dazu in einem zweiten Terminal: pnpm --fi
 
 Suche im Web (optional): `TAVILY_API_KEY` setzen (Tavily, kostenloser Tarif mit 1000 Suchen im Monat; an Tavily gehen nur die Suchbegriffe). Ohne Schlüssel zeigt die Oberfläche das Suchfeld nicht. Pro Nutzer sind 10 Suchen pro Stunde und für alle zusammen 30 pro Tag erlaubt.
 
+Titelbilder (optional): Ein S3-kompatibler Speicher, dazu `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID` und `S3_SECRET_ACCESS_KEY` setzen (alle vier oder keins). Lokal startet `pnpm db:up` einen (SeaweedFS). Ohne Speicher zeigt der Dialog „Notizbuch anpassen“ keine Bildfläche. Die Bilder liegen im Speicher, nicht in der Datenbank: Bei einem Docker-Volume sind sie dauerhaft, aber nicht gesichert.
+
 Beispiel-Notizbuch anlegen (braucht den Schlüssel, liest drei Beispieldokumente einmal ein): `SEED_DEMO_EMAIL` und `SEED_DEMO_PASSWORD` setzen, dann `pnpm seed:demo`. Der Befehl kann wiederholt werden. Gäste („Beispiel ausprobieren“) bekommen eine Kopie dieses Notizbuchs, dafür muss `SEED_DEMO_EMAIL` auch in der Umgebung der App stehen.
 
 ## Deployment

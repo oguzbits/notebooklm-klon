@@ -171,8 +171,14 @@ describe('GET /api/capabilities', () => {
     const cookie = await signUp(unavailable, 'fritz@example.test');
     const no = await unavailableApp.request('/api/capabilities', { headers: { cookie } });
 
-    expect(CapabilitiesSchema.parse(await yes.json())).toEqual({ webSearch: true });
-    expect(CapabilitiesSchema.parse(await no.json())).toEqual({ webSearch: false });
+    expect(CapabilitiesSchema.parse(await yes.json())).toEqual({
+      webSearch: true,
+      coverImage: false,
+    });
+    expect(CapabilitiesSchema.parse(await no.json())).toEqual({
+      webSearch: false,
+      coverImage: false,
+    });
     await unavailable.pool.query('TRUNCATE "user" CASCADE');
   });
 

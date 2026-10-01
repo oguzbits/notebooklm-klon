@@ -10,6 +10,7 @@ import { QuotaExceededError } from './ingestion/ingest';
 import { log } from './logger';
 import { chatRoutes } from './routes/chat';
 import { chatConfigRoutes } from './routes/chat-config';
+import { coverRoutes } from './routes/cover';
 import { guestRoutes } from './routes/guest';
 import { notebookOverviewRoutes } from './routes/notebook-overview';
 import { notebookRoutes } from './routes/notebooks';
@@ -75,6 +76,7 @@ export function createApp(deps: AppDeps) {
     .route('/api/web-search', webSearchRoutes(deps))
     .route('/api/capabilities', capabilityRoutes(deps))
     .route('/api/notebooks', notebookRoutes(deps))
+    .route('/api/notebooks', coverRoutes(deps))
     .route('/api/notebooks', sourceRoutes(deps))
     .route('/api/notebooks', chatRoutes(deps))
     .route('/api/notebooks', readerRoutes(deps))

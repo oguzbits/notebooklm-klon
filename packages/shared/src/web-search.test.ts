@@ -42,8 +42,11 @@ describe('web search contracts', () => {
     expect(WebSearchResponseSchema.parse({ results: [] })).toEqual({ results: [] });
   });
 
-  it('says whether the web search is set up', () => {
-    expect(CapabilitiesSchema.parse({ webSearch: false })).toEqual({ webSearch: false });
+  it('says whether the web search and the cover images are set up', () => {
+    expect(CapabilitiesSchema.parse({ webSearch: false, coverImage: true })).toEqual({
+      webSearch: false,
+      coverImage: true,
+    });
     expect(CapabilitiesSchema.safeParse({}).success).toBe(false);
   });
 });

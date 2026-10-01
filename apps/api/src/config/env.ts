@@ -25,6 +25,13 @@ export const EnvSchema = DatabaseEnvSchema.extend({
   BETTER_AUTH_URL: z.url({ protocol: /^https?$/ }),
   // Optional. Key of the web search (Tavily). Without it the search box is not offered.
   TAVILY_API_KEY: z.string().trim().min(1).optional(),
+  // Optional. An S3-compatible object store for the cover images: all of the first four or none
+  // (checked where they are used, `s3ConfigFromEnv`). Without it cover images are not offered.
+  S3_ENDPOINT: z.url({ protocol: /^https?$/ }).optional(),
+  S3_REGION: z.string().trim().min(1).optional(),
+  S3_BUCKET: z.string().trim().min(1).optional(),
+  S3_ACCESS_KEY_ID: z.string().trim().min(1).optional(),
+  S3_SECRET_ACCESS_KEY: z.string().trim().min(1).optional(),
   // Folder of the built web app. Set: the API serves it (one container). Unset: API only.
   WEB_DIST_DIR: z.string().trim().min(1).optional(),
   // Only for `pnpm seed:demo`: the account of the example notebook. Both or neither.
@@ -52,6 +59,12 @@ export const OfflineServerEnvSchema = EnvSchema.pick({
   BETTER_AUTH_SECRET: true,
   BETTER_AUTH_URL: true,
   WEB_DIST_DIR: true,
+  // Optional here too, so the browser tests can run against the S3 container.
+  S3_ENDPOINT: true,
+  S3_REGION: true,
+  S3_BUCKET: true,
+  S3_ACCESS_KEY_ID: true,
+  S3_SECRET_ACCESS_KEY: true,
 });
 
 export type Env = z.infer<typeof EnvSchema>;

@@ -34,6 +34,8 @@ import { runIngestJob, type SubmitPorts } from '../ingestion/submit';
 import { log } from '../logger';
 import { createParseSource } from '../parsing/parse-source';
 import { seedDemo } from '../seed/demo';
+import { s3ConfigFromEnv } from '../storage/s3-config';
+import { createS3ObjectStore } from '../storage/s3-object-store';
 import { serveWeb } from '../web/serve-web';
 import {
   extractiveAnswer,
@@ -120,6 +122,12 @@ await seedDemo(
   }
 );
 
+// Cover images only where an object store is given (the S3 container of `pnpm db:up`).
+const s3Config = s3ConfigFromEnv(env);
+const s3 = s3Config ? createS3ObjectStore(s3Config) : null;
+await s3?.ensureBucket();
+const objectStore = s3;
+
 const app = createApp({
   auth,
   db,
@@ -128,6 +136,7 @@ const app = createApp({
   fetch: systemDeps,
   // The offline server has no search service.
   webSearch: null,
+  objectStore,
   chat: {
     embedQuery: async (text) => hashEmbedding(text, EMBEDDING_DIMENSIONS),
     stream,

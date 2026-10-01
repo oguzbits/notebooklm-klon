@@ -46,6 +46,7 @@ export {
   type WrittenNote,
 } from './note';
 export {
+  COVER_IMAGE,
   CreateNotebookBodySchema,
   type Notebook,
   NotebookListSchema,

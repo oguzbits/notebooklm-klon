@@ -25,7 +25,7 @@ export const WebSearchResponseSchema = z.object({
 });
 
 /** What the server can do in this installation, so the UI offers only that. */
-export const CapabilitiesSchema = z.object({ webSearch: z.boolean() });
+export const CapabilitiesSchema = z.object({ webSearch: z.boolean(), coverImage: z.boolean() });
 
 export type WebSearchResult = z.infer<typeof WebSearchResultSchema>;
 export type Capabilities = z.infer<typeof CapabilitiesSchema>;

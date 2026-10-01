@@ -19,6 +19,12 @@ export const SUBMIT_ACTION = {
 
 export const SubmitActionSchema = z.enum(SUBMIT_ACTION);
 
+/** What a cover image may be: PNG, JPEG or WebP, up to 2 MB. The server checks the bytes, not the name. */
+export const COVER_IMAGE = {
+  MAX_BYTES: 2 * 1024 * 1024,
+  TYPES: ['image/png', 'image/jpeg', 'image/webp'],
+} as const;
+
 export const NotebookSchema = z.object({
   id: z.uuid(),
   title: z.string(),
@@ -26,6 +32,8 @@ export const NotebookSchema = z.object({
   emoji: NotebookOverviewSchema.shape.emoji.nullable(),
   /** The summary the user wrote, shown instead of the model's. Null: the model's summary is shown. */
   customSummary: CustomSummarySchema.nullable(),
+  /** Names the cover image so a new one is fetched; null: no cover image. */
+  coverVersion: z.uuid().nullable(),
   /** Pinned notebooks stand first on the start page. */
   pinned: z.boolean(),
   /** How many sources the notebook holds, whatever their state. */

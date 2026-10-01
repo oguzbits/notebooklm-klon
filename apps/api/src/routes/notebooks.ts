@@ -25,6 +25,7 @@ import {
   unlinkSource,
   updateNotebook,
 } from '../db/notebook-repository';
+import { coverKey } from '../storage/cover-key';
 import { json, notFound, unauthenticated } from './openapi';
 
 const OK = 200;
@@ -171,8 +172,15 @@ export function notebookRoutes(deps: AppDeps) {
     })
     .openapi(deleteRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
-      const deleted = await deleteNotebook(deps.db, c.var.userId, notebookId);
-      return deleted ? c.body(null, NO_CONTENT) : c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
+      const { userId } = c.var;
+      const existing = await findNotebook(deps.db, userId, notebookId);
+      const deleted = await deleteNotebook(deps.db, userId, notebookId);
+      if (!deleted) return c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
+      // The cover image goes with the notebook.
+      if (existing?.coverVersion) {
+        await deps.objectStore?.remove(coverKey(userId, notebookId, existing.coverVersion));
+      }
+      return c.body(null, NO_CONTENT);
     })
     .openapi(listSourcesRoute, async (c) => {
       const { notebookId } = c.req.valid('param');

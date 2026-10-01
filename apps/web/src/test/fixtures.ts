@@ -28,6 +28,7 @@ export const notebook = (
     emoji: string | null;
     customSummary: string | null;
     pinned: boolean;
+    coverVersion: string | null;
     sourceCount: number;
   }> = {}
 ) => ({
@@ -36,6 +37,7 @@ export const notebook = (
   emoji: null,
   customSummary: null,
   pinned: false,
+  coverVersion: null,
   sourceCount: 2,
   createdAt: CREATED_AT,
   ...overrides,

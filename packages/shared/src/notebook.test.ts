@@ -26,6 +26,7 @@ describe('notebook contracts', () => {
         emoji: null,
         customSummary: null,
         pinned: false,
+        coverVersion: null,
         sourceCount: 3,
         createdAt: DATE,
       })
@@ -38,6 +39,7 @@ describe('notebook contracts', () => {
       title: 'Recherche',
       customSummary: null,
       pinned: false,
+      coverVersion: null,
       sourceCount: 1,
       createdAt: DATE,
     };
@@ -55,6 +57,7 @@ describe('notebook contracts', () => {
       emoji: null,
       customSummary: null,
       pinned: false,
+      coverVersion: null,
       createdAt: DATE,
     };
 
@@ -100,6 +103,7 @@ describe('notebook contracts', () => {
       title: 'Recherche',
       emoji: null,
       pinned: false,
+      coverVersion: null,
       sourceCount: 1,
       createdAt: DATE,
     };

@@ -96,5 +96,7 @@ export function webSearchRoutes(deps: AppDeps) {
 /** Tells the UI which optional features this installation has. */
 export function capabilityRoutes(deps: AppDeps) {
   const app = new OpenAPIHono<{ Variables: AuthVariables }>();
-  return app.openapi(capabilitiesRoute, (c) => c.json({ webSearch: deps.webSearch !== null }, OK));
+  return app.openapi(capabilitiesRoute, (c) =>
+    c.json({ webSearch: deps.webSearch !== null, coverImage: deps.objectStore !== null }, OK)
+  );
 }

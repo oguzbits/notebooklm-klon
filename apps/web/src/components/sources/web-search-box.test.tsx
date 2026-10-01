@@ -15,7 +15,7 @@ const RESULTS = [
   { title: 'Doku zu RAG', url: 'https://example.org/doku', snippet: 'Zweiter Text.' },
 ];
 const capabilities = (webSearch: boolean) =>
-  http.get('*/api/capabilities', () => HttpResponse.json({ webSearch }));
+  http.get('*/api/capabilities', () => HttpResponse.json({ webSearch, coverImage: false }));
 const search = (results: unknown[] = RESULTS) =>
   http.post('*/api/web-search', () => HttpResponse.json({ results }));
 

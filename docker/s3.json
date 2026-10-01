@@ -1,0 +1,9 @@
+{
+  "identities": [
+    {
+      "name": "app",
+      "credentials": [{ "accessKey": "nlm-dev-access", "secretKey": "nlm-dev-secret-not-real" }],
+      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+    }
+  ]
+}

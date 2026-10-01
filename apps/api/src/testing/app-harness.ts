@@ -9,6 +9,7 @@ import { axisVector, createTestDb } from '../db/testing/test-db';
 import type { FetchDeps } from '../import/fetch-url';
 import { runIngestJob } from '../ingestion/submit';
 import type { WebSearch } from '../search/tavily-search';
+import type { ObjectStore } from '../storage/object-store';
 
 export const BASE_URL = 'http://localhost:3000';
 export const DEMO_OWNER_EMAIL = 'demo@example.test';
@@ -27,6 +28,8 @@ interface HarnessOptions {
   fetch?: FetchDeps;
   /** The web search the app gets; none by default. */
   webSearch?: WebSearch;
+  /** The object store for cover images; none by default. */
+  objectStore?: ObjectStore;
   /** Replaces the model: gets what the app would send and streams text back. */
   model?: (input: ChatInput) => AsyncIterable<string>;
   embedQuery?: (text: string) => Promise<number[]>;
@@ -62,6 +65,7 @@ export function createHarness(options: HarnessOptions = {}) {
     demoOwnerEmail: DEMO_OWNER_EMAIL,
     fetch: options.fetch ?? noNetwork,
     webSearch: options.webSearch ?? null,
+    objectStore: options.objectStore ?? null,
     chat: {
       embedQuery: options.embedQuery ?? (async () => axisVector(0, EMBEDDING_DIMENSIONS)),
       stream:

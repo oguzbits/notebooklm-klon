@@ -62,6 +62,8 @@ export const notebooks = pgTable(
     customSummary: text('custom_summary'),
     // When the notebook was pinned to the top of the start page; null: not pinned.
     pinnedAt: timestamp('pinned_at', { withTimezone: true }),
+    // Names the cover image in the object store (covers/<user>/<notebook>/<version>); null: none.
+    coverVersion: uuid('cover_version'),
     createdAt: createdAt(),
   },
   (table) => [index('notebooks_user_id_idx').on(table.userId)]

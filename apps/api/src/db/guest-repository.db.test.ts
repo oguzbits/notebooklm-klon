@@ -213,7 +213,7 @@ describe('deleteExpiredGuests', () => {
 
     const deleted = await deleteExpiredGuests(db, new Date(Date.now() - 7 * DAY_MS));
 
-    expect(deleted).toBe(1);
+    expect(deleted).toEqual(['stale']);
     const left = await db.select({ id: user.id }).from(user);
     expect(left.map((row) => row.id).sort()).toEqual(['fresh', 'member', 'owner']);
     expect(await db.select().from(notebooks).where(eq(notebooks.userId, 'stale'))).toEqual([]);

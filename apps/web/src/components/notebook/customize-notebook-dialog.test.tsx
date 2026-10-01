@@ -1,8 +1,8 @@
 import { API_ERROR } from '@nlm/shared';
-import { screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { notebook, NOTEBOOK_ID } from '@/test/fixtures';
 import { renderWithProviders } from '@/test/render';
@@ -127,5 +127,96 @@ describe('CustomizeNotebookDialog', () => {
 
     expect(await screen.findByRole('alert')).toBeTruthy();
     expect(onOpenChange).not.toHaveBeenCalled();
+  });
+});
+
+describe('the cover image in the dialog', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  /** jsdom's FormData is not a body the Node fetch accepts, so the requests are answered here. */
+  function stubCover(coverImage: boolean) {
+    const requests: { url: string; method: string; file?: File }[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: string, init?: { method?: string; body?: FormData }) => {
+        const method = init?.method ?? 'GET';
+        if (input.endsWith('/api/capabilities')) {
+          return Response.json({ webSearch: false, coverImage });
+        }
+        requests.push({ url: input, method, file: init?.body?.get('file') as File | undefined });
+        if (method === 'DELETE') return new Response(null, { status: 204 });
+        return Response.json(notebook({ coverVersion: COVER_VERSION }));
+      })
+    );
+    return requests;
+  }
+
+  const COVER_VERSION = '9b2c7d6e-1f43-4c8a-8a3b-5e7a8f0c1d22';
+  const renderWithCover = (coverVersion: string | null) =>
+    renderWithProviders(
+      <CustomizeNotebookDialog
+        notebook={notebook({ title: 'Forschung', coverVersion })}
+        open
+        onOpenChange={() => {}}
+      />
+    );
+
+  it('is not offered where no object store is set up', async () => {
+    stubCover(false);
+    renderWithCover(null);
+
+    await screen.findByRole('heading', { name: '„Forschung“ anpassen' });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(screen.queryByRole('button', { name: 'Hochladen' })).toBeNull();
+  });
+
+  it('sends the chosen image to the cover route', async () => {
+    const requests = stubCover(true);
+    renderWithCover(null);
+    const file = new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], 'titel.png', {
+      type: 'image/png',
+    });
+
+    await screen.findByRole('button', { name: 'Hochladen' });
+    fireEvent.change(screen.getByLabelText('Titelbild auswählen'), { target: { files: [file] } });
+
+    await waitFor(() => expect(requests).toHaveLength(1));
+    expect(requests[0]).toMatchObject({
+      url: `/api/notebooks/${NOTEBOOK_ID}/cover`,
+      method: 'PUT',
+    });
+    expect(requests[0]?.file?.name).toBe('titel.png');
+  });
+
+  it('shows the image and takes it back', async () => {
+    const requests = stubCover(true);
+    renderWithCover(COVER_VERSION);
+    const user = userEvent.setup();
+
+    expect((await screen.findByRole('img', { name: 'Titelbild' })).getAttribute('src')).toBe(
+      `/api/notebooks/${NOTEBOOK_ID}/cover?v=${COVER_VERSION}`
+    );
+    await user.click(await screen.findByRole('button', { name: 'Titelbild entfernen' }));
+
+    await waitFor(() => expect(requests.map((r) => r.method)).toEqual(['DELETE']));
+  });
+
+  it('says why an image was refused', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: string) =>
+        input.endsWith('/api/capabilities')
+          ? Response.json({ webSearch: false, coverImage: true })
+          : Response.json({ code: API_ERROR.COVER_INVALID }, { status: 400 })
+      )
+    );
+    renderWithCover(null);
+
+    await screen.findByRole('button', { name: 'Hochladen' });
+    fireEvent.change(screen.getByLabelText('Titelbild auswählen'), {
+      target: { files: [new File(['x'], 'seite.html')] },
+    });
+
+    expect(await screen.findByText(/PNG, JPEG oder WebP/)).toBeTruthy();
   });
 });

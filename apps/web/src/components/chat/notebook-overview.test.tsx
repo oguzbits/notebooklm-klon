@@ -77,6 +77,25 @@ describe('NotebookOverview', () => {
     expect(screen.getByText('typisierte Werte').tagName).toBe('STRONG');
   });
 
+  it('shows the cover image of the notebook instead of the symbol', async () => {
+    const version = '9b2c7d6e-1f43-4c8a-8a3b-5e7a8f0c1d22';
+    serve();
+    server.use(
+      http.get('*/api/notebooks', () =>
+        HttpResponse.json([notebook({ title: 'Jev: ein Modell', coverVersion: version })])
+      )
+    );
+    const { container } = renderOverview();
+
+    await screen.findByRole('heading', { name: 'Jev: ein Modell' });
+    await waitFor(() =>
+      expect(container.querySelector('img')?.getAttribute('src')).toBe(
+        `/api/notebooks/${NOTEBOOK_ID}/cover?v=${version}`
+      )
+    );
+    expect(screen.queryByText('🤖')).toBeNull();
+  });
+
   it('opens the customizing of the notebook when the cover is clicked', async () => {
     serve();
     renderOverview();

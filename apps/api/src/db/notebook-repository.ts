@@ -35,6 +35,7 @@ const notebookColumns = {
   emoji: emojiOf,
   customSummary: notebooks.customSummary,
   pinned: sql<boolean>`${notebooks.pinnedAt} is not null`,
+  coverVersion: notebooks.coverVersion,
   createdAt: notebooks.createdAt,
   sourceCount: sourceCountOf,
 };
@@ -45,6 +46,7 @@ function toNotebook(row: {
   emoji: string | null;
   customSummary: string | null;
   pinned: boolean;
+  coverVersion: string | null;
   createdAt: Date;
   sourceCount: number;
 }): Notebook {
@@ -54,6 +56,7 @@ function toNotebook(row: {
     emoji: row.emoji,
     customSummary: row.customSummary,
     pinned: row.pinned,
+    coverVersion: row.coverVersion,
     sourceCount: row.sourceCount,
     createdAt: row.createdAt.toISOString(),
   };
@@ -66,7 +69,7 @@ export async function createNotebook(
 ): Promise<Notebook> {
   const [row] = await db.insert(notebooks).values({ userId, title }).returning();
   if (!row) throw new Error('insert returned no row');
-  return toNotebook({ ...row, emoji: null, pinned: false, sourceCount: 0 });
+  return toNotebook({ ...row, emoji: null, pinned: false, coverVersion: null, sourceCount: 0 });
 }
 
 export async function listNotebooks(db: Database, userId: string): Promise<Notebook[]> {
@@ -116,6 +119,33 @@ export async function updateNotebook(
     .where(and(eq(notebooks.id, notebookId), eq(notebooks.userId, userId)))
     .returning({ id: notebooks.id });
   return updated.length === 1 ? findNotebook(db, userId, notebookId) : null;
+}
+
+/**
+ * Sets the cover image of the notebook (or takes it back with null) and returns the notebook and
+ * the version it had before, so the caller can remove that file. Null when it is not the user's.
+ */
+export async function setCoverVersion(
+  db: Database,
+  userId: string,
+  notebookId: string,
+  version: string | null
+): Promise<{ notebook: Notebook; previous: string | null } | null> {
+  if (!UUID.test(notebookId)) return null;
+  return db.transaction(async (tx) => {
+    const [before] = await tx
+      .select({ coverVersion: notebooks.coverVersion })
+      .from(notebooks)
+      .where(and(eq(notebooks.id, notebookId), eq(notebooks.userId, userId)))
+      .for('update');
+    if (!before) return null;
+    await tx.update(notebooks).set({ coverVersion: version }).where(eq(notebooks.id, notebookId));
+    const [row] = await tx
+      .select(notebookColumns)
+      .from(notebooks)
+      .where(eq(notebooks.id, notebookId));
+    return row ? { notebook: toNotebook(row), previous: before.coverVersion } : null;
+  });
 }
 
 /**

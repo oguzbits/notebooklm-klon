@@ -20,6 +20,10 @@ export const API_ERROR = {
   WEB_SEARCH_UNAVAILABLE: 'WEB_SEARCH_UNAVAILABLE',
   /** Too many searches within the window. */
   WEB_SEARCH_LIMIT_REACHED: 'WEB_SEARCH_LIMIT_REACHED',
+  /** Cover images are not set up in this installation (no object store). */
+  COVER_UNAVAILABLE: 'COVER_UNAVAILABLE',
+  /** The file is no PNG, JPEG or WebP image, or it is too large. */
+  COVER_INVALID: 'COVER_INVALID',
   INTERNAL: 'INTERNAL',
 } as const;
 

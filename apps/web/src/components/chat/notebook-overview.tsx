@@ -8,13 +8,14 @@ import { SummarySkeleton } from '@/components/skeletons';
 import { Button } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
 import { useNotebookOverview } from '@/hooks/use-notebook-overview';
-import { useNotebook } from '@/hooks/use-notebooks';
+import { coverUrl, useNotebook } from '@/hooks/use-notebooks';
 import { useCreateWrittenNote } from '@/hooks/use-notes';
 import { formatDay } from '@/lib/day';
 import { describeError } from '@/lib/messages';
 import { notebookEmoji } from '@/lib/notebook-emoji';
 import { withoutMarkers } from '@/lib/plain-text';
 import { sourcesLabel } from '@/lib/sources-label';
+import { cn } from '@/lib/utils';
 
 const SUMMARY_NOTE_TITLE = 'Zusammenfassung';
 
@@ -44,17 +45,34 @@ export function NotebookOverview({
 
   if (!ready) return null;
   const emoji = overview?.emoji ?? notebook?.emoji ?? notebookEmoji(notebookId);
+  const cover = notebook?.coverVersion ? coverUrl(notebook.id, notebook.coverVersion) : null;
 
   return (
     <section aria-labelledby="notebook-overview-title" className="-mt-2">
       {/* 265 high like in the original; on a phone, which was not measured, a good deal shorter. */}
-      <header className="relative flex min-h-[200px] flex-col justify-end pb-6 sm:min-h-[265px]">
-        <span
-          aria-hidden
-          className="absolute top-6 left-0 flex size-10 items-center justify-center text-[40px] leading-10"
-        >
-          {emoji}
-        </span>
+      <header
+        className={cn(
+          'relative flex min-h-[200px] flex-col justify-end pb-6 sm:min-h-[265px]',
+          cover && 'overflow-hidden rounded-3xl px-6'
+        )}
+      >
+        {cover ? (
+          <>
+            {/* The picture of the reader fills the cover; the fade keeps the title readable on it. */}
+            <img src={cover} alt="" className="absolute inset-0 size-full object-cover" />
+            <span
+              aria-hidden
+              className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent"
+            />
+          </>
+        ) : (
+          <span
+            aria-hidden
+            className="absolute top-6 left-0 flex size-10 items-center justify-center text-[40px] leading-10"
+          >
+            {emoji}
+          </span>
+        )}
         {/* Like the original: the whole cover is one invisible control that opens "Notebook anpassen". */}
         <button
           type="button"
@@ -66,11 +84,11 @@ export function NotebookOverview({
           <>
             <h3
               id="notebook-overview-title"
-              className="text-[2.25rem] leading-[2.75rem] font-[320] break-words"
+              className="relative text-[2.25rem] leading-[2.75rem] font-[320] break-words"
             >
               {notebook.title}
             </h3>
-            <p className="text-[0.875rem] leading-6">
+            <p className="relative text-[0.875rem] leading-6">
               {sourcesLabel(notebook.sourceCount)} · {formatDay(notebook.createdAt)}
             </p>
           </>
