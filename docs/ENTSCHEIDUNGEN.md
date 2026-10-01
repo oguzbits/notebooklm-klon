@@ -568,15 +568,16 @@ eigener Code durch ein Paket ersetzbar ist. Ergebnis: Es bleibt, wie es ist.
   rohes HTML, `<pre>` wird kein Codeblock, der Strich in einer Zelle wird nicht maskiert und Überschriften behalten Links. Jede Angleichung
   wäre eine eigene `turndown`-Regel; am Ende stünde etwa derselbe Umfang plus eine Abhängigkeit. Außerdem hängt der Inhalts-Hash der Quelle
   (Regel „idempotente Aufnahme“) vom Text, den dieser Schritt erzeugt.
-- **SSRF-Schutz (`core/ssrf.ts`, `import/fetch-url.ts`) bleibt.** Er nutzt schon `node:net` (`BlockList`, `isIP`), und die Pakete für
-  diesen Zweck prüfen nicht erneut nach jedem Redirect und passen nicht zu `undici` mit festgelegter Adresse.
+- **SSRF-Schutz (`core/ssrf.ts`, `import/fetch-url.ts`) bleibt.** Er nutzt schon `node:net` (`BlockList`, `isIP`), und ein Paket müsste die
+  Prüfung nach jedem Redirect und die festgelegte Adresse von `undici` mitbringen (Annahme, kein Paket geprüft). Sicherheitscode, der
+  schon klein ist und getestet wird, tauscht man nicht ohne Not.
 - **Zwei gleitende Fenster bleiben getrennt.** `RateLimiter` (blockiert, gewichtet nach Tokens, für Gemini) und `createWindowLimit`
   (nimmt oder lehnt ab, je Nutzer) haben verschiedene Aufgaben; ein Paket (`rate-limiter-flexible`, `bottleneck`) deckt keins der beiden
   mit Uhr zum Testen ab (siehe Eintrag oben zum Limiter).
 - **Bildtyp (`core/image-type.ts`, 25 Zeilen) bleibt.** `file-type` erkennt Hunderte Typen und lädt viel; wir erlauben drei.
 - **Kleines bleibt klein:** `relative-time.ts` und `use-wide-layout.ts` nutzen schon `Intl` und `useSyncExternalStore`. Der
   SSE-Leser im Browser (`chat-stream.ts`, 49 Zeilen) ließe sich durch `eventsource-parser` ersetzen; der Gewinn wäre etwa 15 Zeilen.
-  `pdf-lib` dient nur dem Seitenzählen (7 Zeilen), ist aber der kleinste verlässliche Weg ohne Anbieteraufruf.
+  `pdf-lib` dient nur dem Seitenzählen (7 Zeilen), bleibt, weil das Zählen ohne Anbieteraufruf geschehen muss (Alternativen nicht verglichen).
 - **Abweichung vom Plan, nachgetragen:** [PLAN.md](PLAN.md) nennt für die LLM-Schicht das Vercel AI SDK. Gebaut ist ein eigener
   schlanker Client (`ai/gemini-http.ts`, `gemini-chat.ts`, `gemini-pdf-parser.ts`, `gemini-embedder.ts`, zusammen 360 Zeilen) mit Wiederholung bei
   429/503 und dem Ratenbegrenzer davor. Das wurde damals nicht eingetragen. Ein Wechsel würde Zeilen sparen, aber die Tests, die auf der
