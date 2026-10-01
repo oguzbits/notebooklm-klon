@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
-const MAX_QUERY_CHARS = 200;
+/** What a search query may be: the field and the schema use the same numbers. */
+export const WEB_SEARCH_QUERY = { MIN_CHARS: 2, MAX_CHARS: 200 } as const;
 const MAX_TITLE_CHARS = 300;
 const MAX_SNIPPET_CHARS = 500;
 const MAX_URL_CHARS = 2048;
@@ -9,7 +10,7 @@ export const MAX_WEB_RESULTS = 5;
 const HTTP_URL = /^https?:\/\//i;
 
 export const WebSearchBodySchema = z.object({
-  query: z.string().trim().min(2).max(MAX_QUERY_CHARS),
+  query: z.string().trim().min(WEB_SEARCH_QUERY.MIN_CHARS).max(WEB_SEARCH_QUERY.MAX_CHARS),
 });
 
 /** One suggestion of the web search: a page the reader can add as a source. */

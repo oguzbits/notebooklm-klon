@@ -1,4 +1,4 @@
-import type { WebSearchResult } from '@nlm/shared';
+import { WEB_SEARCH_QUERY, type WebSearchResult } from '@nlm/shared';
 import { ArrowRight, Check, LoaderCircle, Plus, X } from 'lucide-react';
 import { type FormEvent, type KeyboardEvent, useState } from 'react';
 
@@ -55,6 +55,108 @@ function ResultRow({ notebookId, result }: ResultRowProps) {
   );
 }
 
+interface SearchFieldProps {
+  query: string;
+  pending: boolean;
+  canSearch: boolean;
+  onChange: (query: string) => void;
+  onRun: () => void;
+}
+
+/** The field for the search, which sends with Enter or with the arrow. */
+function SearchField({ query, pending, canSearch, onChange, onRun }: SearchFieldProps) {
+  const submitOnEnter = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      onRun();
+    }
+  };
+
+  return (
+    <form
+      onSubmit={(event: FormEvent) => {
+        event.preventDefault();
+        onRun();
+      }}
+      className="flex items-end gap-2 rounded-2xl bg-secondary py-2 pr-2 pl-4"
+    >
+      <Textarea
+        aria-label="Im Web nach neuen Quellen suchen"
+        placeholder="Im Web nach neuen Quellen suchen"
+        rows={1}
+        maxLength={WEB_SEARCH_QUERY.MAX_CHARS}
+        value={query}
+        disabled={pending}
+        onChange={(event) => onChange(event.target.value)}
+        onKeyDown={submitOnEnter}
+        className="min-h-0 flex-1 resize-none rounded-none border-0 bg-transparent px-0 py-1.5 text-[0.875rem] leading-5 shadow-none focus-visible:border-0 focus-visible:outline-0"
+      />
+      <Button
+        type="submit"
+        size="icon"
+        variant={canSearch ? 'default' : 'ghost'}
+        aria-label="Suchen"
+        disabled={!canSearch}
+      >
+        <ArrowRight />
+      </Button>
+    </form>
+  );
+}
+
+interface SearchResultsProps {
+  notebookId: string;
+  search: ReturnType<typeof useWebSearch>;
+  onRetry: () => void;
+  onClose: () => void;
+}
+
+/** What the search brought: the wait, the failure with a way to try again, or the pages found. */
+function SearchResults({ notebookId, search, onRetry, onClose }: SearchResultsProps) {
+  return (
+    <section aria-label="Suchergebnisse" className="flex flex-col gap-1">
+      {search.isPending && (
+        <p
+          role="status"
+          aria-label="Suche läuft"
+          className="flex items-center gap-2 px-2 py-3 text-ui text-muted-foreground"
+        >
+          <LoaderCircle className="size-4 animate-spin" aria-hidden />
+          Suche läuft …
+        </p>
+      )}
+      {search.isError && (
+        <ErrorNotice error={search.error} onRetry={onRetry} retrying={search.isPending} />
+      )}
+      {search.isSuccess && (
+        <>
+          <div className="flex items-center justify-between pl-2">
+            <h3 className="text-small text-muted-foreground">Gefundene Seiten</h3>
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              aria-label="Ergebnisse schließen"
+              tooltip="Schließen"
+              onClick={onClose}
+            >
+              <X />
+            </Button>
+          </div>
+          {search.data.results.length === 0 ? (
+            <p className="px-2 py-3 text-ui text-muted-foreground">Dazu wurde nichts gefunden.</p>
+          ) : (
+            <ul aria-label="Gefundene Seiten" className="flex flex-col">
+              {search.data.results.map((result) => (
+                <ResultRow key={result.url} notebookId={notebookId} result={result} />
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
 interface WebSearchBoxProps {
   notebookId: string;
 }
@@ -72,95 +174,29 @@ export function WebSearchBox({ notebookId }: WebSearchBoxProps) {
 
   if (!capabilities.data?.webSearch) return null;
   const text = query.trim();
-  const canSearch = text.length >= 2 && !search.isPending;
-
+  const canSearch = text.length >= WEB_SEARCH_QUERY.MIN_CHARS && !search.isPending;
   const run = () => {
     if (!canSearch) return;
     setOpen(true);
     search.mutate(text);
   };
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
-    run();
-  };
-  const submitOnEnter = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      run();
-    }
-  };
 
   return (
     <div className="flex flex-col gap-2">
-      <form
-        onSubmit={submit}
-        className="flex items-end gap-2 rounded-2xl bg-secondary py-2 pr-2 pl-4"
-      >
-        <Textarea
-          aria-label="Im Web nach neuen Quellen suchen"
-          placeholder="Im Web nach neuen Quellen suchen"
-          rows={1}
-          maxLength={200}
-          value={query}
-          disabled={search.isPending}
-          onChange={(event) => setQuery(event.target.value)}
-          onKeyDown={submitOnEnter}
-          className="min-h-0 flex-1 resize-none rounded-none border-0 bg-transparent px-0 py-1.5 text-[0.875rem] leading-5 shadow-none focus-visible:border-0 focus-visible:outline-0"
-        />
-        <Button
-          type="submit"
-          size="icon"
-          variant={canSearch ? 'default' : 'ghost'}
-          aria-label="Suchen"
-          disabled={!canSearch}
-        >
-          <ArrowRight />
-        </Button>
-      </form>
-
+      <SearchField
+        query={query}
+        pending={search.isPending}
+        canSearch={canSearch}
+        onChange={setQuery}
+        onRun={run}
+      />
       {open && (
-        <section aria-label="Suchergebnisse" className="flex flex-col gap-1">
-          {search.isPending && (
-            <p
-              role="status"
-              aria-label="Suche läuft"
-              className="flex items-center gap-2 px-2 py-3 text-ui text-muted-foreground"
-            >
-              <LoaderCircle className="size-4 animate-spin" aria-hidden />
-              Suche läuft …
-            </p>
-          )}
-          {search.isError && (
-            <ErrorNotice error={search.error} onRetry={run} retrying={search.isPending} />
-          )}
-          {search.isSuccess && (
-            <>
-              <div className="flex items-center justify-between pl-2">
-                <h3 className="text-small text-muted-foreground">Gefundene Seiten</h3>
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  aria-label="Ergebnisse schließen"
-                  tooltip="Schließen"
-                  onClick={() => setOpen(false)}
-                >
-                  <X />
-                </Button>
-              </div>
-              {search.data.results.length === 0 ? (
-                <p className="px-2 py-3 text-ui text-muted-foreground">
-                  Dazu wurde nichts gefunden.
-                </p>
-              ) : (
-                <ul aria-label="Gefundene Seiten" className="flex flex-col">
-                  {search.data.results.map((result) => (
-                    <ResultRow key={result.url} notebookId={notebookId} result={result} />
-                  ))}
-                </ul>
-              )}
-            </>
-          )}
-        </section>
+        <SearchResults
+          notebookId={notebookId}
+          search={search}
+          onRetry={run}
+          onClose={() => setOpen(false)}
+        />
       )}
     </div>
   );

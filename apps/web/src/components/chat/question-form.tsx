@@ -1,10 +1,9 @@
+import { MAX_QUESTION_CHARS } from '@nlm/shared';
 import { ArrowUp, FileText } from 'lucide-react';
 import { type FormEvent, type KeyboardEvent, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-
-const MAX_QUESTION_CHARS = 2000;
 
 /** Enter sends, Shift+Enter makes a new line. */
 const submitOnEnter = (event: KeyboardEvent<HTMLTextAreaElement>) => {

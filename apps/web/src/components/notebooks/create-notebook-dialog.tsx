@@ -1,4 +1,4 @@
-import type { Notebook } from '@nlm/shared';
+import { type Notebook, NOTEBOOK_TITLE_MAX_CHARS } from '@nlm/shared';
 import { type FormEvent, type ReactNode, useState } from 'react';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -60,7 +60,7 @@ export function CreateNotebookDialog({
               id="notebook-title"
               name="title"
               placeholder="Zum Beispiel: Steuerrecht"
-              maxLength={200}
+              maxLength={NOTEBOOK_TITLE_MAX_CHARS}
               required
             />
           </div>

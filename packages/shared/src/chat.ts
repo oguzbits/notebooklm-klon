@@ -3,7 +3,8 @@ import { z } from 'zod';
 import { ApiErrorCodeSchema } from './api-error';
 import { AnswerSchema } from './citation';
 
-const MAX_QUESTION_CHARS = 2000;
+/** The longest question that can be asked. */
+export const MAX_QUESTION_CHARS = 2000;
 
 /** How many questions the assistant suggests after an answer, like the three cards of NotebookLM. */
 export const MAX_FOLLOW_UPS = 3;

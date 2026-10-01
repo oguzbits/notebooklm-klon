@@ -9,6 +9,10 @@ export const SOURCE_SORT = {
 } as const;
 export type SourceSort = (typeof SOURCE_SORT)[keyof typeof SOURCE_SORT];
 
+/** The choice behind a menu value, or null for a value that is none of them. */
+export const toSourceSort = (value: string): SourceSort | null =>
+  Object.values(SOURCE_SORT).find((sort) => sort === value) ?? null;
+
 const KIND_ORDER = Object.values(SOURCE_KIND);
 const byTitle = (x: SourceSummary, y: SourceSummary) =>
   x.title.localeCompare(y.title, 'de', { sensitivity: 'base' });

@@ -1,4 +1,4 @@
-import { COVER_IMAGE, type Notebook } from '@nlm/shared';
+import { COVER_IMAGE, type Notebook, NOTEBOOK_TITLE_MAX_CHARS } from '@nlm/shared';
 import { ImageIcon, Trash2, Upload } from 'lucide-react';
 import { type ChangeEvent, type FormEvent, useRef, useState } from 'react';
 
@@ -169,7 +169,7 @@ function CustomizeForm({ notebook, onDone }: CustomizeFormProps) {
         <Input
           id="notebook-title-field"
           value={title}
-          maxLength={200}
+          maxLength={NOTEBOOK_TITLE_MAX_CHARS}
           onChange={(event) => setTitle(event.target.value)}
         />
       </div>

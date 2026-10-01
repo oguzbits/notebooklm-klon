@@ -3,7 +3,8 @@ import { z } from 'zod';
 import { CustomSummarySchema, NotebookOverviewSchema } from './overview';
 import { SourceFailureSchema, SourceKindSchema, SourceStatusSchema } from './source';
 
-const MAX_TITLE_CHARS = 200;
+/** The longest title a notebook may have. */
+export const NOTEBOOK_TITLE_MAX_CHARS = 200;
 const MAX_URL_CHARS = 2048;
 const HTTP_URL = /^https?:\/\//i;
 
@@ -42,7 +43,7 @@ export const NotebookSchema = z.object({
 });
 
 export const CreateNotebookBodySchema = z.object({
-  title: z.string().trim().min(1).max(MAX_TITLE_CHARS),
+  title: z.string().trim().min(1).max(NOTEBOOK_TITLE_MAX_CHARS),
 });
 
 /**

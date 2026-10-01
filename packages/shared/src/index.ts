@@ -16,6 +16,7 @@ export {
   ChatRequestSchema,
   FollowUpsSchema,
   MAX_FOLLOW_UPS,
+  MAX_QUESTION_CHARS,
 } from './chat';
 export {
   CHAT_LANGUAGE,
@@ -49,6 +50,7 @@ export {
   COVER_IMAGE,
   CreateNotebookBodySchema,
   type Notebook,
+  NOTEBOOK_TITLE_MAX_CHARS,
   NotebookListSchema,
   NotebookSchema,
   RenameSourceBodySchema,
@@ -136,6 +138,7 @@ export {
   type Capabilities,
   CapabilitiesSchema,
   MAX_WEB_RESULTS,
+  WEB_SEARCH_QUERY,
   WebSearchBodySchema,
   WebSearchResponseSchema,
   type WebSearchResult,

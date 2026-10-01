@@ -150,27 +150,7 @@
       "count": 1
     }
   },
-  "apps/web/src/components/sources/add-source.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "apps/web/src/components/sources/source-overview.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "apps/web/src/components/sources/source-row.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "apps/web/src/components/sources/sources-panel.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "apps/web/src/components/sources/web-search-box.tsx": {
     "max-lines-per-function": {
       "count": 1
     }

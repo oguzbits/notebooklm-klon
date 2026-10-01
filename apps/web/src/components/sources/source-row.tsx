@@ -19,6 +19,68 @@ import { describeError, FAILURE_MESSAGE, STATUS_LABEL } from '@/lib/messages';
 
 const FAILED_HINT = 'Entferne die Quelle und füge sie noch einmal hinzu.';
 
+/** The menu at the end of a row: remove the source, or rename it. It shows while the row is hovered or focused. */
+function SourceMenu({
+  title,
+  busy,
+  onRemove,
+  onRename,
+}: {
+  title: string;
+  busy: boolean;
+  onRemove: () => void;
+  onRename: () => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          aria-label={`Weitere Aktionen für „${title}“`}
+          tooltip="Mehr"
+          disabled={busy}
+          className="opacity-0 group-focus-within/row:opacity-100 group-hover/row:opacity-100 data-[state=open]:opacity-100 max-wide:opacity-100"
+        >
+          <EllipsisVertical />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem disabled={busy} onSelect={onRemove}>
+          <Trash2 aria-hidden />
+          Quelle entfernen
+        </DropdownMenuItem>
+        <DropdownMenuItem disabled={busy} onSelect={onRename}>
+          <Pencil aria-hidden />
+          Quelle umbenennen
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+/** Under the title: what is being done to a source that is not ready, or why it failed. */
+function SourceStatus({ source }: { source: SourceSummary }) {
+  if (source.status === SOURCE_STATUS.READY) return null;
+  if (source.status !== SOURCE_STATUS.FAILED) {
+    return (
+      <Badge variant="secondary" className="mb-1 ml-9">
+        <LoaderCircle className="animate-spin" aria-hidden />
+        {STATUS_LABEL[source.status]}
+      </Badge>
+    );
+  }
+  return (
+    <p className="mb-1 ml-9 flex items-start gap-1 text-small text-destructive" role="alert">
+      <TriangleAlert className="mt-0.5 size-3 shrink-0" aria-hidden />
+      <span>
+        {source.failure ? FAILURE_MESSAGE[source.failure] : STATUS_LABEL[source.status]}{' '}
+        {FAILED_HINT}
+      </span>
+    </p>
+  );
+}
+
 interface SourceRowProps {
   notebookId: string;
   source: SourceSummary;
@@ -44,8 +106,6 @@ export function SourceRow({
   const [renaming, setRenaming] = useState(false);
   const rename = useRenameSource(notebookId);
   const ready = source.status === SOURCE_STATUS.READY;
-  const failed = source.status === SOURCE_STATUS.FAILED;
-  const working = !ready && !failed;
 
   return (
     <li className="group/row veil rounded-lg px-2">
@@ -64,30 +124,12 @@ export function SourceRow({
           </TooltipTrigger>
           <TooltipContent>{source.title}</TooltipContent>
         </Tooltip>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              aria-label={`Weitere Aktionen für „${source.title}“`}
-              tooltip="Mehr"
-              disabled={busy}
-              className="opacity-0 group-focus-within/row:opacity-100 group-hover/row:opacity-100 data-[state=open]:opacity-100 max-wide:opacity-100"
-            >
-              <EllipsisVertical />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem disabled={busy} onSelect={onRemove}>
-              <Trash2 aria-hidden />
-              Quelle entfernen
-            </DropdownMenuItem>
-            <DropdownMenuItem disabled={busy} onSelect={() => setRenaming(true)}>
-              <Pencil aria-hidden />
-              Quelle umbenennen
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <SourceMenu
+          title={source.title}
+          busy={busy}
+          onRemove={onRemove}
+          onRename={() => setRenaming(true)}
+        />
         <RenameDialog
           heading="Quelle umbenennen"
           label="Name der Quelle"
@@ -107,21 +149,7 @@ export function SourceRow({
           aria-label={`„${source.title}“ für Antworten verwenden`}
         />
       </div>
-      {working && (
-        <Badge variant="secondary" className="mb-1 ml-9">
-          <LoaderCircle className="animate-spin" aria-hidden />
-          {STATUS_LABEL[source.status]}
-        </Badge>
-      )}
-      {failed && (
-        <p className="mb-1 ml-9 flex items-start gap-1 text-small text-destructive" role="alert">
-          <TriangleAlert className="mt-0.5 size-3 shrink-0" aria-hidden />
-          <span>
-            {source.failure ? FAILURE_MESSAGE[source.failure] : STATUS_LABEL[source.status]}{' '}
-            {FAILED_HINT}
-          </span>
-        </p>
-      )}
+      <SourceStatus source={source} />
     </li>
   );
 }
