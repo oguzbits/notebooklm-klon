@@ -18,6 +18,7 @@ import { overviewRoutes } from './routes/overview';
 import { readerRoutes } from './routes/reader';
 import { sourceRoutes } from './routes/sources';
 import { studioRoutes } from './routes/studio';
+import { capabilityRoutes, webSearchRoutes } from './routes/web-search';
 
 const BAD_REQUEST = 400;
 const TOO_MANY_REQUESTS = 429;
@@ -67,8 +68,12 @@ export function createApp(deps: AppDeps) {
 
   app.use('/api/notebooks', requireUser(deps.auth));
   app.use('/api/notebooks/*', requireUser(deps.auth));
+  app.use('/api/web-search', requireUser(deps.auth));
+  app.use('/api/capabilities', requireUser(deps.auth));
 
   return app
+    .route('/api/web-search', webSearchRoutes(deps))
+    .route('/api/capabilities', capabilityRoutes(deps))
     .route('/api/notebooks', notebookRoutes(deps))
     .route('/api/notebooks', sourceRoutes(deps))
     .route('/api/notebooks', chatRoutes(deps))

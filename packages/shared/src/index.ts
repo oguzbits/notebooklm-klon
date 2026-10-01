@@ -131,3 +131,12 @@ export {
   type StudioUpdateBody,
   StudioUpdateBodySchema,
 } from './studio';
+export {
+  type Capabilities,
+  CapabilitiesSchema,
+  MAX_WEB_RESULTS,
+  WebSearchBodySchema,
+  WebSearchResponseSchema,
+  type WebSearchResult,
+  WebSearchResultSchema,
+} from './web-search';

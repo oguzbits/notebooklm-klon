@@ -23,6 +23,8 @@ export const EnvSchema = DatabaseEnvSchema.extend({
   BETTER_AUTH_SECRET: z.string().trim().min(MIN_AUTH_SECRET_CHARS),
   // Public origin of the app, also the only origin allowed to send authenticated requests.
   BETTER_AUTH_URL: z.url({ protocol: /^https?$/ }),
+  // Optional. Key of the web search (Tavily). Without it the search box is not offered.
+  TAVILY_API_KEY: z.string().trim().min(1).optional(),
   // Folder of the built web app. Set: the API serves it (one container). Unset: API only.
   WEB_DIST_DIR: z.string().trim().min(1).optional(),
   // Only for `pnpm seed:demo`: the account of the example notebook. Both or neither.

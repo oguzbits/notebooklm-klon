@@ -15,6 +15,7 @@ import { runIngestJob, type SubmitPorts } from './ingestion/submit';
 import { createJobQueue } from './jobs/queue';
 import { log } from './logger';
 import { createProviders } from './providers';
+import { createTavilySearch } from './search/tavily-search';
 import { serveWeb } from './web/serve-web';
 
 let env;
@@ -70,6 +71,7 @@ const app = createApp({
   ingest,
   demoOwnerEmail: env.SEED_DEMO_EMAIL,
   fetch: systemDeps,
+  webSearch: env.TAVILY_API_KEY ? createTavilySearch({ apiKey: env.TAVILY_API_KEY }) : null,
   chat: {
     embedQuery: providers.embedQuery,
     stream: providers.stream,

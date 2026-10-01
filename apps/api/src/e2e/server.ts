@@ -126,6 +126,8 @@ const app = createApp({
   ingest,
   demoOwnerEmail: DEMO_OWNER_EMAIL,
   fetch: systemDeps,
+  // The offline server has no search service.
+  webSearch: null,
   chat: {
     embedQuery: async (text) => hashEmbedding(text, EMBEDDING_DIMENSIONS),
     stream,

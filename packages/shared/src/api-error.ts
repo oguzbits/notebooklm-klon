@@ -16,6 +16,10 @@ export const API_ERROR = {
   STUDIO_EMPTY: 'STUDIO_EMPTY',
   /** No guest can be started now: no example to copy, or too many guests at the moment. */
   GUEST_UNAVAILABLE: 'GUEST_UNAVAILABLE',
+  /** The web search is not set up in this installation. */
+  WEB_SEARCH_UNAVAILABLE: 'WEB_SEARCH_UNAVAILABLE',
+  /** Too many searches within the window. */
+  WEB_SEARCH_LIMIT_REACHED: 'WEB_SEARCH_LIMIT_REACHED',
   INTERNAL: 'INTERNAL',
 } as const;
 
