@@ -6,23 +6,34 @@
  *
  *   pnpm --filter @nlm/api dev:offline     (needs DATABASE_URL, BETTER_AUTH_SECRET, BETTER_AUTH_URL)
  */
+import { randomUUID } from 'node:crypto';
+import { readdirSync, readFileSync } from 'node:fs';
+import path from 'node:path';
+
 import { serve } from '@hono/node-server';
 import { EMBEDDING_DIMENSIONS } from '@nlm/shared';
+import { eq } from 'drizzle-orm';
 
 import type { ChatInput } from '../ai/gemini-chat';
 import { createApp } from '../app';
 import { createAuth } from '../auth/auth';
+import { createNotebookOverviewPorts } from '../chat/notebook-overview-ports';
+import { createOverviewPorts } from '../chat/overview-ports';
 import { parseOfflineServerEnv } from '../config/env';
 import { NOTEBOOK_OVERVIEW_SYSTEM_PROMPT } from '../core/notebook-overview-prompt';
 import { OVERVIEW_SYSTEM_PROMPT } from '../core/overview-prompt';
+import { user } from '../db/auth-schema';
 import { createDb } from '../db/client';
 import { runMigrations } from '../db/migrate';
 import { createQuota } from '../db/quota';
 import { createSourceStorage, createUploadStorage } from '../db/source-storage';
+import { toLocalFile } from '../eval/corpus';
 import { systemDeps } from '../import/system-deps';
+import { createLocalImportDeps } from '../ingestion/local-import-deps';
 import { runIngestJob, type SubmitPorts } from '../ingestion/submit';
 import { log } from '../logger';
 import { createParseSource } from '../parsing/parse-source';
+import { seedDemo } from '../seed/demo';
 import { serveWeb } from '../web/serve-web';
 import {
   extractiveAnswer,
@@ -78,14 +89,46 @@ const ingest: SubmitPorts = {
   embed: async (texts) => texts.map((text) => hashEmbedding(text, EMBEDDING_DIMENSIONS)),
 };
 
+const stream = (input: ChatInput) => trickle(fakeReply(input));
+
+// The example notebook that guests get a copy of, made with the fakes. Safe to run again.
+const DEMO_OWNER_EMAIL = 'beispiel@offline.invalid';
+const DEMO_DIR = path.resolve(import.meta.dirname, '../../seed/demo');
+await seedDemo(
+  {
+    files: readdirSync(DEMO_DIR)
+      .sort()
+      .map((name) => toLocalFile(name, new Uint8Array(readFileSync(path.join(DEMO_DIR, name))))),
+  },
+  {
+    db,
+    importDeps: createLocalImportDeps(db, { parse: ingest.parse, embedDocuments: ingest.embed }),
+    overview: createOverviewPorts(db, stream),
+    notebookOverview: createNotebookOverviewPorts(db, stream),
+    ensureUser: async () => {
+      const [existing] = await db
+        .select({ id: user.id })
+        .from(user)
+        .where(eq(user.email, DEMO_OWNER_EMAIL));
+      if (existing) return existing.id;
+      // Nobody signs in as the owner: the password is thrown away.
+      const created = await auth.api.signUpEmail({
+        body: { name: 'Beispiel', email: DEMO_OWNER_EMAIL, password: randomUUID() },
+      });
+      return created.user.id;
+    },
+  }
+);
+
 const app = createApp({
   auth,
   db,
   ingest,
+  demoOwnerEmail: DEMO_OWNER_EMAIL,
   fetch: systemDeps,
   chat: {
     embedQuery: async (text) => hashEmbedding(text, EMBEDDING_DIMENSIONS),
-    stream: (input) => trickle(fakeReply(input)),
+    stream,
     onError: (error) =>
       log({
         level: 'error',

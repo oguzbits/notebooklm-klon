@@ -1,3 +1,4 @@
+import { GuestStartSchema } from '@nlm/shared';
 import { z } from 'zod';
 
 /** Why a sign-in or sign-up failed, as far as the form can tell the user. */
@@ -5,6 +6,7 @@ export const AUTH_FAILURE = {
   INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
   EMAIL_TAKEN: 'EMAIL_TAKEN',
   WEAK_PASSWORD: 'WEAK_PASSWORD',
+  GUEST_UNAVAILABLE: 'NO_GUEST_AVAILABLE',
   UNKNOWN: 'UNKNOWN',
 } as const;
 
@@ -29,8 +31,18 @@ const FAILURE_BY_CODE: Record<string, AuthFailure> = {
   PASSWORD_TOO_LONG: AUTH_FAILURE.WEAK_PASSWORD,
 };
 
+const GUEST_UNAVAILABLE_STATUS = 503;
+
 const SessionSchema = z
-  .object({ user: z.object({ id: z.string(), name: z.string(), email: z.string() }) })
+  .object({
+    user: z.object({
+      id: z.string(),
+      name: z.string(),
+      email: z.string(),
+      /** Set for a guest of the live demo. */
+      isAnonymous: z.boolean().nullish(),
+    }),
+  })
   .nullable();
 const AuthErrorBodySchema = z.object({ code: z.string() });
 
@@ -63,5 +75,18 @@ export const signIn = (email: string, password: string) =>
 // The product has no display name; the email address serves as the account name.
 export const signUp = (email: string, password: string) =>
   postJson('/api/auth/sign-up/email', { name: email, email, password });
+
+/**
+ * A guest of the live demo, signed in with a copy of the example notebook. Returns the ID of that
+ * notebook. The server answers with its own error codes (ours, not Better Auth's).
+ */
+export async function startGuest(): Promise<string> {
+  const response = await fetch('/api/guest', { method: 'POST' });
+  if (response.status === GUEST_UNAVAILABLE_STATUS) {
+    throw new AuthError(AUTH_FAILURE.GUEST_UNAVAILABLE);
+  }
+  if (!response.ok) throw new AuthError(AUTH_FAILURE.UNKNOWN);
+  return GuestStartSchema.parse(await response.json()).notebookId;
+}
 
 export const signOut = () => postJson('/api/auth/sign-out', {});

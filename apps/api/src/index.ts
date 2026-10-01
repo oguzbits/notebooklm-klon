@@ -3,7 +3,9 @@ import { serve } from '@hono/node-server';
 import { createApp } from './app';
 import { createAuth } from './auth/auth';
 import { parseEnv } from './config/env';
+import { LIMITS } from './config/limits';
 import { createDb } from './db/client';
+import { deleteExpiredGuests } from './db/guest-repository';
 import { runMigrations } from './db/migrate';
 import { createQuota } from './db/quota';
 import { createSourceStorage, createUploadStorage } from './db/source-storage';
@@ -66,6 +68,7 @@ const app = createApp({
   auth,
   db,
   ingest,
+  demoOwnerEmail: env.SEED_DEMO_EMAIL,
   fetch: systemDeps,
   chat: {
     embedQuery: providers.embedQuery,
@@ -78,6 +81,27 @@ const app = createApp({
       }),
   },
 });
+
+// Guests of the live demo are deleted after a few days, with everything they own.
+const DAY_MS = 24 * 60 * 60 * 1000;
+const HOUR_MS = 60 * 60 * 1000;
+async function removeExpiredGuests() {
+  const deleted = await deleteExpiredGuests(
+    db,
+    new Date(Date.now() - LIMITS.GUEST_LIFETIME_DAYS * DAY_MS)
+  );
+  if (deleted > 0) log({ level: 'info', msg: 'expired guests deleted', count: deleted });
+}
+await removeExpiredGuests();
+setInterval(() => {
+  removeExpiredGuests().catch((error: unknown) =>
+    log({
+      level: 'error',
+      msg: 'guest cleanup failed',
+      name: error instanceof Error ? error.name : 'unknown',
+    })
+  );
+}, HOUR_MS).unref();
 
 if (env.WEB_DIST_DIR) serveWeb(app, env.WEB_DIST_DIR);
 

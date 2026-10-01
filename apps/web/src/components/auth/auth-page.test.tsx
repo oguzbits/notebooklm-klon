@@ -1,6 +1,8 @@
+import { API_ERROR } from '@nlm/shared';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
+import { Route, Routes } from 'react-router';
 import { describe, expect, it } from 'vitest';
 
 import { renderWithProviders } from '@/test/render';
@@ -69,5 +71,84 @@ describe('AuthPage', () => {
       )
     );
     release();
+  });
+
+  describe('guest', () => {
+    const NOTEBOOK_ID = '3ec20799-05d5-464f-aeb8-060500436a17';
+    const renderRoutes = () =>
+      renderWithProviders(
+        <Routes>
+          <Route path="/" element={<AuthPage />} />
+          <Route path="/notizbuecher/:notebookId" element={<p>Das Beispiel-Notizbuch</p>} />
+        </Routes>
+      );
+
+    it('offers the example next to the form and opens the example notebook on click', async () => {
+      let signedIn = false;
+      server.use(
+        http.get('*/api/auth/get-session', () =>
+          HttpResponse.json(signedIn ? { user: { id: 'g', name: 'G', email: 'g@x.test' } } : null)
+        ),
+        http.post('*/api/guest', () => {
+          signedIn = true;
+          return HttpResponse.json({ notebookId: NOTEBOOK_ID });
+        })
+      );
+      renderRoutes();
+
+      await userEvent
+        .setup()
+        .click(await screen.findByRole('button', { name: 'Beispiel ausprobieren' }));
+
+      expect(await screen.findByText('Das Beispiel-Notizbuch')).toBeTruthy();
+    });
+
+    it('says why it did not work when no guest can be started, and the sign-in stays usable', async () => {
+      server.use(
+        signedOut(),
+        http.post('*/api/guest', () =>
+          HttpResponse.json({ code: API_ERROR.GUEST_UNAVAILABLE }, { status: 503 })
+        )
+      );
+      renderRoutes();
+
+      await userEvent
+        .setup()
+        .click(await screen.findByRole('button', { name: 'Beispiel ausprobieren' }));
+
+      expect((await screen.findByRole('alert')).textContent).toContain(
+        'Das Beispiel ist gerade nicht verfügbar'
+      );
+      expect(screen.getByRole('button', { name: 'Anmelden' })).toHaveProperty('disabled', false);
+    });
+
+    it('cannot be started twice while it is on its way', async () => {
+      let release: () => void = () => {};
+      const gate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      let calls = 0;
+      server.use(
+        signedOut(),
+        http.post('*/api/guest', async () => {
+          calls += 1;
+          await gate;
+          return HttpResponse.json({ notebookId: NOTEBOOK_ID });
+        })
+      );
+      renderRoutes();
+      const user = userEvent.setup();
+
+      await user.click(await screen.findByRole('button', { name: 'Beispiel ausprobieren' }));
+
+      await waitFor(() =>
+        expect(screen.getByRole('button', { name: 'Beispiel wird vorbereitet …' })).toHaveProperty(
+          'disabled',
+          true
+        )
+      );
+      release();
+      expect(calls).toBe(1);
+    });
   });
 });

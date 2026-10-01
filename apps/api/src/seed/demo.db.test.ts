@@ -2,13 +2,14 @@ import { EMBEDDING_DIMENSIONS, SOURCE_KIND, SOURCE_STATUS } from '@nlm/shared';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import type { ChatInput } from '../ai/gemini-chat';
+import { DEMO_NOTEBOOK_TITLE } from '../config/demo';
 import { findNotebookForOverview, saveNotebookOverview } from '../db/notebook-overview-repository';
 import { linkSource, listNotebooks, listNotebookSources } from '../db/notebook-repository';
 import { findSourceForOverview, saveOverview } from '../db/overview-repository';
 import { createSourceStorage, createUploadStorage } from '../db/source-storage';
 import { axisVector, createTestDb, ensureUsers } from '../db/testing/test-db';
 import type { LocalFile } from '../ingestion/local-import';
-import { DEMO_NOTEBOOK_TITLE, seedDemo } from './demo';
+import { seedDemo } from './demo';
 
 const { db, pool } = createTestDb();
 const USER = 'demo-user';

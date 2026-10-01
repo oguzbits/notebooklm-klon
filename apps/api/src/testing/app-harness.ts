@@ -10,6 +10,7 @@ import type { FetchDeps } from '../import/fetch-url';
 import { runIngestJob } from '../ingestion/submit';
 
 export const BASE_URL = 'http://localhost:3000';
+export const DEMO_OWNER_EMAIL = 'demo@example.test';
 export const SECRET = 'a-test-secret-with-at-least-32-characters';
 
 const noNetwork: FetchDeps = {
@@ -55,6 +56,7 @@ export function createHarness(options: HarnessOptions = {}) {
       parse: async (_kind, bytes) => ({ text: new TextDecoder().decode(bytes), pageCount: null }),
       embed: async (texts) => texts.map(() => axisVector(0, EMBEDDING_DIMENSIONS)),
     },
+    demoOwnerEmail: DEMO_OWNER_EMAIL,
     fetch: options.fetch ?? noNetwork,
     chat: {
       embedQuery: options.embedQuery ?? (async () => axisVector(0, EMBEDDING_DIMENSIONS)),

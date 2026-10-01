@@ -442,3 +442,30 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   Besuch wartet also nicht auf das Modell.
 - **Geprüft:** Unit-, Datenbank- und E2E-Tests; im Browser Desktop dunkel, Handy 390 px, Startseite. Untertitel (y 293) und
   Zusammenfassung (y 364) liegen bei 1440 px genau auf den Werten des Originals.
+
+## 2026-10-01 (Demo-Zugang als Gast)
+
+- **Ein Knopf „Beispiel ausprobieren“ statt eines gemeinsamen Zugangs:** Ein geteilter Demo-Zugang hätte allen Besuchern
+  dieselben Notizbücher gezeigt (jeder Upload eines Fremden läge bei den nächsten) und ließe sich nicht aufräumen. Der Knopf
+  legt stattdessen pro Besucher ein Gastkonto an (`POST /api/guest`, Plugin `anonymous` von Better Auth, Spalte
+  `user.is_anonymous`, Migration 0012) und gibt ihm eine Kopie des Beispiel-Notizbuchs. Der Gast landet direkt darin.
+- **Die Kopie kostet kein Kontingent:** `copyNotebookToUser` kopiert in einer Transaktion Notizbuch, fertige Quellen mit
+  Text und Übersicht und alle Abschnitte samt Vektoren per `INSERT … SELECT`; nichts wird neu gelesen oder eingebettet. Der
+  Schlüssel der Notizbuch-Übersicht wird für die neuen Quellen-IDs neu berechnet, sie wird also nicht noch einmal erzeugt. Das
+  Beispiel selbst bleibt unverändert. Es gehört dem Nutzer aus `SEED_DEMO_EMAIL` (`pnpm seed:demo`); ohne ihn oder ohne
+  Beispiel antwortet die Route mit 503 `GUEST_UNAVAILABLE` und legt kein Konto an.
+- **Grenzen gegen Missbrauch, ohne Zusatzdienst:** Höchstens 20 neue Gäste pro Stunde und 200 zugleich (`LIMITS.GUESTS_PER_HOUR`,
+  `GUESTS_ALIVE`), gezählt in der Datenbank, für alle zusammen. Das ist keine Grenze pro Person (hinter dem Proxy wäre die IP
+  nur mit zusätzlichem Vertrauen brauchbar); wer die Grenze ausreizt, sperrt für eine Stunde neue Gäste, aber nicht
+  die bestehenden und nicht die normale Anmeldung. Die eigene Route des Plugins (`/api/auth/sign-in/anonymous`) ist zu (404),
+  sonst ließe sich ein Gast ohne Kopie und ohne Grenze machen. Schlägt die Kopie fehl, wird der Gast wieder gelöscht.
+- **Gäste werden nach 7 Tagen gelöscht,** samt Notizbüchern, Quellen und Sitzungen (alles hängt per `ON DELETE CASCADE`
+  am Nutzer): beim Start und danach stündlich, ein einfacher Zeitgeber im Prozess statt einer eigenen Queue. Die App sagt es im
+  Konto-Menü („Gast-Zugang. Deine Daten werden nach 7 Tagen gelöscht.“, `GUEST_LIMITS` in `packages/shared`).
+- **Kein „Daten mitnehmen“ beim Registrieren:** Das Plugin könnte es (`onLinkAccount`), aber es müsste alle fünf Tabellen
+  umhängen und Doppelte bei einer Anmeldung mit vorhandenem Konto auflösen. Für eine Handvoll Prüfer ist ein frisches Konto
+  genug; ein Gast, der bleiben will, legt es neu an. Meldet sich ein Gast mit E-Mail an oder registriert sich, löscht das Plugin
+  das Gastkonto.
+- **Der Offline-Server legt das Beispiel selbst an** (mit den Fakes, einmalig, wiederholbar), damit der Knopf auch dort und im
+  E2E-Test geht. Geprüft: Datenbank-Tests für Kopie, Zähler und Löschen, Route-Tests (Isolation zweier Gäste, 503, Grenze,
+  geschlossene Plugin-Route), Web-Tests, ein E2E-Test (Knopf, Frage mit Zitat, Konto-Menü, Abmelden).

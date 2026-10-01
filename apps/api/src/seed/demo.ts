@@ -1,10 +1,9 @@
 import { getOrCreateNotebookOverview, type NotebookOverviewPorts } from '../chat/notebook-overview';
 import { getOrCreateOverview, type OverviewPorts } from '../chat/overview';
+import { DEMO_NOTEBOOK_TITLE } from '../config/demo';
 import type { Database } from '../db/client';
 import { createNotebook, listNotebooks } from '../db/notebook-repository';
 import { importLocalFiles, type LocalFile, type LocalImportDeps } from '../ingestion/local-import';
-
-export const DEMO_NOTEBOOK_TITLE = 'Beispiel: Projekt Nordlicht';
 
 export interface SeedDemoDeps {
   db: Database;
