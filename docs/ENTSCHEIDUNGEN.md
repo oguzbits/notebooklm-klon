@@ -326,3 +326,22 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   Gerade eben“ in der Liste, ein Punkt steht, bis man es öffnet (`unread`, Standard `false`, damit bestehende Ausgaben
   keinen Punkt bekommen und keine Datenmigration nötig ist). Außerdem lassen sich Titel (umbenennen), Bewertung und der
   Lesestatus per `PATCH /api/notebooks/:id/studio/:outputId` ändern.
+- **Ansichten der Studio-Ausgaben wie im Original (2026-10-01):** Der Rahmen hat einen bearbeitbaren Titel (Umbenennen per
+  `PATCH`), den Chip „Prompt und n Quellen ansehen“ (bei Berichten mit Prompt, sonst nur die Quellen, wie im Original), bei
+  Berichten „Inhalt mit Formatierung kopieren“ (HTML und Klartext), bei Karteikarten, Quiz und Mindmap „Maximieren“ (Dialog)
+  und unten „Guter / Schlechter Bericht bzw. Inhalt“ (die Bewertung wird gespeichert, ein zweiter Klick nimmt sie zurück).
+  Der Titel-Editor ist als `EditableTitle` herausgezogen (dritte Verwendung nach Notizbuch und Ausgabe), ebenso `CopyButton`.
+  Nicht übernommen: Teilen (kein Teilen im Umfang), Karten hinzufügen, bearbeiten oder löschen, Stoppuhr, die Fragetypen des
+  Quiz (nur Multiple Choice), gespeicherter Fortschritt (Zähler und Position leben nur in der geöffneten Ansicht).
+- **Karteikarten:** dunkle Karte auf dunkler Bühne in beiden Themes (eigene Farbmarken für ✗ und ✓), Zähler „n von N“, ein Klick
+  dreht, die Rundknöpfe gehen zurück, markieren „nicht verstanden“ / „verstanden“ (beide gehen zur nächsten Karte weiter) und
+  vor. Das ⋮-Menü startet neu, mischt oder lädt das Set als CSV. „Erklären“ stellt dem Chat eine Frage zur Karte (`onAsk`, im
+  Chat als normale Frage, nur wenn dort gerade nichts geschrieben wird). Die Belege bleiben als Chips unter der Karte.
+- **Quiz:** Optionen mit Buchstaben, nach der Wahl sagt jede Option, warum sie stimmt oder nicht („Nicht ganz“, „Richtige
+  Antwort“); ältere Quizze ohne Begründungen zeigen die eine Erklärung. „Tipp anzeigen“ vor der Antwort, „Weiter“ springt auch ohne
+  Antwort weiter (zählt dann nicht), am Ende „Ergebnis anzeigen“.
+- **Mindmap:** Layout als reine Funktion (`lib/mindmap-layout.ts`): eine Spalte je Ebene, Geschwister gestapelt, der Elternknoten
+  mittig zwischen erstem und letztem Kind. Die Knotenbreite wird aus den Buchstaben geschätzt, weil das Layout vor dem Zeichnen
+  feststehen muss (das Original misst im Browser). Wurzel und Äste sind offen, tiefere Ebenen zu; ein runder Schalter
+  nach jedem Knoten klappt auf und zu, „Alle Knoten aufklappen“ öffnet alles und passt es ins Fenster, dazu Zoom, Ziehen und
+  Download als PNG (SVG über Canvas, die Schrift ist dort die Standardschrift). Jeder Knoten behält seine Beleg-Chips.

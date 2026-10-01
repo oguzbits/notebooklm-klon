@@ -67,11 +67,17 @@
   /* The flashcard stays dark in both themes, like in the original. */
   --flashcard: #303030;
   --flashcard-foreground: #f2f2f2;
+  /* The stage of the flashcards and its marks: dark in both themes, so the marks need their own tones. */
+  --stage: #212121;
+  --stage-wrong: #ff7a5c;
+  --stage-right: #3ddc97;
   /* The one colored action of the Studio viewers ("Weiter"), and the nodes of the mind map. */
   --action: #5d5cf4;
   --action-foreground: #ffffff;
   --node-root: #c8cafa;
   --node-branch: #c5d2eb;
+  --node-leaf: #d3e6dc;
+  --node-link: #8f94dc;
   /* Hover and press: a veil of the text color over whatever fill is there. */
   --veil-hover: color-mix(in srgb, var(--foreground) 8%, transparent);
   --veil-press: color-mix(in srgb, var(--foreground) 12%, transparent);
@@ -141,6 +147,8 @@
   --action-foreground: #0f0f0f;
   --node-root: #3a3f99;
   --node-branch: #2b3a5c;
+  --node-leaf: #2d4a3d;
+  --node-link: #8f94f0;
   --callout: linear-gradient(268deg, rgb(169 168 255 / 0.12), rgb(49 134 255 / 0.12));
   --dot: #76a0ff;
 }
@@ -197,12 +205,16 @@
   --color-dot: var(--dot);
   --color-tooltip: var(--tooltip);
   --color-tooltip-foreground: var(--tooltip-foreground);
+  --color-stage: var(--stage);
+  --color-stage-wrong: var(--stage-wrong);
+  --color-stage-right: var(--stage-right);
   --color-flashcard: var(--flashcard);
   --color-flashcard-foreground: var(--flashcard-foreground);
   --color-action: var(--action);
   --color-action-foreground: var(--action-foreground);
   --color-node-root: var(--node-root);
   --color-node-branch: var(--node-branch);
+  --color-node-leaf: var(--node-leaf);
   --shadow-glow: var(--glow);
   /* Three columns from here; below it one column at a time. Measured on the original. */
   --breakpoint-wide: 66rem;

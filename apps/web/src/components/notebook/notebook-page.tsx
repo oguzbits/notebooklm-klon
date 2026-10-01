@@ -62,6 +62,8 @@ export function NotebookPage() {
   const [studioOpen, setStudioOpen] = useState(true);
   const [column, setColumn] = useState<Column>(COLUMN.CHAT);
   const [viewingOutput, setViewingOutput] = useState(false);
+  // A question that came from the Studio ("Erklären" on a card); the chat asks it once.
+  const [asked, setAsked] = useState<{ id: number; question: string } | null>(null);
   const wide = useWideLayout();
 
   // The columns are memoized, so folding one (or opening something in the Studio) does not render the
@@ -74,6 +76,10 @@ export function NotebookPage() {
   const openSource = useCallback((sourceId: string) => openReader({ sourceId }), [openReader]);
   const openCitation = useCallback((chunkId: string) => openReader({ chunkId }), [openReader]);
   const expandStudio = useCallback(() => setStudioOpen(true), []);
+  const askInChat = useCallback((question: string) => {
+    setAsked((current) => ({ id: (current?.id ?? 0) + 1, question }));
+    setColumn(COLUMN.CHAT);
+  }, []);
   const toggleStudio = useCallback(() => setStudioOpen((value) => !value), []);
 
   if (notebook.isError) {
@@ -180,7 +186,7 @@ export function NotebookPage() {
             studioFolded && 'wide:mr-2'
           )}
         >
-          <ChatPanel notebookId={id} onOpenCitation={openCitation} />
+          <ChatPanel notebookId={id} onOpenCitation={openCitation} incoming={asked} />
         </Panel>
         <StudioPanel
           notebookId={id}
@@ -188,6 +194,7 @@ export function NotebookPage() {
           onToggle={toggleStudio}
           onExpand={expandStudio}
           onOpenCitation={openCitation}
+          onAsk={askInChat}
           onViewingChange={setViewingOutput}
           className={cn(
             hiddenBelowWide(COLUMN.STUDIO),

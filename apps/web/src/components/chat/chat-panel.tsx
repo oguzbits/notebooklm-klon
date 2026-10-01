@@ -16,9 +16,12 @@ import { useSources } from '@/hooks/use-sources';
 export const ChatPanel = memo(function ChatPanel({
   notebookId,
   onOpenCitation,
+  incoming = null,
 }: {
   notebookId: string;
   onOpenCitation: (chunkId: string) => void;
+  /** A question from elsewhere on the page, asked once when it is new (its ID counts up). */
+  incoming?: { id: number; question: string } | null;
 }) {
   const history = useChatHistory(notebookId);
   const sources = useSources(notebookId);
@@ -26,6 +29,7 @@ export const ChatPanel = memo(function ChatPanel({
   const suggestions = useSuggestedQuestions(notebookId, sources.data ?? []);
   const bottom = useRef<HTMLDivElement>(null);
   const [question, setQuestion] = useState('');
+  const handled = useRef(0);
 
   const usable = (sources.data ?? []).filter(
     (source) => source.selected && source.status === SOURCE_STATUS.READY
@@ -41,6 +45,14 @@ export const ChatPanel = memo(function ChatPanel({
   useEffect(() => {
     bottom.current?.scrollIntoView?.({ block: 'end' });
   }, [history.data?.length, liveCount, ask.isPending]);
+
+  // A question sent from elsewhere is asked like a typed one. While an answer is being written, or
+  // with no source to answer from, it is not asked: the same rule as for the field.
+  useEffect(() => {
+    if (!incoming || incoming.id === handled.current) return;
+    handled.current = incoming.id;
+    if (canAsk) ask.mutate(incoming.question);
+  }, [incoming, canAsk, ask]);
 
   const send = (form: HTMLFormElement) => {
     const text = String(new FormData(form).get('question') ?? '').trim();

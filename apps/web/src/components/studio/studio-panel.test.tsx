@@ -62,6 +62,7 @@ function renderPanel(onOpenCitation: (chunkId: string) => void = () => {}) {
       onToggle={() => {}}
       onExpand={() => {}}
       onOpenCitation={onOpenCitation}
+      onAsk={() => {}}
     />
   );
 }
@@ -304,6 +305,7 @@ describe('StudioPanel', () => {
         onToggle={() => {}}
         onExpand={() => {}}
         onOpenCitation={() => {}}
+        onAsk={() => {}}
         onViewingChange={onViewingChange}
       />
     );

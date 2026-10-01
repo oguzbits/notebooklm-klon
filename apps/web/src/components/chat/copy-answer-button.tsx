@@ -1,48 +1,18 @@
 import type { AnswerStatement } from '@nlm/shared';
-import { Check, Copy } from 'lucide-react';
-import { useState } from 'react';
 
-import { Button } from '@/components/ui/button';
+import { CopyButton } from '@/components/ui/copy-button';
 import { withoutMarkers } from '@/lib/plain-text';
-
-const CONFIRMATION_MS = 2000;
 
 /** Copies the text of an answer, without the numbers of the citations. */
 export function CopyAnswerButton({ statements }: { statements: AnswerStatement[] }) {
-  const [copied, setCopied] = useState(false);
-  // The name of the error the browser raised, so the failure stays visible and traceable.
-  const [failure, setFailure] = useState<string | null>(null);
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(
-        statements.map((statement) => withoutMarkers(statement.text)).join(' ')
-      );
-      setFailure(null);
-      setCopied(true);
-      setTimeout(() => setCopied(false), CONFIRMATION_MS);
-    } catch (error) {
-      // The browser refused (no permission, no secure page): say so instead of pretending.
-      setFailure(error instanceof Error ? error.name : 'unknown');
-    }
-  };
-
   return (
-    <>
-      <Button
-        variant="ghost"
-        size="icon"
-        aria-label="Kopieren"
-        tooltip={copied ? 'Kopiert' : 'Kopieren'}
-        onClick={() => void copy()}
-      >
-        {copied ? <Check /> : <Copy />}
-      </Button>
-      {failure !== null && (
-        <span className="text-small text-destructive" role="alert">
-          Kopieren hat nicht geklappt.
-        </span>
-      )}
-    </>
+    <CopyButton
+      label="Kopieren"
+      write={() =>
+        navigator.clipboard.writeText(
+          statements.map((statement) => withoutMarkers(statement.text)).join(' ')
+        )
+      }
+    />
   );
 }

@@ -112,6 +112,7 @@ export function StudioPanel({
   onExpand,
   className,
   onOpenCitation,
+  onAsk,
   onViewingChange,
 }: {
   notebookId: string;
@@ -121,6 +122,8 @@ export function StudioPanel({
   onExpand: () => void;
   className?: string;
   onOpenCitation: (chunkId: string) => void;
+  /** Asks the chat a question: a card or a quiz question is explained there. */
+  onAsk: (question: string) => void;
   /** Tells the page whether something is open, because the Studio grows while it is. */
   onViewingChange?: (viewing: boolean) => void;
 }) {
@@ -227,6 +230,7 @@ export function StudioPanel({
         deleting={remove.isPending}
         onDelete={() => remove.mutate(openedOutput.id, { onSuccess: () => show(null) })}
         onOpenCitation={onOpenCitation}
+        onAsk={onAsk}
       />
     );
   } else if (openedNote) {
