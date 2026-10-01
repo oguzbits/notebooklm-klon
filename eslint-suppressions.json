@@ -273,12 +273,6 @@
     }
   },
   "apps/web/src/components/studio/studio-panel.tsx": {
-    "complexity": {
-      "count": 1
-    },
-    "max-lines": {
-      "count": 1
-    },
     "max-lines-per-function": {
       "count": 1
     }
