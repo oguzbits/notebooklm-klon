@@ -29,7 +29,19 @@ export {
 } from './chat-config';
 export { type Answer, AnswerSchema, type AnswerStatement, AnswerStatementSchema } from './citation';
 export { type Health, HealthSchema } from './health';
-export { CreateNoteBodySchema, type Note, NoteListSchema, NoteSchema } from './note';
+export {
+  type AnswerNote,
+  type CreateNoteBody,
+  CreateNoteBodySchema,
+  type Note,
+  NOTE_KIND,
+  NOTE_LIMITS,
+  NoteListSchema,
+  NoteSchema,
+  type NoteUpdateBody,
+  NoteUpdateBodySchema,
+  type WrittenNote,
+} from './note';
 export {
   CreateNotebookBodySchema,
   type Notebook,

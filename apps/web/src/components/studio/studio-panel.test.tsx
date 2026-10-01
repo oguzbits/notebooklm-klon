@@ -1,5 +1,6 @@
 import {
   API_ERROR,
+  NOTE_KIND,
   REPORT_FORMAT,
   STUDIO_DIFFICULTY,
   STUDIO_KIND,
@@ -7,9 +8,9 @@ import {
   type StudioOutput,
   SUBMIT_ACTION,
 } from '@nlm/shared';
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -21,6 +22,7 @@ import {
   OUTPUT_ID,
   quizOutput,
   source,
+  writtenNote,
 } from '@/test/fixtures';
 import { renderWithProviders } from '@/test/render';
 
@@ -393,6 +395,30 @@ describe('StudioPanel', () => {
       expect(await screen.findByText('Hier wird die Ausgabe von Studio gespeichert.')).toBeTruthy();
     });
 
+    it('mentions the answer in the chat only when the note came from one', async () => {
+      serve({ notes: [writtenNote({ title: 'Eigene Gedanken' })] });
+      renderPanel();
+      const user = userEvent.setup();
+
+      await user.click(await screen.findByRole('button', { name: /Weitere Aktionen für/ }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Löschen' }));
+      const written = await screen.findByRole('alertdialog');
+      expect(within(written).getByText('Die Notiz wird gelöscht.')).toBeTruthy();
+      expect(within(written).queryByText(/Antwort im Chat/)).toBeNull();
+    });
+
+    it('says the answer in the chat stays when a saved answer is deleted', async () => {
+      serve({ notes: [note()] });
+      renderPanel();
+      const user = userEvent.setup();
+
+      await user.click(await screen.findByRole('button', { name: /Weitere Aktionen für/ }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Löschen' }));
+
+      const dialog = await screen.findByRole('alertdialog');
+      expect(within(dialog).getByText(/Die Antwort im Chat bleibt erhalten/)).toBeTruthy();
+    });
+
     it('says so when the notes cannot be loaded, and still lists the outputs', async () => {
       serve({ outputs: [flashcardsOutput()] });
       server.use(
@@ -404,6 +430,90 @@ describe('StudioPanel', () => {
 
       expect(await screen.findByRole('alert')).toBeTruthy();
       expect(row(/^Karteikarten/)).toBeTruthy();
+    });
+  });
+  describe('adding a note', () => {
+    /** A notebook that keeps the empty note it is asked to make, after failing as often as told. */
+    function serveAddingNote(options: { failures?: number; delayMs?: number } = {}) {
+      let made = false;
+      let failures = options.failures ?? 0;
+      const bodies: unknown[] = [];
+      serve();
+      server.use(
+        http.get(`${base}/notes`, () => HttpResponse.json(made ? [writtenNote()] : [])),
+        http.post(`${base}/notes`, async ({ request }) => {
+          bodies.push(await request.json());
+          if (failures > 0) {
+            failures -= 1;
+            return HttpResponse.json({ code: API_ERROR.INTERNAL }, { status: 500 });
+          }
+          await delay(options.delayMs ?? 0);
+          made = true;
+          return HttpResponse.json(writtenNote(), { status: 201 });
+        })
+      );
+      return bodies;
+    }
+
+    it('makes an empty note at once and opens it for writing', async () => {
+      const bodies = serveAddingNote();
+      renderPanel();
+      const user = userEvent.setup();
+
+      await user.click(await screen.findByRole('button', { name: 'Notiz hinzufügen' }));
+
+      expect(await screen.findByRole('textbox', { name: 'Text der Notiz' })).toBeTruthy();
+      expect(bodies).toEqual([{ kind: NOTE_KIND.WRITTEN }]);
+      expect(screen.getByRole('navigation', { name: 'Pfad' }).textContent).toContain('Notiz');
+      await user.click(screen.getByRole('button', { name: 'Notizansicht schließen' }));
+      expect(await waitForRow(/^Neue Notiz/)).toBeTruthy();
+    });
+
+    it('shows the note being made and cannot be pressed twice meanwhile', async () => {
+      const bodies = serveAddingNote({ delayMs: 200 });
+      renderPanel();
+      const user = userEvent.setup();
+
+      const button = await screen.findByRole('button', { name: 'Notiz hinzufügen' });
+      await user.click(button);
+
+      expect(await screen.findByText('Notiz wird erstellt …')).toBeTruthy();
+      expect((button as HTMLButtonElement).disabled).toBe(true);
+      expect(await screen.findByRole('textbox', { name: 'Text der Notiz' })).toBeTruthy();
+      expect(bodies).toHaveLength(1);
+    });
+
+    it('explains a failure and tries again', async () => {
+      serveAddingNote({ failures: 1 });
+      renderPanel();
+      const user = userEvent.setup();
+
+      await user.click(await screen.findByRole('button', { name: 'Notiz hinzufügen' }));
+      expect(await screen.findByRole('alert')).toBeTruthy();
+      await user.click(screen.getByRole('button', { name: 'Erneut versuchen' }));
+
+      expect(await screen.findByRole('textbox', { name: 'Text der Notiz' })).toBeTruthy();
+    });
+
+    it('is a button on the rail too, which opens the column with the new note in it', async () => {
+      serveAddingNote();
+      const onExpand = vi.fn();
+      renderWithProviders(
+        <StudioPanel
+          notebookId={NOTEBOOK_ID}
+          collapsed
+          onToggle={() => {}}
+          onExpand={onExpand}
+          onOpenCitation={() => {}}
+          onAsk={() => {}}
+        />
+      );
+
+      await userEvent
+        .setup()
+        .click(await screen.findByRole('button', { name: 'Notiz hinzufügen' }));
+
+      await waitFor(() => expect(onExpand).toHaveBeenCalled());
     });
   });
 });

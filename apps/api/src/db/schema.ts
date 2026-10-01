@@ -1,6 +1,7 @@
 import {
   CHAT_ROLE,
   EMBEDDING_DIMENSIONS,
+  NOTE_KIND,
   SOURCE_KIND,
   SOURCE_STATUS,
   STUDIO_KIND,
@@ -39,6 +40,7 @@ export const sourceKind = pgEnum('source_kind', SOURCE_KIND);
 export const sourceStatus = pgEnum('source_status', SOURCE_STATUS);
 export const chatRole = pgEnum('chat_role', CHAT_ROLE);
 export const studioKind = pgEnum('studio_kind', STUDIO_KIND);
+export const noteKind = pgEnum('note_kind', NOTE_KIND);
 
 // user_id is the Better Auth user id. Deleting a user deletes their notebooks and sources. Every
 // query still filters by user_id: the foreign key is integrity, not authorization (see AGENTS.md).
@@ -175,7 +177,12 @@ export const notes = pgTable(
     messageId: uuid('message_id')
       .unique()
       .references(() => chatMessages.id, { onDelete: 'set null' }),
+    // ANSWER: statements copied from a saved answer. WRITTEN: statements stay empty and body holds
+    // the reader's Markdown. Every note from before the kinds existed is an answer.
+    kind: noteKind('kind').notNull().default(NOTE_KIND.ANSWER),
     statements: jsonb('statements').notNull(),
+    title: text('title'),
+    body: text('body'),
     createdAt: createdAt(),
   },
   (table) => [index('notes_notebook_idx').on(table.notebookId, table.createdAt)]

@@ -412,6 +412,14 @@
   border-top: 1px solid var(--border);
 }
 
+/* The text of a note while it is written: set like a source, but 14/24 as in the editor of the
+   original, and as tall as its area so a click anywhere in it puts the cursor in. */
+.source-text.note-editor {
+  min-height: 100%;
+  outline: none;
+  font-size: 0.875rem;
+}
+
 /* Browser surfaces that belong to the design too: selection, scrollbars, the caret. */
 ::selection {
   background: var(--selected);

@@ -97,7 +97,8 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   `POST /api/notebooks/:id/notes` mit `{ messageId }` kopiert die Aussagen samt Zitaten in SQL aus
   `chat_messages`. Ein Client kann so keine Zitate einschmuggeln, die der Server nicht geprüft hat
   (Invariante 1). Dieselbe Antwort zweimal zu speichern ergibt dieselbe Notiz (`message_id` ist
-  eindeutig). Freitext-Notizen gibt es bewusst nicht; sie wären ohne Zitate und ohne Prüfung.
+  eindeutig). Freitext-Notizen gibt es bewusst nicht; sie wären ohne Zitate und ohne Prüfung. _(Überholt am
+  2026-10-01: siehe „Notizen mit Editor“ unten. Gespeicherte Antworten bleiben, wie hier beschrieben.)_
 - **Notizen links neben den Quellen (Tabs „Quellen“ / „Notizen“):** Die Leseansicht ersetzt weiterhin das
   ganze linke Panel, damit ein Klick auf ein Zitat in einer Notiz dieselbe Ansicht öffnet wie im Chat.
 
@@ -189,9 +190,9 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   „Gemini Notebook“ heißt; die Freigabe des Nutzers nannte NotebookLM, und ein Nachbau mit dem alten Namen
   ist für die Bewerbung eindeutiger. (2) Die Spaltenbreite ist nicht ziehbar (kein Trenner), das wäre Aufwand
   für wenig Wirkung. (3) Kein Dialog für Karteikarten, Quiz und Mindmap: das Backend kennt dafür keine
-  Parameter (Anzahl, Schwierigkeit, Thema); nur der Bericht fragt nach der Vorlage. (4) Keine „Notiz
-  hinzufügen“-Pille mit freiem Text: Notizen sind bei uns gespeicherte Antworten und bleiben ein Abschnitt im
-  Studio. (5) Kein „ungelesen“-Punkt an Ausgaben (würde einen Lesestatus pro Ausgabe brauchen). (6) Die
+  Parameter (Anzahl, Schwierigkeit, Thema); nur der Bericht fragt nach der Vorlage. (4) Notizen sind
+  zuerst gespeicherte Antworten gewesen (ohne „Notiz hinzufügen“); seit 2026-10-01 gibt es auch freie Notizen
+  mit Editor, siehe „Notizen mit Editor“ unten. (5) Kein „ungelesen“-Punkt an Ausgaben (würde einen Lesestatus pro Ausgabe brauchen). (6) Die
   Notizbuchliste zeigt auf dem Handy Karten statt Zeilen. (7) Die Tabs der Mobilansicht heißen deutsch
   „Quellen | Chat | Studio“; das Original hat dort englische Reste. (8) Die Farben der Mindmap-Knoten im
   Dunkelmodus sind geschätzt (die Mindmap läuft im Original in einem Iframe und ließ sich nicht messen).
@@ -240,8 +241,7 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   schimmernde Zeile mit Spinner und „basierend auf n Quellen“. Die leere Liste sagt „Hier wird die Ausgabe von
   Studio gespeichert.“ Der Senden-Pfeil ist bei leerem Feld deaktiviert und grau; unter der Antwort stehen
   „In Notiz speichern“ und Kopieren als Icon; die Kachel heißt „Berichte“; Quellen haben ein Symbol nach Dateityp
-  (PDF rot). Nicht übernommen: „Notiz hinzufügen“ (freie Notizen; unsere Notizen sind gespeicherte Antworten mit
-  Belegen, ein freier Text hätte keine).
+  (PDF rot). „Notiz hinzufügen“ kam später dazu (2026-10-01, siehe „Notizen mit Editor“ unten).
 - **Startseite wie im Original (2026-10-01):** Kopfzeile mit Wortmarke, Suchpille („Notizbücher durchsuchen“,
   256x36, filtert die geladene Liste im Browser) und ⚙; die Karten tragen ein Emoji (aus der ID abgeleitet, damit es
   je Notizbuch gleich bleibt; das Original wählt eines pro Notizbuch), das Datum als TT.MM.JJJJ und die Zahl der
@@ -345,3 +345,58 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   feststehen muss (das Original misst im Browser). Wurzel und Äste sind offen, tiefere Ebenen zu; ein runder Schalter
   nach jedem Knoten klappt auf und zu, „Alle Knoten aufklappen“ öffnet alles und passt es ins Fenster, dazu Zoom, Ziehen und
   Download als PNG (SVG über Canvas, die Schrift ist dort die Standardschrift). Jeder Knoten behält seine Beleg-Chips.
+
+## 2026-10-01 (Notizen mit Editor)
+
+- **Freie Notizen gibt es jetzt, gespeicherte Antworten bleiben unveränderlich:** Eine Notiz hat eine Art (`kind`).
+  `ANSWER` ist eine gespeicherte Antwort: Aussagen mit den vom Server geprüften Zitaten, vom Server aus der Antwort
+  kopiert; ihr Text ist nicht bearbeitbar, nur ihr Titel. Würde man ihn ändern, bürgte ein Zitat-Chip für Worte, die
+  nicht mehr dastehen (Invariante 1). `WRITTEN` ist der Text des Lesers, ein freier Text ohne Zitate; Invariante 1
+  betrifft Antworten und gilt hier nicht. Das ersetzt den Beschluss vom 2026-09-30 „Freitext-Notizen gibt es bewusst
+  nicht“, weil der Nutzer den Editor wie im Original ausdrücklich wollte.
+- **Vertrag und Datenbank:** `NoteSchema` ist eine Union nach `kind` (`packages/shared/src/note.ts`). `POST
+/api/notebooks/:id/notes` nimmt `{ kind: ANSWER, messageId }` oder `{ kind: WRITTEN }` (eine leere Notiz).
+  `PATCH /api/notebooks/:id/notes/:noteId` ändert den Titel (jede Notiz) und den Text (nur `WRITTEN`, sonst 404); der
+  Client kann keine Aussagen oder Zitate schicken. Grenzen in `NOTE_LIMITS` (Titel 200, Text 100.000 Zeichen).
+  Migration 0010 fügt `kind` (Standard `ANSWER`, bestehende Notizen bleiben Antworten), `title` und `body` hinzu. Eine
+  freie Notiz wird in einer einzigen SQL-Anweisung gegen das Notizbuch des Nutzers angelegt (Invariante 3), jede
+  Änderung filtert nach Nutzer und Notizbuch.
+- **Der Editor speichert Markdown, nicht Tiptap-JSON:** `@tiptap/markdown` (`getMarkdown()`, `contentType: 'markdown'`).
+  So ist die Notiz einfacher Text in der Datenbank, sieht als Notiz und als Quelle gleich aus (dieselbe Klasse
+  `.source-text`) und wird ohne Umwandlung zur `.md`-Quelle. Die Doku nennt die Erweiterung eine frühe Version („early
+  release“, Stand 2026-10-01). Darum sichert ein Rundlauf-Test (`note-extensions.test.ts`) Überschriften 1 bis 6, Fett,
+  Kursiv, Code, Codeblock, Link, Listen (auch verschachtelt), Zitat und Trennlinie ab. Bekannte Grenze: Text, der wie
+  Markdown aussieht (etwa ein eingefügtes „# kein Titel“), wird nicht maskiert und beim nächsten Öffnen zur Überschrift;
+  beim Tippen kommt das kaum vor, weil `# ` und `1. ` sofort formatieren. Kein Unterstrich (Markdown kennt ihn nicht);
+  der leere Schlussabsatz des Editors wird beim Speichern abgeschnitten.
+- **Version der Pakete:** `@tiptap/react`, `pm`, `starter-kit` und `markdown` sind auf 3.31.3 festgesetzt, sie brauchen
+  dieselbe Version. 3.31.4 war beim Einbau 19 Stunden alt und fiel durch die Schutzregel gegen frische Pakete; pnpm
+  hatte dafür selbst 29 Ausnahmen in `pnpm-workspace.yaml` eingetragen. Die habe ich zurückgenommen, statt die Regel zu
+  umgehen, 3.31.3 (vom 2026-09-04) besteht sie ohne Ausnahme.
+- **Der Editor wird nachgeladen:** Er wiegt 460 kB. Das Hauptpaket war vorher 833 kB und wäre mit Editor auf 1.297 kB
+  gewachsen; `React.lazy` in `note-viewer.tsx` holt ihn beim ersten Öffnen einer freien Notiz (mit Platzhalter), das
+  Hauptpaket bleibt bei 837 kB.
+- **Speichern wie im Original ohne Knopf:** `lib/save-queue.ts` ist reine Logik und getestet: 800 ms nach der letzten
+  Eingabe, nie zwei Anfragen gleichzeitig, was in der Zwischenzeit getippt wird geht danach hinaus, das Neueste gewinnt,
+  beim Schließen geht der Rest hinaus. Rechts neben „Als Quelle festlegen“ steht „Speichert …“ oder „Gespeichert“;
+  scheitert es, steht darüber eine Meldung mit „Erneut versuchen“. Grenze: Scheitert das Speichern erst beim Schließen
+  der Notiz (Netz weg), geht der letzte Rest verloren, es gibt keinen Zwischenspeicher im Browser.
+- **Wie im Original (gemessen am 2026-10-01, `spikes/reference/NOTES.md` Abschnitt 10, lokal):** Titelzeile 74 hoch mit
+  Titel als Feld (22/32) und Papierkorb statt ⋮-Menü; Format-Leiste 66 hoch zwischen zwei Linien, Knöpfe 32 rund, in
+  der Reihenfolge Rückgängig, Wiederholen | „Normal ▾“ (Überschrift 1 bis 6) | Fett, Kursiv | Verknüpfen, Code,
+  Codeblock | „⋯“ (waagerechte Leiste: Aufzählungsliste, Nummerierte Liste, Zitat, Trennlinie, Formatierung
+  entfernen); Text 14/24. „Notiz hinzufügen“ ist eine Pille unten mittig in der Liste und ein runder Knopf unten in
+  der eingeklappten Leiste, sie legt sofort „Neue Notiz“ an (Zeile „Notiz wird erstellt …“) und öffnet sie mit dem
+  Cursor darin. Ein Titel von `null` heißt „Neue Notiz“ (bei einer Antwort: Anfang ihres Textes). „Verknüpfen“ ist ohne
+  markierten Text aus; eine Adresse ohne Schema („tiptap.dev“) wird zu `https://`.
+- **Abweichungen vom Original:** Die Schaltfläche „Normal“ zeigt die aktuelle Überschrift („Überschrift 1“), die
+  Leiste verschiebt sich dadurch leicht; unter 480 px bricht sie um, die Trennstriche entfallen dort. „Als Quelle
+  festlegen“ ist bei einer leeren Notiz aus (eine leere Quelle würde der Server ablehnen). Der Dateiname der Quelle
+  folgt dem Titel (`.md` bei freien Notizen, `.txt` bei Antworten); der Text ist der aktuelle Stand im Editor, nicht
+  der gespeicherte. Der Dialog zum Löschen erwähnt die Antwort im Chat nur bei einer gespeicherten Antwort.
+- **Tests:** In jsdom fehlen `Range.getClientRects`, `Range.getBoundingClientRect` und `document.elementFromPoint`,
+  die ProseMirror braucht; `test/setup.ts` ersetzt sie durch leere Antworten. Tiptap 3.31.3 setzte `role="textbox"` im
+  Test nicht auf das Element (nur das `aria-label` kam an), ohne Rolle liest ein Screenreader das Label nicht sicher.
+  Der Editor setzt Rolle und `aria-multiline` daher selbst. Im Browser (Desktop dunkel und hell, Handy 390 px,
+  eingeklappte Leiste) geprüft: anlegen, schreiben, Überschrift, Fett, Kursiv, Liste, Link, umbenennen, als Quelle
+  festlegen, Neuladen.

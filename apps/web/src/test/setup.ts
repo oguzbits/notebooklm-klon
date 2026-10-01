@@ -13,6 +13,12 @@ globalThis.ResizeObserver = ResizeObserverStub;
 Element.prototype.hasPointerCapture = () => false;
 Element.prototype.releasePointerCapture = () => {};
 Element.prototype.scrollIntoView = () => {};
+// ProseMirror (the note editor) measures text with ranges and looks up the element under a click,
+// which jsdom cannot lay out. No boxes and no element under the pointer is enough for it to work.
+document.elementFromPoint = () => null;
+Range.prototype.getClientRects = () => document.createElement('span').getClientRects();
+Range.prototype.getBoundingClientRect = () =>
+  document.createElement('span').getBoundingClientRect();
 
 // jsdom has no `matchMedia` either. The tests run on a wide, light screen unless a test says
 // otherwise (the theme tests stub their own).

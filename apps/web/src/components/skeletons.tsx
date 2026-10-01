@@ -100,3 +100,26 @@ export function DialogSpinner() {
     </div>
   );
 }
+
+/** A note of the reader while its editor loads: the title, the bar of tools and a few lines of text. */
+export function NoteEditorSkeleton() {
+  return (
+    <div className="flex h-full min-h-0 flex-col" {...STATUS}>
+      <div className="flex h-12 items-center px-3">
+        <Skeleton className="h-6 w-2/5" />
+      </div>
+      <div className="flex h-[66px] items-center gap-3 border-y border-border px-4">
+        <Skeleton className="size-8 rounded-full" />
+        <Skeleton className="size-8 rounded-full" />
+        <Skeleton className="h-8 w-24 rounded-full" />
+        <Skeleton className="size-8 rounded-full" />
+        <Skeleton className="size-8 rounded-full" />
+      </div>
+      <div className="flex flex-col gap-3 px-4 pt-4">
+        <Skeleton className="h-4 w-[90%]" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-[70%]" />
+      </div>
+    </div>
+  );
+}

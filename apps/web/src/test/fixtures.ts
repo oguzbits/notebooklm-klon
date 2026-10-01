@@ -1,8 +1,9 @@
 import {
+  type AnswerNote,
   CHAT_ROLE,
   type ChatMessage,
   type ChunkDetail,
-  type Note,
+  NOTE_KIND,
   SOURCE_KIND,
   SOURCE_STATUS,
   type SourceOverview,
@@ -10,6 +11,7 @@ import {
   STUDIO_KIND,
   type StudioOutput,
   type StudioRequest,
+  type WrittenNote,
 } from '@nlm/shared';
 
 export const NOTEBOOK_ID = '3f0f4a4e-6c1e-4a52-9a53-0d6d1c6f2a10';
@@ -79,10 +81,23 @@ export const overview = (overrides: Partial<SourceOverview> = {}): SourceOvervie
 export const NOTE_ID = '4c2d7e9f-2a58-4b1c-9d34-6e8f0a1b2c33';
 export const ANSWER_ID = '22222222-2222-4222-8222-222222222222';
 
-export const note = (overrides: Partial<Note> = {}): Note => ({
+/** A note saved from an answer. */
+export const note = (overrides: Partial<AnswerNote> = {}): AnswerNote => ({
   id: NOTE_ID,
+  kind: NOTE_KIND.ANSWER,
+  title: null,
   messageId: ANSWER_ID,
   statements: [{ text: 'Dr. Brandt leitet es.', chunkIds: [CHUNK_ID] }],
+  createdAt: CREATED_AT,
+  ...overrides,
+});
+
+/** A note the reader wrote. */
+export const writtenNote = (overrides: Partial<WrittenNote> = {}): WrittenNote => ({
+  id: NOTE_ID,
+  kind: NOTE_KIND.WRITTEN,
+  title: null,
+  body: '',
   createdAt: CREATED_AT,
   ...overrides,
 });

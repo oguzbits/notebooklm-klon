@@ -71,6 +71,13 @@
       "when": 1790816056964,
       "tag": "0009_living_power_man",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790843078827,
+      "tag": "0010_regular_mattie_franklin",
+      "breakpoints": true
     }
   ]
 }

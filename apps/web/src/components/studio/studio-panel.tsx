@@ -1,4 +1,10 @@
-import { type CreateStudioBody, type Note, SOURCE_STATUS, type StudioOutput } from '@nlm/shared';
+import {
+  type CreateStudioBody,
+  type Note,
+  NOTE_KIND,
+  SOURCE_STATUS,
+  type StudioOutput,
+} from '@nlm/shared';
 import {
   ChevronRight,
   LoaderCircle,
@@ -29,7 +35,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useDeleteNote, useNotes } from '@/hooks/use-notes';
+import { useCreateWrittenNote, useDeleteNote, useNotes } from '@/hooks/use-notes';
 import { useSources } from '@/hooks/use-sources';
 import {
   useCreateStudioOutput,
@@ -72,14 +78,26 @@ function RailButton({
   iconClassName,
   title,
   onClick,
+  className,
+  disabled,
 }: {
   icon: LucideIcon;
   iconClassName?: string;
   title: string;
   onClick: () => void;
+  className?: string;
+  disabled?: boolean;
 }) {
   return (
-    <Button variant="ghost" size="icon-lg" aria-label={title} tooltip={title} onClick={onClick}>
+    <Button
+      variant="ghost"
+      size="icon-lg"
+      aria-label={title}
+      tooltip={title}
+      onClick={onClick}
+      disabled={disabled}
+      className={className}
+    >
       <Icon className={cn('size-6', iconClassName)} aria-hidden />
     </Button>
   );
@@ -134,6 +152,7 @@ export function StudioPanel({
   const update = useUpdateStudioOutput(notebookId);
   const notes = useNotes(notebookId);
   const removeNote = useDeleteNote(notebookId);
+  const addNote = useCreateWrittenNote(notebookId);
   const [open, setOpen] = useState<OpenEntry | null>(null);
   const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -179,7 +198,12 @@ export function StudioPanel({
       open={noteToDelete !== null}
       onOpenChange={(isOpen) => !isOpen && setNoteToDelete(null)}
       title="Notiz löschen?"
-      description="Die Notiz wird gelöscht. Die Antwort im Chat bleibt erhalten."
+      description={
+        // Only a saved answer has one that stays in the chat.
+        notes.data?.find((item) => item.id === noteToDelete)?.kind === NOTE_KIND.WRITTEN
+          ? 'Die Notiz wird gelöscht.'
+          : 'Die Notiz wird gelöscht. Die Antwort im Chat bleibt erhalten.'
+      }
       pending={removeNote.isPending}
       onConfirm={() =>
         noteToDelete &&
@@ -202,6 +226,12 @@ export function StudioPanel({
     if (output?.unread) update.mutate({ outputId: output.id, changes: { read: true } });
   };
   const back = () => show(null);
+  // Like in the original, an empty note is made at once and opens, so the reader can start typing.
+  const startNote = () =>
+    addNote.mutate(undefined, {
+      onSuccess: (created) => openEntry({ type: ENTRY.NOTE, id: created.id }),
+    });
+  const noteBlocked = addNote.isPending || notes.isPending;
 
   let content: ReactNode;
   let header: ReactNode;
@@ -236,6 +266,7 @@ export function StudioPanel({
   } else if (openedNote) {
     content = (
       <NoteViewer
+        key={openedNote.id}
         notebookId={notebookId}
         note={openedNote}
         deleting={removeNote.isPending}
@@ -246,7 +277,7 @@ export function StudioPanel({
   } else {
     content = (
       <div className="relative h-full min-h-0">
-        <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto pb-2">
+        <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto pb-16">
           <div className="grid grid-cols-2 gap-2">
             {TILE_ORDER.map((kind) => tile(kind, false))}
           </div>
@@ -276,6 +307,17 @@ export function StudioPanel({
           )}
 
           <section aria-label="Erstellte Ausgaben" className="flex flex-col gap-1">
+            {addNote.isPending && (
+              <Skeleton
+                role="status"
+                className="flex h-16 items-center gap-2 rounded-2xl p-3 [--shimmer-base:var(--source-guide)] [--shimmer-edge:color-mix(in_srgb,var(--source-guide),var(--card)_60%)]"
+              >
+                <span className="flex size-8 shrink-0 items-center justify-center">
+                  <LoaderCircle className="size-5 animate-spin" aria-hidden />
+                </span>
+                <span className="min-w-0 truncate text-small">Notiz wird erstellt …</span>
+              </Skeleton>
+            )}
             {create.isPending && (
               <Skeleton
                 role="status"
@@ -342,6 +384,17 @@ export function StudioPanel({
                 <AlertDescription>{describeError(notes.error)}</AlertDescription>
               </Alert>
             )}
+            {addNote.isError && (
+              <Alert variant="destructive">
+                <AlertDescription className="flex flex-col items-start gap-2">
+                  <p>{describeError(addNote.error)}</p>
+                  <Button size="sm" variant="outline" disabled={noteBlocked} onClick={startNote}>
+                    <RotateCw />
+                    Erneut versuchen
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
             {(remove.isError || removeNote.isError) && (
               <Alert variant="destructive">
                 <AlertDescription>
@@ -351,6 +404,16 @@ export function StudioPanel({
             )}
           </section>
         </div>
+        <Button
+          variant="secondary"
+          size="xl"
+          disabled={noteBlocked}
+          onClick={startNote}
+          className="absolute bottom-[18px] left-1/2 z-10 -translate-x-1/2 shadow-glow"
+        >
+          <NotebookText />
+          Notiz hinzufügen
+        </Button>
         {/* The list fades out above the lower edge of the panel, padding included. */}
         <div
           aria-hidden
@@ -381,6 +444,13 @@ export function StudioPanel({
           />
         )
       )}
+      <RailButton
+        icon={NotebookText}
+        title="Notiz hinzufügen"
+        disabled={noteBlocked}
+        onClick={startNote}
+        className="mt-auto mb-4"
+      />
     </>
   );
 

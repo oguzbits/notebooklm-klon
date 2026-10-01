@@ -1,5 +1,6 @@
 import {
   type Note,
+  NOTE_KIND,
   REPORT_FORMAT,
   type ReportFormat,
   STUDIO_KIND,
@@ -81,12 +82,29 @@ export function describeOutput(output: StudioOutput): string {
   return parts.join(' · ');
 }
 
-/** What a note is called in the list: the start of its text, since a note has no title of its own. */
+/** What a note of the reader is called until they name it, like in the original. */
+export const NEW_NOTE_TITLE = 'Neue Notiz';
+
+const dateFormat = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' });
+
+/**
+ * What a note is called: the name the reader gave it. A note of the reader without one is "Neue
+ * Notiz"; a saved answer without one is the start of its text.
+ */
 export function noteTitle(note: Note): string {
+  if (note.title !== null) return note.title;
+  if (note.kind === NOTE_KIND.WRITTEN) return NEW_NOTE_TITLE;
   const text = note.statements
     .map((statement) => withoutMarkers(statement.text))
     .join(' ')
     .replace(/\s+/g, ' ')
     .trim();
   return text === '' ? 'Notiz' : text;
+}
+
+/** The name of the file a note becomes when it is made a source: Markdown for a note of the reader. */
+export function noteFileName(note: Note): string {
+  const safe = (name: string) => name.replace(/[\\/]/g, '-');
+  if (note.kind === NOTE_KIND.WRITTEN) return `${safe(noteTitle(note))}.md`;
+  return `${safe(note.title ?? `Notiz vom ${dateFormat.format(new Date(note.createdAt))}`)}.txt`;
 }

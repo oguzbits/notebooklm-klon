@@ -1,4 +1,4 @@
-import { API_ERROR, CHAT_EVENT, type ChatEvent, SOURCE_STATUS } from '@nlm/shared';
+import { API_ERROR, CHAT_EVENT, type ChatEvent, NOTE_KIND, SOURCE_STATUS } from '@nlm/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse, type JsonBodyType } from 'msw';
@@ -324,7 +324,7 @@ describe('ChatPanel', () => {
     await user.click(await screen.findByRole('button', { name: 'In Notiz speichern' }));
 
     expect(await screen.findByText('In Notiz gespeichert')).toBeTruthy();
-    expect(body).toEqual({ messageId: ANSWER_ID });
+    expect(body).toEqual({ kind: NOTE_KIND.ANSWER, messageId: ANSWER_ID });
   });
 
   it('shows an answer that is already a note as saved', async () => {
