@@ -2,20 +2,22 @@ import { CHAT_ROLE, SOURCE_FAILURE, SOURCE_KIND, SOURCE_STATUS } from '@nlm/shar
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import {
-  countSourcesSince,
   createNotebook,
   deleteNotebook,
   duplicateNotebook,
   findNotebook,
-  linkSource,
   listNotebooks,
+  updateNotebook,
+} from './notebook-repository';
+import {
+  countSourcesSince,
+  linkSource,
   listNotebookSources,
   renameSource,
   selectedReadySourceIds,
   setSourceSelected,
   unlinkSource,
-  updateNotebook,
-} from './notebook-repository';
+} from './notebook-source-repository';
 import { sources } from './schema';
 import { createTestDb, ensureUsers } from './testing/test-db';
 

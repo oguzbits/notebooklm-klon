@@ -28,6 +28,58 @@ export async function findDemoTemplate(
   return found ?? null;
 }
 
+type Transaction = Parameters<Parameters<Database['transaction']>[0]>[0];
+type SourceRow = typeof sources.$inferSelect;
+
+/** The ready sources of the example notebook that have text, in the order they were added. */
+function readySourcesOf(tx: Transaction, template: DemoTemplate) {
+  return tx
+    .select({ source: sources, selected: notebookSources.selected })
+    .from(notebookSources)
+    .innerJoin(sources, eq(sources.id, notebookSources.sourceId))
+    .where(
+      and(
+        eq(notebookSources.notebookId, template.notebookId),
+        eq(sources.userId, template.userId),
+        eq(sources.status, SOURCE_STATUS.READY),
+        isNotNull(sources.canonicalText)
+      )
+    )
+    .orderBy(asc(notebookSources.addedAt), asc(sources.id));
+}
+
+/** Copies one source with its passages into the new notebook and returns the ID of the copy. */
+async function copySource(
+  tx: Transaction,
+  notebookId: string,
+  toUserId: string,
+  { source, selected }: { source: SourceRow; selected: boolean }
+): Promise<string> {
+  const [made] = await tx
+    .insert(sources)
+    .values({
+      userId: toUserId,
+      contentHash: source.contentHash,
+      kind: source.kind,
+      title: source.title,
+      sourceUrl: source.sourceUrl,
+      status: source.status,
+      canonicalText: source.canonicalText,
+      pageCount: source.pageCount,
+      overview: source.overview,
+    })
+    .returning({ id: sources.id });
+  if (!made) throw new Error('A source of the example notebook was not copied.');
+  await tx.insert(notebookSources).values({ notebookId, sourceId: made.id, selected });
+  // The search vector is generated from the text, so it is not copied.
+  await tx.execute(sql`
+    INSERT INTO chunks (source_id, ordinal, text, start_offset, end_offset, token_count, embedding)
+    SELECT ${made.id}, ordinal, text, start_offset, end_offset, token_count, embedding
+    FROM chunks WHERE source_id = ${source.id}
+  `);
+  return made.id;
+}
+
 /**
  * Copies the example notebook to the guest: the notebook, its ready sources with their text and
  * overview, and every passage with its vector. Nothing is read or embedded again, so a guest costs
@@ -56,45 +108,9 @@ export async function copyNotebookToUser(
       .returning({ id: notebooks.id });
     if (!copy) throw new Error('The copy of the example notebook was not made.');
 
-    const originals = await tx
-      .select({ source: sources, selected: notebookSources.selected })
-      .from(notebookSources)
-      .innerJoin(sources, eq(sources.id, notebookSources.sourceId))
-      .where(
-        and(
-          eq(notebookSources.notebookId, template.notebookId),
-          eq(sources.userId, template.userId),
-          eq(sources.status, SOURCE_STATUS.READY),
-          isNotNull(sources.canonicalText)
-        )
-      )
-      .orderBy(asc(notebookSources.addedAt), asc(sources.id));
-
     const copiedIds: string[] = [];
-    for (const { source, selected } of originals) {
-      const [made] = await tx
-        .insert(sources)
-        .values({
-          userId: toUserId,
-          contentHash: source.contentHash,
-          kind: source.kind,
-          title: source.title,
-          sourceUrl: source.sourceUrl,
-          status: source.status,
-          canonicalText: source.canonicalText,
-          pageCount: source.pageCount,
-          overview: source.overview,
-        })
-        .returning({ id: sources.id });
-      if (!made) throw new Error('A source of the example notebook was not copied.');
-      await tx.insert(notebookSources).values({ notebookId: copy.id, sourceId: made.id, selected });
-      // The search vector is generated from the text, so it is not copied.
-      await tx.execute(sql`
-        INSERT INTO chunks (source_id, ordinal, text, start_offset, end_offset, token_count, embedding)
-        SELECT ${made.id}, ordinal, text, start_offset, end_offset, token_count, embedding
-        FROM chunks WHERE source_id = ${source.id}
-      `);
-      copiedIds.push(made.id);
+    for (const entry of await readySourcesOf(tx, template)) {
+      copiedIds.push(await copySource(tx, copy.id, toUserId, entry));
     }
 
     if (original.overview !== null) {

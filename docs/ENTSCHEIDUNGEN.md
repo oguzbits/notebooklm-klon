@@ -614,3 +614,21 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
   „nach dem Push `gh run list` ansehen“; ENTSCHEIDUNGEN.md (60 KB) suchen statt ganz lesen; die DoD-Quittung nur für Features.
 - **Nicht geändert:** Der Wächter liest den Text eines Heredocs wie Befehle. Das zu lockern würde `bash <<EOF … EOF` als Umgehung öffnen.
   Dateien schreibt man mit dem Write-Werkzeug.
+
+## 2026-10-01 (Clean-Code-Grenzen für Anwendungscode)
+
+- ESLint begrenzt `apps/*/src` (ohne Tests, e2e, eval, `components/ui`): Komplexität 10,
+  60 Zeilen pro Funktion, 300 pro Datei, Verschachtelung 3, höchstens 4 Parameter, keine
+  verschachtelten Ternaries. In `apps/api/src/db` sind es 5 Parameter, weil jede Abfrage
+  `(db, userId, notebookId, …)` als festen Geltungsbereich trägt (Retrieval-Scope, Invariante 3).
+- Die vorhandenen 75 Verstöße wurden zuerst als Basislinie eingefroren
+  (`--suppress-all`, mit einem Zähler, der nur sinken durfte) und dann abgebaut. Stand heute: **0**,
+  die Datei und der Zähler sind entfernt. Eine neue Verletzung lässt `pnpm lint` sofort scheitern.
+  Die Basislinie nie wieder mit `--suppress-all` füllen und keine `eslint-disable`-Kommentare
+  für diese Regeln setzen: die Funktion teilen.
+- Konventionen aus dem Umbau: Zustand in Hooks, kleine Komponenten, reine Logik in `lib` mit Test,
+  Tabellen (Lookup-Objekte) statt verschachtelter Ternaries, Markup als JSX
+  (`renderToStaticMarkup`) statt zusammengesetzter Strings, Grenzen aus `packages/shared`
+  statt wiederholter Zahlen.
+- Offen: `selectAll` in der Quellenliste stellt eine Anfrage pro Quelle (Sammel-Endpunkt fehlt);
+  `ViewerFrame` hat noch 17 Props; `fetch('/api/…')` steht in vier Hooks.

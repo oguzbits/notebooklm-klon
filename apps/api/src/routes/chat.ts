@@ -13,7 +13,8 @@ import {
 } from '../chat/answer';
 import { AnswerRecorder } from '../chat/answer-recorder';
 import { getChatConfig } from '../db/chat-config-repository';
-import { findNotebook, selectedReadySourceIds } from '../db/notebook-repository';
+import { findNotebook } from '../db/notebook-repository';
+import { selectedReadySourceIds } from '../db/notebook-source-repository';
 import { saveAssistantMessage, saveUserMessage } from '../db/reader-repository';
 import { searchChunks } from '../db/retrieval';
 

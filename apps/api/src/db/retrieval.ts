@@ -36,6 +36,76 @@ export interface RetrievedChunk {
   score: number;
 }
 
+type ChunkRow = {
+  id: string;
+  source_id: string;
+  ordinal: number;
+  text: string;
+  start_offset: number;
+  end_offset: number;
+  score: number;
+};
+
+function toRetrievedChunk(row: ChunkRow): RetrievedChunk {
+  return {
+    id: row.id,
+    sourceId: row.source_id,
+    ordinal: row.ordinal,
+    text: row.text,
+    startOffset: row.start_offset,
+    endOffset: row.end_offset,
+    score: row.score,
+  };
+}
+
+/** The chunks the user may see in this notebook, limited to the selected sources. */
+function scopedChunks(params: SearchParams) {
+  const sourceIdList = sql.join(
+    params.sourceIds.map((id) => sql`${id}::uuid`),
+    sql`, `
+  );
+  return sql`
+    SELECT c.id, c.embedding, c.search_vector
+    FROM chunks c
+    JOIN sources s ON s.id = c.source_id AND s.user_id = ${params.userId}
+    JOIN notebook_sources ns ON ns.source_id = s.id AND ns.notebook_id = ${params.notebookId}
+    JOIN notebooks n ON n.id = ns.notebook_id AND n.user_id = ${params.userId}
+    WHERE c.source_id IN (${sourceIdList})`;
+}
+
+function vectorRanked(queryEmbedding: number[]) {
+  const vector = `[${queryEmbedding.join(',')}]`;
+  return sql`
+    SELECT id, row_number() OVER (ORDER BY embedding <=> ${vector}::vector, id) AS rank
+    FROM scoped
+    WHERE embedding IS NOT NULL
+    ORDER BY embedding <=> ${vector}::vector, id
+    LIMIT ${CANDIDATES_PER_RANKER}`;
+}
+
+function textRanked(queryText: string) {
+  const words = searchWords(queryText);
+  if (words.length === 0) return sql`SELECT id, 0 AS rank FROM scoped WHERE false`;
+  const wordList = sql.join(
+    words.map((word) => sql`${word}`),
+    sql`, `
+  );
+  // Filler words match nearly every chunk and would push the right ones down the fused ranking.
+  // ts_lexize returns an empty array for a stop word, checked for German and English.
+  return sql`
+    SELECT id, row_number() OVER (ORDER BY ts_rank_cd(search_vector, terms.query) DESC, id) AS rank
+    FROM scoped,
+      (
+        SELECT to_tsquery('simple', string_agg(word, ' | ')) AS query
+        FROM unnest(ARRAY[${wordList}]::text[]) AS word
+        WHERE ts_lexize('german_stem', word) IS DISTINCT FROM '{}'
+          AND ts_lexize('english_stem', word) IS DISTINCT FROM '{}'
+      ) AS terms
+    WHERE search_vector @@ terms.query
+    ORDER BY ts_rank_cd(search_vector, terms.query) DESC, id
+    LIMIT ${CANDIDATES_PER_RANKER}`;
+}
+
 /**
  * Hybrid search: nearest vectors plus full-text matches, fused with RRF, all inside PostgreSQL.
  * Scope is enforced in SQL: the chunk's source must belong to the user, the notebook must belong to
@@ -45,59 +115,10 @@ export interface RetrievedChunk {
 export async function searchChunks(db: Database, params: SearchParams): Promise<RetrievedChunk[]> {
   if (params.sourceIds.length === 0) return [];
 
-  const sourceIdList = sql.join(
-    params.sourceIds.map((id) => sql`${id}::uuid`),
-    sql`, `
-  );
-  const vector = `[${params.queryEmbedding.join(',')}]`;
-  const words = searchWords(params.queryText);
-  const wordList = sql.join(
-    words.map((word) => sql`${word}`),
-    sql`, `
-  );
-  // Filler words match nearly every chunk and would push the right ones down the fused ranking.
-  // ts_lexize returns an empty array for a stop word, checked for German and English.
-  const textRanked =
-    words.length === 0
-      ? sql`SELECT id, 0 AS rank FROM scoped WHERE false`
-      : sql`
-          SELECT id, row_number() OVER (ORDER BY ts_rank_cd(search_vector, terms.query) DESC, id) AS rank
-          FROM scoped,
-            (
-              SELECT to_tsquery('simple', string_agg(word, ' | ')) AS query
-              FROM unnest(ARRAY[${wordList}]::text[]) AS word
-              WHERE ts_lexize('german_stem', word) IS DISTINCT FROM '{}'
-                AND ts_lexize('english_stem', word) IS DISTINCT FROM '{}'
-            ) AS terms
-          WHERE search_vector @@ terms.query
-          ORDER BY ts_rank_cd(search_vector, terms.query) DESC, id
-          LIMIT ${CANDIDATES_PER_RANKER}`;
-
-  const result = await db.execute<{
-    id: string;
-    source_id: string;
-    ordinal: number;
-    text: string;
-    start_offset: number;
-    end_offset: number;
-    score: number;
-  }>(sql`
-    WITH scoped AS (
-      SELECT c.id, c.embedding, c.search_vector
-      FROM chunks c
-      JOIN sources s ON s.id = c.source_id AND s.user_id = ${params.userId}
-      JOIN notebook_sources ns ON ns.source_id = s.id AND ns.notebook_id = ${params.notebookId}
-      JOIN notebooks n ON n.id = ns.notebook_id AND n.user_id = ${params.userId}
-      WHERE c.source_id IN (${sourceIdList})
-    ),
-    vector_ranked AS (
-      SELECT id, row_number() OVER (ORDER BY embedding <=> ${vector}::vector, id) AS rank
-      FROM scoped
-      WHERE embedding IS NOT NULL
-      ORDER BY embedding <=> ${vector}::vector, id
-      LIMIT ${CANDIDATES_PER_RANKER}
-    ),
-    text_ranked AS (${textRanked}),
+  const result = await db.execute<ChunkRow>(sql`
+    WITH scoped AS (${scopedChunks(params)}),
+    vector_ranked AS (${vectorRanked(params.queryEmbedding)}),
+    text_ranked AS (${textRanked(params.queryText)}),
     fused AS (
       SELECT id, sum(part) AS score
       FROM (SELECT id, 1.0 / (${RRF_K} + rank) AS part FROM vector_ranked
@@ -112,13 +133,5 @@ export async function searchChunks(db: Database, params: SearchParams): Promise<
     LIMIT ${params.limit}
   `);
 
-  return result.rows.map((row) => ({
-    id: row.id,
-    sourceId: row.source_id,
-    ordinal: row.ordinal,
-    text: row.text,
-    startOffset: row.start_offset,
-    endOffset: row.end_offset,
-    score: row.score,
-  }));
+  return result.rows.map(toRetrievedChunk);
 }

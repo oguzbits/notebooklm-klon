@@ -100,8 +100,7 @@ export default defineConfig([
     },
   },
   {
-    // Clean-code limits for application code. Existing violations are frozen in
-    // eslint-suppressions.json and paid off one by one (`pnpm lint:prune` after a fix); a new one fails.
+    // Clean-code limits for application code. There is no suppression baseline: a violation fails.
     files: ['apps/*/src/**/*.{ts,tsx}'],
     ignores: [
       '**/*.test.{ts,tsx}',

@@ -8,13 +8,13 @@ import {
 
 import type { AppDeps } from '../app-deps';
 import type { AuthVariables } from '../auth/session';
+import { findNotebook } from '../db/notebook-repository';
 import {
-  findNotebook,
   listNotebookSources,
   renameSource,
   setSourceSelected,
   unlinkSource,
-} from '../db/notebook-repository';
+} from '../db/notebook-source-repository';
 import { invalid, json, notebookParams, notFound, sourceParams, unauthenticated } from './openapi';
 
 const OK = 200;

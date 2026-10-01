@@ -1,5 +1,5 @@
 import type { Database } from '../db/client';
-import { linkSource } from '../db/notebook-repository';
+import { linkSource } from '../db/notebook-source-repository';
 import { createSourceStorage, createUploadStorage } from '../db/source-storage';
 import type { LocalImportDeps } from './local-import';
 

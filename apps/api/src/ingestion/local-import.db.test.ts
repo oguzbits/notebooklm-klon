@@ -1,7 +1,8 @@
 import { EMBEDDING_DIMENSIONS, SOURCE_KIND, SOURCE_STATUS } from '@nlm/shared';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { createNotebook, linkSource, listNotebookSources } from '../db/notebook-repository';
+import { createNotebook } from '../db/notebook-repository';
+import { linkSource, listNotebookSources } from '../db/notebook-source-repository';
 import { createSourceStorage, createUploadStorage } from '../db/source-storage';
 import { axisVector, createTestDb, ensureUsers } from '../db/testing/test-db';
 import { importLocalFiles, type LocalFile } from './local-import';
