@@ -22,6 +22,9 @@ const MAX_SUMMARY_CHARS = 3000;
 const ONE_EMOJI =
   /^\p{Extended_Pictographic}(?:\ufe0f|\p{Emoji_Modifier})?(?:\u200d\p{Extended_Pictographic}(?:\ufe0f|\p{Emoji_Modifier})?)*$/u;
 
+/** A summary the user wrote for the notebook, instead of the one the model makes. */
+export const CustomSummarySchema = z.string().trim().min(1).max(MAX_SUMMARY_CHARS);
+
 /**
  * What the sources of a notebook are about together: one symbol that suits the topic and a short
  * summary in which the key terms are **bold**. It describes the sources and does not answer a
@@ -34,7 +37,7 @@ export const NotebookOverviewSchema = z.object({
     .max(MAX_EMOJI_CHARS)
     // A refinement, not a pattern: the provider gets the plain string schema.
     .refine((text) => ONE_EMOJI.test(text), { message: 'One emoji.' }),
-  summary: z.string().trim().min(1).max(MAX_SUMMARY_CHARS),
+  summary: CustomSummarySchema,
 });
 
 export type NotebookOverview = z.infer<typeof NotebookOverviewSchema>;

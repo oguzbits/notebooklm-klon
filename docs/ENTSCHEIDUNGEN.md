@@ -499,7 +499,35 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   als Werkzeug, Verträglichkeit mit dem JSON-Schema, Kosten im kostenlosen Tarif), dann Bau.
 - **Thoughts:** erst ein Test, ob Gedankenzusammenfassungen (`includeThoughts`) mit unserem JSON-Schema-Streaming und dem
   Lite-Modell brauchbar sind; Gedanken-Tokens zählen als Ausgabe.
-- **Titelbild für „Notebook anpassen“:** S3-kompatibler Speicher (MinIO im Docker Compose, Volume) hinter einem Port in
-  `core` mit einer Implementierung und einem Fake für Tests. Entscheidung des Nutzers, auch um Full-Stack-Können zu zeigen.
-  Kein AWS nötig; bei Plan B (Render) wäre ein Anbieter wie R2 oder S3 nötig, Preise vorher prüfen. Das Volume ist
-  dauerhaft, aber nicht gesichert (wie die Datenbank auf demselben Server). Wird als letzter Schritt dieses Dialogs gebaut.
+- **Titelbild für „Notebook anpassen“:** S3-kompatibler Speicher hinter einem Port (`apps/api/src/storage`) mit einer
+  Implementierung (AWS SDK v3, Pfad-Adressen), einem Fake für Tests und einem Integrationstest gegen den Container.
+  Entscheidung des Nutzers, auch um Full-Stack-Können zu zeigen. Kein AWS nötig; bei Plan B (Render) wäre ein Anbieter wie R2
+  oder S3 nötig, Preise vorher prüfen. Ein Docker-Volume ist dauerhaft, aber nicht gesichert (wie die Datenbank auf demselben
+  Server).
+- **Geändert: SeaweedFS statt MinIO.** Beim Prüfen der Quellen (Regel 12) zeigte sich, dass die Community-Ausgabe von MinIO
+  seit Oktober 2025 keine Images mehr veröffentlicht und am 25. April 2026 archiviert wurde. Der Code spricht nur das
+  S3-Protokoll, deshalb ist der Server austauschbar. Gewählt: SeaweedFS (Apache-2.0, aktiv, ein Programm mit S3-Zugang).
+  Fallstricke: je Bucket ein eigenes Volume, auf der kleinen Test-Platte deshalb `-volume.max` und eine kleine
+  `volumeSizeLimitMB`; der Health-Check nimmt jede HTTP-Antwort (auch 403) als „läuft“.
+- **Titelbild, Regeln:** nur PNG, JPEG, WebP bis 2 MB; der Typ wird an den ersten Bytes erkannt, nicht am Namen oder an der Angabe des
+  Browsers (kein SVG, keine Seite als Bild). Jedes Bild bekommt eine neue Version im Schlüssel (`covers/<Nutzer>/<Notizbuch>/<Version>`),
+  der Browser darf es lange zwischenspeichern (`private`). Löschen des Notizbuchs und das Ablaufen eines Gasts löschen die Datei mit; eine
+  Kopie des Notizbuchs bekommt kein Bild. Ohne Speicher (keine `S3_*`-Werte) wird der Upload nicht angeboten.
+- **Entschieden (Nutzer):** „Thoughts“ als echte Schritte des Servers in Deutsch („Vorgehen“, `chat_messages.trace`, Migration 0015),
+  nicht die Gedanken des Modells. Web-Suche über Tavily (`TAVILY_API_KEY`, optional; 10 Suchen je Nutzer und Stunde, 30 am Tag für
+  alle; nur die Suchbegriffe gehen an Tavily; das Hinzufügen läuft über den normalen URL-Import mit SSRF-Schutz).
+
+- **Gebaut in dieser Runde** (je ein Commit auf `feat/gaps-round-4`): Knopf „Nach unten springen“ (sichtbar ab 48 px Abstand zum Ende);
+  „Notizbuch anpassen“ (Titelblock und Menü öffnen den Dialog: Titel und eigene Zusammenfassung; die eigene Zusammenfassung ersetzt die
+  des Modells, kostet keinen Modellaufruf, das Emoji bleibt; Spalte `custom_summary`, Migration 0013); Reihenfolge der Aktionsleiste
+  (In Notiz speichern vor Kopieren); Quellen sortieren (Letzte, Titel, Typ; ohne Auswahl bleibt die Reihenfolge des Servers); Quelle
+  umbenennen (der Titel gehört zur Quelle und gilt in allen Notizbüchern des Nutzers); Studio-Ausgabe umbenennen (ein gemeinsamer
+  `RenameDialog`; „Prompt und Quellen ansehen“ gibt es schon als Chip in der Ansicht); Notizbuch kopieren (verknüpft dieselben
+  Quellen, es wird nichts neu gelesen oder berechnet, weil ein Inhalt pro Nutzer nur einmal vorkommen darf; Chat, Notizen und
+  Studio-Ausgaben bleiben beim Original); Startseite: Titel bearbeiten und Oben anpinnen (Spalte `pinned_at`, Migration 0014).
+- **Korrigiert:** Die Bestätigen-Dialoge schlossen sich beim Klick, bevor ein Fehler zu lesen war. Der Knopf schließt jetzt nicht mehr
+  selbst, die Aufrufer schließen bei Erfolg.
+- **Bewusst nicht gebaut:** Handy-Eingabeleiste mit Dokument-Symbol (gibt es schon), Ausgabesprache als Konto-Einstellung (die Sprache
+  der Antworten lässt sich je Notizbuch unter „Chat konfigurieren“ wählen), „Alle Notizen als Quelle festlegen“.
+- **Offen:** Die Deploy-Dateien für Hetzner brauchen den S3-Dienst im Compose (siehe `docker-compose.yml`, Dienst `s3`) und ein
+  Volume statt `tmpfs`.

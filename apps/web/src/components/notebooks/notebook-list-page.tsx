@@ -1,21 +1,16 @@
-import { EllipsisVertical, NotebookPen, Plus, SearchX, Trash2 } from 'lucide-react';
+import { NotebookPen, Plus, SearchX } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 
 import { AppHeader } from '@/components/layout/app-header';
 import { CreateNotebookDialog } from '@/components/notebooks/create-notebook-dialog';
+import { NotebookCardMenu } from '@/components/notebooks/notebook-card-menu';
 import { NotebookSearch } from '@/components/notebooks/notebook-search';
 import { QueryBoundary } from '@/components/query-boundary';
 import { NotebookCardsSkeleton } from '@/components/skeletons';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { useDeleteNotebook, useNotebooks } from '@/hooks/use-notebooks';
 import { formatDay } from '@/lib/day';
 import { describeError } from '@/lib/messages';
@@ -30,6 +25,8 @@ export function NotebookListPage() {
   const remove = useDeleteNotebook();
   const [toDelete, setToDelete] = useState<{ id: string; title: string } | null>(null);
   const [search, setSearch] = useState('');
+  // What went wrong with a pin; deleting reports in its own dialog.
+  const [actionError, setActionError] = useState<unknown>(null);
   const needle = search.trim().toLocaleLowerCase('de-DE');
 
   return (
@@ -92,27 +89,11 @@ export function NotebookListPage() {
                           </span>
                         </span>
                       </Link>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon-xs"
-                            className="absolute top-6 right-6"
-                            aria-label={`Weitere Aktionen für Notizbuch „${notebook.title}“`}
-                            tooltip="Mehr"
-                          >
-                            <EllipsisVertical />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onSelect={() => setToDelete({ id: notebook.id, title: notebook.title })}
-                          >
-                            <Trash2 aria-hidden />
-                            Löschen
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <NotebookCardMenu
+                        notebook={notebook}
+                        onDelete={() => setToDelete({ id: notebook.id, title: notebook.title })}
+                        onError={setActionError}
+                      />
                     </li>
                   ))}
                 </ul>
@@ -120,9 +101,9 @@ export function NotebookListPage() {
             }}
           </QueryBoundary>
 
-          {remove.isError && (
+          {(remove.isError || actionError !== null) && (
             <Alert variant="destructive">
-              <AlertDescription>{describeError(remove.error)}</AlertDescription>
+              <AlertDescription>{describeError(remove.error ?? actionError)}</AlertDescription>
             </Alert>
           )}
           <p className="mt-8 text-center text-small text-muted-foreground">{IMITATION_NOTICE}</p>
@@ -134,13 +115,19 @@ export function NotebookListPage() {
         onOpenChange={(open) => !open && setToDelete(null)}
         title="Notizbuch löschen?"
         description={
-          <>
-            „{toDelete?.title}“ wird mit allen Quellen und dem Verlauf der Fragen gelöscht. Das
-            lässt sich nicht rückgängig machen.
-          </>
+          remove.isError ? (
+            describeError(remove.error)
+          ) : (
+            <>
+              „{toDelete?.title}“ wird mit allen Quellen und dem Verlauf der Fragen gelöscht. Das
+              lässt sich nicht rückgängig machen.
+            </>
+          )
         }
         pending={remove.isPending}
-        onConfirm={() => toDelete && remove.mutate(toDelete.id)}
+        onConfirm={() =>
+          toDelete && remove.mutate(toDelete.id, { onSuccess: () => setToDelete(null) })
+        }
       />
     </>
   );

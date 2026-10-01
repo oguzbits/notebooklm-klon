@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router';
 
 import { ChatPanel } from '@/components/chat/chat-panel';
 import { AppHeader } from '@/components/layout/app-header';
+import { CustomizeNotebookDialog } from '@/components/notebook/customize-notebook-dialog';
 import { NotebookActions } from '@/components/notebook/notebook-actions';
 import { NotebookTitle } from '@/components/notebook/notebook-title';
 import { Panel } from '@/components/notebook/panel';
@@ -62,6 +63,7 @@ export function NotebookPage() {
   const [studioOpen, setStudioOpen] = useState(true);
   const [column, setColumn] = useState<Column>(COLUMN.CHAT);
   const [viewingOutput, setViewingOutput] = useState(false);
+  const [customizing, setCustomizing] = useState(false);
   // A question that came from the Studio ("Erklären" on a card); the chat asks it once.
   const [asked, setAsked] = useState<{ id: number; question: string } | null>(null);
   const wide = useWideLayout();
@@ -81,6 +83,7 @@ export function NotebookPage() {
     setColumn(COLUMN.CHAT);
   }, []);
   const toggleStudio = useCallback(() => setStudioOpen((value) => !value), []);
+  const customize = useCallback(() => setCustomizing(true), []);
 
   if (notebook.isError) {
     return (
@@ -130,7 +133,11 @@ export function NotebookPage() {
             <Skeleton className="h-7 w-64 max-w-[40vw]" aria-hidden />
           )
         }
-        actions={notebook.data ? <NotebookActions notebook={notebook.data} /> : undefined}
+        actions={
+          notebook.data ? (
+            <NotebookActions notebook={notebook.data} onCustomize={customize} />
+          ) : undefined
+        }
       />
       <nav
         aria-label="Bereiche"
@@ -186,7 +193,12 @@ export function NotebookPage() {
             studioFolded && 'wide:mr-2'
           )}
         >
-          <ChatPanel notebookId={id} onOpenCitation={openCitation} incoming={asked} />
+          <ChatPanel
+            notebookId={id}
+            onOpenCitation={openCitation}
+            onCustomize={customize}
+            incoming={asked}
+          />
         </Panel>
         <StudioPanel
           notebookId={id}
@@ -205,6 +217,13 @@ export function NotebookPage() {
           )}
         />
       </div>
+      {notebook.data && (
+        <CustomizeNotebookDialog
+          notebook={notebook.data}
+          open={customizing}
+          onOpenChange={setCustomizing}
+        />
+      )}
     </>
   );
 }

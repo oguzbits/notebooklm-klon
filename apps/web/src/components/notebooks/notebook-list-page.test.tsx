@@ -2,7 +2,7 @@ import { API_ERROR } from '@nlm/shared';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { notebookEmoji } from '@/lib/notebook-emoji';
 import { notebook } from '@/test/fixtures';
@@ -95,6 +95,56 @@ describe('NotebookListPage', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Löschen' }));
 
     expect(await screen.findByText('Noch kein Notizbuch')).toBeTruthy();
+  });
+
+  it('changes the title from the menu of a card', async () => {
+    let sent: unknown;
+    server.use(
+      list([notebook({ title: 'Alt' })]),
+      http.patch('*/api/notebooks/:id', async ({ request }) => {
+        sent = await request.json();
+        return HttpResponse.json(notebook({ title: 'Neu' }));
+      })
+    );
+    renderWithProviders(<NotebookListPage />);
+    const user = userEvent.setup();
+
+    await user.click(
+      await screen.findByRole('button', { name: /Weitere Aktionen für Notizbuch „Alt“/ })
+    );
+    await user.click(await screen.findByRole('menuitem', { name: 'Titel bearbeiten' }));
+    const field = await screen.findByLabelText('Titel des Notizbuchs');
+    await user.clear(field);
+    await user.type(field, 'Neu');
+    await user.click(screen.getByRole('button', { name: 'Speichern' }));
+
+    await vi.waitFor(() => expect(sent).toEqual({ title: 'Neu' }));
+  });
+
+  it('pins a notebook, and offers to take the pin back once it is pinned', async () => {
+    const sent: unknown[] = [];
+    let pinned = false;
+    server.use(
+      http.get('*/api/notebooks', () =>
+        HttpResponse.json([notebook({ title: 'Wichtig', pinned })])
+      ),
+      http.patch('*/api/notebooks/:id', async ({ request }) => {
+        sent.push(await request.json());
+        pinned = !pinned;
+        return HttpResponse.json(notebook({ title: 'Wichtig', pinned }));
+      })
+    );
+    renderWithProviders(<NotebookListPage />);
+    const user = userEvent.setup();
+    const open = async () =>
+      user.click(await screen.findByRole('button', { name: /Weitere Aktionen für Notizbuch/ }));
+
+    await open();
+    await user.click(await screen.findByRole('menuitem', { name: 'Oben anpinnen' }));
+    await open();
+    await user.click(await screen.findByRole('menuitem', { name: 'Nicht mehr oben anpinnen' }));
+
+    expect(sent).toEqual([{ pinned: true }, { pinned: false }]);
   });
 
   it('shows the date and the number of sources on each card', async () => {

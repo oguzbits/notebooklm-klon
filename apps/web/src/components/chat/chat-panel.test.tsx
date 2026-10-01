@@ -1,5 +1,5 @@
 import { API_ERROR, CHAT_EVENT, type ChatEvent, NOTE_KIND, SOURCE_STATUS } from '@nlm/shared';
-import { screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse, type JsonBodyType } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -33,7 +33,7 @@ const frame = (event: ChatEvent) => `event: ${event.type}\ndata: ${JSON.stringif
 
 function renderChat(onOpenCitation: (chunkId: string) => void = () => {}) {
   return renderWithProviders(
-    <ChatPanel notebookId={NOTEBOOK_ID} onOpenCitation={onOpenCitation} />
+    <ChatPanel notebookId={NOTEBOOK_ID} onOpenCitation={onOpenCitation} onCustomize={() => {}} />
   );
 }
 
@@ -170,6 +170,8 @@ describe('ChatPanel', () => {
     const done: ChatEvent = {
       type: CHAT_EVENT.DONE,
       statements: 1,
+      sourcesSearched: 1,
+      passagesFound: 2,
       droppedStatements: 0,
       strippedCitations: 0,
       followUps: [],
@@ -361,6 +363,45 @@ describe('ChatPanel', () => {
     expect(screen.getByLabelText('Deine Frage').hasAttribute('disabled')).toBe(false);
   });
 
+  describe('the jump to the end', () => {
+    // jsdom has no layout: the scroll area gets the sizes of a long conversation by hand.
+    function scrollArea(position: number) {
+      const area = screen.getByTestId('chat-scroll');
+      Object.defineProperty(area, 'scrollHeight', { configurable: true, value: 1000 });
+      Object.defineProperty(area, 'clientHeight', { configurable: true, value: 400 });
+      area.scrollTop = position;
+      area.scrollTo = vi.fn();
+      fireEvent.scroll(area);
+      return area;
+    }
+
+    it('shows a button when the chat is not at its end and scrolls down on click', async () => {
+      server.use(sources(), history([answer([{ text: 'Aussage.', chunkIds: [CHUNK_ID] }])]));
+      renderChat();
+      await screen.findByText('Aussage.');
+      const user = userEvent.setup();
+
+      const area = scrollArea(0);
+      await user.click(await screen.findByRole('button', { name: 'Nach unten springen' }));
+
+      expect(area.scrollTo).toHaveBeenCalledWith({ top: 1000, behavior: 'smooth' });
+    });
+
+    it('hides the button again at the end of the chat', async () => {
+      server.use(sources(), history([answer([{ text: 'Aussage.', chunkIds: [CHUNK_ID] }])]));
+      renderChat();
+      await screen.findByText('Aussage.');
+
+      scrollArea(0);
+      await screen.findByRole('button', { name: 'Nach unten springen' });
+      scrollArea(590);
+
+      await waitFor(() =>
+        expect(screen.queryByRole('button', { name: 'Nach unten springen' })).toBeNull()
+      );
+    });
+  });
+
   it('saves an answer as a note and then shows that it is saved', async () => {
     let body: unknown;
     let saved = false;
@@ -383,6 +424,40 @@ describe('ChatPanel', () => {
 
     expect(await screen.findByText('In Notiz gespeichert')).toBeTruthy();
     expect(body).toEqual({ kind: NOTE_KIND.ANSWER, messageId: ANSWER_ID });
+  });
+
+  it('puts "In Notiz speichern" before "Kopieren" under an answer, like the original', async () => {
+    server.use(sources(), history([answer([{ text: 'Aussage.', chunkIds: [CHUNK_ID] }])]));
+    renderChat();
+
+    const saves = await screen.findAllByRole('button', { name: 'In Notiz speichern' });
+    const copies = screen.getAllByRole('button', { name: 'Kopieren' });
+    const save = saves[saves.length - 1]!;
+    const copy = copies[copies.length - 1]!;
+
+    expect(save.compareDocumentPosition(copy) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('offers the steps of an answer that kept them, and nothing for an older one', async () => {
+    server.use(
+      sources(),
+      history([
+        answer([{ text: 'Neu.', chunkIds: [CHUNK_ID] }], [], {
+          sourcesSearched: 1,
+          passagesFound: 3,
+          droppedStatements: 0,
+          strippedCitations: 0,
+        }),
+        {
+          ...answer([{ text: 'Alt.', chunkIds: [CHUNK_ID] }]),
+          id: '55555555-5555-4555-8555-555555555555',
+        },
+      ])
+    );
+    renderChat();
+
+    await screen.findByText('Neu.');
+    expect(screen.getAllByRole('button', { name: 'Vorgehen' })).toHaveLength(1);
   });
 
   it('shows an answer that is already a note as saved', async () => {

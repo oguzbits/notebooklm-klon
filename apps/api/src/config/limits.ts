@@ -30,6 +30,10 @@ export const LIMITS = {
   GUESTS_ALIVE: 200,
   /** Guests of the live demo: days until the account and its data are deleted. */
   GUEST_LIFETIME_DAYS: GUEST_LIMITS.LIFETIME_DAYS,
+  /** Web search: searches one user may make per hour. */
+  WEB_SEARCHES_PER_USER_PER_HOUR: 10,
+  /** Web search: searches everybody together may make per day (the service gives 1000 credits a month). */
+  WEB_SEARCHES_PER_DAY: 30,
   /** Ingestion: chunks per embedding request. */
   EMBED_BATCH_SIZE: 16,
 } as const;

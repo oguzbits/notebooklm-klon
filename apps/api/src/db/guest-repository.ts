@@ -120,11 +120,14 @@ export async function countGuests(db: Database, since?: Date): Promise<number> {
   return row?.guests ?? 0;
 }
 
-/** Deletes guests started before the given moment. Their notebooks, sources and sessions go with them. */
-export async function deleteExpiredGuests(db: Database, before: Date): Promise<number> {
+/**
+ * Deletes guests started before the given moment. Their notebooks, sources and sessions go with
+ * them. Returns their IDs, so files of theirs elsewhere (cover images) can be removed too.
+ */
+export async function deleteExpiredGuests(db: Database, before: Date): Promise<string[]> {
   const deleted = await db
     .delete(user)
     .where(and(eq(user.isAnonymous, true), lt(user.createdAt, before)))
     .returning({ id: user.id });
-  return deleted.length;
+  return deleted.map((row) => row.id);
 }

@@ -261,6 +261,34 @@ describe('StudioPanel', () => {
     expect(await screen.findByText('Hier wird die Ausgabe von Studio gespeichert.')).toBeTruthy();
   });
 
+  it('renames an output from the menu of the list', async () => {
+    let sent: unknown;
+    serve({ outputs: [flashcardsOutput()] });
+    server.use(
+      http.patch(`${base}/studio/${OUTPUT_ID}`, async ({ request }) => {
+        sent = await request.json();
+        return HttpResponse.json({ ...flashcardsOutput(), title: 'Mein Name' });
+      })
+    );
+    renderPanel();
+    const user = userEvent.setup();
+
+    await user.click(await waitForRow(/^Karteikarten/));
+    await user.click(await screen.findByRole('button', { name: 'Zurück zum Studio' }));
+    const list = screen.getByRole('region', { name: 'Erstellte Ausgaben' });
+    await user.click(
+      within(list).getByRole('button', { name: 'Weitere Aktionen für „Karteikarten“' })
+    );
+    await user.click(await screen.findByRole('menuitem', { name: 'Umbenennen' }));
+    const field = await screen.findByLabelText('Name');
+    await user.clear(field);
+    await user.type(field, 'Mein Name');
+    await user.click(screen.getByRole('button', { name: 'Speichern' }));
+
+    await vi.waitFor(() => expect(sent).toEqual({ title: 'Mein Name' }));
+    expect(await within(list).findByRole('button', { name: /^Mein Name/ })).toBeTruthy();
+  });
+
   it('deletes an output from inside its view and returns to the list', async () => {
     let deleted = false;
     serve();

@@ -58,6 +58,12 @@ export const notebooks = pgTable(
     // sources it was made from. Both are null until the first overview exists.
     overview: jsonb('overview'),
     overviewKey: text('overview_key'),
+    // A summary the user wrote. When set, it is shown instead of the one the model makes.
+    customSummary: text('custom_summary'),
+    // When the notebook was pinned to the top of the start page; null: not pinned.
+    pinnedAt: timestamp('pinned_at', { withTimezone: true }),
+    // Names the cover image in the object store (covers/<user>/<notebook>/<version>); null: none.
+    coverVersion: uuid('cover_version'),
     createdAt: createdAt(),
   },
   (table) => [index('notebooks_user_id_idx').on(table.userId)]
@@ -160,6 +166,9 @@ export const chatMessages = pgTable(
     // The questions the assistant suggested after an answer (FollowUpsSchema). Null: none, or an
     // answer from before they existed.
     followUps: jsonb('follow_ups'),
+    // How the answer came about (AnswerTraceSchema). Null: an answer from before it was kept, or one
+    // that was cut off before it finished.
+    trace: jsonb('trace'),
     createdAt: createdAt(),
   },
   (table) => [index('chat_messages_notebook_seq_idx').on(table.notebookId, table.seq)]

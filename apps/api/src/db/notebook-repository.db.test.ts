@@ -5,14 +5,16 @@ import {
   countSourcesSince,
   createNotebook,
   deleteNotebook,
+  duplicateNotebook,
   findNotebook,
   linkSource,
   listNotebooks,
   listNotebookSources,
-  renameNotebook,
+  renameSource,
   selectedReadySourceIds,
   setSourceSelected,
   unlinkSource,
+  updateNotebook,
 } from './notebook-repository';
 import { sources } from './schema';
 import { createTestDb, ensureUsers } from './testing/test-db';
@@ -210,22 +212,120 @@ describe('the number of sources of a notebook', () => {
   });
 });
 
-describe('renameNotebook', () => {
+describe('updateNotebook', () => {
   it('changes the title and returns the notebook', async () => {
     const notebook = await createNotebook(db, USER, 'Alt');
 
-    const renamed = await renameNotebook(db, USER, notebook.id, 'Neu');
+    const renamed = await updateNotebook(db, USER, notebook.id, { title: 'Neu' });
 
     expect(renamed).toEqual({ ...notebook, title: 'Neu' });
     expect((await findNotebook(db, USER, notebook.id))?.title).toBe('Neu');
   });
 
-  it("does not rename another user's notebook or answer for an unknown ID", async () => {
+  it('sets and takes back the own summary and leaves the title alone', async () => {
+    const notebook = await createNotebook(db, USER, 'Titel');
+
+    const written = await updateNotebook(db, USER, notebook.id, { customSummary: 'Mein Text' });
+    expect(written).toMatchObject({ title: 'Titel', customSummary: 'Mein Text' });
+
+    const cleared = await updateNotebook(db, USER, notebook.id, { customSummary: null });
+    expect(cleared).toMatchObject({ title: 'Titel', customSummary: null });
+  });
+
+  it('pins a notebook to the top of the list and takes the pin back', async () => {
+    const older = await createNotebook(db, USER, 'Älter');
+    const newer = await createNotebook(db, USER, 'Neuer');
+    await pool.query("UPDATE notebooks SET created_at = now() - interval '1 day' WHERE id = $1", [
+      older.id,
+    ]);
+    expect((await listNotebooks(db, USER)).map((n) => n.title)).toEqual(['Neuer', 'Älter']);
+
+    const pinned = await updateNotebook(db, USER, older.id, { pinned: true });
+
+    expect(pinned?.pinned).toBe(true);
+    expect((await listNotebooks(db, USER)).map((n) => n.title)).toEqual(['Älter', 'Neuer']);
+    expect((await findNotebook(db, USER, newer.id))?.pinned).toBe(false);
+
+    await updateNotebook(db, USER, older.id, { pinned: false });
+    expect((await listNotebooks(db, USER)).map((n) => n.title)).toEqual(['Neuer', 'Älter']);
+  });
+
+  it("does not change another user's notebook or answer for an unknown ID", async () => {
     const theirs = await createNotebook(db, OTHER, 'Fremd');
 
-    expect(await renameNotebook(db, USER, theirs.id, 'Meins')).toBeNull();
-    expect(await renameNotebook(db, USER, 'kein-uuid', 'X')).toBeNull();
+    expect(await updateNotebook(db, USER, theirs.id, { title: 'Meins' })).toBeNull();
+    expect(await updateNotebook(db, USER, 'kein-uuid', { title: 'X' })).toBeNull();
     expect((await findNotebook(db, OTHER, theirs.id))?.title).toBe('Fremd');
+  });
+});
+
+describe('renameSource', () => {
+  it('gives a linked source of the user a new title', async () => {
+    const notebook = await createNotebook(db, USER, 'N');
+    const source = await addSource(USER, 'rename-a', { title: 'alt.pdf' });
+    await linkSource(db, USER, notebook.id, source.id);
+
+    expect(await renameSource(db, USER, notebook.id, source.id, 'Neu')).toBe(true);
+
+    const [row] = await listNotebookSources(db, USER, notebook.id);
+    expect(row?.title).toBe('Neu');
+  });
+
+  it('does not rename a source that is not in this notebook, belongs to another user, or is unknown', async () => {
+    const mine = await createNotebook(db, USER, 'Mein');
+    const theirs = await createNotebook(db, OTHER, 'Fremd');
+    const unlinked = await addSource(USER, 'rename-b', { title: 'frei.pdf' });
+    const theirSource = await addSource(OTHER, 'rename-c', { title: 'fremd.pdf' });
+    await linkSource(db, OTHER, theirs.id, theirSource.id);
+
+    expect(await renameSource(db, USER, mine.id, unlinked.id, 'X')).toBe(false);
+    expect(await renameSource(db, USER, theirs.id, theirSource.id, 'X')).toBe(false);
+    expect(await renameSource(db, USER, mine.id, 'kein-uuid', 'X')).toBe(false);
+    const [row] = await listNotebookSources(db, OTHER, theirs.id);
+    expect(row?.title).toBe('fremd.pdf');
+  });
+});
+
+describe('duplicateNotebook', () => {
+  it('copies title, own summary and the same sources with their selection, not the chat', async () => {
+    const original = await createNotebook(db, USER, 'Forschung');
+    const first = await addSource(USER, 'dup-a', { title: 'a.pdf', status: SOURCE_STATUS.READY });
+    const second = await addSource(USER, 'dup-b', { title: 'b.pdf', status: SOURCE_STATUS.READY });
+    await linkSource(db, USER, original.id, first.id);
+    await linkSource(db, USER, original.id, second.id);
+    await setSourceSelected(db, USER, original.id, second.id, false);
+    await updateNotebook(db, USER, original.id, { customSummary: 'Mein Text' });
+
+    const copy = await duplicateNotebook(db, USER, original.id);
+
+    expect(copy).toMatchObject({
+      title: 'Kopie von Forschung',
+      customSummary: 'Mein Text',
+      sourceCount: 2,
+    });
+    expect(copy?.id).not.toBe(original.id);
+    const copied = await listNotebookSources(db, USER, copy?.id ?? '');
+    expect(copied.map((row) => [row.title, row.selected]).sort()).toEqual([
+      ['a.pdf', true],
+      ['b.pdf', false],
+    ]);
+    // The sources are the same rows: nothing was read or stored a second time.
+    expect(copied.map((row) => row.id).sort()).toEqual([first.id, second.id].sort());
+    expect((await findNotebook(db, USER, original.id))?.sourceCount).toBe(2);
+  });
+
+  it('keeps a title within the limit', async () => {
+    const original = await createNotebook(db, USER, 'x'.repeat(200));
+
+    expect((await duplicateNotebook(db, USER, original.id))?.title).toHaveLength(200);
+  });
+
+  it("does not copy another user's notebook or answer for an unknown ID", async () => {
+    const theirs = await createNotebook(db, OTHER, 'Fremd');
+
+    expect(await duplicateNotebook(db, USER, theirs.id)).toBeNull();
+    expect(await duplicateNotebook(db, USER, 'kein-uuid')).toBeNull();
+    expect(await listNotebooks(db, USER)).toEqual([]);
   });
 });
 

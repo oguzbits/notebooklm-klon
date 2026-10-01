@@ -59,8 +59,11 @@ function serve(
   return served;
 }
 
+const onCustomize = vi.fn();
 const renderOverview = (sources: SourceSummary[] = READY) =>
-  renderWithProviders(<NotebookOverview notebookId={NOTEBOOK_ID} sources={sources} />);
+  renderWithProviders(
+    <NotebookOverview notebookId={NOTEBOOK_ID} sources={sources} onCustomize={onCustomize} />
+  );
 
 describe('NotebookOverview', () => {
   it('shows the cover and the summary with its key terms in bold', async () => {
@@ -72,6 +75,35 @@ describe('NotebookOverview', () => {
     expect(screen.getByText(/^2 Quellen · \d{2}\.\d{2}\.\d{4}$/)).toBeTruthy();
     expect((await screen.findByText('Jev')).tagName).toBe('STRONG');
     expect(screen.getByText('typisierte Werte').tagName).toBe('STRONG');
+  });
+
+  it('shows the cover image of the notebook instead of the symbol', async () => {
+    const version = '9b2c7d6e-1f43-4c8a-8a3b-5e7a8f0c1d22';
+    serve();
+    server.use(
+      http.get('*/api/notebooks', () =>
+        HttpResponse.json([notebook({ title: 'Jev: ein Modell', coverVersion: version })])
+      )
+    );
+    const { container } = renderOverview();
+
+    await screen.findByRole('heading', { name: 'Jev: ein Modell' });
+    await waitFor(() =>
+      expect(container.querySelector('img')?.getAttribute('src')).toBe(
+        `/api/notebooks/${NOTEBOOK_ID}/cover?v=${version}`
+      )
+    );
+    expect(screen.queryByText('🤖')).toBeNull();
+  });
+
+  it('opens the customizing of the notebook when the cover is clicked', async () => {
+    serve();
+    renderOverview();
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole('button', { name: 'Notizbuch anpassen' }));
+
+    expect(onCustomize).toHaveBeenCalledTimes(1);
   });
 
   it('shows the cover at once and a placeholder in place of the summary while it is made', async () => {
@@ -122,7 +154,7 @@ describe('NotebookOverview', () => {
           <button type="button" onClick={() => setList([...READY, source({ id: SECOND_ID })])}>
             Quelle dazu
           </button>
-          <NotebookOverview notebookId={NOTEBOOK_ID} sources={list} />
+          <NotebookOverview notebookId={NOTEBOOK_ID} sources={list} onCustomize={() => {}} />
         </>
       );
     }

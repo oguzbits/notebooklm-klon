@@ -99,3 +99,29 @@ Verifizierte Modell-IDs und Limits (Google-Dokumentation und Modellliste der API
 | `gemini-3.5-flash` bis `gemini-3.8-flash` | 5 / 250K / 20               | nicht erhoben                                     |
 | `gemini-embedding-2`                      | 100 / 30K / 1000            | 0,20 $ (Text)                                     |
 | `gemini-embedding-001`                    | nicht erhoben               | nicht erhoben                                     |
+
+## 5. Gedanken ("Thoughts") und Web-Suche (2026-10-01, Runde 4)
+
+Zwei Skripte gegen das echte Modell (`spikes/thoughts-probe.mjs`, `spikes/websearch-probe.mjs`, `spikes/quota-ping.mjs`;
+Rohdaten lokal in `spikes/results/`, nicht im Repo). Je eine Frage mit zwei öffentlichen Sätzen, ein Lauf, also Stichprobe.
+
+**Gedankenzusammenfassungen (`includeThoughts`) mit strukturierter Ausgabe und Streaming:**
+
+- Sie funktionieren zusammen mit `responseJsonSchema`; die Antwort blieb in allen Läufen gültiges JSON. Gedanken kommen als Teile mit
+  `thought: true`, 2 bis 3 Stück, mit Überschrift in `**…**` und einem Absatz, auf **Englisch**.
+- Auf `gemini-3.5-flash-lite` liefern `includeThoughts` allein und `thinkingLevel: low` **keine** Zusammenfassung (bei `low` wurden 114
+  Denk-Token verbraucht, ohne dass eine Zusammenfassung erschien). Erst `medium` (604 Denk-Token, ca. 740 Zeichen) und `high` (838 Token,
+  ca. 1080 Zeichen) liefern sie. Mit `thinkingLevel` verlängert sich die Zeit bis zur Antwort von ca. 2 s auf ca. 4 bis 7 s; die Gedanken
+  kommen erst kurz vor der Antwort (3,3 s gegen 4,2 s), nicht früh.
+- Auf `gemini-3.5-flash` (`PARSE_FALLBACK_MODEL`) kommen sie auch ohne Stufe, aber der Lauf dauerte 28 bis 35 s.
+- Inhalt: allgemein und über die Aufgabe ("Defining the Constraints", "ensure the answer is in German", "cite passage IDs"); es verrät
+  den Aufbau des Prompts. Denk-Token zählen als Ausgabe und gehen gegen das Tageskontingent.
+
+**Google-Suche (`tools: [{ google_search: {} }]`):**
+
+- Im kostenlosen Tarif **nicht nutzbar**: dieselbe Anfrage ohne Werkzeug gab 200, mit Werkzeug 429 `RESOURCE_EXHAUSTED`
+  (`quota-ping.mjs`). Laut Preisseite ist "Grounding with Google Search" für `gemini-3.1-flash-lite` im Free Tier "Not available"; im
+  bezahlten Tarif sind bei Gemini 3 monatlich 5000 Anfragen enthalten, danach 14 $ je 1000 Suchanfragen. Verträglichkeit mit dem
+  JSON-Schema wurde deshalb **nicht** geprüft.
+- Alternativen laut Anbieterseiten (nicht selbst geprüft): Tavily 1000 Credits im Monat ohne Karte; Brave Search hat für neue Konten
+  keinen kostenlosen Tarif mehr (5 $ Guthaben im Monat). Beide wären ein Dritter, der die Suchbegriffe erhält.

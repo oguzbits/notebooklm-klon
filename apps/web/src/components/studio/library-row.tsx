@@ -1,4 +1,4 @@
-import { EllipsisVertical, type LucideIcon, Trash2 } from 'lucide-react';
+import { EllipsisVertical, type LucideIcon, Pencil, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -22,6 +22,7 @@ export function LibraryRow({
   unread = false,
   deleting,
   onOpen,
+  onRename,
   onDelete,
 }: {
   icon: LucideIcon;
@@ -32,6 +33,8 @@ export function LibraryRow({
   unread?: boolean;
   deleting: boolean;
   onOpen: () => void;
+  /** Where a name can be changed from the menu; notes are renamed in their editor. */
+  onRename?: () => void;
   onDelete: () => void;
 }) {
   return (
@@ -82,6 +85,12 @@ export function LibraryRow({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          {onRename && (
+            <DropdownMenuItem disabled={deleting} onSelect={onRename}>
+              <Pencil aria-hidden />
+              Umbenennen
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem disabled={deleting} onSelect={onDelete}>
             <Trash2 aria-hidden />
             Löschen

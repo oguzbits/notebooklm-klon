@@ -21,10 +21,13 @@ Bewerbungsaufgabe für Everlast AI (zweite Runde). Der Schwerpunkt liegt auf dem
 - **Übersicht des Notizbuchs** am Anfang des Chats: ein Emoji, der Titel, die Zahl der Quellen und eine Zusammenfassung aller fertigen Quellen mit fetten Schlüsselbegriffen. Sie entsteht einmal, wenn sich die Quellen ändern, und lässt sich als Notiz speichern oder kopieren.
 - **Notizen** aus Antworten, mit erhaltenen Zitaten, und eigene Notizen mit Editor (Format-Leiste, wird beim Tippen gespeichert, auf Wunsch als Quelle).
 - **Studio**: Bericht (Briefing, FAQ, Lernleitfaden, Blogbeitrag oder eigene Anweisung), Karteikarten, Quiz und Mindmap aus den gewählten Quellen. Vor dem Erzeugen lassen sich Umfang und Schwierigkeit wählen; die Ausgaben tragen dieselben geprüften Zitate wie der Chat.
+- **Suche im Web** unter „Quellen hinzufügen“: Treffer ansehen und als Quelle übernehmen (Tavily, optional, mit Grenzen pro Nutzer und Tag).
+- **Notizbuch anpassen**: Titel, eigene Zusammenfassung und Titelbild (liegt in einem S3-kompatiblen Speicher, optional). Notizbücher lassen sich kopieren, auf der Startseite anpinnen und umbenennen.
+- **Quellen und Ausgaben** sortieren und umbenennen; der Chat hat „Nach unten springen“ und zeigt je Antwort das **Vorgehen** (wie viele Quellen und Stellen geprüft wurden).
 - **Chat-Konfiguration** pro Notizbuch und Vorschlagsfragen unter der letzten Antwort.
 - **Verlauf** bleibt pro Notizbuch erhalten, gegliedert nach Tagen.
 
-Nicht gebaut (siehe [docs/PLAN.md](docs/PLAN.md), Kategorien Should und Stretch): Audio, Präsentation, Video und Infografik im Studio, PPTX als Quelle, agentische Suche, Bewertung von Chat-Antworten (Daumen). Der Umfang wurde bewusst auf die Kernstrecke begrenzt, die Gründe stehen in [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md).
+Nicht gebaut (siehe [docs/PLAN.md](docs/PLAN.md), Kategorien Should und Stretch): Audio, Präsentation, Video und Infografik im Studio, PPTX als Quelle, agentische Suche im Chat, Deep Research, Drive-Anbindung, Bewertung von Chat-Antworten (Daumen). Der Umfang wurde bewusst auf die Kernstrecke begrenzt, die Gründe stehen in [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md).
 
 ## Architektur
 
@@ -39,10 +42,14 @@ flowchart LR
   end
   DB[("PostgreSQL (Neon)<br/>pgvector, Volltextsuche,<br/>Sitzungen, Job-Queue")]
   Gemini["Gemini API<br/>PDF lesen, Einbettungen, Antwort"]
+  Tavily["Tavily<br/>Websuche (optional)"]
+  S3[("S3-kompatibler Speicher<br/>Titelbilder (optional)")]
 
   Web -- "HTTP + SSE, eine Origin" --> Api
   Api --> DB
   Api -- "Antwort streamen" --> Gemini
+  Api -- "nur Suchbegriffe" --> Tavily
+  Api --> S3
   Worker --> DB
   Worker -- "PDF lesen, einbetten" --> Gemini
 ```
@@ -151,6 +158,10 @@ BETTER_AUTH_SECRET=lokal-nur-zum-ausprobieren-0123456789 \
 BETTER_AUTH_URL=http://localhost:5173 \
 pnpm --filter @nlm/api dev:offline   # dazu in einem zweiten Terminal: pnpm --filter @nlm/web dev
 ```
+
+Suche im Web (optional): `TAVILY_API_KEY` setzen (Tavily, kostenloser Tarif mit 1000 Suchen im Monat; an Tavily gehen nur die Suchbegriffe). Ohne Schlüssel zeigt die Oberfläche das Suchfeld nicht. Pro Nutzer sind 10 Suchen pro Stunde und für alle zusammen 30 pro Tag erlaubt.
+
+Titelbilder (optional): Ein S3-kompatibler Speicher, dazu `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID` und `S3_SECRET_ACCESS_KEY` setzen (alle vier oder keins). Lokal startet `pnpm db:up` einen (SeaweedFS). Ohne Speicher zeigt der Dialog „Notizbuch anpassen“ keine Bildfläche. Die Bilder liegen im Speicher, nicht in der Datenbank: Bei einem Docker-Volume sind sie dauerhaft, aber nicht gesichert.
 
 Beispiel-Notizbuch anlegen (braucht den Schlüssel, liest drei Beispieldokumente einmal ein): `SEED_DEMO_EMAIL` und `SEED_DEMO_PASSWORD` setzen, dann `pnpm seed:demo`. Der Befehl kann wiederholt werden. Gäste („Beispiel ausprobieren“) bekommen eine Kopie dieses Notizbuchs, dafür muss `SEED_DEMO_EMAIL` auch in der Umgebung der App stehen.
 

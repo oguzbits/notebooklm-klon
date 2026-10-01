@@ -6,6 +6,8 @@ export {
   ApiErrorSchema,
 } from './api-error';
 export {
+  type AnswerTrace,
+  AnswerTraceSchema,
   CHAT_EVENT,
   type ChatEvent,
   ChatEventSchema,
@@ -44,11 +46,12 @@ export {
   type WrittenNote,
 } from './note';
 export {
+  COVER_IMAGE,
   CreateNotebookBodySchema,
   type Notebook,
   NotebookListSchema,
   NotebookSchema,
-  RenameNotebookBodySchema,
+  RenameSourceBodySchema,
   SetSourceSelectionBodySchema,
   SourceListSchema,
   type SourceSummary,
@@ -58,9 +61,12 @@ export {
   SubmitActionSchema,
   type SubmitSourceResult,
   SubmitSourceResultSchema,
+  type UpdateNotebookBody,
+  UpdateNotebookBodySchema,
   UrlSourceBodySchema,
 } from './notebook';
 export {
+  CustomSummarySchema,
   type NotebookOverview,
   NotebookOverviewResponseSchema,
   NotebookOverviewSchema,
@@ -126,3 +132,12 @@ export {
   type StudioUpdateBody,
   StudioUpdateBodySchema,
 } from './studio';
+export {
+  type Capabilities,
+  CapabilitiesSchema,
+  MAX_WEB_RESULTS,
+  WebSearchBodySchema,
+  WebSearchResponseSchema,
+  type WebSearchResult,
+  WebSearchResultSchema,
+} from './web-search';

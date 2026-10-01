@@ -1,5 +1,6 @@
 import { type AnswerStatement, CHAT_ROLE, type ChatMessage } from '@nlm/shared';
 
+import { AnswerTraceView } from '@/components/chat/answer-trace';
 import { CitationChip } from '@/components/chat/citation-chip';
 import { CopyAnswerButton } from '@/components/chat/copy-answer-button';
 import { InlineText } from '@/components/chat/inline-text';
@@ -91,6 +92,9 @@ export function MessageView({
   }
   return (
     <div className="pr-8">
+      {message.trace && (
+        <AnswerTraceView trace={message.trace} statements={message.statements.length} />
+      )}
       <AnswerView
         notebookId={notebookId}
         statements={message.statements}
@@ -99,8 +103,8 @@ export function MessageView({
       />
       {message.statements.length > 0 && (
         <div className="mt-3 flex flex-wrap items-center">
-          <CopyAnswerButton statements={message.statements} />
           <SaveNoteButton notebookId={notebookId} messageId={message.id} />
+          <CopyAnswerButton statements={message.statements} />
         </div>
       )}
     </div>

@@ -5,9 +5,10 @@ import {
   CreateNotebookBodySchema,
   NotebookListSchema,
   NotebookSchema,
-  RenameNotebookBodySchema,
+  RenameSourceBodySchema,
   SetSourceSelectionBodySchema,
   SourceListSchema,
+  UpdateNotebookBodySchema,
 } from '@nlm/shared';
 
 import type { AppDeps } from '../app-deps';
@@ -15,13 +16,16 @@ import type { AuthVariables } from '../auth/session';
 import {
   createNotebook,
   deleteNotebook,
+  duplicateNotebook,
   findNotebook,
   listNotebooks,
   listNotebookSources,
-  renameNotebook,
+  renameSource,
   setSourceSelected,
   unlinkSource,
+  updateNotebook,
 } from '../db/notebook-repository';
+import { coverKey } from '../storage/cover-key';
 import { json, notFound, unauthenticated } from './openapi';
 
 const OK = 200;
@@ -53,16 +57,27 @@ const createRoute_ = createRoute({
   },
 });
 
-const renameRoute = createRoute({
+const updateRoute = createRoute({
   method: 'patch',
   path: '/{notebookId}',
   request: {
     params: notebookParams,
-    body: { content: { 'application/json': { schema: RenameNotebookBodySchema } }, required: true },
+    body: { content: { 'application/json': { schema: UpdateNotebookBodySchema } }, required: true },
   },
   responses: {
-    [OK]: json(NotebookSchema, 'The notebook with its new title'),
+    [OK]: json(NotebookSchema, 'The changed notebook'),
     400: invalid,
+    401: unauthenticated,
+    [NOT_FOUND]: notFound,
+  },
+});
+
+const copyRoute = createRoute({
+  method: 'post',
+  path: '/{notebookId}/copy',
+  request: { params: notebookParams },
+  responses: {
+    [CREATED]: json(NotebookSchema, 'The copy: same sources, summaries and settings, no chat'),
     401: unauthenticated,
     [NOT_FOUND]: notFound,
   },
@@ -108,6 +123,21 @@ const selectRoute = createRoute({
   },
 });
 
+const renameSourceRoute = createRoute({
+  method: 'patch',
+  path: '/{notebookId}/sources/{sourceId}/title',
+  request: {
+    params: sourceParams,
+    body: { content: { 'application/json': { schema: RenameSourceBodySchema } }, required: true },
+  },
+  responses: {
+    [OK]: json(z.object({ title: z.string() }), 'The new title of the source'),
+    400: invalid,
+    401: unauthenticated,
+    [NOT_FOUND]: notFound,
+  },
+});
+
 const removeRoute = createRoute({
   method: 'delete',
   path: '/{notebookId}/sources/{sourceId}',
@@ -129,16 +159,28 @@ export function notebookRoutes(deps: AppDeps) {
       const { title } = c.req.valid('json');
       return c.json(await createNotebook(deps.db, c.var.userId, title), CREATED);
     })
-    .openapi(renameRoute, async (c) => {
+    .openapi(updateRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
-      const { title } = c.req.valid('json');
-      const renamed = await renameNotebook(deps.db, c.var.userId, notebookId, title);
-      return renamed ? c.json(renamed, OK) : c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
+      const changes = c.req.valid('json');
+      const updated = await updateNotebook(deps.db, c.var.userId, notebookId, changes);
+      return updated ? c.json(updated, OK) : c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
+    })
+    .openapi(copyRoute, async (c) => {
+      const { notebookId } = c.req.valid('param');
+      const copy = await duplicateNotebook(deps.db, c.var.userId, notebookId);
+      return copy ? c.json(copy, CREATED) : c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
     })
     .openapi(deleteRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
-      const deleted = await deleteNotebook(deps.db, c.var.userId, notebookId);
-      return deleted ? c.body(null, NO_CONTENT) : c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
+      const { userId } = c.var;
+      const existing = await findNotebook(deps.db, userId, notebookId);
+      const deleted = await deleteNotebook(deps.db, userId, notebookId);
+      if (!deleted) return c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
+      // The cover image goes with the notebook.
+      if (existing?.coverVersion) {
+        await deps.objectStore?.remove(coverKey(userId, notebookId, existing.coverVersion));
+      }
+      return c.body(null, NO_CONTENT);
     })
     .openapi(listSourcesRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
@@ -159,6 +201,12 @@ export function notebookRoutes(deps: AppDeps) {
         selected
       );
       return changed ? c.json({ selected }, OK) : c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
+    })
+    .openapi(renameSourceRoute, async (c) => {
+      const { notebookId, sourceId } = c.req.valid('param');
+      const { title } = c.req.valid('json');
+      const renamed = await renameSource(deps.db, c.var.userId, notebookId, sourceId, title);
+      return renamed ? c.json({ title }, OK) : c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
     })
     .openapi(removeRoute, async (c) => {
       const { notebookId, sourceId } = c.req.valid('param');

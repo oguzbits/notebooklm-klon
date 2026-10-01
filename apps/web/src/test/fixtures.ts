@@ -1,5 +1,6 @@
 import {
   type AnswerNote,
+  type AnswerTrace,
   CHAT_ROLE,
   type ChatMessage,
   type ChunkDetail,
@@ -21,11 +22,22 @@ export const OTHER_CHUNK_ID = '6e2f9d3b-8c45-4a7e-8d16-3b9f7c2a4d58';
 const CREATED_AT = '2026-09-30T12:00:00.000Z';
 
 export const notebook = (
-  overrides: Partial<{ id: string; title: string; emoji: string | null; sourceCount: number }> = {}
+  overrides: Partial<{
+    id: string;
+    title: string;
+    emoji: string | null;
+    customSummary: string | null;
+    pinned: boolean;
+    coverVersion: string | null;
+    sourceCount: number;
+  }> = {}
 ) => ({
   id: NOTEBOOK_ID,
   title: 'Steuerrecht',
   emoji: null,
+  customSummary: null,
+  pinned: false,
+  coverVersion: null,
   sourceCount: 2,
   createdAt: CREATED_AT,
   ...overrides,
@@ -63,12 +75,14 @@ export const question = (text: string): ChatMessage => ({
 
 export const answer = (
   statements: { text: string; chunkIds: string[] }[],
-  followUps: string[] = []
+  followUps: string[] = [],
+  trace: AnswerTrace | null = null
 ): ChatMessage => ({
   id: '22222222-2222-4222-8222-222222222222',
   role: CHAT_ROLE.ASSISTANT,
   statements,
   followUps,
+  trace,
   createdAt: CREATED_AT,
 });
 

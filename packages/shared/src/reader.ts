@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { FollowUpsSchema } from './chat';
+import { AnswerTraceSchema, FollowUpsSchema } from './chat';
 import { AnswerStatementSchema } from './citation';
 import { SourceKindSchema } from './source';
 
@@ -48,6 +48,8 @@ export const ChatMessageSchema = z.discriminatedUnion('role', [
     statements: z.array(AnswerStatementSchema),
     /** What the reader could ask next. Answers from before this existed have none. */
     followUps: FollowUpsSchema.default([]),
+    /** How the answer came about. Null for answers from before it was kept, or cut off midway. */
+    trace: AnswerTraceSchema.nullable().default(null),
   }),
 ]);
 

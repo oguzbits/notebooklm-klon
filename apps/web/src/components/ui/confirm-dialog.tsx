@@ -11,7 +11,10 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-/** Asks once before something is deleted that cannot be brought back. */
+/**
+ * Asks once before something is done that cannot be brought back. The button does not close the
+ * dialog by itself: the owner closes it when the action worked, so a failure can be told here.
+ */
 export function ConfirmDialog({
   open,
   onOpenChange,
@@ -38,7 +41,13 @@ export function ConfirmDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-          <AlertDialogAction disabled={pending} onClick={onConfirm}>
+          <AlertDialogAction
+            disabled={pending}
+            onClick={(event) => {
+              event.preventDefault();
+              onConfirm();
+            }}
+          >
             {confirmLabel}
           </AlertDialogAction>
         </AlertDialogFooter>

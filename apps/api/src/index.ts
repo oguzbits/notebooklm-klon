@@ -15,6 +15,11 @@ import { runIngestJob, type SubmitPorts } from './ingestion/submit';
 import { createJobQueue } from './jobs/queue';
 import { log } from './logger';
 import { createProviders } from './providers';
+import { createTavilySearch } from './search/tavily-search';
+import { userCoverPrefix } from './storage/cover-key';
+import type { ObjectStore } from './storage/object-store';
+import { s3ConfigFromEnv } from './storage/s3-config';
+import { createS3ObjectStore } from './storage/s3-object-store';
 import { serveWeb } from './web/serve-web';
 
 let env;
@@ -64,12 +69,20 @@ await queue.work(async (payload) => {
   log({ level: 'info', msg: 'ingestion job done', durationMs: Date.now() - started });
 });
 
+// Cover images need an S3-compatible store; without one they are not offered.
+const s3Config = s3ConfigFromEnv(env);
+const s3 = s3Config ? createS3ObjectStore(s3Config) : null;
+await s3?.ensureBucket();
+const objectStore: ObjectStore | null = s3;
+
 const app = createApp({
   auth,
   db,
   ingest,
   demoOwnerEmail: env.SEED_DEMO_EMAIL,
   fetch: systemDeps,
+  webSearch: env.TAVILY_API_KEY ? createTavilySearch({ apiKey: env.TAVILY_API_KEY }) : null,
+  objectStore,
   chat: {
     embedQuery: providers.embedQuery,
     stream: providers.stream,
@@ -90,7 +103,9 @@ async function removeExpiredGuests() {
     db,
     new Date(Date.now() - LIMITS.GUEST_LIFETIME_DAYS * DAY_MS)
   );
-  if (deleted > 0) log({ level: 'info', msg: 'expired guests deleted', count: deleted });
+  for (const userId of deleted) await objectStore?.removePrefix(userCoverPrefix(userId));
+  if (deleted.length > 0)
+    log({ level: 'info', msg: 'expired guests deleted', count: deleted.length });
 }
 await removeExpiredGuests();
 setInterval(() => {

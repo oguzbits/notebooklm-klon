@@ -1,5 +1,5 @@
 import type { Notebook } from '@nlm/shared';
-import { EllipsisVertical, Plus, SlidersHorizontal, Trash2 } from 'lucide-react';
+import { Copy, EllipsisVertical, Paintbrush, Plus, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
@@ -14,18 +14,25 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useClearChat } from '@/hooks/use-chat';
-import { useDeleteNotebook } from '@/hooks/use-notebooks';
+import { useCopyNotebook, useDeleteNotebook } from '@/hooks/use-notebooks';
 import { describeError } from '@/lib/messages';
 import { ROUTES } from '@/lib/routes';
 
-const DIALOG = { CHAT: 'CHAT', CLEAR: 'CLEAR', DELETE: 'DELETE' } as const;
+const DIALOG = { CHAT: 'CHAT', COPY: 'COPY', CLEAR: 'CLEAR', DELETE: 'DELETE' } as const;
 type Dialog = (typeof DIALOG)[keyof typeof DIALOG];
 
 /** What the header offers for one notebook: make a new one, and the menu with its settings. */
-export function NotebookActions({ notebook }: { notebook: Notebook }) {
+export function NotebookActions({
+  notebook,
+  onCustomize,
+}: {
+  notebook: Notebook;
+  onCustomize: () => void;
+}) {
   const navigate = useNavigate();
   const clear = useClearChat(notebook.id);
   const remove = useDeleteNotebook();
+  const copy = useCopyNotebook();
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const close = (open: boolean) => !open && setDialog(null);
 
@@ -57,6 +64,14 @@ export function NotebookActions({ notebook }: { notebook: Notebook }) {
             <SlidersHorizontal aria-hidden />
             Chat konfigurieren
           </DropdownMenuItem>
+          <DropdownMenuItem onSelect={onCustomize}>
+            <Paintbrush aria-hidden />
+            Notizbuch anpassen
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setDialog(DIALOG.COPY)}>
+            <Copy aria-hidden />
+            Notizbuch kopieren
+          </DropdownMenuItem>
           <DropdownMenuItem className="h-auto py-2" onSelect={() => setDialog(DIALOG.CLEAR)}>
             <Trash2 aria-hidden />
             <span className="flex flex-col">
@@ -77,6 +92,26 @@ export function NotebookActions({ notebook }: { notebook: Notebook }) {
         notebookId={notebook.id}
         open={dialog === DIALOG.CHAT}
         onOpenChange={close}
+      />
+      <ConfirmDialog
+        open={dialog === DIALOG.COPY}
+        onOpenChange={close}
+        title="Notizbuch kopieren?"
+        description={
+          copy.isError
+            ? describeError(copy.error)
+            : 'Die Kopie hat dieselben Quellen und Zusammenfassungen. Chatverlauf, Notizen und Ausgaben des Studios bleiben beim Original.'
+        }
+        confirmLabel="Kopieren"
+        pending={copy.isPending}
+        onConfirm={() =>
+          copy.mutate(notebook.id, {
+            onSuccess: (made) => {
+              setDialog(null);
+              navigate(ROUTES.notebook(made.id));
+            },
+          })
+        }
       />
       <ConfirmDialog
         open={dialog === DIALOG.CLEAR}

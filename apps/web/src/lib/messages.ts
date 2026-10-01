@@ -24,6 +24,12 @@ export const ERROR_MESSAGE: Record<ApiErrorCode, string> = {
     'Aus den ausgewählten Quellen ließ sich dazu nichts Belegbares erstellen. Wähle mehr oder andere Quellen.',
   [API_ERROR.GUEST_UNAVAILABLE]:
     'Das Beispiel ist gerade nicht verfügbar. Bitte versuche es später noch einmal.',
+  [API_ERROR.WEB_SEARCH_UNAVAILABLE]: 'Die Suche im Web ist hier nicht eingerichtet.',
+  [API_ERROR.WEB_SEARCH_LIMIT_REACHED]:
+    'Für die Suche im Web ist das Limit erreicht. Bitte versuche es später noch einmal.',
+  [API_ERROR.COVER_UNAVAILABLE]: 'Titelbilder sind hier nicht eingerichtet.',
+  [API_ERROR.COVER_INVALID]:
+    'Das Bild muss ein PNG, JPEG oder WebP sein und darf höchstens 2 MB groß sein.',
   [API_ERROR.INTERNAL]: 'Etwas ist schiefgelaufen. Bitte versuche es noch einmal.',
 };
 

@@ -28,6 +28,8 @@ describe('chat contract', () => {
     const event = {
       type: CHAT_EVENT.DONE,
       statements: 2,
+      sourcesSearched: 2,
+      passagesFound: 6,
       droppedStatements: 1,
       strippedCitations: 0,
       followUps: ['Wie geht es weiter?'],
@@ -40,6 +42,8 @@ describe('chat contract', () => {
     const closing = {
       type: CHAT_EVENT.DONE,
       statements: 1,
+      sourcesSearched: 1,
+      passagesFound: 3,
       droppedStatements: 0,
       strippedCitations: 0,
     };

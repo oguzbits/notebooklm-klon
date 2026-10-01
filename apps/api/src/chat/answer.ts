@@ -46,6 +46,8 @@ export interface ChatPorts {
 
 export interface PreparedAnswer {
   question: string;
+  /** How many sources the question was searched in (the selected, ready ones). */
+  sourcesSearched: number;
   context: ChatContext;
   config: ChatConfig;
 }
@@ -72,6 +74,7 @@ export async function prepareAnswer(
   });
   return {
     question: input.question,
+    sourcesSearched: sourceIds.length,
     context: buildChatContext(chunks),
     config: input.config ?? DEFAULT_CHAT_CONFIG,
   };
@@ -137,5 +140,13 @@ export async function* answerQuestion(
 
   // Questions only make sense next to an answer that has something to say.
   const followUps = statements > 0 ? cleanFollowUps(suggested, question) : [];
-  yield { type: CHAT_EVENT.DONE, statements, droppedStatements, strippedCitations, followUps };
+  yield {
+    type: CHAT_EVENT.DONE,
+    statements,
+    sourcesSearched: prepared.sourcesSearched,
+    passagesFound: context.labels.length,
+    droppedStatements,
+    strippedCitations,
+    followUps,
+  };
 }

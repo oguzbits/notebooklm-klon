@@ -72,6 +72,7 @@ ein Nachbau für eine Bewerbung ist. Dazu:
 **Bewusst nicht**
 
 - Audio- und Video-Overview, Infografik, Präsentation, Datentabelle, Deep Research.
+- Später ergänzt (Runde 4): eine schnelle Websuche mit Tavily (ohne Deep Research) und ein Titelbild im S3-Speicher; siehe [ENTSCHEIDUNGEN.md](ENTSCHEIDUNGEN.md).
 - Sharing und Kollaboration, YouTube- oder Audio-Transkription, Drive-Anbindung, Mobile.
 - Originaldateien speichern (nur extrahierter Text plus Metadaten).
 

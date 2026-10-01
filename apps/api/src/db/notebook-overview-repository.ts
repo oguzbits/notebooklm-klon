@@ -28,10 +28,18 @@ export async function findNotebookForOverview(
   db: Database,
   userId: string,
   notebookId: string
-): Promise<{ sources: NotebookOverviewSource[]; stored: StoredNotebookOverview | null } | null> {
+): Promise<{
+  sources: NotebookOverviewSource[];
+  stored: StoredNotebookOverview | null;
+  customSummary: string | null;
+} | null> {
   if (!UUID.test(notebookId)) return null;
   const [notebook] = await db
-    .select({ overview: notebooks.overview, key: notebooks.overviewKey })
+    .select({
+      overview: notebooks.overview,
+      key: notebooks.overviewKey,
+      customSummary: notebooks.customSummary,
+    })
     .from(notebooks)
     .where(and(eq(notebooks.id, notebookId), eq(notebooks.userId, userId)));
   if (!notebook) return null;
@@ -53,6 +61,7 @@ export async function findNotebookForOverview(
     .orderBy(asc(notebookSources.addedAt), asc(sources.id));
 
   return {
+    customSummary: notebook.customSummary,
     sources: rows.flatMap((row) =>
       row.text === null ? [] : [{ id: row.id, title: row.title, text: row.text }]
     ),
