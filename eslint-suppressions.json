@@ -1,25 +1,4 @@
 {
-  "apps/api/src/ai/gemini-chat.ts": {
-    "complexity": {
-      "count": 1
-    }
-  },
-  "apps/api/src/chat/answer.ts": {
-    "complexity": {
-      "count": 1
-    },
-    "max-depth": {
-      "count": 3
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "apps/api/src/core/statement-stream.ts": {
-    "complexity": {
-      "count": 1
-    }
-  },
   "apps/api/src/db/guest-repository.ts": {
     "max-lines-per-function": {
       "count": 2

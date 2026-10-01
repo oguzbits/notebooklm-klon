@@ -62,6 +62,72 @@ async function* lines(body: ReadableStream<Uint8Array>): AsyncGenerator<string> 
   if (buffer !== '') yield buffer.replace(/\r$/, '');
 }
 
+/** The request for one answer: the instruction, the question, and the shape the answer must have. */
+function requestBody(input: ChatInput) {
+  return {
+    systemInstruction: { parts: [{ text: input.system }] },
+    contents: [{ role: 'user', parts: [{ text: input.user }] }],
+    generationConfig: {
+      temperature: 0,
+      responseMimeType: 'application/json',
+      responseJsonSchema: input.schema,
+    },
+  };
+}
+
+type Usage = { promptTokens: number; outputTokens: number };
+
+type Event = z.infer<typeof EventSchema>;
+type Candidate = NonNullable<Event['candidates']>[number];
+
+/** True for a normal finish; any other reason (length, safety, recitation) is an error. */
+function isNormalFinish(reason: string): true {
+  if (reason !== FINISH_STOP) throw new Error(`The model did not finish normally: ${reason}.`);
+  return true;
+}
+
+function usageOf(metadata: NonNullable<Event['usageMetadata']>): Usage {
+  return {
+    promptTokens: metadata.promptTokenCount ?? 0,
+    outputTokens: metadata.candidatesTokenCount ?? 0,
+  };
+}
+
+/** The text of one event, which Gemini leaves out when it produced none (MAX_TOKENS, RECITATION). */
+function textOf(candidate: Candidate | undefined): string {
+  return (candidate?.content?.parts ?? []).map((part) => part.text ?? '').join('');
+}
+
+/**
+ * What the events of one stream add up to: whether the model finished, whether the prompt was
+ * blocked, and the token counts. An abnormal finish is an error at once; a stream that ends without a
+ * normal finish is one in `conclude`.
+ */
+class StreamReport {
+  private finished = false;
+  private blocked: string | undefined;
+  private usage: Usage | undefined;
+
+  /** Takes one event and returns the text it carries (possibly none). */
+  read(event: Event): string {
+    this.blocked ??= event.promptFeedback?.blockReason;
+    const candidate = event.candidates?.[0];
+    if (candidate?.finishReason !== undefined)
+      this.finished = isNormalFinish(candidate.finishReason);
+    if (event.usageMetadata) this.usage = usageOf(event.usageMetadata);
+    return textOf(candidate);
+  }
+
+  /** Call when the stream is over: the counts of the last event, or the reason there is no answer. */
+  conclude(): Usage | undefined {
+    if (this.blocked !== undefined && !this.finished) {
+      throw new Error(`The prompt was blocked: ${this.blocked}.`);
+    }
+    if (!this.finished) throw new Error('The stream ended without a normal finish.');
+    return this.usage;
+  }
+}
+
 /**
  * Streams an answer as structured JSON text. The stream must end with a normal finish: an answer that
  * was cut off, blocked or filtered is an error, never a shorter answer.
@@ -76,48 +142,20 @@ export function createGeminiChat(config: GeminiChatConfig) {
         requestGemini(
           config,
           `models/${config.model}:streamGenerateContent?alt=sse`,
-          {
-            systemInstruction: { parts: [{ text: input.system }] },
-            contents: [{ role: 'user', parts: [{ text: input.user }] }],
-            generationConfig: {
-              temperature: 0,
-              responseMimeType: 'application/json',
-              responseJsonSchema: input.schema,
-            },
-          },
+          requestBody(input),
           signal
         )
       );
       if (!response.body) throw new Error('The model returned no stream.');
 
-      let finished = false;
-      let blocked: string | undefined;
-      let usage: { promptTokens: number; outputTokens: number } | undefined;
+      const report = new StreamReport();
       for await (const line of lines(response.body)) {
         if (!line.startsWith(DATA_PREFIX)) continue;
-        const event = EventSchema.parse(JSON.parse(line.slice(DATA_PREFIX.length)));
-        blocked ??= event.promptFeedback?.blockReason;
-        const candidate = event.candidates?.[0];
-        const text = (candidate?.content?.parts ?? []).map((part) => part.text ?? '').join('');
+        const text = report.read(EventSchema.parse(JSON.parse(line.slice(DATA_PREFIX.length))));
         if (text !== '') yield text;
-        if (candidate?.finishReason !== undefined) {
-          if (candidate.finishReason !== FINISH_STOP) {
-            throw new Error(`The model did not finish normally: ${candidate.finishReason}.`);
-          }
-          finished = true;
-        }
-        if (event.usageMetadata) {
-          usage = {
-            promptTokens: event.usageMetadata.promptTokenCount ?? 0,
-            outputTokens: event.usageMetadata.candidatesTokenCount ?? 0,
-          };
-        }
       }
-      if (blocked !== undefined && !finished) {
-        throw new Error(`The prompt was blocked: ${blocked}.`);
-      }
-      if (!finished) throw new Error('The stream ended without a normal finish.');
       // The counts arrive cumulatively in several events; report the last ones once.
+      const usage = report.conclude();
       if (usage) config.onUsage?.(usage);
     },
   };

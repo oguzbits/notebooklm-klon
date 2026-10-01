@@ -25,31 +25,41 @@ export class StatementStream {
   push(piece: string): AnswerStatement[] {
     this.text += piece;
     const done: AnswerStatement[] = [];
-
     for (; this.scanned < this.text.length; this.scanned += 1) {
-      const char = this.text.charAt(this.scanned);
-      if (this.inString) {
-        if (this.escaped) this.escaped = false;
-        else if (char === BACKSLASH) this.escaped = true;
-        else if (char === QUOTE) this.inString = false;
-        continue;
-      }
-      if (char === QUOTE) {
-        this.inString = true;
-      } else if (char === '{' || char === '[') {
-        this.depth += 1;
-        if (char === '{' && this.depth === STATEMENT_DEPTH) this.statementStart = this.scanned;
-      } else if (char === '}' || char === ']') {
-        if (char === '}' && this.depth === STATEMENT_DEPTH && this.statementStart >= 0) {
-          const raw = this.text.slice(this.statementStart, this.scanned + 1);
-          done.push(AnswerStatementSchema.parse(JSON.parse(raw)));
-          this.emitted += 1;
-          this.statementStart = -1;
-        }
-        this.depth -= 1;
-      }
+      this.read(this.text.charAt(this.scanned), done);
     }
     return done;
+  }
+
+  /** One character: inside a string only its end matters, outside it brackets are counted. */
+  private read(char: string, done: AnswerStatement[]): void {
+    if (this.inString) this.readInString(char);
+    else if (char === QUOTE) this.inString = true;
+    else if (char === '{' || char === '[') this.open(char);
+    else if (char === '}' || char === ']') this.close(char, done);
+  }
+
+  private readInString(char: string): void {
+    if (this.escaped) this.escaped = false;
+    else if (char === BACKSLASH) this.escaped = true;
+    else if (char === QUOTE) this.inString = false;
+  }
+
+  /** A bracket opens; an object at the depth of the statements is where one begins. */
+  private open(char: string): void {
+    this.depth += 1;
+    if (char === '{' && this.depth === STATEMENT_DEPTH) this.statementStart = this.scanned;
+  }
+
+  /** A bracket closes; the object that began at the depth of the statements is one, now complete. */
+  private close(char: string, done: AnswerStatement[]): void {
+    if (char === '}' && this.depth === STATEMENT_DEPTH && this.statementStart >= 0) {
+      const raw = this.text.slice(this.statementStart, this.scanned + 1);
+      done.push(AnswerStatementSchema.parse(JSON.parse(raw)));
+      this.emitted += 1;
+      this.statementStart = -1;
+    }
+    this.depth -= 1;
   }
 
   /**

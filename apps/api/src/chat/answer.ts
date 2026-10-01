@@ -81,6 +81,62 @@ export async function prepareAnswer(
 }
 
 /**
+ * What happened to the statements of one answer: how many were kept, how many were left out for
+ * having no valid citation, and how many citations were removed from the ones that stayed.
+ */
+class AnswerTally {
+  statements = 0;
+  droppedStatements = 0;
+  strippedCitations = 0;
+
+  constructor(private readonly context: ChatContext) {}
+
+  /** The events of the statements that keep a valid citation; the others are counted and left out. */
+  *events(statements: readonly { text: string; chunkIds: string[] }[]): Generator<ChatEvent> {
+    for (const statement of statements) {
+      const result = resolveCitations({ statements: [statement] }, this.context);
+      this.strippedCitations += result.strippedCitations;
+      const [kept] = result.answer.statements;
+      if (!kept) {
+        this.droppedStatements += 1;
+        continue;
+      }
+      this.statements += 1;
+      yield { type: CHAT_EVENT.STATEMENT, text: kept.text, chunkIds: kept.chunkIds };
+    }
+  }
+}
+
+/** Asks the model and sends each statement as soon as it is complete; the result is the follow-up questions. */
+async function* streamStatements(
+  prepared: PreparedAnswer,
+  ports: ChatPorts,
+  tally: AnswerTally
+): AsyncGenerator<ChatEvent, string[]> {
+  const parser = new StatementStream();
+  const input: ChatInput = {
+    system: chatSystemPrompt(prepared.config),
+    user: buildUserMessage(prepared.context, prepared.question),
+    schema: ANSWER_JSON_SCHEMA,
+  };
+  for await (const piece of ports.stream(input)) {
+    yield* tally.events(parser.push(piece));
+  }
+  const rest = parser.finish();
+  yield* tally.events(rest.statements);
+  return rest.followUps;
+}
+
+/** The event that ends an answer the model could not finish: the quota is told apart from the rest. */
+const errorEvent = (error: unknown): ChatEvent => ({
+  type: CHAT_EVENT.ERROR,
+  code:
+    error instanceof GeminiError && error.status === QUOTA_STATUS
+      ? API_ERROR.CHAT_LIMIT_REACHED
+      : API_ERROR.INTERNAL,
+});
+
+/**
  * Streams the answer as events. A statement is checked against the context and sent as soon as the
  * model has finished it; one without a valid citation is left out. A failure ends the stream with
  * an ERROR event after the statements that already arrived.
@@ -89,64 +145,27 @@ export async function* answerQuestion(
   prepared: PreparedAnswer,
   ports: ChatPorts
 ): AsyncGenerator<ChatEvent> {
-  const { context, question, config } = prepared;
-  let statements = 0;
-  let droppedStatements = 0;
-  let strippedCitations = 0;
+  const tally = new AnswerTally(prepared.context);
   let suggested: string[] = [];
 
-  const check = (statement: { text: string; chunkIds: string[] }): ChatEvent | null => {
-    const result = resolveCitations({ statements: [statement] }, context);
-    strippedCitations += result.strippedCitations;
-    const [kept] = result.answer.statements;
-    if (!kept) {
-      droppedStatements += 1;
-      return null;
-    }
-    statements += 1;
-    return { type: CHAT_EVENT.STATEMENT, text: kept.text, chunkIds: kept.chunkIds };
-  };
-
-  if (context.labels.length > 0) {
+  if (prepared.context.labels.length > 0) {
     try {
-      const parser = new StatementStream();
-      const input: ChatInput = {
-        system: chatSystemPrompt(config),
-        user: buildUserMessage(context, question),
-        schema: ANSWER_JSON_SCHEMA,
-      };
-      for await (const piece of ports.stream(input)) {
-        for (const statement of parser.push(piece)) {
-          const event = check(statement);
-          if (event) yield event;
-        }
-      }
-      const rest = parser.finish();
-      for (const statement of rest.statements) {
-        const event = check(statement);
-        if (event) yield event;
-      }
-      suggested = rest.followUps;
+      suggested = yield* streamStatements(prepared, ports, tally);
     } catch (error) {
       ports.onError(error);
-      const isQuota = error instanceof GeminiError && error.status === QUOTA_STATUS;
-      yield {
-        type: CHAT_EVENT.ERROR,
-        code: isQuota ? API_ERROR.CHAT_LIMIT_REACHED : API_ERROR.INTERNAL,
-      };
+      yield errorEvent(error);
       return;
     }
   }
 
   // Questions only make sense next to an answer that has something to say.
-  const followUps = statements > 0 ? cleanFollowUps(suggested, question) : [];
   yield {
     type: CHAT_EVENT.DONE,
-    statements,
+    statements: tally.statements,
     sourcesSearched: prepared.sourcesSearched,
-    passagesFound: context.labels.length,
-    droppedStatements,
-    strippedCitations,
-    followUps,
+    passagesFound: prepared.context.labels.length,
+    droppedStatements: tally.droppedStatements,
+    strippedCitations: tally.strippedCitations,
+    followUps: tally.statements > 0 ? cleanFollowUps(suggested, prepared.question) : [],
   };
 }
