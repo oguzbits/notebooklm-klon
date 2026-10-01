@@ -633,4 +633,4 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
 - Erledigt: „Alle auswählen“ ruft `PATCH /api/notebooks/:id/sources` auf und ändert alle fertigen
   Quellen in einer SQL-Anweisung (vorher eine Anfrage pro Quelle, bei Abbruch halb geändert).
 - Erledigt: `ViewerFrame` nimmt acht Props statt 17 (Titel, Prompt, Bewertung und Löschen als Gruppen).
-- Offen: `fetch('/api/…')` steht in vier Hooks.
+- Geprüft, bleibt: Die rohen `fetch`-Aufrufe sind begründet. Better Auth (`auth.ts`) steht nicht im `AppType`, der Chat-Stream wird als Stream gelesen, und die beiden Uploads (Cover, Datei) sind Multipart, das der typisierte Client nicht beschreibt.
