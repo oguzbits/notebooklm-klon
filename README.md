@@ -10,7 +10,7 @@ Bewerbungsaufgabe für Everlast AI (zweite Runde). Der Schwerpunkt liegt auf dem
 | Demo-Zugang | Auf der Anmeldeseite **„Beispiel ausprobieren“**: ein Gastkonto mit einer eigenen Kopie des Beispiel-Notizbuchs, ohne E-Mail und Passwort. Es wird nach 7 Tagen gelöscht. |
 | Video       | _Loom-Link folgt_                                                                                                                                                         |
 
-> Hinweis für die Demo: Keine sensiblen Dokumente hochladen. Im kostenlosen Tarif von Google können Eingaben zur Verbesserung der Modelle genutzt werden. Der kostenlose Hosting-Tarif schläft nach 15 Minuten Leerlauf ein, der erste Aufruf danach dauert etwa eine Minute.
+> Hinweis für die Demo: Keine sensiblen Dokumente hochladen. Im kostenlosen Tarif von Google können Eingaben zur Verbesserung der Modelle genutzt werden. Läuft die Demo auf dem kostenlosen Hosting-Tarif (Render), schläft sie nach 15 Minuten Leerlauf ein und der erste Aufruf danach dauert etwa eine Minute. Auf dem geplanten Hetzner-Server entfällt das (siehe Abschnitt „Deployment“).
 
 ## Was es kann
 
@@ -36,7 +36,7 @@ flowchart LR
   subgraph Browser
     Web["React 19<br/>TanStack Query, shadcn"]
   end
-  subgraph Container["Ein Container (Render)"]
+  subgraph Container["Ein Container (Render oder Hetzner)"]
     Api["Hono API<br/>Zod-Schemas aus packages/shared"]
     Worker["Ingestion-Worker<br/>pg-boss"]
   end
@@ -161,7 +161,7 @@ pnpm --filter @nlm/api dev:offline   # dazu in einem zweiten Terminal: pnpm --fi
 
 Suche im Web (optional): `TAVILY_API_KEY` setzen (Tavily, kostenloser Tarif mit 1000 Suchen im Monat; an Tavily gehen nur die Suchbegriffe). Ohne Schlüssel zeigt die Oberfläche das Suchfeld nicht. Pro Nutzer sind 10 Suchen pro Stunde und für alle zusammen 30 pro Tag erlaubt.
 
-Titelbilder (optional): Ein S3-kompatibler Speicher, dazu `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID` und `S3_SECRET_ACCESS_KEY` setzen (alle vier oder keins). Lokal startet `pnpm db:up` einen (SeaweedFS). Ohne Speicher zeigt der Dialog „Notizbuch anpassen“ keine Bildfläche. Die Bilder liegen im Speicher, nicht in der Datenbank: Bei einem Docker-Volume sind sie dauerhaft, aber nicht gesichert.
+Titelbilder (optional): Ein S3-kompatibler Speicher, dazu `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID` und `S3_SECRET_ACCESS_KEY` setzen (alle vier oder keins). Lokal startet `pnpm db:up` einen (SeaweedFS). Ohne Speicher zeigt der Dialog „Notizbuch anpassen“ keine Bildfläche. Die Bilder liegen im Speicher, nicht in der Datenbank: Der lokale Dienst aus `pnpm db:up` hält die Bilder nur im Arbeitsspeicher (`tmpfs`): nach `pnpm db:down` sind sie weg. Bei einem Docker-Volume (Deployment) sind sie dauerhaft, aber nicht gesichert.
 
 Beispiel-Notizbuch anlegen (braucht den Schlüssel, liest drei Beispieldokumente einmal ein): `SEED_DEMO_EMAIL` und `SEED_DEMO_PASSWORD` setzen, dann `pnpm seed:demo`. Der Befehl kann wiederholt werden. Gäste („Beispiel ausprobieren“) bekommen eine Kopie dieses Notizbuchs, dafür muss `SEED_DEMO_EMAIL` auch in der Umgebung der App stehen.
 

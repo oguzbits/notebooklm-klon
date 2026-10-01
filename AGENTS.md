@@ -18,6 +18,8 @@ Project context and stack: [docs/PLAN.md](docs/PLAN.md). Use `pnpm`, never `npm`
 - **SoC beats DRY.** Similar code in two independent features is fine. Extract only on the third
   identical use (Rule of Three). No speculative abstractions, no meta-frameworks (YAGNI).
 - Fail fast: DB and provider errors throw. No silent `catch`, no fallback data in production paths.
+  One exception: removing a file from the object store after the database change is best effort and
+  logged (`storage/remove-quietly.ts`).
 - Filtering, search and aggregation run in PostgreSQL, never by loading whole tables into Node.
 - Strict types: no `any`, no `@ts-ignore`, no `as unknown as`, no `export *`. Derive types with
   `z.infer`, never write a parallel type by hand.
@@ -46,7 +48,8 @@ Project context and stack: [docs/PLAN.md](docs/PLAN.md). Use `pnpm`, never `npm`
 8. **Env only via `apps/api/src/config/env.ts`.** Never read `process.env` elsewhere. Never print or
    edit `.env*` files and never commit them; only `.env.example` is tracked. The one exception: a reviewed
    spike script may run as `node --env-file=.env.local spikes/<name>.mjs`, so Node loads the key
-   and the agent never sees it (see `.claude/hooks/bash-rules.mjs`).
+   and the agent never sees it (see `.claude/hooks/bash-rules.mjs`). The guard checks the form of the
+   command, not the script: a spike never prints environment values.
 9. **UI states.** Every async view handles empty, loading, error (with retry) and pending
    (disabled controls, no double submit). One canonical trigger per user intent.
 10. **UI language is German** and free of technical terms (no "RAG", "Embedding", "Chunk" for
@@ -64,30 +67,37 @@ command that proves success. Skip it for copy changes, pure styling and Markdown
 
 Then: contract first (`packages/shared`), failing test first, smallest diff that passes.
 Refactor only on a trigger: third identical use, or a failing quality gate.
-UI changes are inspected in a browser (chrome-devtools MCP or Playwright) before they count as done.
+UI changes are inspected in a browser (chrome-devtools MCP, set up per user and not in the repo, or
+Playwright) before they count as done.
+The logs are long: [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md) is about 60 KB, so search it
+(`rg`) and read only the section you need.
 
 **Commands**
 
-| Command                | Purpose                                                           |
-| ---------------------- | ----------------------------------------------------------------- |
-| `pnpm check`           | typecheck, lint, depcruise, knip, jscpd (2 %), magic-string audit |
-| `pnpm test`            | Vitest, offline                                                   |
-| `pnpm test:db`         | Postgres tests (needs `pnpm db:up`, Docker)                       |
-| `pnpm db:generate`     | drizzle-kit: new migration from `apps/api/src/db/schema.ts`       |
-| `pnpm format:check`    | Prettier (staged files are formatted by lint-staged)              |
-| `pnpm depcruise:graph` | writes `architecture.mmd` for the README                          |
+| Command                              | Purpose                                                           |
+| ------------------------------------ | ----------------------------------------------------------------- |
+| `pnpm check`                         | typecheck, lint, depcruise, knip, jscpd (2 %), magic-string audit |
+| `pnpm test`                          | Vitest, offline                                                   |
+| `pnpm test:db`                       | Postgres and S3 tests (needs `pnpm db:up`, Docker)                |
+| `pnpm e2e`                           | Playwright browser tests (needs `pnpm db:up`)                     |
+| `pnpm audit:duplication:details`     | lists the duplicates when `pnpm check` reports too many           |
+| `pnpm --filter @nlm/api db:generate` | drizzle-kit: new migration from `apps/api/src/db/schema.ts`       |
+| `pnpm format:check`                  | Prettier (staged files are formatted by lint-staged)              |
+| `pnpm depcruise:graph`               | writes `architecture.mmd` for the README                          |
 
 **Commits and pushes are allowed** once `pnpm check` and `pnpm test` are green (the Husky hooks run
 them; never skip them with `--no-verify`, never force-push, never rewrite remote history). One
 topic per commit, imperative Conventional Commit subject, never stage `.env*`. Work on a feature
-branch and merge to `main` only when the whole slice is green.
+branch and merge to `main` only when the whole slice is green. The hooks do not run `pnpm test:db`,
+`pnpm e2e` or Semgrep, CI does: after a push look at `gh run list --branch main --limit 1`, and fix a
+red run before starting new work.
 **Dependencies may be added without asking.** Verify the current docs first (rule 12), keep the set
 small (YAGNI), and record why in the commit message.
 **Small decisions are yours.** Where the plan leaves something open, choose the simplest option
 that fits the plan and log it with the reason in [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md).
 Ask the user only for things that change scope, cost or data protection.
 
-**Definition-of-Done receipt** (end of every functional task):
+**Definition-of-Done receipt** (end of every feature; not for docs, config or fixes of a review):
 
 ```markdown
 ### DoD: <task>

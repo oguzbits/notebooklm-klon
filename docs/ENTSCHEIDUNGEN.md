@@ -584,3 +584,26 @@ eigener Code durch ein Paket ersetzbar ist. Ergebnis: Es bleibt, wie es ist.
   Form der HTTP-Antworten beruhen (MSW), und den Strom der Aussagen (`core/statement-stream.ts`) neu fassen, und die in den Spikes
   gemessenen Eigenheiten (Gedankenzusammenfassungen, `thinkingLevel`) laufen heute über rohe Felder. Nicht jetzt; wenn das Studio mit
   mehreren Modellen arbeiten soll, lohnt ein neuer Blick.
+
+### CI wieder grün und ein schlankeres Setup für Agenten (2026-10-01)
+
+CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `test:db`, `e2e` und Semgrep aus, und der Agent sah CI nicht.
+
+- **Ursachen und Behebung:** (1) `test-db` brauchte den S3-Dienst, den der Job nicht startete: Schritt `docker compose up -d --wait s3`.
+  (2) Im Browser-Test verdeckte das noch offene Hover-Fenster der Quellenmarke den Schließen-Knopf: Der Test bewegt vorher die Maus weg.
+  (3) Semgrep: zwei gleiche handgeschriebene Escape-Funktionen ersetzt durch `lib/escape-markup.ts` (ein Durchgang, auch für
+  Attribute), das Favicon liegt als Datei in `public/` statt als Data-URI. Ob Semgrep damit durchläuft, zeigt erst CI (lokal nicht installiert).
+- **SeaweedFS fest auf `4.48`** (Tag auf Docker Hub geprüft), nicht mehr `latest`.
+- **Weniger Ausgabe, weniger Token:** `pnpm test` schrieb ~140 Zeilen (Warnungen zu `localStorage`, einmal je Worker); mit
+  `NODE_OPTIONS=--no-experimental-webstorage` sind es 16. `pnpm check` listete bei jedem Lauf alle 15 Duplikate unter der Schwelle; jscpd
+  meldet jetzt nur noch beim Überschreiten (`--reporters threshold`), die Liste gibt `pnpm audit:duplication:details`. Zwei Knip-Hinweise entfernt.
+- **Stop-Hook:** Er merkt sich einen bestandenen Lauf an einem Hash der geänderten Code-Dateien (`.git/guard-stop-last-pass`) und prüft
+  nicht erneut, wenn sich nichts geändert hat. Ein Fehlschlag wird nie gemerkt. Läuft `pnpm check` in die Zeitgrenze (100 s), blockiert der
+  Hook nicht mehr (das sagt nichts über den Code).
+- **Freigaben im Repo:** `.claude/settings.json` erlaubt jetzt die Befehle der täglichen Schleife (`pnpm check/test/typecheck/lint/e2e`,
+  `pnpm exec vitest`, `git status/diff/log/add/commit/push/switch/merge`, `gh run`). Force-Push, `--no-verify`, Löschen und `.env*`
+  sperrt weiter der Wächter. Vorher fragte jeder dieser Befehle in einem frischen Checkout nach.
+- **`AGENTS.md`:** richtiger Befehl `pnpm --filter @nlm/api db:generate`; die Ausnahme für das stille Aufräumen im Speicher;
+  „nach dem Push `gh run list` ansehen“; ENTSCHEIDUNGEN.md (60 KB) suchen statt ganz lesen; die DoD-Quittung nur für Features.
+- **Nicht geändert:** Der Wächter liest den Text eines Heredocs wie Befehle. Das zu lockern würde `bash <<EOF … EOF` als Umgehung öffnen.
+  Dateien schreibt man mit dem Write-Werkzeug.
