@@ -34,6 +34,12 @@ test('from sign-up to a cited passage, a note and back out', async ({ page }) =>
   await expect(page.getByRole('button', { name: 'nordlicht.txt', exact: true })).toBeVisible();
   await expect(page.getByRole('checkbox', { name: /nordlicht.txt/ })).toBeEnabled();
 
+  // A notebook with a source that is read leads its chat with an overview: the cover with the title
+  // and the number of sources, and a summary of the sources.
+  await expect(page.getByRole('heading', { name: 'Smoke-Test', level: 3 })).toBeVisible();
+  await expect(page.getByText(/^1 Quelle · \d{2}\.\d{2}\.\d{4}$/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Zusammenfassung kopieren' })).toBeVisible();
+
   // Ask a question: the answer streams in with a numbered chip.
   await page.getByLabel('Deine Frage').fill('Wer leitet das Projekt Nordlicht?');
   await page.getByRole('button', { name: 'Frage senden' }).click();
@@ -50,13 +56,18 @@ test('from sign-up to a cited passage, a note and back out', async ({ page }) =>
   );
 
   // Save the answer as a note and find it in the notes.
-  await page.getByRole('button', { name: 'In Notiz speichern' }).click();
+  // The overview has the same button; the one of the answer is the last.
+  await page.getByRole('button', { name: 'In Notiz speichern' }).last().click();
   await expect(page.getByText('In Notiz gespeichert')).toBeVisible();
   await page.getByRole('button', { name: 'Quellenansicht schließen' }).click();
   const library = page.getByRole('region', { name: 'Erstellte Ausgaben' });
   await expect(
     library.getByRole('button', { name: /^Projekt Nordlicht Dr\. Brandt leitet das Projekt/ })
   ).toBeVisible();
+
+  // The summary of the overview can be kept as a note of its own, too.
+  await page.getByRole('button', { name: 'In Notiz speichern' }).click();
+  await expect(library.getByRole('button', { name: /^Zusammenfassung/ })).toBeVisible();
 
   // The Studio makes flashcards from the source; every card has a passage behind it. The result
   // joins the list and is opened from there.

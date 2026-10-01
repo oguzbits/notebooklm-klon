@@ -1,4 +1,7 @@
-/** The symbols a notebook can wear on its card; the original picks one for each notebook. */
+/**
+ * The symbols a notebook wears on its card until its overview has chosen one (the original picks one
+ * for each notebook). Only the stand-in: a notebook with an overview shows its own.
+ */
 const EMOJIS = ['📚', '🔬', '💡', '🧠', '🌍', '📝', '🔭', '🧩', '🎓', '⚖️', '📊', '🌱'] as const;
 
 /** The same notebook always gets the same symbol, taken from its ID. */

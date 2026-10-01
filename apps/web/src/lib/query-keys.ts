@@ -9,6 +9,9 @@ export const queryKeys = {
   chatConfig: (notebookId: string) => ['notebooks', notebookId, 'chat-config'] as const,
   chunk: (notebookId: string, chunkId: string) =>
     ['notebooks', notebookId, 'chunks', chunkId] as const,
+  // The key of the sources it was made from is part of it: other sources, another overview.
+  notebookOverview: (notebookId: string, sourcesKey: string) =>
+    ['notebooks', notebookId, 'overview', sourcesKey] as const,
   overview: (notebookId: string, sourceId: string) =>
     ['notebooks', notebookId, 'sources', sourceId, 'overview'] as const,
   sourceText: (notebookId: string, sourceId: string) =>

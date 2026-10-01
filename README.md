@@ -18,6 +18,7 @@ Bewerbungsaufgabe für Everlast AI (zweite Runde). Der Schwerpunkt liegt auf dem
 - **Quellen** hinzufügen: PDF, DOCX, TXT, MD und Webseiten per Link. Die Verarbeitung läuft im Hintergrund mit sichtbarem Status und verständlichen Fehlermeldungen. Quellen lassen sich an- und abwählen, die Auswahl begrenzt auch die Suche.
 - **Chat** mit Streaming. Jede aussagekräftige Antwort besteht aus Aussagen mit nummerierten Chips. Hover zeigt die Textstelle mit Quellenname, Klick öffnet den Quelltext mit hervorgehobenem Abschnitt.
 - **Übersicht pro Quelle**: Zusammenfassung, Schlüsselthemen und Vorschlagsfragen, die das Gespräch starten.
+- **Übersicht des Notizbuchs** am Anfang des Chats: ein Emoji, der Titel, die Zahl der Quellen und eine Zusammenfassung aller fertigen Quellen mit fetten Schlüsselbegriffen. Sie entsteht einmal, wenn sich die Quellen ändern, und lässt sich als Notiz speichern oder kopieren.
 - **Notizen** aus Antworten, mit erhaltenen Zitaten, und eigene Notizen mit Editor (Format-Leiste, wird beim Tippen gespeichert, auf Wunsch als Quelle).
 - **Verlauf** bleibt pro Notizbuch erhalten.
 

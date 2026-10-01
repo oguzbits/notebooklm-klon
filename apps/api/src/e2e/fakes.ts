@@ -95,6 +95,37 @@ export function fakeOverview(userMessage: string): string {
   });
 }
 
+const NOTEBOOK_SOURCE = /^Source \d+: .*\n\n([\s\S]*?)(?=\n\nSource \d+: |$)/gm;
+const NOTEBOOK_SUMMARY_SOURCES = 3;
+const NOTEBOOK_TERMS = 2;
+const NO_SOURCE_TEXT = 'In den Quellen steht kein lesbarer Text.';
+
+/**
+ * A stand-in for the notebook overview: the first sentence of each source as the summary, the two
+ * most frequent long capitalised words in bold, and a fixed symbol.
+ */
+export function fakeNotebookOverview(userMessage: string): string {
+  const texts = [...userMessage.matchAll(NOTEBOOK_SOURCE)].map(([, text]) => (text ?? '').trim());
+  let summary =
+    texts
+      .slice(0, NOTEBOOK_SUMMARY_SOURCES)
+      .map((text) => text.split(SENTENCE_END)[0] ?? '')
+      .filter((sentence) => sentence !== '')
+      .join(' ') || NO_SOURCE_TEXT;
+
+  const counts = new Map<string, number>();
+  for (const word of texts.join(' ').match(/\p{Lu}\p{L}{4,}/gu) ?? []) {
+    counts.set(word, (counts.get(word) ?? 0) + 1);
+  }
+  const terms = [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, NOTEBOOK_TERMS)
+    .map(([word]) => word);
+  for (const term of terms) summary = summary.replace(term, `**${term}**`);
+
+  return JSON.stringify({ emoji: '📚', summary });
+}
+
 const STUDIO_TITLE_WORDS = 3;
 
 function firstWords(text: string, count: number): string {

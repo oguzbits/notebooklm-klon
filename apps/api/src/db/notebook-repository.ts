@@ -23,9 +23,13 @@ function toFailure(message: string | null): SourceFailure | null {
 /** The number of sources linked to a notebook, counted by the database. */
 const sourceCountOf = sql<number>`(select count(*)::int from ${notebookSources} where ${notebookSources.notebookId} = ${notebooks.id})`;
 
+/** The symbol the overview of the notebook chose, null while there is no overview. */
+const emojiOf = sql<string | null>`${notebooks.overview}->>'emoji'`;
+
 const notebookColumns = {
   id: notebooks.id,
   title: notebooks.title,
+  emoji: emojiOf,
   createdAt: notebooks.createdAt,
   sourceCount: sourceCountOf,
 };
@@ -33,12 +37,14 @@ const notebookColumns = {
 function toNotebook(row: {
   id: string;
   title: string;
+  emoji: string | null;
   createdAt: Date;
   sourceCount: number;
 }): Notebook {
   return {
     id: row.id,
     title: row.title,
+    emoji: row.emoji,
     sourceCount: row.sourceCount,
     createdAt: row.createdAt.toISOString(),
   };
@@ -51,7 +57,7 @@ export async function createNotebook(
 ): Promise<Notebook> {
   const [row] = await db.insert(notebooks).values({ userId, title }).returning();
   if (!row) throw new Error('insert returned no row');
-  return toNotebook({ ...row, sourceCount: 0 });
+  return toNotebook({ ...row, emoji: null, sourceCount: 0 });
 }
 
 export async function listNotebooks(db: Database, userId: string): Promise<Notebook[]> {

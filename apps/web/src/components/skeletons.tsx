@@ -32,6 +32,9 @@ const BAR_WIDTHS = [
   'w-full',
 ] as const;
 
+const TextBars = () =>
+  BAR_WIDTHS.map((width, index) => <Skeleton key={index} className={`h-[46px] ${width}`} />);
+
 /** The chat while its history loads: a spinner over seven bars of text. */
 export function ChatSkeleton() {
   return (
@@ -39,9 +42,16 @@ export function ChatSkeleton() {
       <div className="mx-auto mb-4 flex size-10 items-center justify-center rounded-full bg-card shadow-glow">
         <LoaderCircle className="size-7 animate-spin text-muted-foreground" aria-hidden />
       </div>
-      {BAR_WIDTHS.map((width, index) => (
-        <Skeleton key={index} className={`h-[46px] ${width}`} />
-      ))}
+      <TextBars />
+    </div>
+  );
+}
+
+/** The summary of a notebook while it is made: the same seven bars, under the cover that is already there. */
+export function SummarySkeleton() {
+  return (
+    <div className="flex flex-col gap-2" {...STATUS}>
+      <TextBars />
     </div>
   );
 }

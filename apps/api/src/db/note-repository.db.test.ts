@@ -134,6 +134,32 @@ describe('notes', () => {
       expect(await listNotes(db, USER, notebook.id)).toHaveLength(2);
     });
 
+    it('can start with a title and a text, which is how a saved summary becomes a note', async () => {
+      const notebook = await insertNotebook(USER);
+
+      const note = await createWrittenNote(db, USER, notebook.id, {
+        title: 'Zusammenfassung',
+        body: 'Es geht um **Nordlicht**.',
+      });
+
+      expect(note).toMatchObject({
+        kind: NOTE_KIND.WRITTEN,
+        title: 'Zusammenfassung',
+        body: 'Es geht um **Nordlicht**.',
+      });
+      expect(await listNotes(db, USER, notebook.id)).toEqual([note]);
+    });
+
+    it('starts with the part that is given and leaves the other empty', async () => {
+      const notebook = await insertNotebook(USER);
+
+      const onlyText = await createWrittenNote(db, USER, notebook.id, { body: 'Nur Text.' });
+      const onlyTitle = await createWrittenNote(db, USER, notebook.id, { title: 'Nur Titel' });
+
+      expect(onlyText).toMatchObject({ title: null, body: 'Nur Text.' });
+      expect(onlyTitle).toMatchObject({ title: 'Nur Titel', body: '' });
+    });
+
     it('makes no note in the notebook of another user or in an unknown one', async () => {
       const foreign = await insertNotebook(OTHER_USER);
 

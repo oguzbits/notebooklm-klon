@@ -1,3 +1,5 @@
+import { formatDay } from './day';
+
 const SECOND_MS = 1000;
 const MINUTE_S = 60;
 const HOUR_S = 3600;
@@ -22,11 +24,6 @@ export function relativeTime(iso: string, now: Date = new Date()): string {
   return date.format(new Date(iso));
 }
 
-const dayFormat = new Intl.DateTimeFormat('de-DE', {
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-});
 const clockFormat = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: '2-digit' });
 
 const startOfDay = (value: Date) =>
@@ -38,7 +35,7 @@ export function messageTime(iso: string, now: Date = new Date()): string {
   const days = Math.round(
     (startOfDay(now).getTime() - startOfDay(moment).getTime()) / (DAY_S * SECOND_MS)
   );
-  const day = days === 0 ? 'Heute' : days === 1 ? 'Gestern' : dayFormat.format(moment);
+  const day = days === 0 ? 'Heute' : days === 1 ? 'Gestern' : formatDay(moment);
   return `${day} • ${clockFormat.format(moment)}`;
 }
 

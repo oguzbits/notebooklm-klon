@@ -32,17 +32,17 @@ export function useCreateNote(notebookId: string) {
 }
 
 /**
- * Makes an empty note to write in. It is the newest, so it goes to the top of the list at once and
+ * Makes a note to write in, empty or with a text to start from (a saved summary). It is the newest, so it goes to the top of the list at once and
  * the view that opens on it finds it there without waiting for the list to load again.
  */
 export function useCreateWrittenNote(notebookId: string) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: async () =>
+    mutationFn: async (start?: { title?: string; body?: string }) =>
       readJson(
         await api.api.notebooks[':notebookId'].notes.$post({
           param: { notebookId },
-          json: { kind: NOTE_KIND.WRITTEN },
+          json: { kind: NOTE_KIND.WRITTEN, ...start },
         }),
         NoteSchema
       ),

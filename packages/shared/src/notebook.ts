@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { NotebookOverviewSchema } from './overview';
 import { SourceFailureSchema, SourceKindSchema, SourceStatusSchema } from './source';
 
 const MAX_TITLE_CHARS = 200;
@@ -21,6 +22,8 @@ export const SubmitActionSchema = z.enum(SUBMIT_ACTION);
 export const NotebookSchema = z.object({
   id: z.uuid(),
   title: z.string(),
+  /** The symbol its overview chose, null until the overview was made. */
+  emoji: NotebookOverviewSchema.shape.emoji.nullable(),
   /** How many sources the notebook holds, whatever their state. */
   sourceCount: z.number().int().nonnegative(),
   createdAt: z.iso.datetime(),

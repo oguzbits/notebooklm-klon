@@ -228,6 +228,26 @@ describe('notes of the reader', () => {
     expect(second.note.id).not.toBe(first.note.id);
   });
 
+  it('starts a note with the title and the text it is given', async () => {
+    const { notebook } = await answeredNotebook(alice);
+
+    const response = await app.request(
+      `/api/notebooks/${notebook}/notes`,
+      send('POST', alice, {
+        kind: NOTE_KIND.WRITTEN,
+        title: 'Zusammenfassung',
+        body: 'Es geht um **Nordlicht**.',
+      })
+    );
+
+    expect(response.status).toBe(201);
+    expect(NoteSchema.parse(await response.json())).toMatchObject({
+      kind: NOTE_KIND.WRITTEN,
+      title: 'Zusammenfassung',
+      body: 'Es geht um **Nordlicht**.',
+    });
+  });
+
   it('makes no note in the notebook of another user', async () => {
     const { notebook } = await answeredNotebook(bob);
 

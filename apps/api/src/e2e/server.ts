@@ -13,6 +13,7 @@ import type { ChatInput } from '../ai/gemini-chat';
 import { createApp } from '../app';
 import { createAuth } from '../auth/auth';
 import { parseOfflineServerEnv } from '../config/env';
+import { NOTEBOOK_OVERVIEW_SYSTEM_PROMPT } from '../core/notebook-overview-prompt';
 import { OVERVIEW_SYSTEM_PROMPT } from '../core/overview-prompt';
 import { createDb } from '../db/client';
 import { runMigrations } from '../db/migrate';
@@ -23,13 +24,21 @@ import { runIngestJob, type SubmitPorts } from '../ingestion/submit';
 import { log } from '../logger';
 import { createParseSource } from '../parsing/parse-source';
 import { serveWeb } from '../web/serve-web';
-import { extractiveAnswer, fakeOverview, fakeStudio, hashEmbedding, trickle } from './fakes';
+import {
+  extractiveAnswer,
+  fakeNotebookOverview,
+  fakeOverview,
+  fakeStudio,
+  hashEmbedding,
+  trickle,
+} from './fakes';
 
 const STUDIO_PROPERTIES = ['sections', 'cards', 'questions', 'branches'];
 
 /** Picks the stand-in by what is asked: the overview, a Studio output or a chat answer. */
 function fakeReply(input: ChatInput): string {
   if (input.system === OVERVIEW_SYSTEM_PROMPT) return fakeOverview(input.user);
+  if (input.system === NOTEBOOK_OVERVIEW_SYSTEM_PROMPT) return fakeNotebookOverview(input.user);
   const properties = Object.keys((input.schema.properties ?? {}) as Record<string, unknown>);
   if (STUDIO_PROPERTIES.some((name) => properties.includes(name))) {
     return fakeStudio(input.schema, input.user);

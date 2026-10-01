@@ -4,13 +4,56 @@ import { type FormEvent, type KeyboardEvent, memo, useEffect, useRef, useState }
 
 import { FollowUps } from '@/components/chat/follow-ups';
 import { AnswerView, MessageView, QuestionBubble } from '@/components/chat/message-view';
+import { NotebookOverview } from '@/components/chat/notebook-overview';
 import { ErrorNotice, QueryBoundary } from '@/components/query-boundary';
 import { ChatSkeleton } from '@/components/skeletons';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAskQuestion, useChatHistory } from '@/hooks/use-chat';
-import { useSuggestedQuestions } from '@/hooks/use-overview';
+import { type Suggestions, useSuggestedQuestions } from '@/hooks/use-overview';
 import { useSources } from '@/hooks/use-sources';
+
+/** The questions to start with: while they are made, when that failed, and as buttons. */
+function SuggestionList({
+  suggestions,
+  canAsk,
+  onAsk,
+}: {
+  suggestions: Suggestions;
+  canAsk: boolean;
+  onAsk: (question: string) => void;
+}) {
+  return (
+    <>
+      {suggestions.loading && (
+        <p className="text-ui text-muted-foreground" role="status">
+          Vorschläge werden erstellt …
+        </p>
+      )}
+      {suggestions.failed && (
+        <p className="text-ui text-muted-foreground">
+          Vorschläge konnten nicht erstellt werden. Du kannst trotzdem fragen.
+        </p>
+      )}
+      {suggestions.questions.length > 0 && (
+        <ul className="mt-4 flex max-w-xl flex-wrap justify-center gap-2">
+          {suggestions.questions.map((suggestion) => (
+            <li key={suggestion}>
+              <Button
+                variant="outline"
+                className="h-auto min-h-9 whitespace-normal py-2 text-left"
+                disabled={!canAsk}
+                onClick={() => onAsk(suggestion)}
+              >
+                {suggestion}
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
+  );
+}
 
 /** The middle panel: the conversation, the field for a new question and the streamed answer. */
 export const ChatPanel = memo(function ChatPanel({
@@ -34,6 +77,8 @@ export const ChatPanel = memo(function ChatPanel({
   const usable = (sources.data ?? []).filter(
     (source) => source.selected && source.status === SOURCE_STATUS.READY
   ).length;
+  // With a source that is read, the overview of the notebook leads the chat.
+  const hasReady = (sources.data ?? []).some((source) => source.status === SOURCE_STATUS.READY);
   const canAsk = usable > 0 && !ask.isPending;
   const canSend = canAsk && question.trim() !== '';
 
@@ -87,45 +132,39 @@ export const ChatPanel = memo(function ChatPanel({
       />
       <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5">
         <div className="mx-auto flex max-w-[756px] flex-col gap-3 px-6 pt-2">
+          <NotebookOverview notebookId={notebookId} sources={sources.data} />
           <QueryBoundary
             query={history}
-            loading={<ChatSkeleton />}
+            // The overview has placeholders of its own while it loads, a second set would double them.
+            loading={hasReady ? null : <ChatSkeleton />}
             isEmpty={(messages) => messages.length === 0 && !ask.live}
             empty={
-              <div className="flex flex-col items-center gap-2 py-16 text-center">
-                <MessageCircleQuestion className="size-12 text-muted-foreground" aria-hidden />
-                <p className="text-xl font-title">Stelle deine erste Frage</p>
-                <p className="max-w-sm text-read text-muted-foreground">
-                  Die Antwort stützt sich nur auf deine ausgewählten Quellen. Jede Aussage hat eine
-                  Nummer, die zur Textstelle führt.
-                </p>
-                {suggestions.loading && (
-                  <p className="text-ui text-muted-foreground" role="status">
-                    Vorschläge werden erstellt …
+              hasReady ? (
+                <div className="flex flex-col items-center gap-2 py-2 text-center">
+                  <p className="max-w-sm text-ui text-muted-foreground">
+                    Jede Aussage einer Antwort hat eine Nummer, die zur Textstelle führt.
                   </p>
-                )}
-                {suggestions.failed && (
-                  <p className="text-ui text-muted-foreground">
-                    Vorschläge konnten nicht erstellt werden. Du kannst trotzdem fragen.
+                  <SuggestionList
+                    suggestions={suggestions}
+                    canAsk={canAsk}
+                    onAsk={(text) => ask.mutate(text)}
+                  />
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-2 py-16 text-center">
+                  <MessageCircleQuestion className="size-12 text-muted-foreground" aria-hidden />
+                  <p className="text-xl font-title">Stelle deine erste Frage</p>
+                  <p className="max-w-sm text-read text-muted-foreground">
+                    Die Antwort stützt sich nur auf deine ausgewählten Quellen. Jede Aussage hat
+                    eine Nummer, die zur Textstelle führt.
                   </p>
-                )}
-                {suggestions.questions.length > 0 && (
-                  <ul className="mt-4 flex max-w-xl flex-wrap justify-center gap-2">
-                    {suggestions.questions.map((suggestion) => (
-                      <li key={suggestion}>
-                        <Button
-                          variant="outline"
-                          className="h-auto min-h-9 whitespace-normal py-2 text-left"
-                          disabled={!canAsk}
-                          onClick={() => ask.mutate(suggestion)}
-                        >
-                          {suggestion}
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+                  <SuggestionList
+                    suggestions={suggestions}
+                    canAsk={canAsk}
+                    onAsk={(text) => ask.mutate(text)}
+                  />
+                </div>
+              )
             }
           >
             {(messages) => (

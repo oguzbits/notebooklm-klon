@@ -44,10 +44,11 @@ export const NoteSchema = z.discriminatedUnion('kind', [AnswerNoteSchema, Writte
 
 export const NoteListSchema = z.array(NoteSchema);
 
-/** A note is made either from a saved answer (only its ID is sent) or empty, to be written. */
+/** A note is made from a saved answer (only its ID is sent), or by the reader, empty or with a text. */
 export const CreateNoteBodySchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal(NOTE_KIND.ANSWER), messageId: z.uuid() }),
-  z.object({ kind: z.literal(NOTE_KIND.WRITTEN) }),
+  // A note of the reader may start with a text (a saved summary): it has no citations to protect.
+  z.object({ kind: z.literal(NOTE_KIND.WRITTEN), title: title.optional(), body: body.optional() }),
 ]);
 
 /** What can change on a note: its title (any note) and its text (a written note only). */

@@ -80,9 +80,18 @@ describe('creating a note', () => {
     expect(CreateNoteBodySchema.parse({ kind: NOTE_KIND.WRITTEN })).toEqual({
       kind: NOTE_KIND.WRITTEN,
     });
-    expect(CreateNoteBodySchema.parse({ kind: NOTE_KIND.WRITTEN, body: 'schmuggelt' })).toEqual({
-      kind: NOTE_KIND.WRITTEN,
-    });
+  });
+
+  it('lets a note of the reader start with a title and a text, which carry no citations', () => {
+    const body = { kind: NOTE_KIND.WRITTEN, title: 'Zusammenfassung', body: 'Ein **Text**.' };
+
+    expect(CreateNoteBodySchema.parse({ ...body, title: '  Zusammenfassung ' })).toEqual(body);
+    expect(CreateNoteBodySchema.parse({ ...body, statements: [] })).toEqual(body);
+    expect(CreateNoteBodySchema.safeParse({ ...body, title: ' ' }).success).toBe(false);
+    expect(
+      CreateNoteBodySchema.safeParse({ ...body, body: 'x'.repeat(NOTE_LIMITS.BODY_CHARS + 1) })
+        .success
+    ).toBe(false);
   });
 });
 

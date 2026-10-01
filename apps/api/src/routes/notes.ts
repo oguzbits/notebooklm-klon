@@ -101,7 +101,10 @@ export function noteRoutes(deps: AppDeps) {
       const note =
         body.kind === NOTE_KIND.ANSWER
           ? await createNoteFromMessage(deps.db, c.var.userId, notebookId, body.messageId)
-          : await createWrittenNote(deps.db, c.var.userId, notebookId);
+          : await createWrittenNote(deps.db, c.var.userId, notebookId, {
+              title: body.title,
+              body: body.body,
+            });
       return note ? c.json(note, CREATED) : c.json(missing, NOT_FOUND);
     })
     .openapi(updateRoute, async (c) => {

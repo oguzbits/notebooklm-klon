@@ -90,18 +90,21 @@ export async function createNoteFromMessage(
 }
 
 /**
- * Makes an empty note of the reader in one of their notebooks. Null when the notebook is not theirs
- * (checked in the same statement). Every call makes a new note, there is nothing to deduplicate.
+ * Makes a note of the reader in one of their notebooks, empty or with a title and a text to start
+ * from. Null when the notebook is not theirs (checked in the same statement). Every call makes a
+ * new note, there is nothing to deduplicate.
  */
 export async function createWrittenNote(
   db: Database,
   userId: string,
-  notebookId: string
+  notebookId: string,
+  start: { title?: string; body?: string } = {}
 ): Promise<Note | null> {
   if (!UUID.test(notebookId)) return null;
   const result = await db.execute<RawNoteRow>(sql`
-    INSERT INTO notes (notebook_id, user_id, kind, statements, body)
-    SELECT n.id, n.user_id, ${NOTE_KIND.WRITTEN}::note_kind, '[]'::jsonb, ''
+    INSERT INTO notes (notebook_id, user_id, kind, statements, title, body)
+    SELECT n.id, n.user_id, ${NOTE_KIND.WRITTEN}::note_kind, '[]'::jsonb,
+      ${start.title ?? null}::text, ${start.body ?? ''}::text
     FROM notebooks n
     WHERE n.id = ${notebookId} AND n.user_id = ${userId}
     RETURNING id, kind, title, message_id, statements, body, created_at`);

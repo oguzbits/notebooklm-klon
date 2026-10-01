@@ -54,6 +54,10 @@ export const notebooks = pgTable(
     title: text('title').notNull(),
     // How the assistant talks in this notebook (ChatConfigSchema). Null: the default.
     chatConfig: jsonb('chat_config'),
+    // What all sources of the notebook are about (NotebookOverviewSchema) and the key of the set of
+    // sources it was made from. Both are null until the first overview exists.
+    overview: jsonb('overview'),
+    overviewKey: text('overview_key'),
     createdAt: createdAt(),
   },
   (table) => [index('notebooks_user_id_idx').on(table.userId)]

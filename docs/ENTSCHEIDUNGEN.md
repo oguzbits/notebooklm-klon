@@ -400,3 +400,39 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   Der Editor setzt Rolle und `aria-multiline` daher selbst. Im Browser (Desktop dunkel und hell, Handy 390 px,
   eingeklappte Leiste) geprüft: anlegen, schreiben, Überschrift, Fett, Kursiv, Liste, Link, umbenennen, als Quelle
   festlegen, Neuladen.
+
+## 2026-10-01 (Notebook-Übersicht im Chat)
+
+- **Wie im Original, nach Messung am echten Produkt (`spikes/reference/NOTES.md` Abschnitt 11, lokal):** Die Übersicht ist das erste
+  Element im Scrollbereich des Chats und läuft mit dem Verlauf weg. Das Cover ist 265 hoch: Emoji 40 px oben links (24 Rand),
+  unten der Titel 36/44 (Gewicht 320) und „n Quellen · TT.MM.JJJJ“ (14/24, Anlagedatum). 24 darunter die Zusammenfassung
+  (16/24, fette Begriffe 600), dann 24 darunter die Leiste mit „In Notiz speichern“ und Kopieren (36 hoch). Beim Laden steht das
+  Cover sofort da und die sieben Schimmerbalken der Zusammenfassung folgen; ein Fehler zeigt die Meldung mit „Erneut versuchen“
+  unter dem Cover, der Chat bleibt benutzbar. Auf dem Handy ist das Cover 200 statt 265 hoch (dort nicht gemessen).
+- **Ein Modellaufruf pro Änderung der Quellen, nicht pro Öffnen:** `GET /api/notebooks/:id/overview` liefert die gespeicherte
+  Übersicht, solange der Schlüssel der fertigen Quellen (`notebookOverviewKey`: SHA-256 über die sortierten Quellen-IDs) derselbe ist,
+  und macht sie sonst neu. Gespeichert wird im Notizbuch (`notebooks.overview`, `overview_key`, Migration 0011). Sie deckt alle
+  fertigen Quellen ab, ausgewählt oder nicht, wie die „n Quellen“ im Cover. Gelesen werden höchstens 20 Quellen, der Text wird auf
+  45.000 Zeichen verteilt (wer weniger braucht, gibt den Rest ab), das steht im Prompt. Alles geht über den Ratenbegrenzer der
+  Rolle wie die Quellenübersicht; das Kontingent pro Nutzer betrifft weiter nur neue Quellen.
+- **Das Web fragt erst, wenn alle Quellen fertig sind:** Solange eine Quelle wartet oder gelesen wird, bleibt die Abfrage aus
+  (ein Upload, eine Übersicht statt eine je Quelle). Kommt eine Quelle dazu, bleibt die alte Zusammenfassung stehen, bis die neue
+  da ist (`keepPreviousData`). Ohne fertige Quelle gibt es kein Cover, es bleibt der alte Hinweis „Stelle deine erste Frage“.
+- **Das Emoji wählt das Modell, einmal:** Es steht in derselben Antwort (`NotebookOverviewSchema`: `emoji` und `summary`) und
+  bleibt bei einer neuen Zusammenfassung, wie das Original sein Emoji behält. Die Startseite zeigt es auch
+  (`NotebookSchema.emoji`, aus `overview->>'emoji'`), bis dahin das aus der ID abgeleitete. Das Emoji muss genau ein Symbol sein
+  (eine Regex im Schema, nicht im JSON-Schema, das der Anbieter sieht).
+- **Keine Zitate in der Zusammenfassung:** Wie die Übersicht einer Quelle beschreibt sie die Quellen und antwortet nicht auf eine
+  Frage aus ihnen; Invariante 1 betrifft Antworten. Das Original hat dort ebenfalls keine Belege. Der Prompt verlangt, nur zu
+  sagen, was die Quellen sagen, auf Deutsch und mit fetten Schlüsselbegriffen.
+- **„In Notiz speichern“ legt eine freie Notiz an:** Titel „Zusammenfassung“, der Text als Markdown mit den fetten Begriffen. Dafür
+  darf eine freie Notiz mit Titel und Text beginnen (`CreateNoteBodySchema`); das war vorher bewusst nicht erlaubt und gilt nur
+  für freie Notizen, nicht für gespeicherte Antworten. Der Server hatte Titel und Text zuerst verworfen, der E2E-Test hat das
+  gefunden. Danach steht „In Notiz gespeichert“, bis es eine neue Zusammenfassung gibt.
+- **Nicht gebaut:** „Notebook anpassen“ (Emoji und Titel ändern, der Titel ist oben im Kopf bearbeitbar), die Daumen („Gute /
+  Schlechte Zusammenfassung“, es gibt sie auch an Antworten nicht), der Tagestrenner, ein vom Modell erzeugter Notizbuch-Titel.
+- **Der leere Chat:** Mit Cover stehen darunter ein Satz zu den Nummern an den Aussagen und die Vorschlagsfragen; die große
+  Überschrift „Stelle deine erste Frage“ gibt es nur noch ohne fertige Quelle. Der Demo-Seed macht die Übersicht mit, der erste
+  Besuch wartet also nicht auf das Modell.
+- **Geprüft:** Unit-, Datenbank- und E2E-Tests; im Browser Desktop dunkel, Handy 390 px, Startseite. Untertitel (y 293) und
+  Zusammenfassung (y 364) liegen bei 1440 px genau auf den Werten des Originals.

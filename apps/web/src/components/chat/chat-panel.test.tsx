@@ -10,6 +10,7 @@ import {
   CHUNK_ID,
   chunkDetail,
   note,
+  notebook,
   NOTEBOOK_ID,
   OTHER_CHUNK_ID,
   overview,
@@ -40,15 +41,46 @@ const overviewOf = (sourceId: string, body: JsonBodyType, status = 200) =>
 
 describe('ChatPanel', () => {
   // Answers ask for the notes, to show which are saved. Most tests do not care about them.
+  // The notebook and its overview lead the chat once a source is ready. Most tests do not care.
   beforeEach(() => {
-    server.use(http.get(`${base}/notes`, () => HttpResponse.json([])));
+    server.use(
+      http.get(`${base}/notes`, () => HttpResponse.json([])),
+      http.get('*/api/notebooks', () => HttpResponse.json([notebook({ title: 'Steuerrecht' })])),
+      http.get(`${base}/overview`, () =>
+        HttpResponse.json({ overview: { emoji: '📚', summary: 'Es geht um **Steuern**.' } })
+      )
+    );
   });
 
-  it('invites the user to ask the first question when the history is empty', async () => {
-    server.use(sources(), history([]));
+  it('invites the user to ask the first question while no source is ready', async () => {
+    server.use(sources([]), history([]));
     renderChat();
 
     expect(await screen.findByText('Stelle deine erste Frage')).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Steuerrecht' })).toBeNull();
+  });
+
+  it('leads with the overview of the notebook once a source is ready, and invites to ask under it', async () => {
+    server.use(sources(), history([]));
+    renderChat();
+
+    expect(await screen.findByRole('heading', { name: 'Steuerrecht' })).toBeTruthy();
+    expect((await screen.findByText('Steuern')).tagName).toBe('STRONG');
+    expect(screen.getByText(/Jede Aussage einer Antwort hat eine Nummer/)).toBeTruthy();
+    expect(screen.queryByText('Stelle deine erste Frage')).toBeNull();
+  });
+
+  it('keeps the overview above the conversation, so it scrolls away with it', async () => {
+    server.use(
+      sources(),
+      history([question('Wer leitet es?'), answer([{ text: 'Er.', chunkIds: [CHUNK_ID] }])])
+    );
+    renderChat();
+
+    const title = await screen.findByRole('heading', { name: 'Steuerrecht' });
+    const asked = await screen.findByText('Wer leitet es?');
+
+    expect(title.compareDocumentPosition(asked) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('shows saved answers with numbered chips that repeat for the same passage', async () => {
@@ -148,7 +180,7 @@ describe('ChatPanel', () => {
     );
     renderChat();
     const user = userEvent.setup();
-    await screen.findByText('Stelle deine erste Frage');
+    await screen.findByLabelText('Deine Frage');
 
     await user.type(screen.getByLabelText('Deine Frage'), 'Wer leitet es?');
     await user.click(screen.getByRole('button', { name: 'Frage senden' }));
@@ -175,7 +207,7 @@ describe('ChatPanel', () => {
     );
     renderChat();
     const user = userEvent.setup();
-    await screen.findByText('Stelle deine erste Frage');
+    await screen.findByLabelText('Deine Frage');
 
     await user.type(screen.getByLabelText('Deine Frage'), 'Wer?');
     await user.click(screen.getByRole('button', { name: 'Frage senden' }));
@@ -321,7 +353,9 @@ describe('ChatPanel', () => {
     renderChat();
     const user = userEvent.setup();
 
-    await user.click(await screen.findByRole('button', { name: 'In Notiz speichern' }));
+    // The overview above has the same button; the one of the answer is the last on the page.
+    const buttons = await screen.findAllByRole('button', { name: 'In Notiz speichern' });
+    await user.click(buttons[buttons.length - 1]!);
 
     expect(await screen.findByText('In Notiz gespeichert')).toBeTruthy();
     expect(body).toEqual({ kind: NOTE_KIND.ANSWER, messageId: ANSWER_ID });
@@ -336,6 +370,8 @@ describe('ChatPanel', () => {
     renderChat();
 
     expect(await screen.findByText('In Notiz gespeichert')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'In Notiz speichern' })).toBeNull();
+    // What is left is the button of the overview, the answer has none.
+    await screen.findByText('Steuern');
+    expect(screen.getAllByRole('button', { name: 'In Notiz speichern' })).toHaveLength(1);
   });
 });
