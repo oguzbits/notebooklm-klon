@@ -197,7 +197,7 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   „Quellen | Chat | Studio“; das Original hat dort englische Reste. (8) Die Farben der Mindmap-Knoten im
   Dunkelmodus sind geschätzt (die Mindmap läuft im Original in einem Iframe und ließ sich nicht messen).
 - **Startseite des Originals:** Auf Wunsch des Nutzers zusätzlich gemessen. Die Liste folgt ihr: Karten
-  272x185 mit Radius 40 und 32 px Innenabstand, Abschnittstitel 24/32, die blaue Pille „Neues Notizbuch“
+  272x185 mit Radius 40 und 32 px Innenabstand, Abschnittstitel 24/32, die blaue Pille „Neues Notebook“
   (hell #9dd2ff, dunkel #1f3b9b) öffnet einen Dialog für den Titel, statt ein Formular auf der Seite zu zeigen.
   Löschen sitzt im ⋮-Menü der Karte. Die „Empfohlenen Notebooks“ sind Googles eigene Inhalte und fehlen.
 - **Abgleich mit dem Original, Runde 2 (2026-09-30):** Plan und Checkliste stehen in
@@ -225,7 +225,7 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   Farben im Dunkelmodus sind eigene Werte: das Original nutzt dort eine grelle Lichtkante (#d4d7db), die auf
   dunklem Grund störte. `QueryBoundary` verlangt jetzt eine `loading`-Angabe, damit keine Stelle einen
   unpassenden Standard-Platzhalter bekommt.
-- **Kopfzeile wie im Original (2026-10-01):** Rechts „+ Notizbuch erstellen“ (legt ein Notizbuch an und öffnet es),
+- **Kopfzeile wie im Original (2026-10-01):** Rechts „+ Notebook erstellen“ (legt ein Notizbuch an und öffnet es),
   ⋮ (Chat konfigurieren, Chatverlauf löschen mit Hinweis, Notizbuch löschen, die beiden Löschungen mit
   Rückfrage) und ⚙ (Darstellung: Gerätestandard / Hell / Dunkel; die Wahl steht in einem Cookie, weil
   `localStorage` bei gesperrtem Speicher wirft und die Regeln stilles Fangen ausschließen). Der Titel ist wie im
@@ -659,3 +659,13 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
 - Bewusst nicht übernommen: die genaue Form des Material-Symbols (die Sonne fehlt). Der Zweck ist eine ruhige Andeutung.
 - Geprüft im Browser: hell, dunkel, 390 px (kein horizontaler Überlauf). Der Test prüft die Klassen, nicht den Hover selbst
   (jsdom kennt kein `:hover`).
+
+## 2026-10-01 (Notebook sofort anlegen, ohne Dialog)
+
+- Das Original legt mit einem Klick sofort „Unbenanntes Notebook“ an und öffnet es. Der Titel wird danach in der Kopfzeile
+  geändert. Bei uns genauso: `CreateNotebookButton` (Kopfzeile „Notebook erstellen“, Startseite „Neues Notebook“) ersetzt den
+  Titel-Dialog. Der Standardtitel `UNTITLED_NOTEBOOK` steht in `apps/web`, nicht in `packages/shared` (nur Anzeigetext, kein Vertrag).
+- Zustände: während der Anfrage ist der Knopf gesperrt (kein doppeltes Anlegen); bei einem Fehler nennt ein Dialog den Grund
+  und bietet „Erneut versuchen“ (es gibt keine Toasts im Projekt).
+- Die übrige Oberfläche sagt weiter „Notizbuch“; nur diese beiden Beschriftungen folgen dem Wunsch „Notebook“.
+- Keine Daumen (gute/schlechte Antwort): Es gibt keinen Speicher für Rückmeldungen und keinen Nutzen, also nicht gebaut.

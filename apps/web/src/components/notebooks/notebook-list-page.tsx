@@ -1,17 +1,16 @@
 import type { Notebook } from '@nlm/shared';
-import { NotebookPen, Plus, SearchX } from 'lucide-react';
+import { NotebookPen, SearchX } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 
 import { AppHeader } from '@/components/layout/app-header';
-import { CreateNotebookDialog } from '@/components/notebooks/create-notebook-dialog';
+import { CreateNotebookButton } from '@/components/notebooks/create-notebook-button';
 import { DeleteNotebookDialog } from '@/components/notebooks/delete-notebook-dialog';
 import { NotebookCardMenu } from '@/components/notebooks/notebook-card-menu';
 import { NotebookSearch } from '@/components/notebooks/notebook-search';
 import { QueryBoundary } from '@/components/query-boundary';
 import { NotebookCardsSkeleton } from '@/components/skeletons';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
 import { useNotebooks } from '@/hooks/use-notebooks';
 import { formatDay } from '@/lib/day';
 import { describeError } from '@/lib/messages';
@@ -89,13 +88,10 @@ export function NotebookListPage() {
         <div className="flex flex-col gap-2 px-6 pb-10">
           <div className="flex flex-wrap items-center justify-between gap-3 pt-6">
             <h1 className="text-2xl leading-8">Deine Notizbücher</h1>
-            <CreateNotebookDialog
-              trigger={
-                <Button variant="prominent" className="pr-3 pl-2">
-                  <Plus />
-                  Neues Notizbuch
-                </Button>
-              }
+            <CreateNotebookButton
+              label="Neues Notebook"
+              variant="prominent"
+              className="pr-3 pl-2"
             />
           </div>
           <QueryBoundary

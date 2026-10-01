@@ -1,11 +1,11 @@
 import type { Notebook } from '@nlm/shared';
-import { Copy, EllipsisVertical, Paintbrush, Plus, SlidersHorizontal, Trash2 } from 'lucide-react';
+import { Copy, EllipsisVertical, Paintbrush, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { ChatSettingsDialog } from '@/components/chat/chat-settings-dialog';
 import { ClearChatDialog, CopyNotebookDialog } from '@/components/notebook/notebook-dialogs';
-import { CreateNotebookDialog } from '@/components/notebooks/create-notebook-dialog';
+import { CreateNotebookButton } from '@/components/notebooks/create-notebook-button';
 import { DeleteNotebookDialog } from '@/components/notebooks/delete-notebook-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -112,20 +112,11 @@ interface NotebookActionsProps {
 
 /** What the header offers for one notebook: make a new one, and the menu with its settings. */
 export function NotebookActions({ notebook, onCustomize }: NotebookActionsProps) {
-  const navigate = useNavigate();
   const [dialog, setDialog] = useState<Dialog | null>(null);
 
   return (
     <>
-      <CreateNotebookDialog
-        trigger={
-          <Button variant="ghost" className="pr-4 pl-3">
-            <Plus />
-            <span className="max-wide:sr-only">Notizbuch erstellen</span>
-          </Button>
-        }
-        onCreated={(created) => navigate(ROUTES.notebook(created.id))}
-      />
+      <CreateNotebookButton label="Notebook erstellen" variant="ghost" className="pr-4 pl-3" />
       <NotebookMenu onPick={setDialog} onCustomize={onCustomize} />
       <NotebookDialogs notebook={notebook} dialog={dialog} onClose={() => setDialog(null)} />
     </>

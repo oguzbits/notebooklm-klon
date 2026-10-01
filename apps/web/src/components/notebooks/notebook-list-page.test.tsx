@@ -1,9 +1,10 @@
 import { API_ERROR } from '@nlm/shared';
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 
+import { UNTITLED_NOTEBOOK } from '@/components/notebooks/create-notebook-button';
 import { notebookEmoji } from '@/lib/notebook-emoji';
 import { notebook } from '@/test/fixtures';
 import { renderWithProviders } from '@/test/render';
@@ -49,27 +50,44 @@ describe('NotebookListPage', () => {
     expect(await screen.findByText('Wieder da')).toBeTruthy();
   });
 
-  it('creates a notebook with the typed title and reloads the list', async () => {
+  it('makes an untitled notebook at once, without asking for a title', async () => {
     let created: unknown;
-    let notebooks: unknown[] = [];
     server.use(
-      http.get('*/api/notebooks', () => HttpResponse.json(notebooks)),
+      http.get('*/api/notebooks', () => HttpResponse.json([])),
       http.post('*/api/notebooks', async ({ request }) => {
         created = await request.json();
-        notebooks = [notebook({ title: 'Neu' })];
-        return HttpResponse.json(notebook({ title: 'Neu' }), { status: 201 });
+        return HttpResponse.json(notebook({ title: UNTITLED_NOTEBOOK }), { status: 201 });
       })
     );
     renderWithProviders(<NotebookListPage />);
     await screen.findByText('Noch kein Notizbuch');
 
-    const user = userEvent.setup();
-    await user.click(screen.getByRole('button', { name: 'Neues Notizbuch' }));
-    await user.type(await screen.findByLabelText('Titel des Notizbuchs'), '  Neu ');
-    await user.click(screen.getByRole('button', { name: 'Anlegen' }));
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Neues Notebook' }));
 
-    expect(await screen.findByText('Neu')).toBeTruthy();
-    expect(created).toEqual({ title: 'Neu' });
+    await waitFor(() => expect(created).toEqual({ title: UNTITLED_NOTEBOOK }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('tells why no notebook was made and tries again on request', async () => {
+    let calls = 0;
+    server.use(
+      http.get('*/api/notebooks', () => HttpResponse.json([])),
+      http.post('*/api/notebooks', () => {
+        calls += 1;
+        return calls === 1
+          ? HttpResponse.json({ code: API_ERROR.INTERNAL }, { status: 500 })
+          : HttpResponse.json(notebook({ title: UNTITLED_NOTEBOOK }), { status: 201 });
+      })
+    );
+    renderWithProviders(<NotebookListPage />);
+    await screen.findByText('Noch kein Notizbuch');
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole('button', { name: 'Neues Notebook' }));
+    expect(await screen.findByText('Notebook konnte nicht erstellt werden')).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Erneut versuchen' }));
+
+    await waitFor(() => expect(calls).toBe(2));
   });
 
   it('asks before deleting and deletes after the confirmation', async () => {

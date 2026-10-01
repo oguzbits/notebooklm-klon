@@ -21,10 +21,8 @@ test('from sign-up to a cited passage, a note and back out', async ({ page }) =>
 
   // Empty state, then a notebook.
   await expect(page.getByText('Noch kein Notizbuch')).toBeVisible();
-  await page.getByRole('button', { name: 'Neues Notizbuch' }).click();
-  await page.getByLabel('Titel des Notizbuchs').fill('Smoke-Test');
-  await page.getByRole('button', { name: 'Anlegen' }).click();
-  await page.getByRole('link', { name: /Smoke-Test/ }).click();
+  await page.getByRole('button', { name: 'Neues Notebook' }).click();
+  await expect(page.getByLabel('Titel des Notizbuchs')).toHaveValue('Unbenanntes Notebook');
 
   // A refused file explains itself; a text file is read.
   await page.getByRole('button', { name: 'Quellen hinzufügen' }).click();

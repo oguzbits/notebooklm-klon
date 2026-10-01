@@ -157,9 +157,7 @@ describe('NotebookActions', () => {
     renderActions();
     const user = userEvent.setup();
 
-    await user.click(screen.getByRole('button', { name: /Notizbuch erstellen/ }));
-    await user.type(await screen.findByLabelText('Titel des Notizbuchs'), 'Neu');
-    await user.click(screen.getByRole('button', { name: 'Anlegen' }));
+    await user.click(screen.getByRole('button', { name: /Notebook erstellen/ }));
 
     expect(await screen.findByText('Neues Notizbuch offen')).toBeTruthy();
   });
