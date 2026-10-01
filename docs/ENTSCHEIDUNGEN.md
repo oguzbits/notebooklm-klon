@@ -487,7 +487,20 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   Engpass, und Google darf Eingaben zur Modellverbesserung nutzen; die README warnt davor, sensible Dokumente hochzuladen.
   Gäste kosten dabei kein Kontingent (Kopie ohne Modellaufruf).
 - **Plan B** bleibt Render + Neon (oder Render bezahlt, damit der Dienst nicht einschläft; Preise nicht geprüft).
-- **Offen:** Deploy-Dateien (Compose, Caddyfile, Workflow, Anleitung) sind nicht geschrieben.
+- **Geschrieben (ungetestet auf einem echten Server):** [deploy/](../deploy/) und [deploy.yml](../.github/workflows/deploy.yml),
+  Anleitung in der README. Kleine Entscheidungen dazu:
+  - Das Image wird in GitHub Actions gebaut und per `docker save | ssh docker load` übertragen: keine Registry, kein
+    Repository-Zugriff auf dem Server, keine zusätzlichen Geheimnisse.
+  - Docker und Compose kommen aus den Ubuntu-Paketen (`docker.io`, `docker-compose-v2`) statt aus einem Install-Skript aus dem
+    Netz: weniger Angriffsfläche, ältere Version genügt.
+  - Postgres hört nur auf `127.0.0.1` des Servers; das Beispiel-Notizbuch wird über einen SSH-Tunnel angelegt, weil `seed:demo`
+    nicht im Produktions-Image liegt.
+  - Caddy ohne `encode` und mit `flush_interval -1`, damit die gestreamte Antwort nicht gepuffert wird.
+  - SeaweedFS bekommt seine Zugangsdaten über eine vom Bootstrap erzeugte `s3.json` (nicht im Repository), weil die
+    Umgebungsvariablen-Variante nicht geprüft ist. Das Volume ist nicht im Backup; nur die Datenbank wird gesichert.
+  - Das Deploy läuft nach grünem CI (`workflow_run`) oder von Hand; `concurrency` verhindert zwei gleichzeitige Deployments.
+  - Zu prüfen beim ersten Lauf: `caddy:2` und die Hostname-Zertifikate bei sslip.io (Let's-Encrypt-Limits, Caddy weicht auf
+    ZeroSSL aus), Speicherbedarf mit `docker stats`.
 
 ## 2026-10-01 (Abgleich, Runde 4: fehlende Kleinigkeiten)
 

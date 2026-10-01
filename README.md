@@ -167,12 +167,29 @@ Beispiel-Notizbuch anlegen (braucht den Schlüssel, liest drei Beispieldokumente
 
 ## Deployment
 
-> Stand: Es ist noch nichts deployt. Vorbereitet ist der Weg unten (Render + Neon). Geplant ist stattdessen ein Hetzner-Server, weil Render und Neon im kostenlosen Tarif einschlafen. Begründung und Setup: [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md), Abschnitt „Deployment: Entscheidung und Stand“.
+> Stand: Es ist noch nichts deployt. Vorbereitet ist ein Hetzner-Server (Weg 1). Weg 2 (Render + Neon) ist der Plan B, schläft aber im kostenlosen Tarif ein. Begründung: [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md), Abschnitt „Deployment: Entscheidung und Stand“.
+
+### Weg 1: Hetzner Cloud (Docker Compose, Caddy)
+
+Dateien in [deploy/](deploy/): [docker-compose.prod.yml](deploy/docker-compose.prod.yml) (Caddy mit automatischem HTTPS, App, Postgres mit pgvector, SeaweedFS für die Titelbilder), [Caddyfile](deploy/Caddyfile), [bootstrap.sh](deploy/bootstrap.sh) (Ersteinrichtung), [backup.sh](deploy/backup.sh) (täglicher `pg_dump`, 7 Tage). Der Workflow [deploy.yml](.github/workflows/deploy.yml) baut das Image, schickt es per SSH an den Server und startet den Stack, sobald CI auf `main` grün ist. Der Server braucht weder Zugriff auf das Repository noch eine Registry.
+
+1. Server CX23 mit Ubuntu 24.04 buchen, SSH-Schlüssel hinterlegen, Hetzner-Firewall mit 22, 80 und 443 (TCP) anlegen und zuweisen. Für den Deploy-Benutzer ein eigenes Schlüsselpaar erzeugen: `ssh-keygen -t ed25519 -f deploy_key -N ""`.
+2. Hostname festlegen: ohne eigene Domain `<IP mit Bindestrichen>.sslip.io`, zum Beispiel `203-0-113-7.sslip.io`. Eine eigene Domain mit A-Eintrag geht genauso.
+3. Auf den Server kopieren und als root ausführen: `bash bootstrap.sh <Hostname> "<Inhalt von deploy_key.pub>"`. Das installiert Docker, legt Swap, Benutzer `deploy`, Firewall und Backup an und schreibt `/srv/nlm/server.env` mit frisch erzeugten Geheimnissen.
+4. In `/srv/nlm/server.env` die Werte `FILL_IN` ersetzen: eigener Google-Schlüssel (eigenes Projekt, damit Tests das Kontingent der Prüfer nicht verbrauchen), die vier Modell-Namen (aus `apps/api/src/config`, vorher gegen die Google-Doku prüfen), `SEED_DEMO_EMAIL`. Optional `TAVILY_API_KEY=...` anhängen.
+5. In GitHub unter Settings > Secrets and variables > Actions anlegen: `DEPLOY_HOST` (Hostname), `DEPLOY_SSH_KEY` (Inhalt von `deploy_key`), `DEPLOY_KNOWN_HOSTS` (Ausgabe von `ssh-keyscan -t ed25519 <Hostname>`, mit dem Fingerabdruck aus der Hetzner-Konsole vergleichen).
+6. Workflow „Deploy“ von Hand starten (Actions > Deploy > Run workflow). Danach läuft er nach jedem grünen CI-Lauf auf `main`.
+7. Beispiel-Notizbuch: Die Datenbank hört nur auf `127.0.0.1` des Servers. Tunnel öffnen: `ssh -N -L 5433:127.0.0.1:5432 deploy@<Hostname>`. In einer zweiten Shell, im Repository, `DATABASE_URL`, `SEED_DEMO_EMAIL`, `SEED_DEMO_PASSWORD` und den Schlüssel setzen und `pnpm seed:demo` ausführen (`DATABASE_URL` mit Port 5433 und dem `POSTGRES_PASSWORD` aus `server.env`).
+8. Uptime-Check auf `https://<Hostname>/health` einrichten (zum Beispiel UptimeRobot, kostenlos). Live-Link, Demo-Zugang und Loom-Link in die README eintragen.
+
+Speicher: Auf 4 GB RAM laufen alle vier Dienste; `docker stats` nach dem ersten Lauf ansehen. Die Titelbilder (Volume `s3data`) sind nicht Teil des Backups.
+
+### Weg 2: Render + Neon (Plan B)
 
 Ein Container aus dem [Dockerfile](Dockerfile), beschrieben in [render.yaml](render.yaml) (Render, Region Frankfurt). Die Datenbank ist Neon (kostenlos, 500 MB, pgvector). Ablauf:
 
 1. Neon-Projekt anlegen, die **direkte** Verbindung (ohne `-pooler` im Host) als `DATABASE_URL` nehmen. Migrationen und die Job-Queue brauchen Funktionen, die ein Pooler nicht bietet.
-2. Auf Render ein Blueprint aus diesem Repository anlegen und die abgefragten Werte eintragen. Für den Schlüssel ein eigenes Google-Projekt nutzen, damit das Testen das Kontingent der Prüfer nicht verbraucht.
+2. Auf Render ein Blueprint aus diesem Repository anlegen und die abgefragten Werte eintragen. Für den Schlüssel ein eigenes Google-Projekt nutzen.
 3. Nach dem ersten Deploy die URL des Dienstes als `BETTER_AUTH_URL` eintragen und neu deployen.
 4. `SEED_DEMO_EMAIL` in der Umgebung der App setzen, dann einmalig von einem Rechner aus mit der Produktions-`DATABASE_URL`: `pnpm seed:demo`. Ohne dieses Beispiel antwortet „Beispiel ausprobieren“ mit einer Fehlermeldung.
 
