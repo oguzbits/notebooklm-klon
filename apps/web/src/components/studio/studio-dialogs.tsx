@@ -2,6 +2,8 @@ import { type Note, NOTE_KIND, type StudioOutput } from '@nlm/shared';
 
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { RenameDialog } from '@/components/ui/rename-dialog';
+import type { useDeleteNote } from '@/hooks/use-notes';
+import type { useUpdateStudioOutput } from '@/hooks/use-studio';
 import { describeError } from '@/lib/messages';
 
 /** Asks before a note is deleted; only a saved answer has a copy that stays in the chat. */
@@ -57,5 +59,54 @@ export function RenameOutputDialog({
       error={error ? describeError(error) : null}
       onSave={(title, close) => output && onSave(output.id, title, close)}
     />
+  );
+}
+
+type RemoveNote = ReturnType<typeof useDeleteNote>;
+type Update = ReturnType<typeof useUpdateStudioOutput>;
+
+/** The two questions the list can ask: delete this note, and what an output should be called. */
+export function StudioDialogs({
+  noteToDelete,
+  outputToRename,
+  removeNote,
+  update,
+  onClose,
+  onDone,
+}: {
+  noteToDelete: Note | null;
+  outputToRename: StudioOutput | null;
+  removeNote: RemoveNote;
+  update: Update;
+  /** Closes the question that is open. */
+  onClose: () => void;
+  /** A deleted note was open: the view goes back to the list. */
+  onDone: () => void;
+}) {
+  return (
+    <>
+      <DeleteNoteDialog
+        note={noteToDelete}
+        pending={removeNote.isPending}
+        onCancel={onClose}
+        onConfirm={(noteId) =>
+          removeNote.mutate(noteId, {
+            onSuccess: () => {
+              onClose();
+              onDone();
+            },
+          })
+        }
+      />
+      <RenameOutputDialog
+        output={outputToRename}
+        pending={update.isPending}
+        error={update.error}
+        onCancel={onClose}
+        onSave={(outputId, title, close) =>
+          update.mutate({ outputId, changes: { title } }, { onSuccess: close })
+        }
+      />
+    </>
   );
 }

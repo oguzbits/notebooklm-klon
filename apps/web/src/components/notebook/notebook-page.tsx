@@ -1,14 +1,11 @@
 import { useCallback, useState } from 'react';
 import { useParams } from 'react-router';
 
-import { AppHeader } from '@/components/layout/app-header';
 import { ColumnTabs } from '@/components/notebook/column-tabs';
 import { CustomizeNotebookDialog } from '@/components/notebook/customize-notebook-dialog';
-import { NotebookActions } from '@/components/notebook/notebook-actions';
 import { ChatColumn, SourcesColumn, StudioColumn } from '@/components/notebook/notebook-columns';
+import { NotebookHeader } from '@/components/notebook/notebook-header';
 import { NotebookLoadFailed, NotebookNotFound } from '@/components/notebook/notebook-states';
-import { NotebookTitle } from '@/components/notebook/notebook-title';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useNotebookLayout } from '@/hooks/use-notebook-layout';
 import { useNotebook } from '@/hooks/use-notebooks';
 import { useWideLayout } from '@/hooks/use-wide-layout';
@@ -46,20 +43,7 @@ export function NotebookPage() {
 
   return (
     <>
-      <AppHeader
-        title={
-          notebook.data ? (
-            <NotebookTitle key={notebook.data.title} notebook={notebook.data} />
-          ) : (
-            <Skeleton className="h-7 w-64 max-w-[40vw]" aria-hidden />
-          )
-        }
-        actions={
-          notebook.data ? (
-            <NotebookActions notebook={notebook.data} onCustomize={customize} />
-          ) : undefined
-        }
-      />
+      <NotebookHeader notebook={notebook.data} onCustomize={customize} />
       <ColumnTabs column={layout.column} onSelect={layout.setColumn} />
       <div className="flex min-h-0 flex-1 px-4 wide:mx-3 wide:gap-2 wide:px-0">
         <SourcesColumn

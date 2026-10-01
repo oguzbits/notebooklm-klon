@@ -1,4 +1,3 @@
-import { SOURCE_STATUS } from '@nlm/shared';
 import { memo, useEffect, useRef } from 'react';
 
 import { Conversation } from '@/components/chat/conversation';
@@ -6,11 +5,9 @@ import { JumpToEndButton } from '@/components/chat/jump-to-end-button';
 import { NotebookOverview } from '@/components/chat/notebook-overview';
 import { QuestionForm } from '@/components/chat/question-form';
 import { ErrorNotice } from '@/components/query-boundary';
-import { useAskQuestion, useChatHistory } from '@/hooks/use-chat';
+import { useChatSession } from '@/hooks/use-chat-session';
 import { type IncomingQuestion, useIncomingQuestion } from '@/hooks/use-incoming-question';
-import { useSuggestedQuestions } from '@/hooks/use-overview';
 import { useScrollEnd } from '@/hooks/use-scroll-end';
-import { useSources } from '@/hooks/use-sources';
 
 const NO_SOURCE_HINT =
   'Wähle links mindestens eine fertig gelesene Quelle aus, um Fragen zu stellen.';
@@ -29,20 +26,10 @@ export const ChatPanel = memo(function ChatPanel({
   /** A question from elsewhere on the page, asked once when it is new (its ID counts up). */
   incoming?: IncomingQuestion | null;
 }) {
-  const history = useChatHistory(notebookId);
-  const sources = useSources(notebookId);
-  const ask = useAskQuestion(notebookId);
-  const suggestions = useSuggestedQuestions(notebookId, sources.data ?? []);
+  const { history, sources, ask, suggestions, usable, hasReady, canAsk } =
+    useChatSession(notebookId);
   const { scroller, atEnd, trackEnd, jumpToEnd } = useScrollEnd();
   const bottom = useRef<HTMLDivElement>(null);
-
-  const list = sources.data ?? [];
-  const usable = list.filter(
-    (source) => source.selected && source.status === SOURCE_STATUS.READY
-  ).length;
-  // With a source that is read, the overview of the notebook leads the chat.
-  const hasReady = list.some((source) => source.status === SOURCE_STATUS.READY);
-  const canAsk = usable > 0 && !ask.isPending;
 
   const liveCount = ask.live?.statements.length ?? 0;
   useEffect(() => {

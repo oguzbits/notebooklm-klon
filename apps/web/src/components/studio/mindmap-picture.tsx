@@ -16,8 +16,9 @@ export interface MapColors {
   background: string;
 }
 
+/** The root, the branches and everything below them each have their own tone. */
 const fillOf = (depth: number, colors: MapColors) =>
-  depth === 0 ? colors.root : depth === 1 ? colors.branch : colors.leaf;
+  [colors.root, colors.branch][depth] ?? colors.leaf;
 
 /** The visible map as an SVG picture: the links, then the nodes with their labels. */
 function MindmapPicture({ layout, colors }: { layout: Layout; colors: MapColors }) {

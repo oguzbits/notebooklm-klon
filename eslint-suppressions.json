@@ -118,9 +118,6 @@
     }
   },
   "apps/web/src/components/chat/chat-panel.tsx": {
-    "complexity": {
-      "count": 1
-    },
     "max-lines-per-function": {
       "count": 1
     }
@@ -157,9 +154,6 @@
     }
   },
   "apps/web/src/components/notebook/notebook-page.tsx": {
-    "complexity": {
-      "count": 1
-    },
     "max-lines-per-function": {
       "count": 1
     }
@@ -225,11 +219,6 @@
   },
   "apps/web/src/components/studio/library-row.tsx": {
     "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "apps/web/src/components/studio/mindmap-picture.tsx": {
-    "no-nested-ternary": {
       "count": 1
     }
   },
