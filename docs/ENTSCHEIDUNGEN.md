@@ -698,3 +698,24 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
 - Über das Original hinaus: Tastatur (Pfeiltasten verschieben die Kante um 16 px) und ein ARIA-Trenner mit Beschriftung
   („Breite der Quellen ändern“, „Breite des Studios ändern“). Unter 66 rem (schmale Ansicht) gibt es keine Trenner.
 - Geprüft im Browser bei 1720 px: Ziehen, Anschlag am 285-px-Chat, Tastatur, Einklappen und Wiederherstellen.
+
+## 2026-10-01 (Datentabelle im Studio)
+
+- Gebaut, weil das Original sie hat und der Zitat-Vertrag sich gut auf Zellen übertragen lässt. Eine Anfrage hat nur
+  Quellen und Fokus, keine Größe und keine Schwierigkeit: Das Modell wählt die Spalten selbst (2 bis 8), der Nutzer sagt im
+  Fokus, was verglichen werden soll.
+- Vertrag (`DataTableSchema` in `packages/shared`): `title`, `columns` und `rows`, jede Zeile hat so viele `cells` wie Spalten,
+  jede Zelle `text` und `chunkIds`. Die Prüfung steht in `core/studio-check.ts` (dorthin ausgelagert, damit die Datei unter
+  300 Zeilen bleibt).
+- Zitate pro Zelle: Eine Zelle ohne gültiges Zitat wird geleert (`{ text: '', chunkIds: [] }`) statt die ganze Zeile zu
+  verwerfen; sonst gingen bei einer Tabelle mit vielen Spalten fast alle Zeilen verloren. Eine Zeile bleibt nur, wenn die
+  erste Zelle und mindestens eine weitere gefüllt sind. Zeilen mit falscher Zellenzahl fallen weg. `dropped` zählt verworfene
+  Zeilen und geleerte Zellen in behaltenen Zeilen. Bleibt nichts übrig, gibt es `EmptyStudioOutputError` wie bei den anderen
+  Formaten. Leere Zellen zeigt die Ansicht als „–“.
+- Ansicht: Brotkrumen, Titel, Kopf „N Quellen ansehen“, scrollbare Tabelle mit fixierter Kopfzeile, Zitat-Chips in jeder
+  Zelle, „Guter/Schlechter Inhalt“ über das vorhandene `feedback`. Die Tabelle ist nur lesbar (kein Export nach Google
+  Tabellen: bräuchte Google-Anmeldung).
+- `studioPrompt` hatte die Komplexitätsgrenze 10 erreicht: Die Anweisung für Mindmap und Datentabelle steht in `SHAPE_PROMPT`,
+  der Bericht in `reportPrompt`.
+- Der Offline-Server (`e2e/server.ts`) kannte die Schlüssel der Antwortformen als Liste; `rows` fehlte, die Datentabelle bekam
+  dort eine Chat-Antwort. Der Smoke-Test (Playwright) prüft jetzt auch die Tabelle und deckt so diese Liste ab.

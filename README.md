@@ -20,7 +20,7 @@ Bewerbungsaufgabe für Everlast AI (zweite Runde). Der Schwerpunkt liegt auf dem
 - **Übersicht pro Quelle**: Zusammenfassung, Schlüsselthemen und Vorschlagsfragen, die das Gespräch starten.
 - **Übersicht des Notizbuchs** am Anfang des Chats: ein Emoji, der Titel, die Zahl der Quellen und eine Zusammenfassung aller fertigen Quellen mit fetten Schlüsselbegriffen. Sie entsteht einmal, wenn sich die Quellen ändern, und lässt sich als Notiz speichern oder kopieren.
 - **Notizen** aus Antworten, mit erhaltenen Zitaten, und eigene Notizen mit Editor (Format-Leiste, wird beim Tippen gespeichert, auf Wunsch als Quelle).
-- **Studio**: Bericht (Briefing, FAQ, Lernleitfaden, Blogbeitrag oder eigene Anweisung), Karteikarten, Quiz und Mindmap aus den gewählten Quellen. Vor dem Erzeugen lassen sich Umfang und Schwierigkeit wählen; die Ausgaben tragen dieselben geprüften Zitate wie der Chat.
+- **Studio**: Bericht (Briefing, FAQ, Lernleitfaden, Blogbeitrag oder eigene Anweisung), Karteikarten, Quiz, Mindmap und Datentabelle aus den gewählten Quellen. Vor dem Erzeugen lassen sich Umfang und Schwierigkeit wählen; die Ausgaben tragen dieselben geprüften Zitate wie der Chat.
 - **Suche im Web** unter „Quellen hinzufügen“: Treffer ansehen und als Quelle übernehmen (Tavily, optional, mit Grenzen pro Nutzer und Tag).
 - **Notizbuch anpassen**: Titel, eigene Zusammenfassung und Titelbild (liegt in einem S3-kompatiblen Speicher, optional). Notizbücher lassen sich kopieren, auf der Startseite anpinnen und umbenennen.
 - **Quellen und Ausgaben** sortieren und umbenennen; der Chat hat „Nach unten springen“ und zeigt je Antwort das **Vorgehen** (wie viele Quellen und Stellen geprüft wurden).

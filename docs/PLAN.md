@@ -54,9 +54,9 @@ Abständen (neutrales Grau, Blau nur als Akzent), hell und dunkel.
 Logo und Name sind ausdrücklich erlaubt (Entscheidung des Nutzers); im Live-Demo steht ein Hinweis, dass es
 ein Nachbau für eine Bewerbung ist. Dazu:
 
-- **Studio-Spalte:** Bericht (Briefing, FAQ, Lernleitfaden), Karteikarten, Quiz, Mindmap. Alle Ausgaben
+- **Studio-Spalte:** Bericht (Briefing, FAQ, Lernleitfaden), Karteikarten, Quiz, Mindmap, Datentabelle (später ergänzt). Alle Ausgaben
   sind strukturiert, stützen sich auf die ausgewählten Quellen und folgen dem Zitat-Vertrag: Jeder
-  Abschnitt, jede Karte, jede Frage und jeder Ast verweist auf echte Passagen, der Server verwirft, was
+  Abschnitt, jede Karte, jede Frage, jede Zelle der Datentabelle und jeder Ast verweist auf echte Passagen, der Server verwirft, was
   nicht belegt ist. Notizen wohnen wie bei NotebookLM in der Studio-Spalte.
 - **Chat-Einstellungen pro Notizbuch:** Stil (Standard, Lernbegleiter, eigene Anweisung), Antwortlänge,
   Ausgabesprache (Standard: Sprache der Frage).
@@ -71,7 +71,7 @@ ein Nachbau für eine Bewerbung ist. Dazu:
 
 **Bewusst nicht**
 
-- Audio- und Video-Overview, Infografik, Präsentation, Datentabelle, Deep Research.
+- Audio- und Video-Overview, Infografik, Präsentation, Deep Research.
 - Später ergänzt (Runde 4): eine schnelle Websuche mit Tavily (ohne Deep Research) und ein Titelbild im S3-Speicher; siehe [ENTSCHEIDUNGEN.md](ENTSCHEIDUNGEN.md).
 - Sharing und Kollaboration, YouTube- oder Audio-Transkription, Drive-Anbindung. Eine eigene Handy-App entfällt; die Seite selbst hat ein Handy-Layout (Tabs).
 - Originaldateien speichern (nur extrahierter Text plus Metadaten).

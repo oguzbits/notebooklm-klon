@@ -118,7 +118,7 @@ Nachweis je Commit: `pnpm check`, `pnpm test`, Browser-Vergleich hell und dunkel
 
 - **Google-Kontext:** „Freigeben“, „PRO“, Apps-Raster, Empfohlene Notebooks, Drive-Import, Bücher.
 - **Web-Recherche:** gebaut mit Tavily, nur „Web“ mit schneller Suche; ohne Drive (bräuchte Google-Anmeldung mit Dateizugriff) und ohne Deep Research (dauert Minuten, teuer). Die Google-Suche im Gemini-Tarif ist kostenlos nicht nutzbar (429).
-- **Studio-Formate:** Audio, Präsentation, Video, Infografik, Datentabelle fehlen (laut Plan bewusst nicht).
+- **Studio-Formate:** Audio, Präsentation, Video, Infografik fehlen (laut Plan bewusst nicht). Die Datentabelle ist gebaut, siehe [ENTSCHEIDUNGEN.md](ENTSCHEIDUNGEN.md), Abschnitt „Datentabelle“.
 - **Gedankenschritte „Thoughts“:** nicht die Gedanken des Modells (englisch, teuer, siehe [SPIKE-ERGEBNISSE.md](SPIKE-ERGEBNISSE.md), Abschnitt 5), sondern „Vorgehen“ mit den echten Schritten des Servers.
 - **Gute/schlechte Antwort** (Daumen): kein Feedback-Speicher, kein Bedarf.
 - **Name:** „NotebookLM (Nachbau)“ statt „Gemini Notebook“ (siehe ENTSCHEIDUNGEN.md).

@@ -5,7 +5,7 @@ Gliederung nach [PLAN.md](PLAN.md#tagesplan). Vorher einmal komplett üben, mit 
 ## 1. Ziel und Umfang (1 Minute)
 
 - Aufgabe: NotebookLM-Klon in production-ready Qualität. Kern: ein Chat, der nur auf eigenen Quellen antwortet und jede Aussage belegt.
-- Gebaut: Anmeldung, Notizbücher, Quellen (PDF, DOCX, TXT, MD, Link), Chat mit Streaming, nummerierte Zitate mit Hover und Sprung zur Textstelle, Übersicht pro Quelle und pro Notizbuch, Vorschlagsfragen, Notizen mit Editor, Studio (Bericht, Karteikarten, Quiz, Mindmap), Chat-Konfiguration.
+- Gebaut: Anmeldung, Notizbücher, Quellen (PDF, DOCX, TXT, MD, Link), Chat mit Streaming, nummerierte Zitate mit Hover und Sprung zur Textstelle, Übersicht pro Quelle und pro Notizbuch, Vorschlagsfragen, Notizen mit Editor, Studio (Bericht, Karteikarten, Quiz, Mindmap, Datentabelle), Chat-Konfiguration.
 - Bewusst nicht gebaut: Audio, Präsentation, Video, Infografik, Daumen an Antworten. Grund: wenige Funktionen in hoher Qualität statt vieler halber.
 
 ## 2. Vorgehen und Architektur (3 Minuten)
