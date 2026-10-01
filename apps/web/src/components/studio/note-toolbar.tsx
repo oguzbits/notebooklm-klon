@@ -36,20 +36,16 @@ const URL_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
 /** A web address without a scheme ("tiptap.dev") is meant as https, not as a path on this site. */
 const withScheme = (address: string) => (URL_SCHEME.test(address) ? address : `https://${address}`);
 
-function ToolButton({
-  label,
-  icon: Icon,
-  onClick,
-  active,
-  disabled = false,
-}: {
+interface ToolButtonProps {
   label: string;
   icon: LucideIcon;
   onClick: () => void;
   /** Set for a tool that is on or off (bold); left out for one that only acts (undo). */
   active?: boolean;
   disabled?: boolean;
-}) {
+}
+
+function ToolButton({ label, icon: Icon, onClick, active, disabled = false }: ToolButtonProps) {
   return (
     <Button
       variant="ghost"
@@ -74,8 +70,13 @@ const Divider = () => (
   <span aria-hidden className="mx-2 hidden h-5 w-px bg-border min-[480px]:block" />
 );
 
+interface StyleMenuProps {
+  editor: Editor;
+  level: number;
+}
+
 /** "Normal ▾": the paragraph style, as a menu of the six heading levels and plain text. */
-function StyleMenu({ editor, level }: { editor: Editor; level: number }) {
+function StyleMenu({ editor, level }: StyleMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -116,16 +117,14 @@ function StyleMenu({ editor, level }: { editor: Editor; level: number }) {
   );
 }
 
-/** "Verknüpfen": gives the selected text an address, changes it, or takes it away. */
-function LinkTool({
-  editor,
-  active,
-  enabled,
-}: {
+interface LinkToolProps {
   editor: Editor;
   active: boolean;
   enabled: boolean;
-}) {
+}
+
+/** "Verknüpfen": gives the selected text an address, changes it, or takes it away. */
+function LinkTool({ editor, active, enabled }: LinkToolProps) {
   const [open, setOpen] = useState(false);
   const [address, setAddress] = useState('');
 
@@ -199,18 +198,15 @@ function LinkTool({
   );
 }
 
-/** "⋯": the tools that do not fit in the bar, as a short row of symbols, like in the original. */
-function MoreTools({
-  editor,
-  bullets,
-  numbers,
-  quote,
-}: {
+interface MoreToolsProps {
   editor: Editor;
   bullets: boolean;
   numbers: boolean;
   quote: boolean;
-}) {
+}
+
+/** "⋯": the tools that do not fit in the bar, as a short row of symbols, like in the original. */
+function MoreTools({ editor, bullets, numbers, quote }: MoreToolsProps) {
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -265,11 +261,15 @@ function MoreTools({
   );
 }
 
+interface NoteToolbarProps {
+  editor: Editor;
+}
+
 /**
  * The bar above the text of a note, in the order of the original: undo and redo, the text style,
  * bold and italic, link, code and code block, and a menu with the rest.
  */
-export function NoteToolbar({ editor }: { editor: Editor }) {
+export function NoteToolbar({ editor }: NoteToolbarProps) {
   const state = useEditorState({
     editor,
     selector: ({ editor: current }) => ({

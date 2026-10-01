@@ -12,7 +12,12 @@ import { describeError } from '@/lib/messages';
 /** The domain of an address, for the line under the title. */
 const domainOf = (address: string) => new URL(address).hostname.replace(/^www\./, '');
 
-function ResultRow({ notebookId, result }: { notebookId: string; result: WebSearchResult }) {
+interface ResultRowProps {
+  notebookId: string;
+  result: WebSearchResult;
+}
+
+function ResultRow({ notebookId, result }: ResultRowProps) {
   const add = useAddUrl(notebookId);
 
   return (
@@ -50,12 +55,16 @@ function ResultRow({ notebookId, result }: { notebookId: string; result: WebSear
   );
 }
 
+interface WebSearchBoxProps {
+  notebookId: string;
+}
+
 /**
  * "Im Web nach neuen Quellen suchen" of the original, under "Quellen hinzufügen": a field, and the
  * pages that were found with a button to add each as a source. It is shown only where the server has
  * a search service. Adding a page is the normal import of a web address, with all its checks.
  */
-export function WebSearchBox({ notebookId }: { notebookId: string }) {
+export function WebSearchBox({ notebookId }: WebSearchBoxProps) {
   const capabilities = useCapabilities();
   const search = useWebSearch();
   const [query, setQuery] = useState('');

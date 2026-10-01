@@ -5,20 +5,18 @@ import { SourceKindIcon } from '@/components/sources/kind-icon';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useSources } from '@/hooks/use-sources';
 
+interface PromptChipProps {
+  notebookId: string;
+  request: StudioRequest;
+  withPrompt: boolean;
+}
+
 /**
  * "Prompt und 2 Quellen ansehen": a chip under the title that opens how the output was asked for
  * (the instruction in words) and the sources it was made from. Where the original shows no prompt
  * (cards, quiz, mind map), the chip names the sources only.
  */
-export function PromptChip({
-  notebookId,
-  request,
-  withPrompt,
-}: {
-  notebookId: string;
-  request: StudioRequest;
-  withPrompt: boolean;
-}) {
+export function PromptChip({ notebookId, request, withPrompt }: PromptChipProps) {
   const sources = useSources(notebookId);
   const count = request.sources.length;
   const sourcesText = `${count} ${count === 1 ? 'Quelle' : 'Quellen'}`;

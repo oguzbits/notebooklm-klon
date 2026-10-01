@@ -20,6 +20,12 @@ import { coverUrl, useRemoveCover, useUpdateNotebook, useUploadCover } from '@/h
 import { useCapabilities } from '@/hooks/use-web-search';
 import { describeError } from '@/lib/messages';
 
+interface CustomizeNotebookDialogProps {
+  notebook: Notebook;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
 /**
  * "Notebook anpassen" of the original: the title of the notebook and a summary of your own that is
  * shown instead of the one made from the sources. Only what changed is sent. The form starts from the
@@ -29,11 +35,7 @@ export function CustomizeNotebookDialog({
   notebook,
   open,
   onOpenChange,
-}: {
-  notebook: Notebook;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
+}: CustomizeNotebookDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[640px]">
@@ -43,8 +45,12 @@ export function CustomizeNotebookDialog({
   );
 }
 
+interface CoverPickerProps {
+  notebook: Notebook;
+}
+
 /** The cover image: the picture (or a placeholder), a button to choose a file and one to take it back. */
-function CoverPicker({ notebook }: { notebook: Notebook }) {
+function CoverPicker({ notebook }: CoverPickerProps) {
   const upload = useUploadCover(notebook.id);
   const remove = useRemoveCover(notebook.id);
   const input = useRef<HTMLInputElement>(null);
@@ -116,7 +122,12 @@ function CoverPicker({ notebook }: { notebook: Notebook }) {
   );
 }
 
-function CustomizeForm({ notebook, onDone }: { notebook: Notebook; onDone: () => void }) {
+interface CustomizeFormProps {
+  notebook: Notebook;
+  onDone: () => void;
+}
+
+function CustomizeForm({ notebook, onDone }: CustomizeFormProps) {
   const update = useUpdateNotebook(notebook.id);
   const capabilities = useCapabilities();
   const [title, setTitle] = useState(notebook.title);

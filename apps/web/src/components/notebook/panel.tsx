@@ -10,6 +10,24 @@ const RAIL_GONE = 'invisible opacity-0';
 /** Below the wide layout nothing folds, so the content is always there. */
 const CONTENT_GONE = 'wide:invisible wide:opacity-0';
 
+interface PanelProps {
+  title: string;
+  /** Which edge the panel sits on; decides the icon of the collapse button. */
+  side?: 'left' | 'right';
+  /** No surface of its own: the page shows through. */
+  bare?: boolean;
+  collapsed?: boolean;
+  onToggle?: () => void;
+  /** Written by the content instead of the title (a path back, "Studio › Notiz"). */
+  header?: ReactNode;
+  /** Replaces the collapse button in the header (the reader puts its close button there). */
+  action?: ReactNode;
+  /** What the folded panel shows under its open button. */
+  rail?: ReactNode;
+  className?: string;
+  children: ReactNode;
+}
+
 /**
  * One of the three columns. The sources and the Studio are surfaces with 32px corners, 8px of
  * padding inside a 1px invisible border and 12px of space below; the chat (`bare`) sits directly on
@@ -32,23 +50,7 @@ export function Panel({
   rail,
   className,
   children,
-}: {
-  title: string;
-  /** Which edge the panel sits on; decides the icon of the collapse button. */
-  side?: 'left' | 'right';
-  /** No surface of its own: the page shows through. */
-  bare?: boolean;
-  collapsed?: boolean;
-  onToggle?: () => void;
-  /** Written by the content instead of the title (a path back, "Studio › Notiz"). */
-  header?: ReactNode;
-  /** Replaces the collapse button in the header (the reader puts its close button there). */
-  action?: ReactNode;
-  /** What the folded panel shows under its open button. */
-  rail?: ReactNode;
-  className?: string;
-  children: ReactNode;
-}) {
+}: PanelProps) {
   const left = side === 'left';
   const Close = left ? PanelLeftClose : PanelRightClose;
   const Open = left ? PanelLeftOpen : PanelRightOpen;

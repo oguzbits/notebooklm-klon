@@ -26,14 +26,13 @@ const DIALOG = {
 } as const;
 type Dialog = (typeof DIALOG)[keyof typeof DIALOG];
 
-/** What the header offers for one notebook: make a new one, and the menu with its settings. */
-export function NotebookActions({
-  notebook,
-  onCustomize,
-}: {
+interface NotebookActionsProps {
   notebook: Notebook;
   onCustomize: () => void;
-}) {
+}
+
+/** What the header offers for one notebook: make a new one, and the menu with its settings. */
+export function NotebookActions({ notebook, onCustomize }: NotebookActionsProps) {
   const navigate = useNavigate();
   const clear = useClearChat(notebook.id);
   const remove = useDeleteNotebook();

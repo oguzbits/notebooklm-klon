@@ -7,12 +7,17 @@ import { cn } from '@/lib/utils';
 
 const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
 
+interface AnswerTraceViewProps {
+  trace: AnswerTrace;
+  statements: number;
+}
+
 /**
  * "Thoughts" of the original, honestly: a closed line under the question that opens to the steps
  * the server really took for this answer (searched the sources, wrote and checked the statements),
  * in German. There are no thoughts of the model in it, only what was done and what was left out.
  */
-export function AnswerTraceView({ trace, statements }: { trace: AnswerTrace; statements: number }) {
+export function AnswerTraceView({ trace, statements }: AnswerTraceViewProps) {
   const [open, setOpen] = useState(false);
   const found =
     trace.passagesFound === 0

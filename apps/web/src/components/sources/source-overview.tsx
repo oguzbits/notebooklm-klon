@@ -6,17 +6,16 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useOverview } from '@/hooks/use-overview';
 
+interface SourceOverviewCardProps {
+  notebookId: string;
+  sourceId: string;
+}
+
 /**
  * The card on top of the reader: a summary of the source and its key topics, made on first view.
  * It folds away with the arrow, like in NotebookLM.
  */
-export function SourceOverviewCard({
-  notebookId,
-  sourceId,
-}: {
-  notebookId: string;
-  sourceId: string;
-}) {
+export function SourceOverviewCard({ notebookId, sourceId }: SourceOverviewCardProps) {
   const overview = useOverview(notebookId, sourceId, true);
   const [open, setOpen] = useState(true);
   const toggleLabel = `Quellenübersicht ${open ? 'schließen' : 'öffnen'}`;

@@ -10,6 +10,20 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
+interface LibraryRowProps {
+  icon: LucideIcon;
+  iconClassName: string;
+  title: string;
+  subtitle: string;
+  /** Nobody has opened it yet: a blue dot stands where the menu is until the pointer comes. */
+  unread?: boolean;
+  deleting: boolean;
+  onOpen: () => void;
+  /** Where a name can be changed from the menu; notes are renamed in their editor. */
+  onRename?: () => void;
+  onDelete: () => void;
+}
+
 /**
  * One line of the list of the Studio: what was made or saved, 60px high like in the original. The
  * title opens it, the menu at the end deletes it.
@@ -24,19 +38,7 @@ export function LibraryRow({
   onOpen,
   onRename,
   onDelete,
-}: {
-  icon: LucideIcon;
-  iconClassName: string;
-  title: string;
-  subtitle: string;
-  /** Nobody has opened it yet: a blue dot stands where the menu is until the pointer comes. */
-  unread?: boolean;
-  deleting: boolean;
-  onOpen: () => void;
-  /** Where a name can be changed from the menu; notes are renamed in their editor. */
-  onRename?: () => void;
-  onDelete: () => void;
-}) {
+}: LibraryRowProps) {
   return (
     <li className={cn('group/row veil flex items-center rounded-xl', deleting && 'opacity-50')}>
       <Tooltip>

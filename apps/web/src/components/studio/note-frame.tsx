@@ -10,21 +10,17 @@ import { useUpdateNote } from '@/hooks/use-notes';
 import { useUploadFile } from '@/hooks/use-sources';
 import { describeError } from '@/lib/messages';
 
-/** Puts the text of a note among the sources, as a file, like pasted text does. */
-function AddAsSource({
-  notebookId,
-  fileName,
-  type,
-  getText,
-  disabled,
-}: {
+interface AddAsSourceProps {
   notebookId: string;
   fileName: string;
   type: string;
   /** The text as it is now, which for a note being written is newer than the saved one. */
   getText: () => string;
   disabled: boolean;
-}) {
+}
+
+/** Puts the text of a note among the sources, as a file, like pasted text does. */
+function AddAsSource({ notebookId, fileName, type, getText, disabled }: AddAsSourceProps) {
   const upload = useUploadFile(notebookId);
   const [added, setAdded] = useState(false);
 
@@ -60,6 +56,23 @@ function AddAsSource({
   );
 }
 
+interface NoteFrameProps {
+  notebookId: string;
+  note: Note;
+  deleting: boolean;
+  onDelete: () => void;
+  toolbar?: ReactNode;
+  getSourceText: () => string;
+  sourceType: string;
+  /** True while there is nothing to make a source of. */
+  sourceDisabled?: boolean;
+  /** A failure to save, above the footer (only a note of the reader is saved as it is typed). */
+  problem?: ReactNode;
+  /** A quiet word on saving, at the right of "Als Quelle festlegen". */
+  footerNote?: ReactNode;
+  children: ReactNode;
+}
+
 /**
  * The frame of one note in full, like the original: its title as a field with the trash can, the
  * tools (for a note of the reader), the text, and "Als Quelle festlegen" with what is known about
@@ -77,22 +90,7 @@ export function NoteFrame({
   problem,
   footerNote,
   children,
-}: {
-  notebookId: string;
-  note: Note;
-  deleting: boolean;
-  onDelete: () => void;
-  toolbar?: ReactNode;
-  getSourceText: () => string;
-  sourceType: string;
-  /** True while there is nothing to make a source of. */
-  sourceDisabled?: boolean;
-  /** A failure to save, above the footer (only a note of the reader is saved as it is typed). */
-  problem?: ReactNode;
-  /** A quiet word on saving, at the right of "Als Quelle festlegen". */
-  footerNote?: ReactNode;
-  children: ReactNode;
-}) {
+}: NoteFrameProps) {
   const update = useUpdateNote(notebookId);
 
   return (

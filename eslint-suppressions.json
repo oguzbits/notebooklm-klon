@@ -188,32 +188,12 @@
       "count": 1
     }
   },
-  "apps/web/src/components/studio/note-frame.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "apps/web/src/components/studio/note-toolbar.tsx": {
     "max-lines": {
       "count": 1
     },
     "max-lines-per-function": {
-      "count": 3
-    }
-  },
-  "apps/web/src/components/studio/output-viewer.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "apps/web/src/components/studio/prompt-chip.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "apps/web/src/components/studio/viewer-frame.tsx": {
-    "max-lines-per-function": {
-      "count": 1
+      "count": 2
     }
   }
 }

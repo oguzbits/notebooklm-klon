@@ -48,17 +48,14 @@ const LANGUAGE_OPTIONS = [
   [CHAT_LANGUAGE.EN, 'Englisch'],
 ] as const;
 
-function Option({
-  group,
-  value,
-  label,
-  hint,
-}: {
+interface OptionProps {
   group: string;
   value: string;
   label: string;
   hint?: string;
-}) {
+}
+
+function Option({ group, value, label, hint }: OptionProps) {
   const id = `${group}-${value}`;
   return (
     <div className="flex items-start gap-3 rounded-2xl px-2 py-2 hover:bg-secondary">
@@ -71,15 +68,13 @@ function Option({
   );
 }
 
-function SettingsForm({
-  notebookId,
-  initial,
-  onSaved,
-}: {
+interface SettingsFormProps {
   notebookId: string;
   initial: ChatConfig;
   onSaved: () => void;
-}) {
+}
+
+function SettingsForm({ notebookId, initial, onSaved }: SettingsFormProps) {
   const [config, setConfig] = useState(initial);
   const save = useSaveChatConfig(notebookId);
   const missingInstruction =
@@ -164,16 +159,14 @@ function SettingsForm({
   );
 }
 
-/** The chat settings of one notebook, opened from the menu of the notebook. */
-export function ChatSettingsDialog({
-  notebookId,
-  open,
-  onOpenChange,
-}: {
+interface ChatSettingsDialogProps {
   notebookId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}) {
+}
+
+/** The chat settings of one notebook, opened from the menu of the notebook. */
+export function ChatSettingsDialog({ notebookId, open, onOpenChange }: ChatSettingsDialogProps) {
   const config = useChatConfig(notebookId, open);
 
   return (

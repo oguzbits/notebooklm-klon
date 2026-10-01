@@ -9,8 +9,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useChunk, useSourceText } from '@/hooks/use-reader';
 import type { ReaderTarget } from '@/lib/reader-target';
 
+interface CloseReaderButtonProps {
+  onClick: () => void;
+}
+
 /** The button in the header of the sources that leaves the reader, like in the original. */
-export function CloseReaderButton({ onClick }: { onClick: () => void }) {
+export function CloseReaderButton({ onClick }: CloseReaderButtonProps) {
   return (
     <Button
       variant="ghost"
@@ -24,7 +28,12 @@ export function CloseReaderButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-export function ReaderPanel({ notebookId, target }: { notebookId: string; target: ReaderTarget }) {
+interface ReaderPanelProps {
+  notebookId: string;
+  target: ReaderTarget;
+}
+
+export function ReaderPanel({ notebookId, target }: ReaderPanelProps) {
   const chunk = useChunk(
     notebookId,
     'chunkId' in target ? target.chunkId : '',

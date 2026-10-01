@@ -40,6 +40,77 @@ function FeedbackButton({
   );
 }
 
+/** The menu next to the title: delete the output. */
+function FrameMenu({ deleting, onDelete }: { deleting: boolean; onDelete: () => void }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Weitere Aktionen"
+          tooltip="Mehr"
+          disabled={deleting}
+        >
+          <EllipsisVertical />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem disabled={deleting} onSelect={onDelete}>
+          <Trash2 aria-hidden />
+          Löschen
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+/** The two buttons that rate the output ("Guter Bericht", "Schlechter Bericht"). */
+function FeedbackBar({
+  noun,
+  chosen,
+  onChange,
+}: {
+  noun: string;
+  chosen: StudioFeedback | null;
+  onChange: (feedback: StudioFeedback | null) => void;
+}) {
+  return (
+    <div className="flex shrink-0 flex-wrap gap-3 border-t border-border px-1 pt-3 pb-1">
+      <FeedbackButton
+        noun={noun}
+        value={STUDIO_FEEDBACK.GOOD}
+        chosen={chosen}
+        onChange={onChange}
+      />
+      <FeedbackButton noun={noun} value={STUDIO_FEEDBACK.BAD} chosen={chosen} onChange={onChange} />
+    </div>
+  );
+}
+
+interface ViewerFrameProps {
+  notebookId: string;
+  title: string;
+  titleLabel: string;
+  renaming: boolean;
+  renameError: string | null;
+  onRename: (title: string, revert: () => void) => void;
+  /** Null for an output from before the request was kept: there is nothing to show then. */
+  request: StudioRequest | null;
+  /** Shows the prompt too, not just the sources (reports do, in the original). */
+  withPrompt: boolean;
+  feedback: StudioFeedback | null;
+  /** "Bericht" for a report, "Inhalt" for the rest: "Guter Bericht". */
+  feedbackNoun: string;
+  onFeedback: (feedback: StudioFeedback | null) => void;
+  /** Buttons of the view next to the title, before the menu (copying a report). */
+  actions?: ReactNode;
+  onMaximize?: () => void;
+  deleting: boolean;
+  onDelete: () => void;
+  children: ReactNode;
+}
+
 /**
  * The frame around one output in full, in place of the list, like in the original: the title as a
  * field with its tools, the chip that shows how it was made, the content that scrolls, and the two
@@ -62,28 +133,7 @@ export function ViewerFrame({
   deleting,
   onDelete,
   children,
-}: {
-  notebookId: string;
-  title: string;
-  titleLabel: string;
-  renaming: boolean;
-  renameError: string | null;
-  onRename: (title: string, revert: () => void) => void;
-  /** Null for an output from before the request was kept: there is nothing to show then. */
-  request: StudioRequest | null;
-  /** Shows the prompt too, not just the sources (reports do, in the original). */
-  withPrompt: boolean;
-  feedback: StudioFeedback | null;
-  /** "Bericht" for a report, "Inhalt" for the rest: "Guter Bericht". */
-  feedbackNoun: string;
-  onFeedback: (feedback: StudioFeedback | null) => void;
-  /** Buttons of the view next to the title, before the menu (copying a report). */
-  actions?: ReactNode;
-  onMaximize?: () => void;
-  deleting: boolean;
-  onDelete: () => void;
-  children: ReactNode;
-}) {
+}: ViewerFrameProps) {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex shrink-0 flex-col gap-1 px-1 pt-1 pb-3">
@@ -108,25 +158,7 @@ export function ViewerFrame({
               <Maximize2 />
             </Button>
           )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Weitere Aktionen"
-                tooltip="Mehr"
-                disabled={deleting}
-              >
-                <EllipsisVertical />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem disabled={deleting} onSelect={onDelete}>
-                <Trash2 aria-hidden />
-                Löschen
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <FrameMenu deleting={deleting} onDelete={onDelete} />
         </div>
         {request && (
           <div className="px-2">
@@ -135,20 +167,7 @@ export function ViewerFrame({
         )}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">{children}</div>
-      <div className="flex shrink-0 flex-wrap gap-3 border-t border-border px-1 pt-3 pb-1">
-        <FeedbackButton
-          noun={feedbackNoun}
-          value={STUDIO_FEEDBACK.GOOD}
-          chosen={feedback}
-          onChange={onFeedback}
-        />
-        <FeedbackButton
-          noun={feedbackNoun}
-          value={STUDIO_FEEDBACK.BAD}
-          chosen={feedback}
-          onChange={onFeedback}
-        />
-      </div>
+      <FeedbackBar noun={feedbackNoun} chosen={feedback} onChange={onFeedback} />
     </div>
   );
 }

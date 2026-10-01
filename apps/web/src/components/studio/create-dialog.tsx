@@ -92,14 +92,13 @@ const CUSTOM_IDEAS = [
   'Ein Vergleich der Quellen in einer Tabelle, danach eine kurze Empfehlung',
 ];
 
-/** The cards of the templates of a report, three lines each. */
-function TemplateCards({
-  value,
-  onChange,
-}: {
+interface TemplateCardsProps {
   value: ReportFormat | null;
   onChange: (format: ReportFormat) => void;
-}) {
+}
+
+/** The cards of the templates of a report, three lines each. */
+function TemplateCards({ value, onChange }: TemplateCardsProps) {
   return (
     <div className="flex flex-col gap-3">
       <p className={FIELD_LABEL} id="report-template">
@@ -145,16 +144,14 @@ function TemplateCards({
   );
 }
 
-/** The fields of one dialog and the request they make. A new one for every opening. */
-function CreateForm({
-  kind,
-  sources,
-  onSubmit,
-}: {
+interface CreateFormProps {
   kind: StudioKind;
   sources: readonly SourceSummary[];
   onSubmit: (body: CreateStudioBody) => void;
-}) {
+}
+
+/** The fields of one dialog and the request they make. A new one for every opening. */
+function CreateForm({ kind, sources, onSubmit }: CreateFormProps) {
   const [size, setSize] = useState<StudioSize>(STUDIO_SIZE.DEFAULT);
   const [difficulty, setDifficulty] = useState<StudioDifficulty>(STUDIO_DIFFICULTY.MEDIUM);
   const [format, setFormat] = useState<ReportFormat | null>(null);
@@ -234,22 +231,19 @@ function CreateForm({
   );
 }
 
-/**
- * The dialog behind a tile of the Studio, like NotebookLM asks before it makes anything: how many,
- * how hard, from which sources, about what. The trigger is the tile that is passed in.
- */
-export function CreateDialog({
-  kind,
-  sources,
-  onCreate,
-  children,
-}: {
+interface CreateDialogProps {
   kind: StudioKind;
   /** The sources the output can be made from: selected and ready. */
   sources: readonly SourceSummary[];
   onCreate: (body: CreateStudioBody) => void;
   children: ReactNode;
-}) {
+}
+
+/**
+ * The dialog behind a tile of the Studio, like NotebookLM asks before it makes anything: how many,
+ * how hard, from which sources, about what. The trigger is the tile that is passed in.
+ */
+export function CreateDialog({ kind, sources, onCreate, children }: CreateDialogProps) {
   const [open, setOpen] = useState(false);
   const content = useRef<HTMLDivElement>(null);
   const Icon = KIND_ICON[kind];

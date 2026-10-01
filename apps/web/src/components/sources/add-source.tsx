@@ -16,18 +16,17 @@ const TEXT_FILE_EXTENSION = '.txt';
 const VIEW = { CHOOSE: 'CHOOSE', WEB_PAGE: 'WEB_PAGE', TEXT: 'TEXT' } as const;
 type View = (typeof VIEW)[keyof typeof VIEW];
 
+interface AddSourceProps {
+  notebookId: string;
+  /** Called when a source was accepted, so a dialog around this can close. */
+  onAdded?: () => void;
+}
+
 /**
  * The ways to add a source, as in NotebookLM: pills for a file, a web page or pasted text, and a
  * drop zone. A web page and pasted text open their own view with a way back.
  */
-export function AddSource({
-  notebookId,
-  onAdded,
-}: {
-  notebookId: string;
-  /** Called when a source was accepted, so a dialog around this can close. */
-  onAdded?: () => void;
-}) {
+export function AddSource({ notebookId, onAdded }: AddSourceProps) {
   const upload = useUploadFile(notebookId);
   const addUrl = useAddUrl(notebookId);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -201,7 +200,12 @@ export function AddSource({
   );
 }
 
-function BackHeader({ title, onBack }: { title: string; onBack: () => void }) {
+interface BackHeaderProps {
+  title: string;
+  onBack: () => void;
+}
+
+function BackHeader({ title, onBack }: BackHeaderProps) {
   return (
     <div className="flex items-center gap-2">
       <Button variant="ghost" size="icon-lg" aria-label="Zurück" onClick={onBack}>

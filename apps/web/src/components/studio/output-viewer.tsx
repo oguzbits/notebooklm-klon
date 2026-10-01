@@ -1,5 +1,5 @@
-import { STUDIO_KIND, type StudioFeedback, type StudioOutput } from '@nlm/shared';
-import { useState } from 'react';
+import { type Report, STUDIO_KIND, type StudioOutput } from '@nlm/shared';
+import { type ReactNode, useState } from 'react';
 
 import { FlashcardsView } from '@/components/studio/flashcards-view';
 import { MindmapView } from '@/components/studio/mindmap-view';
@@ -18,6 +18,103 @@ import {
 import { useUpdateStudioOutput } from '@/hooks/use-studio';
 import { describeError } from '@/lib/messages';
 import { reportToText } from '@/lib/report-export';
+
+/** The content of an output as its kind needs it: a report, cards, a quiz or a mind map. */
+function OutputContent({
+  notebookId,
+  output,
+  onOpenCitation,
+  onAsk,
+}: {
+  notebookId: string;
+  output: StudioOutput;
+  onOpenCitation: (chunkId: string) => void;
+  onAsk: (question: string) => void;
+}) {
+  switch (output.kind) {
+    case STUDIO_KIND.REPORT:
+      return (
+        <ReportView
+          notebookId={notebookId}
+          report={output.content}
+          onOpenCitation={onOpenCitation}
+        />
+      );
+    case STUDIO_KIND.FLASHCARDS:
+      return (
+        <FlashcardsView
+          notebookId={notebookId}
+          title={output.title}
+          flashcards={output.content}
+          onOpenCitation={onOpenCitation}
+          onAsk={onAsk}
+        />
+      );
+    case STUDIO_KIND.QUIZ:
+      return (
+        <QuizView
+          notebookId={notebookId}
+          quiz={output.content}
+          onOpenCitation={onOpenCitation}
+          onAsk={onAsk}
+        />
+      );
+    case STUDIO_KIND.MINDMAP:
+      return (
+        <MindmapView
+          notebookId={notebookId}
+          title={output.title}
+          mindmap={output.content}
+          onOpenCitation={onOpenCitation}
+        />
+      );
+  }
+}
+
+/** Copies a report with its formatting and as plain text, so a document or a text field takes what it prefers. */
+function CopyReportButton({ report }: { report: Report }) {
+  return (
+    <CopyButton
+      label="Inhalt mit Formatierung kopieren"
+      tooltip="Inhalt kopieren"
+      write={() =>
+        navigator.clipboard.write([
+          new ClipboardItem({
+            'text/html': reportHtml(report).then((html) => new Blob([html], { type: 'text/html' })),
+            'text/plain': new Blob([reportToText(report)], { type: 'text/plain' }),
+          }),
+        ])
+      }
+    />
+  );
+}
+
+/** The output in a dialog of its own, as large as the window allows. */
+function EnlargedOutput({
+  title,
+  open,
+  onOpenChange,
+  children,
+}: {
+  title: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  children: ReactNode;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="h-[90dvh] max-w-[calc(100%-2rem)] grid-rows-[auto_1fr] sm:max-w-5xl">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription className="sr-only">
+            Die Ausgabe in voller Größe. Die Nummern führen zu den Textstellen.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="min-h-0 overflow-y-auto">{children}</div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 /** One output in full, in place of the list: its frame, and its content as the kind needs it. */
 export function OutputViewer({
@@ -39,50 +136,14 @@ export function OutputViewer({
   const update = useUpdateStudioOutput(notebookId);
   const [enlarged, setEnlarged] = useState(false);
   const report = output.kind === STUDIO_KIND.REPORT;
-
-  const content = () => {
-    switch (output.kind) {
-      case STUDIO_KIND.REPORT:
-        return (
-          <ReportView
-            notebookId={notebookId}
-            report={output.content}
-            onOpenCitation={onOpenCitation}
-          />
-        );
-      case STUDIO_KIND.FLASHCARDS:
-        return (
-          <FlashcardsView
-            notebookId={notebookId}
-            title={output.title}
-            flashcards={output.content}
-            onOpenCitation={onOpenCitation}
-            onAsk={onAsk}
-          />
-        );
-      case STUDIO_KIND.QUIZ:
-        return (
-          <QuizView
-            notebookId={notebookId}
-            quiz={output.content}
-            onOpenCitation={onOpenCitation}
-            onAsk={onAsk}
-          />
-        );
-      case STUDIO_KIND.MINDMAP:
-        return (
-          <MindmapView
-            notebookId={notebookId}
-            title={output.title}
-            mindmap={output.content}
-            onOpenCitation={onOpenCitation}
-          />
-        );
-    }
-  };
-
-  const change = (changes: { title: string } | { feedback: StudioFeedback | null }) =>
-    update.mutate({ outputId: output.id, changes });
+  const content = (
+    <OutputContent
+      notebookId={notebookId}
+      output={output}
+      onOpenCitation={onOpenCitation}
+      onAsk={onAsk}
+    />
+  );
 
   return (
     <>
@@ -99,43 +160,18 @@ export function OutputViewer({
         withPrompt={report}
         feedback={output.feedback}
         feedbackNoun={report ? 'Bericht' : 'Inhalt'}
-        onFeedback={(feedback) => change({ feedback })}
-        actions={
-          report ? (
-            <CopyButton
-              label="Inhalt mit Formatierung kopieren"
-              tooltip="Inhalt kopieren"
-              write={() =>
-                navigator.clipboard.write([
-                  new ClipboardItem({
-                    'text/html': reportHtml(output.content).then(
-                      (html) => new Blob([html], { type: 'text/html' })
-                    ),
-                    'text/plain': new Blob([reportToText(output.content)], { type: 'text/plain' }),
-                  }),
-                ])
-              }
-            />
-          ) : undefined
-        }
+        onFeedback={(feedback) => update.mutate({ outputId: output.id, changes: { feedback } })}
+        actions={report ? <CopyReportButton report={output.content} /> : undefined}
         onMaximize={report ? undefined : () => setEnlarged(true)}
         deleting={deleting}
         onDelete={onDelete}
       >
-        {content()}
+        {content}
       </ViewerFrame>
       {!report && (
-        <Dialog open={enlarged} onOpenChange={setEnlarged}>
-          <DialogContent className="h-[90dvh] max-w-[calc(100%-2rem)] grid-rows-[auto_1fr] sm:max-w-5xl">
-            <DialogHeader>
-              <DialogTitle>{output.title}</DialogTitle>
-              <DialogDescription className="sr-only">
-                Die Ausgabe in voller Größe. Die Nummern führen zu den Textstellen.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="min-h-0 overflow-y-auto">{content()}</div>
-          </DialogContent>
-        </Dialog>
+        <EnlargedOutput title={output.title} open={enlarged} onOpenChange={setEnlarged}>
+          {content}
+        </EnlargedOutput>
       )}
     </>
   );
