@@ -1,0 +1,48 @@
+name: Deploy
+
+# Runs after CI went green on main. The image is built here and sent over SSH, so the server needs
+# no access to the repository and no registry. Secrets (Settings > Secrets and variables > Actions):
+#   DEPLOY_HOST        host name of the server
+#   DEPLOY_SSH_KEY     private key of the user "deploy"
+#   DEPLOY_KNOWN_HOSTS the line of the server from `ssh-keyscan` (pins the host key)
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build, ship and start
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    env:
+      TARGET: deploy@${{ secrets.DEPLOY_HOST }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - name: Prepare SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          printf '%s\n' "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          printf 'Host *\n  IdentityFile ~/.ssh/id_deploy\n  StrictHostKeyChecking yes\n' > ~/.ssh/config
+      - name: Build image
+        run: docker build -t nlm-app:current .
+      - name: Copy files and image
+        run: |
+          scp deploy/docker-compose.prod.yml deploy/Caddyfile deploy/backup.sh "$TARGET:/srv/nlm/"
+          docker save nlm-app:current | gzip | ssh "$TARGET" 'gunzip | docker load'
+      - name: Start
+        run: |
+          ssh "$TARGET" 'cd /srv/nlm && chmod +x backup.sh && docker compose -f docker-compose.prod.yml --env-file server.env up -d --wait --remove-orphans && docker image prune -f'

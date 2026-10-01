@@ -1,0 +1,87 @@
+# Production stack for the Hetzner server (steps: README, section Deployment): Caddy (HTTPS), the app, Postgres
+# with pgvector and the S3-compatible store of the cover images. Only Caddy is reachable from the
+# internet (80, 443); the database listens on the server's loopback for the SSH tunnel of the seed.
+# The secrets live in server.env on the server (made by bootstrap.sh), never in the repository.
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on:
+      app:
+        condition: service_healthy
+
+  app:
+    # Loaded by the deploy workflow (docker save | docker load), tagged "current".
+    image: nlm-app:current
+    restart: unless-stopped
+    env_file: server.env
+    environment:
+      NODE_ENV: production
+      PORT: '3000'
+      DATABASE_URL: postgresql://nlm:${POSTGRES_PASSWORD}@db:5432/nlm
+      BETTER_AUTH_URL: https://${SITE_ADDRESS}
+      S3_ENDPOINT: http://s3:8333
+      S3_REGION: us-east-1
+      S3_BUCKET: covers
+    depends_on:
+      db:
+        condition: service_healthy
+      s3:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://localhost:3000/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  db:
+    image: pgvector/pgvector:pg18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nlm
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: nlm
+    ports:
+      - '127.0.0.1:5432:5432'
+    volumes:
+      # Postgres 18 images keep the data below /var/lib/postgresql.
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U nlm -d nlm']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  s3:
+    # Same version the tests run against (docker-compose.yml).
+    image: chrislusf/seaweedfs:4.48
+    restart: unless-stopped
+    command: server -dir=/data -volume.max=20 -master.volumeSizeLimitMB=256 -s3 -s3.port=8333 -s3.config=/etc/seaweedfs/s3.json
+    mem_limit: 512m
+    volumes:
+      - s3data:/data
+      - ./s3.json:/etc/seaweedfs/s3.json:ro
+    healthcheck:
+      # Any HTTP answer, even a refusal, means the S3 port is up.
+      test: ['CMD-SHELL', 'curl -s -o /dev/null http://localhost:8333']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  caddy_data:
+  pgdata:
+  s3data:

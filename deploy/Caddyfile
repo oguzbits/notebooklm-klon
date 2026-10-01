@@ -1,0 +1,8 @@
+# SITE_ADDRESS is a host name without scheme, for example 203-0-113-7.sslip.io. Caddy gets and
+# renews the certificate by itself (ports 80 and 443 must be open).
+{$SITE_ADDRESS} {
+	# No buffering, so the streamed chat answer reaches the browser piece by piece.
+	reverse_proxy app:3000 {
+		flush_interval -1
+	}
+}
