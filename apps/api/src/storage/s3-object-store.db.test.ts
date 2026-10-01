@@ -1,6 +1,4 @@
-import { randomUUID } from 'node:crypto';
-
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createS3ObjectStore } from './s3-object-store';
 
@@ -8,7 +6,8 @@ import { createS3ObjectStore } from './s3-object-store';
 const store = createS3ObjectStore({
   endpoint: 'http://localhost:8333',
   region: 'us-east-1',
-  bucket: `nlm-test-${randomUUID().slice(0, 8)}`,
+  // One fixed bucket: every bucket takes a volume of the small store, so a new one per run would fill it.
+  bucket: 'nlm-store-test',
   accessKeyId: 'nlm-dev-access',
   secretAccessKey: 'nlm-dev-secret-not-real',
 });
@@ -18,6 +17,10 @@ beforeAll(async () => {
   await store.ensureBucket();
   // Asking again is fine: the bucket is there.
   await store.ensureBucket();
+});
+
+afterAll(async () => {
+  await store.removePrefix('');
 });
 
 describe('createS3ObjectStore', () => {
