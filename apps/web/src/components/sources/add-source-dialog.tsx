@@ -12,17 +12,37 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 
-/** The button on top of the sources and the dialog behind it, where sources are added. */
-export function AddSourceDialog({ notebookId }: { notebookId: string }) {
+/**
+ * The button on top of the sources and the dialog behind it, where sources are added. `compact` is
+ * the round plus of the folded column.
+ */
+export function AddSourceDialog({
+  notebookId,
+  compact = false,
+}: {
+  notebookId: string;
+  compact?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const content = useRef<HTMLDivElement>(null);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="secondary" className="w-full" tooltip="Quelle hinzufügen">
-          <Plus />
-          Quellen hinzufügen
-        </Button>
+        {compact ? (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Quelle hinzufügen"
+            tooltip="Quelle hinzufügen"
+          >
+            <Plus />
+          </Button>
+        ) : (
+          <Button variant="secondary" className="w-full" tooltip="Quelle hinzufügen">
+            <Plus />
+            Quellen hinzufügen
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent
         ref={content}

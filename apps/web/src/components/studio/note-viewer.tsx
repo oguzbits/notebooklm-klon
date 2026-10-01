@@ -22,14 +22,12 @@ export function NoteViewer({
   notebookId,
   note,
   deleting,
-  onBack,
   onDelete,
   onOpenCitation,
 }: {
   notebookId: string;
   note: Note;
   deleting: boolean;
-  onBack: () => void;
   onDelete: () => void;
   onOpenCitation: (chunkId: string) => void;
 }) {
@@ -49,12 +47,10 @@ export function NoteViewer({
 
   return (
     <ViewerFrame
-      crumb="Notiz"
       title="Notiz"
       subtitle={`Gespeichert ${relativeTime(note.createdAt)}`}
       deleteLabel="Löschen"
       deleting={deleting}
-      onBack={onBack}
       onDelete={onDelete}
       footer={
         <div className="flex flex-col items-start gap-2">

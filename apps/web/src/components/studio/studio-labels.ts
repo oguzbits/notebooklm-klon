@@ -17,6 +17,16 @@ export const KIND_LABEL: Record<StudioKind, string> = {
   [STUDIO_KIND.MINDMAP]: 'Mindmap',
 };
 
+/** What the button that closes the full view of an output says, like "Berichtsansicht schließen". */
+export const CLOSE_VIEW_LABEL: Record<StudioKind, string> = {
+  [STUDIO_KIND.REPORT]: 'Berichtsansicht schließen',
+  [STUDIO_KIND.FLASHCARDS]: 'Karteikartenansicht schließen',
+  [STUDIO_KIND.QUIZ]: 'Quizansicht schließen',
+  [STUDIO_KIND.MINDMAP]: 'Mindmapansicht schließen',
+};
+
+export const CLOSE_NOTE_LABEL = 'Notizansicht schließen';
+
 /** The label on a tile of the Studio: the format in the plural, like the original. */
 export const TILE_LABEL: Record<StudioKind, string> = {
   ...KIND_LABEL,

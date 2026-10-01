@@ -1,6 +1,6 @@
 import { SOURCE_STATUS } from '@nlm/shared';
 import { ArrowUp, FileText, LoaderCircle, MessageCircleQuestion } from 'lucide-react';
-import { type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react';
+import { type FormEvent, type KeyboardEvent, memo, useEffect, useRef, useState } from 'react';
 
 import { AnswerView, MessageView, QuestionBubble } from '@/components/chat/message-view';
 import { ErrorNotice, QueryBoundary } from '@/components/query-boundary';
@@ -12,7 +12,7 @@ import { useSuggestedQuestions } from '@/hooks/use-overview';
 import { useSources } from '@/hooks/use-sources';
 
 /** The middle panel: the conversation, the field for a new question and the streamed answer. */
-export function ChatPanel({
+export const ChatPanel = memo(function ChatPanel({
   notebookId,
   onOpenCitation,
 }: {
@@ -197,4 +197,4 @@ export function ChatPanel({
       </div>
     </div>
   );
-}
+});

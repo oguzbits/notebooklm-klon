@@ -54,7 +54,13 @@ function serveMaking(
 
 function renderPanel(onOpenCitation: (chunkId: string) => void = () => {}) {
   return renderWithProviders(
-    <StudioPanel notebookId={NOTEBOOK_ID} onOpenCitation={onOpenCitation} />
+    <StudioPanel
+      notebookId={NOTEBOOK_ID}
+      collapsed={false}
+      onToggle={() => {}}
+      onExpand={() => {}}
+      onOpenCitation={onOpenCitation}
+    />
   );
 }
 
@@ -217,6 +223,43 @@ describe('StudioPanel', () => {
     await user.click(await screen.findByRole('menuitem', { name: 'Löschen' }));
 
     expect(await screen.findByText('Hier wird die Ausgabe von Studio gespeichert.')).toBeTruthy();
+  });
+
+  it('writes the path of an open output into the header and closes it with the button there', async () => {
+    serve({ outputs: [flashcardsOutput()] });
+    renderPanel();
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole('button', { name: /Karteikarten · 2 Karten/ }));
+
+    const path = screen.getByRole('navigation', { name: 'Pfad' });
+    expect(path.textContent).toContain('Studio');
+    expect(path.textContent).toContain('Karteikarten');
+    // The fold button gives way to the one that closes the view.
+    expect(screen.queryByRole('button', { name: 'Studio ausblenden' })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Karteikartenansicht schließen' }));
+    expect(await screen.findByText(/Karteikarten · 2 Karten/)).toBeTruthy();
+  });
+
+  it('tells the page at once that something is open, so the column can grow while it renders', async () => {
+    serve({ outputs: [flashcardsOutput()] });
+    const onViewingChange = vi.fn();
+    renderWithProviders(
+      <StudioPanel
+        notebookId={NOTEBOOK_ID}
+        collapsed={false}
+        onToggle={() => {}}
+        onExpand={() => {}}
+        onOpenCitation={() => {}}
+        onViewingChange={onViewingChange}
+      />
+    );
+
+    await userEvent
+      .setup()
+      .click(await screen.findByRole('button', { name: /Karteikarten · 2 Karten/ }));
+
+    expect(onViewingChange).toHaveBeenCalledWith(true);
   });
 
   describe('notes', () => {

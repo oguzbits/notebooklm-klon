@@ -1,9 +1,11 @@
+import { SOURCE_KIND } from '@nlm/shared';
 import { screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { Route, Routes } from 'react-router';
 import { describe, expect, it } from 'vitest';
 
-import { notebook, NOTEBOOK_ID } from '@/test/fixtures';
+import { notebook, NOTEBOOK_ID, source } from '@/test/fixtures';
 import { renderWithProviders } from '@/test/render';
 
 import { server } from '../../../../../vitest.setup';
@@ -70,5 +72,65 @@ describe('NotebookPage', () => {
       'value',
       'Forschung'
     );
+  });
+
+  describe('folding a column', () => {
+    function serveNotebook() {
+      server.use(
+        http.get('*/api/notebooks', () => HttpResponse.json([notebook({ id: NOTEBOOK_ID })])),
+        http.get(`${base}/sources`, () => HttpResponse.json([source({ title: 'projekt.pdf' })])),
+        http.get(`${base}/messages`, () => HttpResponse.json([])),
+        http.get(`${base}/studio`, () => HttpResponse.json([])),
+        http.get(`${base}/notes`, () => HttpResponse.json([]))
+      );
+    }
+
+    it('shows a rail with the sources, and the whole column again when it is opened', async () => {
+      serveNotebook();
+      renderPage();
+      const user = userEvent.setup();
+
+      const sources = await screen.findByRole('region', { name: 'Quellen' });
+      await user.click(await within(sources).findByRole('button', { name: 'Quellen ausblenden' }));
+
+      // The text of the sources is still in the page, behind the rail, and out of reach.
+      expect(within(sources).getByText('Alle auswählen').closest('[inert]')).toBeTruthy();
+      expect(
+        within(sources).getByRole('button', { name: 'Quelle anzeigen: projekt.pdf' })
+      ).toBeTruthy();
+
+      await user.click(within(sources).getByRole('button', { name: 'Quellen einblenden' }));
+      expect(within(sources).getByText('Alle auswählen').closest('[inert]')).toBeNull();
+    });
+
+    it('opens the text of a source from its symbol on the rail and opens the column with it', async () => {
+      serveNotebook();
+      server.use(
+        http.get(`${base}/sources/${source().id}/text`, () =>
+          HttpResponse.json({
+            id: source().id,
+            title: 'projekt.pdf',
+            kind: SOURCE_KIND.PDF,
+            sourceUrl: null,
+            text: 'Dr. Brandt leitet das Projekt.',
+          })
+        ),
+        http.get(`${base}/sources/${source().id}/overview`, () => new Promise<never>(() => {}))
+      );
+      renderPage();
+      const user = userEvent.setup();
+
+      const sources = await screen.findByRole('region', { name: 'Quellen' });
+      await user.click(await within(sources).findByRole('button', { name: 'Quellen ausblenden' }));
+      await user.click(
+        within(sources).getByRole('button', { name: 'Quelle anzeigen: projekt.pdf' })
+      );
+
+      // The reader replaces the list, and the column is open again.
+      expect(
+        await within(sources).findByRole('button', { name: 'Quellenansicht schließen' })
+      ).toBeTruthy();
+      expect(within(sources).queryByText('Alle auswählen')).toBeNull();
+    });
   });
 });

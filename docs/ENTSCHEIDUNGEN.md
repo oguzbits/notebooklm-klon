@@ -259,3 +259,35 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   zuvor. Listen wie im Original gibt es bewusst nicht: unsere Aussagen bilden fließenden Text, eine Liste würde
   sie falsch gliedern. Live geprüft: 9 fette Begriffe in einer Antwort zu einem Wikipedia-Artikel, alle Belege
   gültig.
+
+## 2026-10-01 (Abgleich, Runde 3)
+
+- **Spalten klappen ohne Sprung, nach dem Mechanismus des Originals (2026-10-01):** Das Original wurde Bild für Bild
+  gemessen (Breite der drei Spalten je Frame beim Einklappen, Ausklappen, Öffnen und Schließen einer Ausgabe). Es
+  animiert nur Längen: die schmale Leiste über `inline-size` (0,2 s ease-in-out), die breite Studio-Ansicht über
+  `min-inline-size` (0 → 37,5 vw) am Studio; die anderen Spalten geben per normalem Flex-Schrumpfen nach (Quellen 296,5,
+  Chat 563,5 bei 1440 px, das ist exakt die Rechnung aus `flex-shrink` mal innerer Basisgröße). Unsere erste Fassung
+  wechselte beim Chat zwischen `0 1 48 %` und `1 1 0 %` (`flex-grow` und `flex-basis` wurden gleichzeitig überblendet),
+  schaltete den Rand `ml-2` sofort um und tauschte den Inhalt des Panels gegen eine Leiste aus. Messung der alten
+  Fassung: das Studio wanderte beim Einklappen von x = 1070 auf 832 und wieder auf 1074, der Chat schrumpfte dabei kurz
+  um 100 px. Jetzt füllt der Chat immer (`flex 1 1 48 %`, `max-width: 48 %` solange beide Seiten offen sind, sonst 100 %),
+  die Seitenspalten wechseln zwischen `0 1 25 %` und `0 0 56 px`, und alles läuft als Übergang auf `flex-basis`,
+  `min-width`, `max-width` und `margin` mit 0,2 s. Das Original klappt nur ein weich, beim Ausklappen springt es;
+  wir sind hier bewusst besser, weil der Sprung das war, was als „kaputt“ auffiel. Die Frame-Messung des Nachbaus
+  steht in den Tests nicht (jsdom hat kein Layout), sie ist in `docs/DESIGN-ABGLEICH.md` festgehalten.
+- **Inhalt und Leiste bleiben beide im Dokument und blenden ineinander über:** Eine zugeklappte Spalte hat jetzt dieselbe
+  Struktur wie eine offene (`inert` und `aria-hidden` auf der jeweils verborgenen Seite). Dadurch ruckt nichts beim
+  Wechsel, und ein geöffneter Eintrag oder eine halb geschriebene Frage geht beim Einklappen nicht verloren. Die Leiste zeigt
+  wie das Original unter dem Öffnen-Knopf ein Plus und je ein Symbol pro Quelle (Klick öffnet die Quelle und die Spalte),
+  im Studio die Kacheln und die Ausgaben als Symbole. Unter 1056 px (Tab-Layout) gibt es keine Leiste
+  (`useWideLayout`), sonst wäre eine zugeklappte Spalte nach dem Verkleinern des Fensters unbedienbar.
+- **Pfad und Schließen-Knopf der Studio-Ansicht stehen in der Kopfzeile der Spalte:** Vorher schob ein Negativrand
+  (`-mt-10`) den Pfad „Studio › Notiz“ über die Kopfzeile, und der Einklapp-Knopf rutschte darunter (Überdeckung). Wie im Original
+  steht der Pfad links in der Kopfzeile und rechts ersetzt „Notizansicht schließen“ den Einklapp-Knopf.
+  `StudioPanel` trägt dafür sein Panel selbst.
+- **Der Inhaltswechsel im Studio ist ein React-Übergang, die Breite wird sofort gemeldet:** Das Rendern einer Ansicht
+  dauert im Entwicklungsmodus rund 90 ms und fraß die erste Hälfte der Breitenanimation (CSS-Übergänge starten zum Zeitpunkt
+  des letzten Frames). Chat und Quellen sind `memo` mit stabilen Funktionen, `onViewingChange` wird im Klick gerufen
+  und der Inhalt folgt per `startTransition`.
+- **Reihenfolge der Kacheln wie im Original:** Mindmap, Berichte, Karteikarten, Quiz (die Reihenfolge der vier Formate,
+  die wir haben). Vorher stand Bericht zuerst.
