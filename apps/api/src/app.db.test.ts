@@ -476,6 +476,51 @@ describe('selection and removal', () => {
     expect(after).toEqual([]);
   });
 
+  it('renames a source and refuses an empty title', async () => {
+    const notebook = await createNotebook(alice);
+    const added = SubmitSourceResultSchema.parse(
+      await (
+        await app.request(
+          `/api/notebooks/${notebook}/sources/file`,
+          upload(alice, 'alt.txt', 'Inhalt zum Umbenennen')
+        )
+      ).json()
+    );
+    const url = `/api/notebooks/${notebook}/sources/${added.sourceId}/title`;
+
+    const renamed = await app.request(url, json(alice, { title: ' Neu ' }, 'PATCH'));
+    const empty = await app.request(url, json(alice, { title: '  ' }, 'PATCH'));
+
+    expect(renamed.status).toBe(200);
+    expect(await renamed.json()).toEqual({ title: 'Neu' });
+    expect(empty.status).toBe(400);
+    const listed = SourceListSchema.parse(
+      await (
+        await app.request(`/api/notebooks/${notebook}/sources`, { headers: { cookie: alice } })
+      ).json()
+    );
+    expect(listed[0]?.title).toBe('Neu');
+  });
+
+  it("answers 404 when renaming another user's source", async () => {
+    const bobsBook = await createNotebook(bob);
+    const added = SubmitSourceResultSchema.parse(
+      await (
+        await app.request(
+          `/api/notebooks/${bobsBook}/sources/file`,
+          upload(bob, 'b.txt', 'Bobs Inhalt zum Umbenennen')
+        )
+      ).json()
+    );
+
+    const response = await app.request(
+      `/api/notebooks/${bobsBook}/sources/${added.sourceId}/title`,
+      json(alice, { title: 'Meins' }, 'PATCH')
+    );
+
+    expect(response.status).toBe(404);
+  });
+
   it("answers 404 when changing or removing another user's source", async () => {
     const bobsBook = await createNotebook(bob);
     const added = SubmitSourceResultSchema.parse(

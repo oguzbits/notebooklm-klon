@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   CreateNotebookBodySchema,
   NotebookSchema,
+  RenameSourceBodySchema,
   SetSourceSelectionBodySchema,
   SOURCE_KIND,
   SOURCE_STATUS,
@@ -72,6 +73,14 @@ describe('notebook contracts', () => {
     });
     expect(UpdateNotebookBodySchema.safeParse({ customSummary: '  ' }).success).toBe(false);
     expect(UpdateNotebookBodySchema.safeParse({}).success).toBe(false);
+  });
+
+  it('renames a source with a trimmed, non-empty title', () => {
+    expect(RenameSourceBodySchema.parse({ title: ' Bericht 2026 ' })).toEqual({
+      title: 'Bericht 2026',
+    });
+    expect(RenameSourceBodySchema.safeParse({ title: '  ' }).success).toBe(false);
+    expect(RenameSourceBodySchema.safeParse({ title: 'x'.repeat(201) }).success).toBe(false);
   });
 
   it('carries the own summary of a notebook, or null', () => {

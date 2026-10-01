@@ -239,6 +239,29 @@ export async function setSourceSelected(
   return result.rowCount === 1;
 }
 
+/**
+ * Gives a source of the notebook a new title. The title belongs to the source, so it changes in
+ * every notebook of the user that holds it. False when the source is not linked to this notebook of
+ * the user.
+ */
+export async function renameSource(
+  db: Database,
+  userId: string,
+  notebookId: string,
+  sourceId: string,
+  title: string
+): Promise<boolean> {
+  if (!UUID.test(notebookId) || !UUID.test(sourceId)) return false;
+  const result = await db.execute(sql`
+    UPDATE sources s SET title = ${title}
+    FROM notebook_sources ns, notebooks n
+    WHERE s.id = ${sourceId} AND s.user_id = ${userId}
+      AND ns.source_id = s.id AND ns.notebook_id = ${notebookId}
+      AND n.id = ns.notebook_id AND n.user_id = ${userId}
+    RETURNING s.id`);
+  return result.rowCount === 1;
+}
+
 export async function unlinkSource(
   db: Database,
   userId: string,

@@ -5,6 +5,7 @@ import {
   CreateNotebookBodySchema,
   NotebookListSchema,
   NotebookSchema,
+  RenameSourceBodySchema,
   SetSourceSelectionBodySchema,
   SourceListSchema,
   UpdateNotebookBodySchema,
@@ -18,6 +19,7 @@ import {
   findNotebook,
   listNotebooks,
   listNotebookSources,
+  renameSource,
   setSourceSelected,
   unlinkSource,
   updateNotebook,
@@ -108,6 +110,21 @@ const selectRoute = createRoute({
   },
 });
 
+const renameSourceRoute = createRoute({
+  method: 'patch',
+  path: '/{notebookId}/sources/{sourceId}/title',
+  request: {
+    params: sourceParams,
+    body: { content: { 'application/json': { schema: RenameSourceBodySchema } }, required: true },
+  },
+  responses: {
+    [OK]: json(z.object({ title: z.string() }), 'The new title of the source'),
+    400: invalid,
+    401: unauthenticated,
+    [NOT_FOUND]: notFound,
+  },
+});
+
 const removeRoute = createRoute({
   method: 'delete',
   path: '/{notebookId}/sources/{sourceId}',
@@ -159,6 +176,12 @@ export function notebookRoutes(deps: AppDeps) {
         selected
       );
       return changed ? c.json({ selected }, OK) : c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
+    })
+    .openapi(renameSourceRoute, async (c) => {
+      const { notebookId, sourceId } = c.req.valid('param');
+      const { title } = c.req.valid('json');
+      const renamed = await renameSource(deps.db, c.var.userId, notebookId, sourceId, title);
+      return renamed ? c.json({ title }, OK) : c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
     })
     .openapi(removeRoute, async (c) => {
       const { notebookId, sourceId } = c.req.valid('param');

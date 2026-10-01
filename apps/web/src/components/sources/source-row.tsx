@@ -1,7 +1,9 @@
 import { SOURCE_STATUS, type SourceSummary } from '@nlm/shared';
-import { EllipsisVertical, LoaderCircle, Trash2, TriangleAlert } from 'lucide-react';
+import { EllipsisVertical, LoaderCircle, Pencil, Trash2, TriangleAlert } from 'lucide-react';
+import { useState } from 'react';
 
 import { SourceKindIcon } from '@/components/sources/kind-icon';
+import { RenameSourceDialog } from '@/components/sources/rename-source-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -17,6 +19,7 @@ import { FAILURE_MESSAGE, STATUS_LABEL } from '@/lib/messages';
 const FAILED_HINT = 'Entferne die Quelle und füge sie noch einmal hinzu.';
 
 interface SourceRowProps {
+  notebookId: string;
   source: SourceSummary;
   /** A change to this source is on its way. */
   busy: boolean;
@@ -29,7 +32,15 @@ interface SourceRowProps {
  * One source, 36px high like in NotebookLM: its kind, the title (opens the text), a menu that
  * shows while the row is hovered or focused, and the checkbox to use it for answers.
  */
-export function SourceRow({ source, busy, onToggle, onOpen, onRemove }: SourceRowProps) {
+export function SourceRow({
+  notebookId,
+  source,
+  busy,
+  onToggle,
+  onOpen,
+  onRemove,
+}: SourceRowProps) {
+  const [renaming, setRenaming] = useState(false);
   const ready = source.status === SOURCE_STATUS.READY;
   const failed = source.status === SOURCE_STATUS.FAILED;
   const working = !ready && !failed;
@@ -69,8 +80,19 @@ export function SourceRow({ source, busy, onToggle, onOpen, onRemove }: SourceRo
               <Trash2 aria-hidden />
               Quelle entfernen
             </DropdownMenuItem>
+            <DropdownMenuItem disabled={busy} onSelect={() => setRenaming(true)}>
+              <Pencil aria-hidden />
+              Quelle umbenennen
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        <RenameSourceDialog
+          notebookId={notebookId}
+          sourceId={source.id}
+          title={source.title}
+          open={renaming}
+          onOpenChange={setRenaming}
+        />
         <Checkbox
           checked={source.selected && ready}
           disabled={!ready || busy}

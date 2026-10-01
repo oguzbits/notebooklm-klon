@@ -18,6 +18,43 @@ function renderPanel(onOpenSource: (sourceId: string) => void = () => {}) {
 }
 
 describe('SourcesPanel', () => {
+  it('renames a source from its menu', async () => {
+    let sent: unknown;
+    server.use(
+      list([source({ id: SOURCE_ID, title: 'alt.pdf' })]),
+      http.patch(`${base}/${SOURCE_ID}/title`, async ({ request }) => {
+        sent = await request.json();
+        return HttpResponse.json({ title: 'Neu' });
+      })
+    );
+    renderPanel();
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole('button', { name: /Weitere Aktionen für „alt.pdf“/ }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Quelle umbenennen' }));
+    const field = await screen.findByLabelText('Name der Quelle');
+    await user.clear(field);
+    await user.type(field, ' Neu ');
+    await user.click(screen.getByRole('button', { name: 'Speichern' }));
+
+    await vi.waitFor(() => expect(sent).toEqual({ title: 'Neu' }));
+    await vi.waitFor(() => expect(screen.queryByLabelText('Name der Quelle')).toBeNull());
+  });
+
+  it('does not save an empty name', async () => {
+    server.use(list([source({ id: SOURCE_ID, title: 'alt.pdf' })]));
+    renderPanel();
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole('button', { name: /Weitere Aktionen für „alt.pdf“/ }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Quelle umbenennen' }));
+    await user.clear(await screen.findByLabelText('Name der Quelle'));
+
+    expect((screen.getByRole('button', { name: 'Speichern' }) as HTMLButtonElement).disabled).toBe(
+      true
+    );
+  });
+
   it('sorts the sources by the choice in the menu', async () => {
     server.use(
       list([

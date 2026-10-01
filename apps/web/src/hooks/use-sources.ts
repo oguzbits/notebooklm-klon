@@ -79,6 +79,20 @@ export function useToggleSource(notebookId: string) {
   });
 }
 
+export function useRenameSource(notebookId: string) {
+  const refresh = useRefreshSources(notebookId);
+  return useMutation({
+    mutationFn: async ({ sourceId, title }: { sourceId: string; title: string }) =>
+      expectOk(
+        await api.api.notebooks[':notebookId'].sources[':sourceId'].title.$patch({
+          param: { notebookId, sourceId },
+          json: { title },
+        })
+      ),
+    onSuccess: refresh,
+  });
+}
+
 export function useRemoveSource(notebookId: string) {
   const refresh = useRefreshSources(notebookId);
   return useMutation({

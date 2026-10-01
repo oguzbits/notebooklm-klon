@@ -70,6 +70,9 @@ export const SubmitSourceResultSchema = z.object({
   action: SubmitActionSchema,
 });
 
+/** A source is renamed with a title under the same rules as a notebook. */
+export const RenameSourceBodySchema = CreateNotebookBodySchema;
+
 export const SetSourceSelectionBodySchema = z.object({ selected: z.boolean() });
 
 export const NotebookListSchema = z.array(NotebookSchema);

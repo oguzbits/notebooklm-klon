@@ -9,6 +9,7 @@ import {
   linkSource,
   listNotebooks,
   listNotebookSources,
+  renameSource,
   selectedReadySourceIds,
   setSourceSelected,
   unlinkSource,
@@ -236,6 +237,33 @@ describe('updateNotebook', () => {
     expect(await updateNotebook(db, USER, theirs.id, { title: 'Meins' })).toBeNull();
     expect(await updateNotebook(db, USER, 'kein-uuid', { title: 'X' })).toBeNull();
     expect((await findNotebook(db, OTHER, theirs.id))?.title).toBe('Fremd');
+  });
+});
+
+describe('renameSource', () => {
+  it('gives a linked source of the user a new title', async () => {
+    const notebook = await createNotebook(db, USER, 'N');
+    const source = await addSource(USER, 'rename-a', { title: 'alt.pdf' });
+    await linkSource(db, USER, notebook.id, source.id);
+
+    expect(await renameSource(db, USER, notebook.id, source.id, 'Neu')).toBe(true);
+
+    const [row] = await listNotebookSources(db, USER, notebook.id);
+    expect(row?.title).toBe('Neu');
+  });
+
+  it('does not rename a source that is not in this notebook, belongs to another user, or is unknown', async () => {
+    const mine = await createNotebook(db, USER, 'Mein');
+    const theirs = await createNotebook(db, OTHER, 'Fremd');
+    const unlinked = await addSource(USER, 'rename-b', { title: 'frei.pdf' });
+    const theirSource = await addSource(OTHER, 'rename-c', { title: 'fremd.pdf' });
+    await linkSource(db, OTHER, theirs.id, theirSource.id);
+
+    expect(await renameSource(db, USER, mine.id, unlinked.id, 'X')).toBe(false);
+    expect(await renameSource(db, USER, theirs.id, theirSource.id, 'X')).toBe(false);
+    expect(await renameSource(db, USER, mine.id, 'kein-uuid', 'X')).toBe(false);
+    const [row] = await listNotebookSources(db, OTHER, theirs.id);
+    expect(row?.title).toBe('fremd.pdf');
   });
 });
 

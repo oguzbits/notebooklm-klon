@@ -109,6 +109,7 @@ export const SourcesPanel = memo(function SourcesPanel({
               {sortSources(list, sort).map((source) => (
                 <SourceRow
                   key={source.id}
+                  notebookId={notebookId}
                   source={source}
                   busy={
                     (toggle.isPending && toggle.variables?.sourceId === source.id) ||
