@@ -11,7 +11,7 @@ import {
   MessageView,
   QuestionBubble,
 } from '@/components/chat/message-view';
-import { QueryBoundary } from '@/components/query-boundary';
+import { ErrorNotice, QueryBoundary } from '@/components/query-boundary';
 import { ChatSkeleton } from '@/components/skeletons';
 import type { LiveAnswer, useAskQuestion } from '@/hooks/use-chat';
 import type { Suggestions } from '@/hooks/use-overview';
@@ -97,7 +97,10 @@ function Messages({
   );
 }
 
-/** The conversation: loading, the empty chat, or the messages (the fourth state is the live turn). */
+/**
+ * The conversation: loading, the empty chat, or the messages (the fourth state is the live turn),
+ * and the failure of the last question with a way to ask it again.
+ */
 export function Conversation({
   history,
   ask,
@@ -114,29 +117,38 @@ export function Conversation({
   citations: Citations;
 }) {
   return (
-    <QueryBoundary
-      query={history}
-      // The overview has placeholders of its own while it loads, a second set would double them.
-      loading={hasReady ? null : <ChatSkeleton />}
-      isEmpty={(messages) => messages.length === 0 && !ask.live}
-      empty={
-        <EmptyChat
-          hasReady={hasReady}
-          suggestions={suggestions}
-          canAsk={canAsk}
-          onAsk={ask.mutate}
-        />
-      }
-    >
-      {(messages) => (
-        <Messages
-          messages={messages}
-          live={ask.live}
-          canAsk={canAsk}
-          onAsk={ask.mutate}
-          citations={citations}
+    <>
+      <QueryBoundary
+        query={history}
+        // The overview has placeholders of its own while it loads, a second set would double them.
+        loading={hasReady ? null : <ChatSkeleton />}
+        isEmpty={(messages) => messages.length === 0 && !ask.live}
+        empty={
+          <EmptyChat
+            hasReady={hasReady}
+            suggestions={suggestions}
+            canAsk={canAsk}
+            onAsk={ask.mutate}
+          />
+        }
+      >
+        {(messages) => (
+          <Messages
+            messages={messages}
+            live={ask.live}
+            canAsk={canAsk}
+            onAsk={ask.mutate}
+            citations={citations}
+          />
+        )}
+      </QueryBoundary>
+      {ask.isError && (
+        <ErrorNotice
+          error={ask.error}
+          onRetry={() => ask.variables && ask.mutate(ask.variables)}
+          retrying={ask.isPending}
         />
       )}
-    </QueryBoundary>
+    </>
   );
 }

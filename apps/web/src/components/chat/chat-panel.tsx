@@ -1,11 +1,12 @@
-import { memo, useEffect, useRef } from 'react';
+import { memo } from 'react';
 
 import { Conversation } from '@/components/chat/conversation';
 import { JumpToEndButton } from '@/components/chat/jump-to-end-button';
 import { NotebookOverview } from '@/components/chat/notebook-overview';
 import { QuestionForm } from '@/components/chat/question-form';
-import { ErrorNotice } from '@/components/query-boundary';
+import { TopFade } from '@/components/chat/top-fade';
 import { useChatSession } from '@/hooks/use-chat-session';
+import { useFollowNewest } from '@/hooks/use-follow-newest';
 import { type IncomingQuestion, useIncomingQuestion } from '@/hooks/use-incoming-question';
 import { useScrollEnd } from '@/hooks/use-scroll-end';
 
@@ -29,21 +30,16 @@ export const ChatPanel = memo(function ChatPanel({
   const { history, sources, ask, suggestions, usable, hasReady, canAsk } =
     useChatSession(notebookId);
   const { scroller, atEnd, trackEnd, jumpToEnd } = useScrollEnd();
-  const bottom = useRef<HTMLDivElement>(null);
-
-  const liveCount = ask.live?.statements.length ?? 0;
-  useEffect(() => {
-    bottom.current?.scrollIntoView?.({ block: 'end' });
-  }, [history.data?.length, liveCount, ask.isPending]);
+  const bottom = useFollowNewest({
+    messages: history.data?.length,
+    statements: ask.live?.statements.length ?? 0,
+    pending: ask.isPending,
+  });
   useIncomingQuestion(incoming, canAsk, ask.mutate);
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
-      {/* The text fades out under the top edge instead of being cut off. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 z-10 h-7 bg-gradient-to-b from-background from-0% via-background/98 via-10% to-transparent"
-      />
+      <TopFade />
       <div className="relative min-h-0 flex-1">
         <div
           ref={scroller}
@@ -65,13 +61,6 @@ export const ChatPanel = memo(function ChatPanel({
               canAsk={canAsk}
               citations={{ notebookId, onOpenCitation }}
             />
-            {ask.isError && (
-              <ErrorNotice
-                error={ask.error}
-                onRetry={() => ask.variables && ask.mutate(ask.variables)}
-                retrying={ask.isPending}
-              />
-            )}
             <div ref={bottom} />
           </div>
         </div>

@@ -1,30 +1,24 @@
-import type { CreateStudioBody, SourceSummary } from '@nlm/shared';
+import type { SourceSummary } from '@nlm/shared';
 import { NotebookText } from 'lucide-react';
 
 import { CreateTile } from '@/components/studio/studio-create-tile';
 import { RailButton, RailEntries } from '@/components/studio/studio-library';
 import { TILE_ORDER } from '@/components/studio/studio-tiles';
-import type { LibraryEntry, OpenEntry } from '@/lib/library-entries';
+import type { useStudioActions } from '@/hooks/use-studio-actions';
+import type { useStudioLibrary } from '@/hooks/use-studio-library';
 
 /** What stays visible when the column is folded: the tiles, one symbol per line, a new note. */
 export function StudioRail({
-  entries,
+  library,
   sources,
-  blocked,
-  noteBlocked,
-  onCreate,
-  onOpen,
-  onStartNote,
+  studio,
 }: {
-  entries: LibraryEntry[];
+  library: ReturnType<typeof useStudioLibrary>;
   sources: SourceSummary[];
-  /** Nothing can be made now: no usable source, or something is being made. */
-  blocked: boolean;
-  noteBlocked: boolean;
-  onCreate: (body: CreateStudioBody) => void;
-  onOpen: (entry: OpenEntry) => void;
-  onStartNote: () => void;
+  studio: ReturnType<typeof useStudioActions>;
 }) {
+  // Nothing can be made now: no usable source, or something is being made.
+  const blocked = sources.length === 0 || studio.create.isPending;
   return (
     <>
       {TILE_ORDER.map((kind) => (
@@ -34,15 +28,15 @@ export function StudioRail({
           compact
           sources={sources}
           disabled={blocked}
-          onCreate={onCreate}
+          onCreate={studio.create.mutate}
         />
       ))}
-      <RailEntries entries={entries} onOpen={onOpen} />
+      <RailEntries entries={library.entries} onOpen={studio.openEntry} />
       <RailButton
         icon={<NotebookText className="size-6" aria-hidden />}
         title="Notiz hinzufügen"
-        disabled={noteBlocked}
-        onClick={onStartNote}
+        disabled={studio.addNote.isPending || library.notes.isPending}
+        onClick={studio.startNote}
         className="mt-auto mb-4"
       />
     </>

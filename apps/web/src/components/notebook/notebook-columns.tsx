@@ -5,7 +5,7 @@ import { CloseReaderButton, ReaderPanel } from '@/components/reader/reader-panel
 import { SourcesPanel } from '@/components/sources/sources-panel';
 import { SourcesRail } from '@/components/sources/sources-rail';
 import { StudioPanel } from '@/components/studio/studio-panel';
-import type { AskedQuestion } from '@/hooks/use-notebook-layout';
+import type { AskedQuestion, useNotebookLayout } from '@/hooks/use-notebook-layout';
 import { COLUMN, type Column } from '@/lib/columns';
 import type { ReaderTarget } from '@/lib/reader-target';
 import { cn } from '@/lib/utils';
@@ -123,5 +123,54 @@ export function StudioColumn({
         viewing && !folded && FLEX.STUDIO_VIEWING
       )}
     />
+  );
+}
+
+/** The three columns side by side (or one at a time below the wide layout). */
+export function NotebookColumns({
+  notebookId,
+  layout,
+  sourcesFolded,
+  studioFolded,
+  onCustomize,
+}: {
+  notebookId: string;
+  layout: ReturnType<typeof useNotebookLayout>;
+  sourcesFolded: boolean;
+  studioFolded: boolean;
+  onCustomize: () => void;
+}) {
+  return (
+    <div className="flex min-h-0 flex-1 px-4 wide:mx-3 wide:gap-2 wide:px-0">
+      <SourcesColumn
+        notebookId={notebookId}
+        shown={layout.column}
+        folded={sourcesFolded}
+        reading={layout.reading}
+        onToggle={layout.toggleSources}
+        onOpenSource={layout.openSource}
+        onCloseReader={layout.closeReader}
+      />
+      <ChatColumn
+        notebookId={notebookId}
+        shown={layout.column}
+        sourcesFolded={sourcesFolded}
+        studioFolded={studioFolded}
+        asked={layout.asked}
+        onOpenCitation={layout.openCitation}
+        onCustomize={onCustomize}
+      />
+      <StudioColumn
+        notebookId={notebookId}
+        shown={layout.column}
+        folded={studioFolded}
+        viewing={layout.viewingOutput}
+        onToggle={layout.toggleStudio}
+        onExpand={layout.expandStudio}
+        onOpenCitation={layout.openCitation}
+        onAsk={layout.askInChat}
+        onViewingChange={layout.setViewingOutput}
+      />
+    </div>
   );
 }

@@ -117,11 +117,6 @@
       "count": 1
     }
   },
-  "apps/web/src/components/chat/chat-panel.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "apps/web/src/components/chat/chat-settings-dialog.tsx": {
     "max-lines-per-function": {
       "count": 1
@@ -149,11 +144,6 @@
     }
   },
   "apps/web/src/components/notebook/notebook-actions.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "apps/web/src/components/notebook/notebook-page.tsx": {
     "max-lines-per-function": {
       "count": 1
     }
@@ -254,11 +244,6 @@
     "complexity": {
       "count": 1
     },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "apps/web/src/components/studio/studio-panel.tsx": {
     "max-lines-per-function": {
       "count": 1
     }

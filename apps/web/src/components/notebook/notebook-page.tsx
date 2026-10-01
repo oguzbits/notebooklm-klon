@@ -3,7 +3,7 @@ import { useParams } from 'react-router';
 
 import { ColumnTabs } from '@/components/notebook/column-tabs';
 import { CustomizeNotebookDialog } from '@/components/notebook/customize-notebook-dialog';
-import { ChatColumn, SourcesColumn, StudioColumn } from '@/components/notebook/notebook-columns';
+import { NotebookColumns } from '@/components/notebook/notebook-columns';
 import { NotebookHeader } from '@/components/notebook/notebook-header';
 import { NotebookLoadFailed, NotebookNotFound } from '@/components/notebook/notebook-states';
 import { useNotebookLayout } from '@/hooks/use-notebook-layout';
@@ -45,37 +45,13 @@ export function NotebookPage() {
     <>
       <NotebookHeader notebook={notebook.data} onCustomize={customize} />
       <ColumnTabs column={layout.column} onSelect={layout.setColumn} />
-      <div className="flex min-h-0 flex-1 px-4 wide:mx-3 wide:gap-2 wide:px-0">
-        <SourcesColumn
-          notebookId={id}
-          shown={layout.column}
-          folded={sourcesFolded}
-          reading={layout.reading}
-          onToggle={layout.toggleSources}
-          onOpenSource={layout.openSource}
-          onCloseReader={layout.closeReader}
-        />
-        <ChatColumn
-          notebookId={id}
-          shown={layout.column}
-          sourcesFolded={sourcesFolded}
-          studioFolded={studioFolded}
-          asked={layout.asked}
-          onOpenCitation={layout.openCitation}
-          onCustomize={customize}
-        />
-        <StudioColumn
-          notebookId={id}
-          shown={layout.column}
-          folded={studioFolded}
-          viewing={layout.viewingOutput}
-          onToggle={layout.toggleStudio}
-          onExpand={layout.expandStudio}
-          onOpenCitation={layout.openCitation}
-          onAsk={layout.askInChat}
-          onViewingChange={layout.setViewingOutput}
-        />
-      </div>
+      <NotebookColumns
+        notebookId={id}
+        layout={layout}
+        sourcesFolded={sourcesFolded}
+        studioFolded={studioFolded}
+        onCustomize={customize}
+      />
       {notebook.data && (
         <CustomizeNotebookDialog
           notebook={notebook.data}

@@ -63,17 +63,7 @@ export function StudioPanel({
       onToggle={onToggle}
       header={opened && <ViewerPath crumb={labels.crumb} onBack={back} />}
       action={opened && <CloseViewerButton label={labels.closeLabel} onClick={back} />}
-      rail={
-        <StudioRail
-          entries={library.entries}
-          sources={usable}
-          blocked={usable.length === 0 || studio.create.isPending}
-          noteBlocked={studio.addNote.isPending || library.notes.isPending}
-          onCreate={studio.create.mutate}
-          onOpen={studio.openEntry}
-          onStartNote={studio.startNote}
-        />
-      }
+      rail={<StudioRail library={library} sources={usable} studio={studio} />}
       className={className}
     >
       <StudioBody
