@@ -18,6 +18,26 @@ function renderPanel(onOpenSource: (sourceId: string) => void = () => {}) {
 }
 
 describe('SourcesPanel', () => {
+  it('sorts the sources by the choice in the menu', async () => {
+    server.use(
+      list([
+        source({ id: SOURCE_ID, title: 'zebra.pdf' }),
+        source({ id: '7c3a0e4b-9d56-4b8f-9e27-4c0a8d3b5e69', title: 'adler.pdf' }),
+      ])
+    );
+    renderPanel();
+    const user = userEvent.setup();
+    const titles = () =>
+      screen.getAllByRole('button', { name: /\.pdf$/ }).map((button) => button.textContent);
+    await screen.findByText('zebra.pdf');
+    expect(titles()).toEqual(['PDFzebra.pdf', 'PDFadler.pdf']);
+
+    await user.click(screen.getByRole('button', { name: 'Quellen sortieren' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Titel' }));
+
+    expect(titles()).toEqual(['PDFadler.pdf', 'PDFzebra.pdf']);
+  });
+
   it('explains what to do when there is no source yet', async () => {
     server.use(list([]));
     renderPanel();
