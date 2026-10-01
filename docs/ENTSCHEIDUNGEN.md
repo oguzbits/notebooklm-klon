@@ -632,4 +632,5 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
   statt wiederholter Zahlen.
 - Erledigt: „Alle auswählen“ ruft `PATCH /api/notebooks/:id/sources` auf und ändert alle fertigen
   Quellen in einer SQL-Anweisung (vorher eine Anfrage pro Quelle, bei Abbruch halb geändert).
-- Offen: `ViewerFrame` hat noch 17 Props; `fetch('/api/…')` steht in vier Hooks.
+- Erledigt: `ViewerFrame` nimmt acht Props statt 17 (Titel, Prompt, Bewertung und Löschen als Gruppen).
+- Offen: `fetch('/api/…')` steht in vier Hooks.

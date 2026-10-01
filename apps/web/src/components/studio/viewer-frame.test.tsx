@@ -1,4 +1,4 @@
-import { STUDIO_FEEDBACK, type StudioRequest } from '@nlm/shared';
+import { STUDIO_FEEDBACK, type StudioFeedback, type StudioRequest } from '@nlm/shared';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
@@ -18,7 +18,20 @@ const REQUEST: StudioRequest = {
   ],
 };
 
-function renderFrame(props: Partial<React.ComponentProps<typeof ViewerFrame>> = {}) {
+interface FrameOverrides {
+  request?: StudioRequest | null;
+  withPrompt?: boolean;
+  feedback?: StudioFeedback | null;
+  actions?: React.ReactNode;
+  onMaximize?: () => void;
+}
+
+function renderFrame({
+  request = REQUEST,
+  withPrompt = true,
+  feedback = null,
+  ...rest
+}: FrameOverrides = {}) {
   server.use(
     http.get(`*/api/notebooks/${NOTEBOOK_ID}/sources`, () => HttpResponse.json([source()]))
   );
@@ -30,17 +43,17 @@ function renderFrame(props: Partial<React.ComponentProps<typeof ViewerFrame>> = 
   renderWithProviders(
     <ViewerFrame
       notebookId={NOTEBOOK_ID}
-      title="Mein Bericht"
-      titleLabel="Titel der Ausgabe"
-      renaming={false}
-      renameError={null}
-      request={REQUEST}
-      withPrompt
-      feedback={null}
-      feedbackNoun="Bericht"
-      deleting={false}
-      {...handlers}
-      {...props}
+      title={{
+        text: 'Mein Bericht',
+        label: 'Titel der Ausgabe',
+        saving: false,
+        error: null,
+        onSave: handlers.onRename,
+      }}
+      prompt={{ request, withPrompt }}
+      feedback={{ value: feedback, noun: 'Bericht', onChange: handlers.onFeedback }}
+      deletion={{ pending: false, onDelete: handlers.onDelete }}
+      {...rest}
     >
       Inhalt
     </ViewerFrame>

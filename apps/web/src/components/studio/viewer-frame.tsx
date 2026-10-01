@@ -88,26 +88,35 @@ function FeedbackBar({
   );
 }
 
+interface TitleProps {
+  text: string;
+  label: string;
+  saving: boolean;
+  error: string | null;
+  onSave: (title: string, revert: () => void) => void;
+}
+
+interface FeedbackProps {
+  value: StudioFeedback | null;
+  /** "Bericht" for a report, "Inhalt" for the rest: "Guter Bericht". */
+  noun: string;
+  onChange: (feedback: StudioFeedback | null) => void;
+}
+
 interface ViewerFrameProps {
   notebookId: string;
-  title: string;
-  titleLabel: string;
-  renaming: boolean;
-  renameError: string | null;
-  onRename: (title: string, revert: () => void) => void;
-  /** Null for an output from before the request was kept: there is nothing to show then. */
-  request: StudioRequest | null;
-  /** Shows the prompt too, not just the sources (reports do, in the original). */
-  withPrompt: boolean;
-  feedback: StudioFeedback | null;
-  /** "Bericht" for a report, "Inhalt" for the rest: "Guter Bericht". */
-  feedbackNoun: string;
-  onFeedback: (feedback: StudioFeedback | null) => void;
+  title: TitleProps;
+  /** Null request for an output from before the request was kept: there is nothing to show then. */
+  prompt: {
+    request: StudioRequest | null;
+    /** Shows the prompt too, not just the sources (reports do, in the original). */
+    withPrompt: boolean;
+  };
+  feedback: FeedbackProps;
   /** Buttons of the view next to the title, before the menu (copying a report). */
   actions?: ReactNode;
   onMaximize?: () => void;
-  deleting: boolean;
-  onDelete: () => void;
+  deletion: { pending: boolean; onDelete: () => void };
   children: ReactNode;
 }
 
@@ -119,19 +128,11 @@ interface ViewerFrameProps {
 export function ViewerFrame({
   notebookId,
   title,
-  titleLabel,
-  renaming,
-  renameError,
-  onRename,
-  request,
-  withPrompt,
+  prompt,
   feedback,
-  feedbackNoun,
-  onFeedback,
   actions,
   onMaximize,
-  deleting,
-  onDelete,
+  deletion,
   children,
 }: ViewerFrameProps) {
   return (
@@ -139,11 +140,11 @@ export function ViewerFrame({
       <div className="flex shrink-0 flex-col gap-1 px-1 pt-1 pb-3">
         <div className="flex items-center gap-1">
           <EditableTitle
-            value={title}
-            label={titleLabel}
-            saving={renaming}
-            error={renameError}
-            onSave={onRename}
+            value={title.text}
+            label={title.label}
+            saving={title.saving}
+            error={title.error}
+            onSave={title.onSave}
             className="h-10 px-2 text-[1.375rem] leading-9"
           />
           {actions}
@@ -158,16 +159,20 @@ export function ViewerFrame({
               <Maximize2 />
             </Button>
           )}
-          <FrameMenu deleting={deleting} onDelete={onDelete} />
+          <FrameMenu deleting={deletion.pending} onDelete={deletion.onDelete} />
         </div>
-        {request && (
+        {prompt.request && (
           <div className="px-2">
-            <PromptChip notebookId={notebookId} request={request} withPrompt={withPrompt} />
+            <PromptChip
+              notebookId={notebookId}
+              request={prompt.request}
+              withPrompt={prompt.withPrompt}
+            />
           </div>
         )}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">{children}</div>
-      <FeedbackBar noun={feedbackNoun} chosen={feedback} onChange={onFeedback} />
+      <FeedbackBar noun={feedback.noun} chosen={feedback.value} onChange={feedback.onChange} />
     </div>
   );
 }

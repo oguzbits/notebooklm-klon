@@ -149,22 +149,23 @@ export function OutputViewer({
     <>
       <ViewerFrame
         notebookId={notebookId}
-        title={output.title}
-        titleLabel="Titel der Ausgabe"
-        renaming={update.isPending && update.variables?.changes.title !== undefined}
-        renameError={update.isError ? describeError(update.error) : null}
-        onRename={(title, revert) =>
-          update.mutate({ outputId: output.id, changes: { title } }, { onError: revert })
-        }
-        request={output.request}
-        withPrompt={report}
-        feedback={output.feedback}
-        feedbackNoun={report ? 'Bericht' : 'Inhalt'}
-        onFeedback={(feedback) => update.mutate({ outputId: output.id, changes: { feedback } })}
+        title={{
+          text: output.title,
+          label: 'Titel der Ausgabe',
+          saving: update.isPending && update.variables?.changes.title !== undefined,
+          error: update.isError ? describeError(update.error) : null,
+          onSave: (title, revert) =>
+            update.mutate({ outputId: output.id, changes: { title } }, { onError: revert }),
+        }}
+        prompt={{ request: output.request, withPrompt: report }}
+        feedback={{
+          value: output.feedback,
+          noun: report ? 'Bericht' : 'Inhalt',
+          onChange: (feedback) => update.mutate({ outputId: output.id, changes: { feedback } }),
+        }}
         actions={report ? <CopyReportButton report={output.content} /> : undefined}
         onMaximize={report ? undefined : () => setEnlarged(true)}
-        deleting={deleting}
-        onDelete={onDelete}
+        deletion={{ pending: deleting, onDelete }}
       >
         {content}
       </ViewerFrame>
