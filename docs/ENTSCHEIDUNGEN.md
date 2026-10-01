@@ -473,7 +473,7 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
 ## 2026-10-01 (Deployment: Entscheidung und Stand)
 
 - **Stand:** Vorbereitet und beschrieben ist Render (kostenloser Docker-Dienst) mit Neon, siehe [render.yaml](../render.yaml)
-  und die README. Ausgeführt wurde es noch nicht. Das Deployment ist bewusst zurückgestellt; es gibt keine Live-URL.
+  und [DEPLOYMENT.md](DEPLOYMENT.md). Ausgeführt wurde es noch nicht. Das Deployment ist bewusst zurückgestellt; es gibt keine Live-URL.
 - **Geplant: ein Hetzner-Server statt Render und Neon.** Grund sind die Kaltstarts: Render schläft nach 15 Minuten, Neon schaltet
   im kostenlosen Tarif nach 5 Minuten ab (nicht abschaltbar), ein Prüfer würde zweimal warten. Ein Server hält App und Datenbank
   dauerhaft wach, hat 40 GB statt 500 MB und liegt in Deutschland. Vorgesehenes Setup: Hetzner Cloud CX23 (x86, laut Drittquellen
@@ -488,7 +488,7 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   Gäste kosten dabei kein Kontingent (Kopie ohne Modellaufruf).
 - **Plan B** bleibt Render + Neon (oder Render bezahlt, damit der Dienst nicht einschläft; Preise nicht geprüft).
 - **Geschrieben (ungetestet auf einem echten Server):** [deploy/](../deploy/) und [deploy.yml](../.github/workflows/deploy.yml),
-  Anleitung in der README. Kleine Entscheidungen dazu:
+  Anleitung in [DEPLOYMENT.md](DEPLOYMENT.md). Kleine Entscheidungen dazu:
   - Das Image wird in GitHub Actions gebaut und per `docker save | ssh docker load` übertragen: keine Registry, kein
     Repository-Zugriff auf dem Server, keine zusätzlichen Geheimnisse.
   - Docker und Compose kommen aus den Ubuntu-Paketen (`docker.io`, `docker-compose-v2`) statt aus einem Install-Skript aus dem
@@ -542,8 +542,7 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   selbst, die Aufrufer schließen bei Erfolg.
 - **Bewusst nicht gebaut:** Handy-Eingabeleiste mit Dokument-Symbol (gibt es schon), Ausgabesprache als Konto-Einstellung (die Sprache
   der Antworten lässt sich je Notizbuch unter „Chat konfigurieren“ wählen), „Alle Notizen als Quelle festlegen“.
-- **Offen:** Die Deploy-Dateien für Hetzner brauchen den S3-Dienst im Compose (siehe `docker-compose.yml`, Dienst `s3`) und ein
-  Volume statt `tmpfs`.
+- **Erledigt später:** Der S3-Dienst mit Volume statt `tmpfs` steht in [deploy/docker-compose.prod.yml](../deploy/docker-compose.prod.yml).
 
 ### Review von Runde 4 (2026-10-01)
 
