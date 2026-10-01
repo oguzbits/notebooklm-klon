@@ -6,7 +6,7 @@ import {
   DEFAULT_CHAT_CONFIG,
   MAX_CUSTOM_INSTRUCTION_CHARS,
 } from '@nlm/shared';
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, type ReactNode, useState } from 'react';
 
 import { QueryBoundary } from '@/components/query-boundary';
 import { DialogSpinner } from '@/components/skeletons';
@@ -68,6 +68,51 @@ function Option({ group, value, label, hint }: OptionProps) {
   );
 }
 
+/** A choice: the value, the words for it and, where needed, a line that explains it. */
+type Choice<T extends string> = readonly [value: T, label: string, hint?: string];
+
+interface ChoiceGroupProps<T extends string> {
+  /** Names the fieldset and the group for a screen reader, and makes the ids of the options. */
+  legend: string;
+  group: string;
+  value: T;
+  choices: readonly Choice<T>[];
+  columns?: boolean;
+  onChange: (value: T) => void;
+  children?: ReactNode;
+}
+
+/** One question of the form with its options as radio buttons; the value that comes back is one of the choices. */
+function ChoiceGroup<T extends string>({
+  legend,
+  group,
+  value,
+  choices,
+  columns = false,
+  onChange,
+  children,
+}: ChoiceGroupProps<T>) {
+  return (
+    <fieldset className="flex flex-col gap-1">
+      <legend className="mb-1 text-sm font-medium">{legend}</legend>
+      <RadioGroup
+        aria-label={legend}
+        className={columns ? 'grid-cols-3' : undefined}
+        value={value}
+        onValueChange={(next) => {
+          const chosen = choices.find(([candidate]) => candidate === next);
+          if (chosen) onChange(chosen[0]);
+        }}
+      >
+        {choices.map(([choice, label, hint]) => (
+          <Option key={choice} group={group} value={choice} label={label} hint={hint} />
+        ))}
+      </RadioGroup>
+      {children}
+    </fieldset>
+  );
+}
+
 interface SettingsFormProps {
   notebookId: string;
   initial: ChatConfig;
@@ -77,35 +122,24 @@ interface SettingsFormProps {
 function SettingsForm({ notebookId, initial, onSaved }: SettingsFormProps) {
   const [config, setConfig] = useState(initial);
   const save = useSaveChatConfig(notebookId);
-  const missingInstruction =
-    config.style === CHAT_STYLE.CUSTOM && config.customInstruction.trim() === '';
+  const custom = config.style === CHAT_STYLE.CUSTOM;
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    save.mutate(
-      {
-        ...config,
-        customInstruction:
-          config.style === CHAT_STYLE.CUSTOM ? config.customInstruction.trim() : '',
-      },
-      { onSuccess: onSaved }
-    );
+    const customInstruction = custom ? config.customInstruction.trim() : '';
+    save.mutate({ ...config, customInstruction }, { onSuccess: onSaved });
   };
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-5">
-      <fieldset className="flex flex-col gap-1">
-        <legend className="mb-1 text-sm font-medium">Stil der Antworten</legend>
-        <RadioGroup
-          aria-label="Stil der Antworten"
-          value={config.style}
-          onValueChange={(style) => setConfig({ ...config, style: style as ChatConfig['style'] })}
-        >
-          {STYLE_OPTIONS.map(([value, label, hint]) => (
-            <Option key={value} group="style" value={value} label={label} hint={hint} />
-          ))}
-        </RadioGroup>
-        {config.style === CHAT_STYLE.CUSTOM && (
+      <ChoiceGroup
+        legend="Stil der Antworten"
+        group="style"
+        value={config.style}
+        choices={STYLE_OPTIONS}
+        onChange={(style) => setConfig({ ...config, style })}
+      >
+        {custom && (
           <Textarea
             aria-label="Eigene Anweisung"
             placeholder="Zum Beispiel: Antworte knapp und nenne zuerst die Zahl."
@@ -114,44 +148,33 @@ function SettingsForm({ notebookId, initial, onSaved }: SettingsFormProps) {
             onChange={(event) => setConfig({ ...config, customInstruction: event.target.value })}
           />
         )}
-      </fieldset>
-      <fieldset className="flex flex-col gap-1">
-        <legend className="mb-1 text-sm font-medium">Länge der Antworten</legend>
-        <RadioGroup
-          aria-label="Länge der Antworten"
-          className="grid-cols-3"
-          value={config.length}
-          onValueChange={(length) =>
-            setConfig({ ...config, length: length as ChatConfig['length'] })
-          }
-        >
-          {LENGTH_OPTIONS.map(([value, label]) => (
-            <Option key={value} group="length" value={value} label={label} />
-          ))}
-        </RadioGroup>
-      </fieldset>
-      <fieldset className="flex flex-col gap-1">
-        <legend className="mb-1 text-sm font-medium">Sprache der Antworten</legend>
-        <RadioGroup
-          aria-label="Sprache der Antworten"
-          className="grid-cols-3"
-          value={config.language}
-          onValueChange={(language) =>
-            setConfig({ ...config, language: language as ChatConfig['language'] })
-          }
-        >
-          {LANGUAGE_OPTIONS.map(([value, label]) => (
-            <Option key={value} group="language" value={value} label={label} />
-          ))}
-        </RadioGroup>
-      </fieldset>
+      </ChoiceGroup>
+      <ChoiceGroup
+        legend="Länge der Antworten"
+        group="length"
+        value={config.length}
+        choices={LENGTH_OPTIONS}
+        columns
+        onChange={(length) => setConfig({ ...config, length })}
+      />
+      <ChoiceGroup
+        legend="Sprache der Antworten"
+        group="language"
+        value={config.language}
+        choices={LANGUAGE_OPTIONS}
+        columns
+        onChange={(language) => setConfig({ ...config, language })}
+      />
       {save.isError && (
         <Alert variant="destructive">
           <AlertDescription>{describeError(save.error)}</AlertDescription>
         </Alert>
       )}
       <DialogFooter>
-        <Button type="submit" disabled={save.isPending || missingInstruction}>
+        <Button
+          type="submit"
+          disabled={save.isPending || (custom && config.customInstruction.trim() === '')}
+        >
           {save.isPending ? 'Wird gespeichert …' : 'Speichern'}
         </Button>
       </DialogFooter>

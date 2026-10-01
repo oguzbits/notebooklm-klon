@@ -2,10 +2,9 @@ import type { AnswerTrace } from '@nlm/shared';
 import { ChevronDown, CircleDot, FileSearch, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 
+import { foundLine, leftOutLines, plural } from '@/lib/answer-trace';
 import { sourcesLabel } from '@/lib/sources-label';
 import { cn } from '@/lib/utils';
-
-const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
 
 interface AnswerTraceViewProps {
   trace: AnswerTrace;
@@ -19,21 +18,7 @@ interface AnswerTraceViewProps {
  */
 export function AnswerTraceView({ trace, statements }: AnswerTraceViewProps) {
   const [open, setOpen] = useState(false);
-  const found =
-    trace.passagesFound === 0
-      ? 'keine passende Textstelle gefunden'
-      : `${plural(trace.passagesFound, 'Textstelle', 'Textstellen')} gefunden`;
-  const left: string[] = [];
-  if (trace.droppedStatements > 0) {
-    left.push(
-      `${plural(trace.droppedStatements, 'Aussage', 'Aussagen')} ohne Beleg ${trace.droppedStatements === 1 ? 'wurde' : 'wurden'} weggelassen`
-    );
-  }
-  if (trace.strippedCitations > 0) {
-    left.push(
-      `${plural(trace.strippedCitations, 'ungültige Quellenangabe', 'ungültige Quellenangaben')} ${trace.strippedCitations === 1 ? 'wurde' : 'wurden'} entfernt`
-    );
-  }
+  const left = leftOutLines(trace);
 
   return (
     <div className="mb-1">
@@ -60,7 +45,7 @@ export function AnswerTraceView({ trace, statements }: AnswerTraceViewProps) {
             <span>
               Deine Quellen wurden durchsucht
               <span className="block text-small text-muted-foreground">
-                {sourcesLabel(trace.sourcesSearched)} · {found}
+                {sourcesLabel(trace.sourcesSearched)} · {foundLine(trace.passagesFound)}
               </span>
             </span>
           </li>

@@ -101,21 +101,6 @@
       "count": 1
     }
   },
-  "apps/web/src/components/chat/answer-trace.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "apps/web/src/components/chat/chat-settings-dialog.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "apps/web/src/components/chat/citation-chip.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "apps/web/src/components/notebook/customize-notebook-dialog.tsx": {
     "max-lines-per-function": {
       "count": 2
