@@ -101,32 +101,6 @@
       "count": 1
     }
   },
-  "apps/web/src/components/reader/reader-panel.tsx": {
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "apps/web/src/components/sources/source-overview.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "apps/web/src/components/studio/create-dialog.tsx": {
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "apps/web/src/components/studio/library-row.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "apps/web/src/components/studio/note-toolbar.tsx": {
     "max-lines": {
       "count": 1

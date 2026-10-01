@@ -6,6 +6,45 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useOverview } from '@/hooks/use-overview';
 
+/** The body of the card: the wait, the failure with a retry, or the summary and the key topics. */
+function OverviewContent({ overview }: { overview: ReturnType<typeof useOverview> }) {
+  return (
+    <>
+      {overview.isPending && (
+        <div className="flex flex-col gap-2" role="status" aria-label="Wird geladen">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-11/12" />
+          <Skeleton className="h-4 w-2/3" />
+        </div>
+      )}
+      {overview.isError && (
+        <ErrorNotice
+          error={overview.error}
+          onRetry={() => void overview.refetch()}
+          retrying={overview.isFetching}
+        />
+      )}
+      {overview.data && (
+        <div className="flex flex-col gap-4">
+          <p className="text-[0.875rem] leading-6">{overview.data.summary}</p>
+          {overview.data.keyTopics.length > 0 && (
+            <ul className="flex flex-wrap gap-2" aria-label="Schlüsselthemen">
+              {overview.data.keyTopics.map((topic) => (
+                <li
+                  key={topic}
+                  className="h-9 max-w-[10.5rem] truncate rounded-full border border-border px-3 text-ui leading-[2.0625rem]"
+                >
+                  {topic}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </>
+  );
+}
+
 interface SourceOverviewCardProps {
   notebookId: string;
   sourceId: string;
@@ -41,41 +80,7 @@ export function SourceOverviewCard({ notebookId, sourceId }: SourceOverviewCardP
           <ChevronUp className={open ? '' : 'rotate-180'} />
         </Button>
       </div>
-      {open && (
-        <>
-          {overview.isPending && (
-            <div className="flex flex-col gap-2" role="status" aria-label="Wird geladen">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-11/12" />
-              <Skeleton className="h-4 w-2/3" />
-            </div>
-          )}
-          {overview.isError && (
-            <ErrorNotice
-              error={overview.error}
-              onRetry={() => void overview.refetch()}
-              retrying={overview.isFetching}
-            />
-          )}
-          {overview.data && (
-            <div className="flex flex-col gap-4">
-              <p className="text-[0.875rem] leading-6">{overview.data.summary}</p>
-              {overview.data.keyTopics.length > 0 && (
-                <ul className="flex flex-wrap gap-2" aria-label="Schlüsselthemen">
-                  {overview.data.keyTopics.map((topic) => (
-                    <li
-                      key={topic}
-                      className="h-9 max-w-[10.5rem] truncate rounded-full border border-border px-3 text-ui leading-[2.0625rem]"
-                    >
-                      {topic}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
-        </>
-      )}
+      {open && <OverviewContent overview={overview} />}
     </section>
   );
 }

@@ -35,6 +35,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { buildCreateBody } from '@/lib/studio-request';
 import { cn } from '@/lib/utils';
 
 /** What the dialog of each format is called; the one for cards says "Lernkarten" like the original. */
@@ -144,6 +145,44 @@ function TemplateCards({ value, onChange }: TemplateCardsProps) {
   );
 }
 
+/** The two kinds that ask how many and how hard. */
+type Countable = typeof STUDIO_KIND.FLASHCARDS | typeof STUDIO_KIND.QUIZ;
+const isCountable = (kind: StudioKind): kind is Countable =>
+  kind === STUDIO_KIND.FLASHCARDS || kind === STUDIO_KIND.QUIZ;
+
+interface SizeFieldsProps {
+  kind: Countable;
+  size: StudioSize;
+  difficulty: StudioDifficulty;
+  onSize: (size: StudioSize) => void;
+  onDifficulty: (difficulty: StudioDifficulty) => void;
+}
+
+/** How many cards or questions, and how hard. */
+function SizeFields({ kind, size, difficulty, onSize, onDifficulty }: SizeFieldsProps) {
+  const sizeOptions = [
+    { value: STUDIO_SIZE.FEWER, label: 'Weniger' },
+    { value: STUDIO_SIZE.DEFAULT, label: USUAL_SIZE[kind] },
+    { value: STUDIO_SIZE.MORE, label: 'Mehr' },
+  ];
+  return (
+    <div className="grid gap-7 sm:grid-cols-2">
+      <SegmentedField
+        label={COUNT_LABEL[kind]}
+        options={sizeOptions}
+        value={size}
+        onChange={onSize}
+      />
+      <SegmentedField
+        label="Schwierigkeitsgrad"
+        options={DIFFICULTIES}
+        value={difficulty}
+        onChange={onDifficulty}
+      />
+    </div>
+  );
+}
+
 interface CreateFormProps {
   kind: StudioKind;
   sources: readonly SourceSummary[];
@@ -159,58 +198,21 @@ function CreateForm({ kind, sources, onSubmit }: CreateFormProps) {
     () => new Set(sources.map((source) => source.id))
   );
   const [focus, setFocus] = useState('');
-
+  const body = buildCreateBody({ kind, format, size, difficulty, chosen, focus }, sources);
   const custom = format === REPORT_FORMAT.CUSTOM;
-  const text = focus.trim();
-  const ready =
-    chosen.size > 0 &&
-    (kind !== STUDIO_KIND.REPORT || (format !== null && (!custom || text !== '')));
-
-  const submit = () => {
-    // Only a real choice is sent: all sources are the usual case and need no list.
-    const options = {
-      ...(chosen.size < sources.length
-        ? { sourceIds: sources.map((s) => s.id).filter((id) => chosen.has(id)) }
-        : {}),
-      ...(text === '' ? {} : { focus: text }),
-    };
-    if (kind === STUDIO_KIND.REPORT) {
-      if (format !== null) onSubmit({ kind, format, ...options });
-    } else if (kind === STUDIO_KIND.MINDMAP) {
-      onSubmit({ kind, ...options });
-    } else {
-      onSubmit({ kind, size, difficulty, ...options });
-    }
-  };
-
-  const sizeOptions =
-    kind === STUDIO_KIND.FLASHCARDS || kind === STUDIO_KIND.QUIZ
-      ? [
-          { value: STUDIO_SIZE.FEWER, label: 'Weniger' },
-          { value: STUDIO_SIZE.DEFAULT, label: USUAL_SIZE[kind] },
-          { value: STUDIO_SIZE.MORE, label: 'Mehr' },
-        ]
-      : null;
 
   return (
     <>
       <div className="flex flex-col gap-7 px-7 pt-6 pb-8">
         {kind === STUDIO_KIND.REPORT && <TemplateCards value={format} onChange={setFormat} />}
-        {(kind === STUDIO_KIND.FLASHCARDS || kind === STUDIO_KIND.QUIZ) && sizeOptions && (
-          <div className="grid gap-7 sm:grid-cols-2">
-            <SegmentedField
-              label={COUNT_LABEL[kind]}
-              options={sizeOptions}
-              value={size}
-              onChange={setSize}
-            />
-            <SegmentedField
-              label="Schwierigkeitsgrad"
-              options={DIFFICULTIES}
-              value={difficulty}
-              onChange={setDifficulty}
-            />
-          </div>
+        {isCountable(kind) && (
+          <SizeFields
+            kind={kind}
+            size={size}
+            difficulty={difficulty}
+            onSize={setSize}
+            onDifficulty={setDifficulty}
+          />
         )}
         <SourcesField sources={sources} chosen={chosen} onChange={setChosen} />
         <FocusField
@@ -223,7 +225,12 @@ function CreateForm({ kind, sources, onSubmit }: CreateFormProps) {
         />
       </div>
       <div className="flex justify-end border-t border-border px-5 py-5">
-        <Button variant="secondary" size="xl" disabled={!ready} onClick={submit}>
+        <Button
+          variant="secondary"
+          size="xl"
+          disabled={body === null}
+          onClick={() => body && onSubmit(body)}
+        >
           Generieren
         </Button>
       </div>
