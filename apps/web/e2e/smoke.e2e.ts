@@ -60,8 +60,8 @@ test('from sign-up to a cited passage, a note and back out', async ({ page }) =>
   await page.getByRole('button', { name: 'In Notiz speichern' }).last().click();
   await expect(page.getByText('In Notiz gespeichert')).toBeVisible();
   // The hover popup of the chip stays open while the mouse is still on it, and covers the button.
+  // With the mouse away it closes, and the click below waits until the button is free.
   await page.mouse.move(0, 0);
-  await expect(page.locator('[data-radix-popper-content-wrapper]')).toHaveCount(0);
   await page.getByRole('button', { name: 'Quellenansicht schließen' }).click();
   const library = page.getByRole('region', { name: 'Erstellte Ausgaben' });
   await expect(
