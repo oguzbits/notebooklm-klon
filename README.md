@@ -156,6 +156,8 @@ Beispiel-Notizbuch anlegen (braucht den Schlüssel, liest drei Beispieldokumente
 
 ## Deployment
 
+> Stand: Es ist noch nichts deployt. Vorbereitet ist der Weg unten (Render + Neon). Geplant ist stattdessen ein Hetzner-Server, weil Render und Neon im kostenlosen Tarif einschlafen. Begründung und Setup: [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md), Abschnitt „Deployment: Entscheidung und Stand“.
+
 Ein Container aus dem [Dockerfile](Dockerfile), beschrieben in [render.yaml](render.yaml) (Render, Region Frankfurt). Die Datenbank ist Neon (kostenlos, 500 MB, pgvector). Ablauf:
 
 1. Neon-Projekt anlegen, die **direkte** Verbindung (ohne `-pooler` im Host) als `DATABASE_URL` nehmen. Migrationen und die Job-Queue brauchen Funktionen, die ein Pooler nicht bietet.

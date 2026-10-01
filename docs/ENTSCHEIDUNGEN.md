@@ -469,3 +469,22 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
 - **Der Offline-Server legt das Beispiel selbst an** (mit den Fakes, einmalig, wiederholbar), damit der Knopf auch dort und im
   E2E-Test geht. Geprüft: Datenbank-Tests für Kopie, Zähler und Löschen, Route-Tests (Isolation zweier Gäste, 503, Grenze,
   geschlossene Plugin-Route), Web-Tests, ein E2E-Test (Knopf, Frage mit Zitat, Konto-Menü, Abmelden).
+
+## 2026-10-01 (Deployment: Entscheidung und Stand)
+
+- **Stand:** Vorbereitet und beschrieben ist Render (kostenloser Docker-Dienst) mit Neon, siehe [render.yaml](../render.yaml)
+  und die README. Ausgeführt wurde es noch nicht. Das Deployment ist bewusst zurückgestellt; es gibt keine Live-URL.
+- **Geplant: ein Hetzner-Server statt Render und Neon.** Grund sind die Kaltstarts: Render schläft nach 15 Minuten, Neon schaltet
+  im kostenlosen Tarif nach 5 Minuten ab (nicht abschaltbar), ein Prüfer würde zweimal warten. Ein Server hält App und Datenbank
+  dauerhaft wach, hat 40 GB statt 500 MB und liegt in Deutschland. Vorgesehenes Setup: Hetzner Cloud CX23 (x86, laut Drittquellen
+  etwa 4 bis 5 € im Monat, Preis vor dem Buchen prüfen), Docker Compose mit Caddy (HTTPS), unserer App (das vorhandene Dockerfile)
+  und `pgvector/pgvector` mit Volume, ein Gratis-Hostname (zum Beispiel `<IP>.sslip.io`), Deployment per GitHub Actions über SSH,
+  Hetzner-Firewall (22, 80, 443), tägliches `pg_dump`, `/health` für einen Uptime-Check. Die `.env` liegt nur auf dem Server.
+- **Verworfen: Vercel.** Die Ingestion läuft über einen dauerhaften `pg-boss`-Worker, Funktionen laufen dort nur pro Anfrage;
+  Anfragen sind auf 4,5 MB begrenzt, unsere Uploads auf 10 MB; die Datenbank bliebe bei Neon. Das wäre ein Umbau von Ingestion und
+  Upload nur für das Hosting.
+- **Google bleibt im kostenlosen Tarif** (Entscheidung des Nutzers, keine Abrechnung). Folge: Das Tageskontingent bleibt der
+  Engpass, und Google darf Eingaben zur Modellverbesserung nutzen; die README warnt davor, sensible Dokumente hochzuladen.
+  Gäste kosten dabei kein Kontingent (Kopie ohne Modellaufruf).
+- **Plan B** bleibt Render + Neon (oder Render bezahlt, damit der Dienst nicht einschläft; Preise nicht geprüft).
+- **Offen:** Deploy-Dateien (Compose, Caddyfile, Workflow, Anleitung) sind nicht geschrieben.
