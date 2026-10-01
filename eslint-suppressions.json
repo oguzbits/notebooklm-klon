@@ -109,20 +109,10 @@
       "count": 1
     }
   },
-  "apps/web/src/components/notebook/notebook-actions.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "apps/web/src/components/notebook/panel.tsx": {
     "complexity": {
       "count": 1
     },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "apps/web/src/components/notebooks/notebook-list-page.tsx": {
     "max-lines-per-function": {
       "count": 1
     }
