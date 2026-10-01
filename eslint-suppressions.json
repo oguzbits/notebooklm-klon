@@ -100,13 +100,5 @@
     "max-lines-per-function": {
       "count": 1
     }
-  },
-  "apps/web/src/components/studio/note-toolbar.tsx": {
-    "max-lines": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 2
-    }
   }
 }
