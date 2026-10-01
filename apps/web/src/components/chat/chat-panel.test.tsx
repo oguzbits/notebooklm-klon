@@ -424,6 +424,18 @@ describe('ChatPanel', () => {
     expect(body).toEqual({ kind: NOTE_KIND.ANSWER, messageId: ANSWER_ID });
   });
 
+  it('puts "In Notiz speichern" before "Kopieren" under an answer, like the original', async () => {
+    server.use(sources(), history([answer([{ text: 'Aussage.', chunkIds: [CHUNK_ID] }])]));
+    renderChat();
+
+    const saves = await screen.findAllByRole('button', { name: 'In Notiz speichern' });
+    const copies = screen.getAllByRole('button', { name: 'Kopieren' });
+    const save = saves[saves.length - 1]!;
+    const copy = copies[copies.length - 1]!;
+
+    expect(save.compareDocumentPosition(copy) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('shows an answer that is already a note as saved', async () => {
     server.use(
       sources(),

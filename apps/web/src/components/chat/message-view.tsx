@@ -99,8 +99,8 @@ export function MessageView({
       />
       {message.statements.length > 0 && (
         <div className="mt-3 flex flex-wrap items-center">
-          <CopyAnswerButton statements={message.statements} />
           <SaveNoteButton notebookId={notebookId} messageId={message.id} />
+          <CopyAnswerButton statements={message.statements} />
         </div>
       )}
     </div>
