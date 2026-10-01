@@ -193,11 +193,6 @@
       "count": 1
     }
   },
-  "apps/web/src/components/studio/mindmap-view.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "apps/web/src/components/studio/note-frame.tsx": {
     "max-lines-per-function": {
       "count": 1
@@ -231,11 +226,6 @@
   },
   "apps/web/src/components/studio/viewer-frame.tsx": {
     "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "apps/web/src/lib/relative-time.ts": {
-    "no-nested-ternary": {
       "count": 1
     }
   }

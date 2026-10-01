@@ -8,6 +8,8 @@ const JUST_NOW_S = 45;
 const DATE_AFTER_DAYS = 7;
 
 const shortRelative = new Intl.RelativeTimeFormat('de', { numeric: 'always', style: 'short' });
+/** The words for today and yesterday, by how many days ago; older and future days get the date. */
+const RECENT_DAYS: readonly string[] = ['Heute', 'Gestern'];
 const date = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium' });
 
 /** "Vor 3 Min." for the list of the Studio; after a week the plain date. */
@@ -35,7 +37,7 @@ export function messageTime(iso: string, now: Date = new Date()): string {
   const days = Math.round(
     (startOfDay(now).getTime() - startOfDay(moment).getTime()) / (DAY_S * SECOND_MS)
   );
-  const day = days === 0 ? 'Heute' : days === 1 ? 'Gestern' : formatDay(moment);
+  const day = RECENT_DAYS[days] ?? formatDay(moment);
   return `${day} • ${clockFormat.format(moment)}`;
 }
 
