@@ -1,4 +1,10 @@
-import { AnswerSchema, CHAT_LANGUAGE, CHAT_LENGTH, CHAT_STYLE, type ChatConfig } from '@nlm/shared';
+import {
+  CHAT_LANGUAGE,
+  CHAT_LENGTH,
+  CHAT_STYLE,
+  type ChatConfig,
+  ChatReplySchema,
+} from '@nlm/shared';
 import { z } from 'zod';
 
 import type { ChatContext } from './chat-context';
@@ -11,11 +17,14 @@ export const CHAT_SYSTEM_PROMPT =
   'date or name only if a cited passage says it literally; do not derive it from a related ' +
   'figure. If the context does not contain the answer, return one statement saying so with an ' +
   'empty citation list. You may mark the most important terms of a statement with **bold**; ' +
-  'use no other Markdown.';
+  'use no other Markdown. After the statements, put at most three short follow-up questions the ' +
+  'reader could ask next into followUps, written in the language of the answer and answerable ' +
+  'from the context passages. A follow-up question is no statement and has no citation; leave ' +
+  'followUps empty when the context does not contain the answer.';
 
-/** The answer contract as JSON Schema for the provider, derived from the shared schema. */
+/** The reply contract as JSON Schema for the provider, derived from the shared schema. */
 export const ANSWER_JSON_SCHEMA: Record<string, unknown> = (() => {
-  const { $schema: _dialect, ...schema } = z.toJSONSchema(AnswerSchema);
+  const { $schema: _dialect, ...schema } = z.toJSONSchema(ChatReplySchema);
   return schema;
 })();
 

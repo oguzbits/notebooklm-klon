@@ -10,6 +10,7 @@ const PASSAGE = /\[(c\d+)\]\n([\s\S]*?)(?=\n\n\[c\d+\]\n|\n\nQuestion:|$)/g;
 // A sentence ends at ".", "!" or "?" followed by a space, but not after an abbreviation like "Dr.".
 const SENTENCE_END = /(?<!\b\p{L}{1,2}\.)(?<=[.!?])\s+/u;
 const NO_ANSWER = 'In den ausgewählten Quellen steht dazu nichts.';
+const FAKE_FOLLOW_UPS = ['Was steht noch in den Quellen?', 'Welche Einzelheiten gibt es dazu?'];
 const MAX_PASSAGES_IN_ANSWER = 2;
 const STREAM_PIECE_CHARS = 24;
 const STREAM_PIECE_DELAY_MS = 25;
@@ -50,7 +51,10 @@ export function extractiveAnswer(userMessage: string): string {
           text: (text ?? '').trim().split(SENTENCE_END)[0] ?? '',
           chunkIds: [label ?? ''],
         }));
-  return JSON.stringify({ statements });
+  return JSON.stringify({
+    statements,
+    followUps: passages.length === 0 ? [] : FAKE_FOLLOW_UPS,
+  });
 }
 
 /** Hands the text out in small pieces with a short pause, so the UI shows real streaming. */

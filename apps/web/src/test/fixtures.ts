@@ -57,10 +57,14 @@ export const question = (text: string): ChatMessage => ({
   createdAt: CREATED_AT,
 });
 
-export const answer = (statements: { text: string; chunkIds: string[] }[]): ChatMessage => ({
+export const answer = (
+  statements: { text: string; chunkIds: string[] }[],
+  followUps: string[] = []
+): ChatMessage => ({
   id: '22222222-2222-4222-8222-222222222222',
   role: CHAT_ROLE.ASSISTANT,
   statements,
+  followUps,
   createdAt: CREATED_AT,
 });
 

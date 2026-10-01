@@ -9,8 +9,11 @@ export {
   CHAT_EVENT,
   type ChatEvent,
   ChatEventSchema,
+  ChatReplySchema,
   type ChatRequest,
   ChatRequestSchema,
+  FollowUpsSchema,
+  MAX_FOLLOW_UPS,
 } from './chat';
 export {
   CHAT_LANGUAGE,

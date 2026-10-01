@@ -64,13 +64,14 @@ export function chatRoutes(deps: AppDeps) {
 
     return streamSSE(c, async (stream) => {
       const statements: AnswerStatement[] = [];
+      let followUps: string[] = [];
       let saved = false;
       // An answer is saved once, before its last event goes out, so the client can read it back at
       // once. An answer with no statements is saved only if the model finished (it found nothing).
       const saveAnswer = async (finished: boolean) => {
         if (saved || (!finished && statements.length === 0)) return;
         saved = true;
-        await saveAssistantMessage(deps.db, userId, notebookId, statements);
+        await saveAssistantMessage(deps.db, userId, notebookId, statements, followUps);
       };
 
       try {
@@ -78,6 +79,7 @@ export function chatRoutes(deps: AppDeps) {
           if (event.type === CHAT_EVENT.STATEMENT) {
             statements.push({ text: event.text, chunkIds: event.chunkIds });
           } else {
+            if (event.type === CHAT_EVENT.DONE) followUps = event.followUps;
             await saveAnswer(event.type === CHAT_EVENT.DONE);
           }
           await stream.writeSSE({ event: event.type, data: JSON.stringify(event) });

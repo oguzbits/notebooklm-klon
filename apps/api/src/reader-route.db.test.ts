@@ -16,7 +16,8 @@ import { createApp } from './app';
 import { BASE_URL, createHarness } from './testing/app-harness';
 
 const PASSWORD = 'ein-sicheres-passwort';
-const ANSWER = '{"statements":[{"text":"Dr. Brandt leitet es.","chunkIds":["c1"]}]}';
+const ANSWER =
+  '{"statements":[{"text":"Dr. Brandt leitet es.","chunkIds":["c1"]}],"followUps":["Wie lange läuft es?"]}';
 
 // The model of the harness is swapped per test through this variable.
 let model: (input: ChatInput) => AsyncIterable<string> = async function* () {
@@ -220,6 +221,8 @@ describe('chat history', () => {
       [chunkIds]
     );
     expect(rows).toEqual([{ source_id: sourceId }]);
+    // The questions the model suggested are saved with the answer, so they are there after a reload.
+    expect(answer.followUps).toEqual(['Wie lange läuft es?']);
   });
 
   it('is deleted on request, only for the own notebook', async () => {
@@ -267,5 +270,7 @@ describe('chat history', () => {
     const answer = messages[1];
     if (answer?.role !== CHAT_ROLE.ASSISTANT) throw new Error('expected an assistant message');
     expect(answer.statements.map((statement) => statement.text)).toEqual(['Eins.']);
+    // An answer that broke off suggests nothing.
+    expect(answer.followUps).toEqual([]);
   });
 });

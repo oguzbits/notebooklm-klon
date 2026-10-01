@@ -151,6 +151,9 @@ export const chatMessages = pgTable(
     role: chatRole('role').notNull(),
     text: text('text'),
     statements: jsonb('statements'),
+    // The questions the assistant suggested after an answer (FollowUpsSchema). Null: none, or an
+    // answer from before they existed.
+    followUps: jsonb('follow_ups'),
     createdAt: createdAt(),
   },
   (table) => [index('chat_messages_notebook_seq_idx').on(table.notebookId, table.seq)]

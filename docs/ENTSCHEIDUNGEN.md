@@ -291,3 +291,14 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   und der Inhalt folgt per `startTransition`.
 - **Reihenfolge der Kacheln wie im Original:** Mindmap, Berichte, Karteikarten, Quiz (die Reihenfolge der vier Formate,
   die wir haben). Vorher stand Bericht zuerst.
+- **Vorschlagsfragen unter der letzten Antwort (2026-10-01):** Das Original zeigt unter der letzten Antwort drei Karten
+  mit Fragen, die man als Nächstes stellen könnte (gemessen: Fläche `surface-dim`, Radius 24, Innenabstand 20, 14/24,
+  Abstand 12, gleich breit, Pfeil unten links, Klick stellt die Frage). Die Fragen kommen **aus derselben Modellantwort**
+  (`followUps` hinter den Aussagen), nicht aus einem zweiten Aufruf: das kostet kein zusätzliches Kontingent (Free Tier:
+  15 Anfragen pro Minute), und die Aussagen bleiben das Erste, was gestreamt wird. Vertrag: `ChatReplySchema` in
+  `packages/shared/src/chat.ts` (höchstens 3, kein Zitat, weil es Fragen sind und keine Behauptungen). Der Server räumt auf
+  (`core/follow-ups.ts`: nicht die eben gestellte Frage, keine doppelten, höchstens drei) und liefert nichts, wenn keine
+  Aussage einen gültigen Beleg behielt. Sie stehen im Abschlussereignis `ANSWER_DONE` und werden mit der Antwort gespeichert
+  (`chat_messages.follow_ups`, Migration `0008`), damit sie nach dem Neuladen noch da sind; ältere Antworten haben keine. Die
+  Karten erscheinen nur unter der letzten Nachricht und nur, wenn sie eine Antwort ist. Ohne fertige Quelle sind sie gesperrt.
+  `pnpm eval:live` wurde nach dem längeren Prompt nicht neu ausgeführt.

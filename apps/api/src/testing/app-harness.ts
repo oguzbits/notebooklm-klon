@@ -62,7 +62,7 @@ export function createHarness(options: HarnessOptions = {}) {
         options.model ??
         async function* (input) {
           modelInputs.push(input);
-          yield '{"statements":[{"text":"Antwort.","chunkIds":["c1"]}]}';
+          yield '{"statements":[{"text":"Antwort.","chunkIds":["c1"]}],"followUps":["Und was noch?"]}';
         },
       onError: (error) => {
         errors.push(error);

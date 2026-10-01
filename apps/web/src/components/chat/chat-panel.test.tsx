@@ -1,5 +1,5 @@
 import { API_ERROR, CHAT_EVENT, type ChatEvent, SOURCE_STATUS } from '@nlm/shared';
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse, type JsonBodyType } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -118,6 +118,7 @@ describe('ChatPanel', () => {
       statements: 1,
       droppedStatements: 0,
       strippedCitations: 0,
+      followUps: [],
     };
     const encoder = new TextEncoder();
     server.use(
@@ -181,6 +182,81 @@ describe('ChatPanel', () => {
 
     expect(await screen.findByText(/keine Antworten mehr möglich/)).toBeTruthy();
     expect(screen.getByRole('button', { name: /Erneut versuchen/ })).toBeTruthy();
+  });
+
+  describe('questions that could follow an answer', () => {
+    const followUps = ['Wie hoch ist das Budget?', 'Wer arbeitet noch mit?'];
+    const asking = () => {
+      const asked: unknown[] = [];
+      server.use(
+        http.post(`${base}/chat`, async ({ request }) => {
+          asked.push(await request.json());
+          return new HttpResponse('', { headers: { 'content-type': 'text/event-stream' } });
+        })
+      );
+      return asked;
+    };
+
+    it('shows them under the last answer and asks one on click', async () => {
+      const asked = asking();
+      server.use(
+        sources(),
+        history([
+          question('Wer leitet es?'),
+          answer([{ text: 'Dr. Brandt leitet es.', chunkIds: [CHUNK_ID] }], followUps),
+        ])
+      );
+      renderChat();
+
+      const list = await screen.findByRole('list', { name: 'Vorschläge für weitere Fragen' });
+      expect(within(list).getAllByRole('button')).toHaveLength(2);
+      await userEvent.setup().click(within(list).getByRole('button', { name: followUps[0] }));
+
+      await waitFor(() => expect(asked).toEqual([{ question: 'Wie hoch ist das Budget?' }]));
+    });
+
+    it('shows them only under the last answer of the conversation', async () => {
+      server.use(
+        sources(),
+        history([
+          question('Eins?'),
+          answer([{ text: 'Eins.', chunkIds: [CHUNK_ID] }], ['Nur für die alte Antwort?']),
+          question('Zwei?'),
+          answer([{ text: 'Zwei.', chunkIds: [CHUNK_ID] }], followUps),
+        ])
+      );
+      renderChat();
+
+      await screen.findByRole('list', { name: 'Vorschläge für weitere Fragen' });
+      expect(screen.queryByText('Nur für die alte Antwort?')).toBeNull();
+    });
+
+    it('shows nothing when the last message is a question or the answer has none', async () => {
+      server.use(
+        sources(),
+        history([
+          question('Wer leitet es?'),
+          answer([{ text: 'Dr. Brandt.', chunkIds: [CHUNK_ID] }]),
+        ])
+      );
+      renderChat();
+
+      await screen.findByText('Wer leitet es?');
+      expect(screen.queryByRole('list', { name: 'Vorschläge für weitere Fragen' })).toBeNull();
+    });
+
+    it('cannot be used while no ready source is selected', async () => {
+      server.use(
+        sources([source({ selected: false })]),
+        history([answer([{ text: 'Dr. Brandt.', chunkIds: [CHUNK_ID] }], followUps)])
+      );
+      renderChat();
+
+      const list = await screen.findByRole('list', { name: 'Vorschläge für weitere Fragen' });
+      for (const card of within(list).getAllByRole('button')) {
+        expect(card).toHaveProperty('disabled', true);
+      }
+    });
   });
 
   it('offers the suggested questions of the selected sources and asks one on click', async () => {

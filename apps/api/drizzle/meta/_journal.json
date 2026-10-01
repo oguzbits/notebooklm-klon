@@ -57,6 +57,13 @@
       "when": 1790791417138,
       "tag": "0007_exotic_ma_gnuci",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790815459007,
+      "tag": "0008_clean_prodigy",
+      "breakpoints": true
     }
   ]
 }

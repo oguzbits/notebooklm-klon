@@ -1,7 +1,8 @@
-import { SOURCE_STATUS } from '@nlm/shared';
+import { CHAT_ROLE, SOURCE_STATUS } from '@nlm/shared';
 import { ArrowUp, FileText, LoaderCircle, MessageCircleQuestion } from 'lucide-react';
 import { type FormEvent, type KeyboardEvent, memo, useEffect, useRef, useState } from 'react';
 
+import { FollowUps } from '@/components/chat/follow-ups';
 import { AnswerView, MessageView, QuestionBubble } from '@/components/chat/message-view';
 import { ErrorNotice, QueryBoundary } from '@/components/query-boundary';
 import { ChatSkeleton } from '@/components/skeletons';
@@ -31,6 +32,10 @@ export const ChatPanel = memo(function ChatPanel({
   ).length;
   const canAsk = usable > 0 && !ask.isPending;
   const canSend = canAsk && question.trim() !== '';
+
+  // Only the last answer of the conversation suggests what to ask next, and only while it is the last.
+  const lastMessage = history.data?.at(-1);
+  const lastFollowUps = lastMessage?.role === CHAT_ROLE.ASSISTANT ? lastMessage.followUps : [];
 
   const liveCount = ask.live?.statements.length ?? 0;
   useEffect(() => {
@@ -121,6 +126,15 @@ export const ChatPanel = memo(function ChatPanel({
                     onOpenCitation={onOpenCitation}
                   />
                 ))}
+                {lastFollowUps.length > 0 && !ask.live && (
+                  <div className="pr-8">
+                    <FollowUps
+                      questions={lastFollowUps}
+                      disabled={!canAsk}
+                      onAsk={(suggestion) => ask.mutate(suggestion)}
+                    />
+                  </div>
+                )}
                 {ask.live && (
                   <>
                     <QuestionBubble text={ask.live.question} askedAt={ask.live.askedAt} />
