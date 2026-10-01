@@ -17,10 +17,11 @@
     "depcruise": "depcruise --config config/dependency-cruiser.cjs apps packages",
     "depcruise:graph": "depcruise --config config/dependency-cruiser.cjs --output-type mermaid apps packages > architecture.mmd",
     "knip": "knip --include dependencies,unlisted,binaries,unresolved,files,cycles",
-    "audit:duplication": "jscpd",
+    "audit:duplication": "jscpd --reporters threshold",
+    "audit:duplication:details": "jscpd --reporters console",
     "audit:magic": "node scripts/audit/audit-magic-strings.mjs",
-    "test": "vitest run --project shared --project api --project hooks --project web",
-    "test:watch": "vitest",
+    "test": "NODE_OPTIONS=--no-experimental-webstorage vitest run --project shared --project api --project hooks --project web",
+    "test:watch": "NODE_OPTIONS=--no-experimental-webstorage vitest",
     "prepare": "husky",
     "test:db": "vitest run --project db",
     "db:up": "docker compose up -d --wait",
@@ -82,9 +83,7 @@
         ],
         "entry": [
           "src/**/*.test.{ts,tsx}",
-          "src/test/setup.ts",
-          "e2e/**/*.e2e.ts",
-          "playwright.config.ts"
+          "e2e/**/*.e2e.ts"
         ]
       }
     }
@@ -102,7 +101,7 @@
     ],
     "threshold": 2,
     "reporters": [
-      "console"
+      "threshold"
     ],
     "gitignore": true
   }

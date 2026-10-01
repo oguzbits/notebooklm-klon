@@ -4,8 +4,10 @@ import os from 'node:os';
 import { checkBashCommand } from './bash-rules.mjs';
 
 /**
- * PreToolUse hook for Bash. Blocks autonomous git commit/push, recursive rm outside the project's
- * subfolders and any reference to secret files. Fails closed: if this hook itself breaks, the
+ * PreToolUse hook for Bash. Blocks force pushes and `--no-verify` (commits and pushes themselves are
+ * allowed, the Husky hooks are the gate), recursive rm outside the project's subfolders and any
+ * reference to secret files. A heredoc body is read like any other text, so a comment that names a
+ * secrets file trips it: write files with the Write tool instead. Fails closed: if this hook itself breaks, the
  * command is blocked (exit 2) instead of silently allowed.
  */
 

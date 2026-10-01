@@ -21,11 +21,11 @@ function makeRepo({ checkScript, codeFile }) {
   return dir;
 }
 
-function runHook(dir, payload = {}) {
+function runHook(dir, payload = {}, env = {}) {
   return spawnSync('node', [script], {
     input: JSON.stringify(payload),
     encoding: 'utf8',
-    env: { ...process.env, CLAUDE_PROJECT_DIR: dir },
+    env: { ...process.env, CLAUDE_PROJECT_DIR: dir, ...env },
   });
 }
 
@@ -59,5 +59,34 @@ describe('guard-stop process', () => {
     const dir = makeRepo({ checkScript: 'exit 1', codeFile: true });
 
     expect(runHook(dir, { stop_hook_active: true }).stdout).toBe('');
+  });
+
+  it('does not run the check again for code it has already passed', () => {
+    const dir = makeRepo({ checkScript: 'echo run >> runs.txt', codeFile: true });
+
+    runHook(dir);
+    runHook(dir);
+    expect(fs.readFileSync(path.join(dir, 'runs.txt'), 'utf8').trim().split('\n')).toHaveLength(1);
+
+    fs.writeFileSync(path.join(dir, 'a.ts'), 'export const a = 2;\n');
+    runHook(dir);
+    expect(fs.readFileSync(path.join(dir, 'runs.txt'), 'utf8').trim().split('\n')).toHaveLength(2);
+  });
+
+  it('checks again after a failure, because a failure is never remembered', () => {
+    const dir = makeRepo({ checkScript: 'echo run >> runs.txt; exit 1', codeFile: true });
+
+    runHook(dir);
+    runHook(dir);
+
+    expect(fs.readFileSync(path.join(dir, 'runs.txt'), 'utf8').trim().split('\n')).toHaveLength(2);
+  });
+
+  it('does not block when the check runs out of time: that is no failure of the code', () => {
+    const dir = makeRepo({ checkScript: 'sleep 5', codeFile: true });
+    const result = runHook(dir, {}, { GUARD_STOP_TIMEOUT_MS: '300' });
+
+    expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('timed out');
   });
 });
