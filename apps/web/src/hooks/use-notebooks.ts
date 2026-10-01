@@ -25,6 +25,19 @@ export function useCreateNotebook() {
   });
 }
 
+/** Makes a copy of the notebook with the same sources; the answer is the new notebook. */
+export function useCopyNotebook() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (notebookId: string) =>
+      readJson(
+        await api.api.notebooks[':notebookId'].copy.$post({ param: { notebookId } }),
+        NotebookSchema
+      ),
+    onSuccess: () => client.invalidateQueries({ queryKey: queryKeys.notebooks, exact: true }),
+  });
+}
+
 export function useDeleteNotebook() {
   const client = useQueryClient();
   return useMutation({

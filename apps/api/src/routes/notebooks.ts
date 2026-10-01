@@ -16,6 +16,7 @@ import type { AuthVariables } from '../auth/session';
 import {
   createNotebook,
   deleteNotebook,
+  duplicateNotebook,
   findNotebook,
   listNotebooks,
   listNotebookSources,
@@ -65,6 +66,17 @@ const updateRoute = createRoute({
   responses: {
     [OK]: json(NotebookSchema, 'The changed notebook'),
     400: invalid,
+    401: unauthenticated,
+    [NOT_FOUND]: notFound,
+  },
+});
+
+const copyRoute = createRoute({
+  method: 'post',
+  path: '/{notebookId}/copy',
+  request: { params: notebookParams },
+  responses: {
+    [CREATED]: json(NotebookSchema, 'The copy: same sources, summaries and settings, no chat'),
     401: unauthenticated,
     [NOT_FOUND]: notFound,
   },
@@ -151,6 +163,11 @@ export function notebookRoutes(deps: AppDeps) {
       const changes = c.req.valid('json');
       const updated = await updateNotebook(deps.db, c.var.userId, notebookId, changes);
       return updated ? c.json(updated, OK) : c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
+    })
+    .openapi(copyRoute, async (c) => {
+      const { notebookId } = c.req.valid('param');
+      const copy = await duplicateNotebook(deps.db, c.var.userId, notebookId);
+      return copy ? c.json(copy, CREATED) : c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
     })
     .openapi(deleteRoute, async (c) => {
       const { notebookId } = c.req.valid('param');

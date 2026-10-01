@@ -5,6 +5,7 @@ import {
   countSourcesSince,
   createNotebook,
   deleteNotebook,
+  duplicateNotebook,
   findNotebook,
   linkSource,
   listNotebooks,
@@ -264,6 +265,49 @@ describe('renameSource', () => {
     expect(await renameSource(db, USER, mine.id, 'kein-uuid', 'X')).toBe(false);
     const [row] = await listNotebookSources(db, OTHER, theirs.id);
     expect(row?.title).toBe('fremd.pdf');
+  });
+});
+
+describe('duplicateNotebook', () => {
+  it('copies title, own summary and the same sources with their selection, not the chat', async () => {
+    const original = await createNotebook(db, USER, 'Forschung');
+    const first = await addSource(USER, 'dup-a', { title: 'a.pdf', status: SOURCE_STATUS.READY });
+    const second = await addSource(USER, 'dup-b', { title: 'b.pdf', status: SOURCE_STATUS.READY });
+    await linkSource(db, USER, original.id, first.id);
+    await linkSource(db, USER, original.id, second.id);
+    await setSourceSelected(db, USER, original.id, second.id, false);
+    await updateNotebook(db, USER, original.id, { customSummary: 'Mein Text' });
+
+    const copy = await duplicateNotebook(db, USER, original.id);
+
+    expect(copy).toMatchObject({
+      title: 'Kopie von Forschung',
+      customSummary: 'Mein Text',
+      sourceCount: 2,
+    });
+    expect(copy?.id).not.toBe(original.id);
+    const copied = await listNotebookSources(db, USER, copy?.id ?? '');
+    expect(copied.map((row) => [row.title, row.selected]).sort()).toEqual([
+      ['a.pdf', true],
+      ['b.pdf', false],
+    ]);
+    // The sources are the same rows: nothing was read or stored a second time.
+    expect(copied.map((row) => row.id).sort()).toEqual([first.id, second.id].sort());
+    expect((await findNotebook(db, USER, original.id))?.sourceCount).toBe(2);
+  });
+
+  it('keeps a title within the limit', async () => {
+    const original = await createNotebook(db, USER, 'x'.repeat(200));
+
+    expect((await duplicateNotebook(db, USER, original.id))?.title).toHaveLength(200);
+  });
+
+  it("does not copy another user's notebook or answer for an unknown ID", async () => {
+    const theirs = await createNotebook(db, OTHER, 'Fremd');
+
+    expect(await duplicateNotebook(db, USER, theirs.id)).toBeNull();
+    expect(await duplicateNotebook(db, USER, 'kein-uuid')).toBeNull();
+    expect(await listNotebooks(db, USER)).toEqual([]);
   });
 });
 

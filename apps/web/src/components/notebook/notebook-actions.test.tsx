@@ -1,4 +1,4 @@
-import { DEFAULT_CHAT_CONFIG } from '@nlm/shared';
+import { API_ERROR, DEFAULT_CHAT_CONFIG } from '@nlm/shared';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
@@ -13,6 +13,7 @@ import { NotebookActions } from './notebook-actions';
 
 const base = `*/api/notebooks/${NOTEBOOK_ID}`;
 
+const NEW_NOTEBOOK_ID = '7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d';
 const onCustomize = vi.fn();
 
 /** Stands in for the notebook page: the notebook of the test shows its actions, any other one says so. */
@@ -42,6 +43,41 @@ const openMenu = async (user: ReturnType<typeof userEvent.setup>) =>
   user.click(screen.getByRole('button', { name: 'Notizbuch-Konfiguration' }));
 
 describe('NotebookActions', () => {
+  it('copies the notebook after asking and opens the copy', async () => {
+    server.use(
+      http.post(`${base}/copy`, () =>
+        HttpResponse.json(notebook({ id: NEW_NOTEBOOK_ID, title: 'Kopie von Forschung' }), {
+          status: 201,
+        })
+      )
+    );
+    renderActions();
+    const user = userEvent.setup();
+
+    await openMenu(user);
+    await user.click(await screen.findByRole('menuitem', { name: 'Notizbuch kopieren' }));
+    await user.click(await screen.findByRole('button', { name: 'Kopieren' }));
+
+    expect(await screen.findByText('Neues Notizbuch offen')).toBeTruthy();
+  });
+
+  it('says so in the dialog when the copy fails', async () => {
+    server.use(
+      http.post(`${base}/copy`, () =>
+        HttpResponse.json({ code: API_ERROR.INTERNAL }, { status: 500 })
+      )
+    );
+    renderActions();
+    const user = userEvent.setup();
+
+    await openMenu(user);
+    await user.click(await screen.findByRole('menuitem', { name: 'Notizbuch kopieren' }));
+    await user.click(await screen.findByRole('button', { name: 'Kopieren' }));
+
+    expect(await screen.findByRole('alertdialog')).toBeTruthy();
+    expect(screen.queryByText('Neues Notizbuch offen')).toBeNull();
+  });
+
   it('offers to customize the notebook', async () => {
     renderActions();
     const user = userEvent.setup();

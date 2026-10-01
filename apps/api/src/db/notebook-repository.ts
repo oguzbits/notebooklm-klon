@@ -13,6 +13,8 @@ import { notebooks, notebookSources, sources } from './schema';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MS_PER_HOUR = 3_600_000;
+const COPY_PREFIX = 'Kopie von ';
+const MAX_NOTEBOOK_TITLE_CHARS = 200;
 const FAILURES = new Set<string>(Object.values(SOURCE_FAILURE));
 
 function toFailure(message: string | null): SourceFailure | null {
@@ -106,6 +108,47 @@ export async function updateNotebook(
     .where(and(eq(notebooks.id, notebookId), eq(notebooks.userId, userId)))
     .returning({ id: notebooks.id });
   return updated.length === 1 ? findNotebook(db, userId, notebookId) : null;
+}
+
+/**
+ * Makes a copy of the notebook for the same user: its settings, its summaries and the same sources
+ * (linked, not read or embedded again). Chat history, notes and Studio outputs stay with the
+ * original. Null when it is not the user's or does not exist.
+ */
+export async function duplicateNotebook(
+  db: Database,
+  userId: string,
+  notebookId: string
+): Promise<Notebook | null> {
+  if (!UUID.test(notebookId)) return null;
+  const copyId = await db.transaction(async (tx) => {
+    const [original] = await tx
+      .select()
+      .from(notebooks)
+      .where(and(eq(notebooks.id, notebookId), eq(notebooks.userId, userId)));
+    if (!original) return null;
+    const [copy] = await tx
+      .insert(notebooks)
+      .values({
+        userId,
+        title: `${COPY_PREFIX}${original.title}`.slice(0, MAX_NOTEBOOK_TITLE_CHARS),
+        chatConfig: original.chatConfig,
+        overview: original.overview,
+        overviewKey: original.overviewKey,
+        customSummary: original.customSummary,
+      })
+      .returning({ id: notebooks.id });
+    if (!copy) throw new Error('The copy of the notebook was not made.');
+    // Same sources, so the key of the stored overview still names exactly this set.
+    await tx.execute(sql`
+      INSERT INTO notebook_sources (notebook_id, source_id, selected, added_at)
+      SELECT ${copy.id}, ns.source_id, ns.selected, ns.added_at
+      FROM notebook_sources ns
+      INNER JOIN sources s ON s.id = ns.source_id
+      WHERE ns.notebook_id = ${notebookId} AND s.user_id = ${userId}`);
+    return copy.id;
+  });
+  return copyId === null ? null : findNotebook(db, userId, copyId);
 }
 
 /** Deletes the notebook with its links and chat history. The sources stay: they are the user's. */

@@ -186,6 +186,28 @@ describe('notebooks', () => {
     expect(NotebookListSchema.parse(await stillThere.json())).toHaveLength(1);
   });
 
+  it('copies a notebook for its owner, and refuses to copy the notebook of somebody else', async () => {
+    const mine = await createNotebook(alice, 'Forschung');
+    const bobs = await createNotebook(bob, 'Bobs');
+
+    const copied = await app.request(`/api/notebooks/${mine}/copy`, {
+      method: 'POST',
+      headers: { cookie: alice },
+    });
+    const refused = await app.request(`/api/notebooks/${bobs}/copy`, {
+      method: 'POST',
+      headers: { cookie: alice },
+    });
+
+    expect(copied.status).toBe(201);
+    expect(NotebookSchema.parse(await copied.json()).title).toBe('Kopie von Forschung');
+    expect(refused.status).toBe(404);
+    const list = NotebookListSchema.parse(
+      await (await app.request('/api/notebooks', { headers: { cookie: alice } })).json()
+    );
+    expect(list).toHaveLength(2);
+  });
+
   it("answers 404 for another user's notebook", async () => {
     const bobs = await createNotebook(bob);
 
