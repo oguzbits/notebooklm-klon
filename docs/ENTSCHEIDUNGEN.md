@@ -719,3 +719,20 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
   der Bericht in `reportPrompt`.
 - Der Offline-Server (`e2e/server.ts`) kannte die Schlüssel der Antwortformen als Liste; `rows` fehlte, die Datentabelle bekam
   dort eine Chat-Antwort. Der Smoke-Test (Playwright) prüft jetzt auch die Tabelle und deckt so diese Liste ab.
+
+## 2026-10-01 (E2E-Tests als Nutzerreisen)
+
+- Mehrere kleine, voneinander unabhängige Specs statt einer langen Reise: `account`, `notebooks`, `sources`, `isolation`
+  neben dem bestehenden `smoke` (alles inklusive Studio) und `guest`. Jede Spec legt ihr eigenes Konto mit eindeutiger
+  E-Mail-Adresse an (`uniqueEmail`), weil die Datenbank `nlm_e2e` über die Specs eines Laufs bestehen bleibt. Gemeinsame
+  Schritte (Registrieren, Abmelden, Notizbuch anlegen und benennen, Datei hinzufügen) stehen in `apps/web/e2e/helpers.ts`.
+- Alles läuft gegen den Offline-Server mit den Fälschungen aus `apps/api/src/e2e/fakes.ts`: keine echten Modell- oder
+  Suchaufrufe, keine Token. Einmal pro Lauf entsteht ein Build der Web-App.
+- Abgedeckt: Anmelden mit falschem und richtigem Passwort, Sitzung nach Neuladen, doppelte Registrierung, Schutz der
+  Notizbuchseite ohne Anmeldung; Notizbücher suchen, umbenennen, anpinnen, löschen (mit Abbrechen) und unbekannte Seite;
+  Quellenauswahl bestimmt die Antwort samt Zitat in der Quellenansicht, Umbenennen, Entfernen, gleicher Inhalt nur einmal,
+  private Adresse wird abgelehnt (SSRF); ein Konto sieht und öffnet nie das Notizbuch eines anderen.
+- Nicht abgedeckt: echtes Modell und echte Websuche (nur `pnpm eval:live`), PDF-Verarbeitung (der Offline-Server kann sie
+  nicht), Quiz, Mindmap, Bericht und Notizen als eigene Reisen.
+- Die Quellenkästchen ändern sich erst nach der Antwort des Servers: Die Tests klicken und prüfen den Zustand, statt
+  `uncheck()` zu nutzen, das auf einen sofortigen Wechsel wartet.

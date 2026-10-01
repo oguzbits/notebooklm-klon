@@ -80,7 +80,7 @@ ein Nachbau für eine Bewerbung ist. Dazu:
 
 - SSRF-Schutz beim URL-Import, Upload-Limits (Größe, Seitenzahl), Rate Limiting und Quoten pro Nutzer.
 - Env-Validierung mit Zod, Health-Check, strukturierte Logs, Migrationen mit drizzle-kit.
-- Tests: Vitest, ein Playwright-Smoke-Test, ein Eval-Skript mit Golden-Fragen. Tests laufen ohne echte API-Aufrufe (Fixtures und Mocks), damit sie kein Tageskontingent verbrauchen.
+- Tests: Vitest, Playwright-Nutzerreisen, ein Eval-Skript mit Golden-Fragen. Tests laufen ohne echte API-Aufrufe (Fixtures und Mocks), damit sie kein Tageskontingent verbrauchen.
 - CI mit Typecheck, Lint und Tests, dazu eine AGENTS.md, die deinen agentischen Workflow im Repo sichtbar macht.
 
 ## Architektur und Datenfluss
@@ -106,7 +106,7 @@ React-Frontend und Node.js-Backend in einem Monorepo, ein Container, Postgres mi
 | Retrieval        | pgvector plus Volltextsuche, Fusion per RRF in SQL                                                                        | Hybrid fängt Eigennamen und Zahlen, die Vektorsuche verfehlt (im Spike ein Fehltreffer, der zu einer falschen Antwort führte)                                                               |
 | LLM-Schicht      | Eigener schlanker Gemini-Client statt Vercel AI SDK (siehe ENTSCHEIDUNGEN), Modell-IDs und Limits in der Config                                                                        | Chat: Gemini 3.5 Flash-Lite (Spike entschieden, GPT-6 Luna ungemessen). Studio: 3.x Flash, Fallback Flash-Lite  |
 | Zitate           | Strukturierte Ausgabe mit Chunk-Nummern, Server prüft, dass die zitierten Chunks im Kontext waren                         | Anthropic-Citations verworfen (Kosten, Anbieter-Bindung)                                                                   |
-| Tests, Qualität  | Vitest, Playwright-Smoke, Eval-Skript, ESLint, Prettier, GitHub Actions                                                   | Tests ohne echte API-Aufrufe                                                                                               |
+| Tests, Qualität  | Vitest, Playwright-Nutzerreisen, Eval-Skript, ESLint, Prettier, GitHub Actions                                                   | Tests ohne echte API-Aufrufe                                                                                               |
 | Hosting          | Render (kostenloser Web Service) plus Neon; geplant ist stattdessen ein Hetzner-Server (siehe ENTSCHEIDUNGEN)                                                                                | Kaltstart etwa 1 Minute nach 15 Minuten Leerlauf, im README erwähnen                                                       |
 
 **Abgrenzung zu notar-agent:** Übernommen werden Zod, Drizzle, pgvector und das Hybrid-Retrieval mit RRF. Neu bzw. geändert sind Auth, Queue (pg-boss statt Eigenbau), Parsing (Gemini statt liteparse plus mammoth für alles) und der Verzicht auf Supabase.
