@@ -1,11 +1,19 @@
-# Production stack for the Hetzner server (steps: README, section Deployment): Caddy (HTTPS), the app, Postgres
+# Production stack for the Hetzner server (steps: docs/DEPLOYMENT.md): Caddy (HTTPS), the app, Postgres
 # with pgvector and the S3-compatible store of the cover images. Only Caddy is reachable from the
 # internet (80, 443); the database listens on the server's loopback for the SSH tunnel of the seed.
 # The secrets live in server.env on the server (made by bootstrap.sh), never in the repository.
+# Docker keeps container logs without a limit by default; cap them so they cannot fill the disk.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '3'
+
 services:
   caddy:
     image: caddy:2
     restart: unless-stopped
+    logging: *logging
     ports:
       - '80:80'
       - '443:443'
@@ -22,6 +30,7 @@ services:
     # Loaded by the deploy workflow (docker save | docker load), tagged "current".
     image: nlm-app:current
     restart: unless-stopped
+    logging: *logging
     env_file: server.env
     environment:
       NODE_ENV: production
@@ -50,6 +59,7 @@ services:
   db:
     image: pgvector/pgvector:pg18
     restart: unless-stopped
+    logging: *logging
     environment:
       POSTGRES_USER: nlm
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -69,6 +79,7 @@ services:
     # Same version the tests run against (docker-compose.yml).
     image: chrislusf/seaweedfs:4.48
     restart: unless-stopped
+    logging: *logging
     command: server -dir=/data -volume.max=20 -master.volumeSizeLimitMB=256 -s3 -s3.port=8333 -s3.config=/etc/seaweedfs/s3.json
     mem_limit: 512m
     volumes:
