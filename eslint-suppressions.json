@@ -1,0 +1,296 @@
+{
+  "apps/api/src/ai/gemini-chat.ts": {
+    "complexity": {
+      "count": 1
+    }
+  },
+  "apps/api/src/chat/answer.ts": {
+    "complexity": {
+      "count": 1
+    },
+    "max-depth": {
+      "count": 3
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/api/src/core/statement-stream.ts": {
+    "complexity": {
+      "count": 1
+    }
+  },
+  "apps/api/src/db/guest-repository.ts": {
+    "max-lines-per-function": {
+      "count": 2
+    }
+  },
+  "apps/api/src/db/note-repository.ts": {
+    "max-params": {
+      "count": 1
+    }
+  },
+  "apps/api/src/db/notebook-overview-repository.ts": {
+    "max-params": {
+      "count": 1
+    }
+  },
+  "apps/api/src/db/notebook-repository.ts": {
+    "max-lines": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 2
+    }
+  },
+  "apps/api/src/db/reader-repository.ts": {
+    "max-params": {
+      "count": 1
+    }
+  },
+  "apps/api/src/db/retrieval.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/api/src/db/studio-repository.ts": {
+    "max-params": {
+      "count": 2
+    }
+  },
+  "apps/api/src/import/fetch-url.ts": {
+    "complexity": {
+      "count": 1
+    }
+  },
+  "apps/api/src/ingestion/ingest.ts": {
+    "max-params": {
+      "count": 1
+    }
+  },
+  "apps/api/src/parsing/html-text.ts": {
+    "complexity": {
+      "count": 2
+    }
+  },
+  "apps/api/src/routes/chat.ts": {
+    "max-depth": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/api/src/routes/cover.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/api/src/routes/notebooks.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/api/src/routes/sources.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/api/src/storage/s3-object-store.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/auth/auth-page.tsx": {
+    "complexity": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "no-nested-ternary": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/chat/answer-trace.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/chat/chat-panel.tsx": {
+    "complexity": {
+      "count": 1
+    },
+    "max-lines": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/chat/chat-settings-dialog.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/chat/citation-chip.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/chat/notebook-overview.tsx": {
+    "complexity": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/notebook/customize-notebook-dialog.tsx": {
+    "max-lines-per-function": {
+      "count": 2
+    },
+    "no-nested-ternary": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/notebook/notebook-actions.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/notebook/notebook-page.tsx": {
+    "complexity": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/notebook/panel.tsx": {
+    "complexity": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/notebooks/notebook-list-page.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/reader/reader-panel.tsx": {
+    "complexity": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/sources/add-source.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/sources/source-overview.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/sources/source-row.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/sources/sources-panel.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/sources/web-search-box.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/studio/create-dialog.tsx": {
+    "complexity": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/studio/flashcards-view.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/studio/library-row.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/studio/mindmap-picture.tsx": {
+    "no-nested-ternary": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/studio/mindmap-view.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/studio/note-frame.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/studio/note-toolbar.tsx": {
+    "max-lines": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 3
+    }
+  },
+  "apps/web/src/components/studio/output-viewer.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/studio/prompt-chip.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/studio/quiz-view.tsx": {
+    "complexity": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/studio/studio-panel.tsx": {
+    "complexity": {
+      "count": 1
+    },
+    "max-lines": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/web/src/components/studio/viewer-frame.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "apps/web/src/lib/relative-time.ts": {
+    "no-nested-ternary": {
+      "count": 1
+    }
+  }
+}

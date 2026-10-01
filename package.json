@@ -11,6 +11,7 @@
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
+    "lint:prune": "eslint . --prune-suppressions",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "pnpm typecheck && pnpm lint && pnpm depcruise && pnpm knip && pnpm audit:duplication && pnpm audit:magic",

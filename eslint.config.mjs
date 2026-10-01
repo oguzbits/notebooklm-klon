@@ -100,6 +100,26 @@ export default defineConfig([
     },
   },
   {
+    // Clean-code limits for application code. Existing violations are frozen in
+    // eslint-suppressions.json and paid off one by one (`pnpm lint:prune` after a fix); a new one fails.
+    files: ['apps/*/src/**/*.{ts,tsx}'],
+    ignores: [
+      '**/*.test.{ts,tsx}',
+      '**/e2e/**',
+      '**/eval/**',
+      '**/testing/**',
+      '**/components/ui/**',
+    ],
+    rules: {
+      complexity: ['error', 10],
+      'max-lines-per-function': ['error', { max: 60, skipBlankLines: true, skipComments: true }],
+      'max-lines': ['error', { max: 300, skipBlankLines: true, skipComments: true }],
+      'max-depth': ['error', 3],
+      'max-params': ['error', 4],
+      'no-nested-ternary': 'error',
+    },
+  },
+  {
     // The single place where model IDs may appear.
     files: ['apps/api/src/config/**/*.ts'],
     rules: { 'no-restricted-syntax': ['error', ...sharedRules] },
