@@ -16,7 +16,8 @@ export const SourceOverviewSchema = z.object({
 export type SourceOverview = z.infer<typeof SourceOverviewSchema>;
 
 const MAX_EMOJI_CHARS = 16;
-const MAX_SUMMARY_CHARS = 3000;
+/** The longest summary of a notebook, the model's or the reader's own. */
+export const MAX_SUMMARY_CHARS = 3000;
 // Exactly one symbol: a pictograph, each part with an optional variation selector or skin tone,
 // parts joined by zero-width joiners (👩‍🔬). Two symbols side by side do not match.
 const ONE_EMOJI =

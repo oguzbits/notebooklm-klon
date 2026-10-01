@@ -69,6 +69,7 @@ export {
 } from './notebook';
 export {
   CustomSummarySchema,
+  MAX_SUMMARY_CHARS,
   type NotebookOverview,
   NotebookOverviewResponseSchema,
   NotebookOverviewSchema,

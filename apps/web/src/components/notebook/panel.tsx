@@ -28,6 +28,80 @@ interface PanelProps {
   children: ReactNode;
 }
 
+interface PanelHeaderProps {
+  title: string;
+  left: boolean;
+  bare: boolean;
+  header: ReactNode;
+  action: ReactNode;
+  onToggle?: () => void;
+}
+
+/** The line on top of a panel: its name or the path the content writes, and the button that folds it. */
+function PanelHeader({ title, left, bare, header, action, onToggle }: PanelHeaderProps) {
+  const Close = left ? PanelLeftClose : PanelRightClose;
+  const fold = onToggle && (
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      aria-label={`${title} ausblenden`}
+      tooltip={`${title} ausblenden`}
+      onClick={onToggle}
+    >
+      <Close />
+    </Button>
+  );
+  return (
+    <header
+      className={cn(
+        'flex h-9 shrink-0 items-center justify-between pr-0.5 pl-3',
+        // The switch above the columns names a panel below the wide layout, but a path back
+        // is not a name: it stays.
+        !header && 'max-wide:hidden',
+        bare && 'sr-only'
+      )}
+    >
+      {header ?? <h2 className="text-ui">{title}</h2>}
+      {action ?? fold}
+    </header>
+  );
+}
+
+interface PanelRailProps {
+  title: string;
+  left: boolean;
+  collapsed: boolean;
+  onToggle: () => void;
+  rail: ReactNode;
+}
+
+/** What a folded panel shows: the button that opens it again and the symbols the content gives. */
+function PanelRail({ title, left, collapsed, onToggle, rail }: PanelRailProps) {
+  const Open = left ? PanelLeftOpen : PanelRightOpen;
+  return (
+    <div
+      inert={!collapsed}
+      aria-hidden={!collapsed}
+      className={cn(
+        'absolute inset-0 flex flex-col items-center gap-2 p-2 max-wide:hidden',
+        FACE,
+        !collapsed && RAIL_GONE
+      )}
+    >
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        aria-label={`${title} einblenden`}
+        tooltip={`${title} einblenden`}
+        onClick={onToggle}
+      >
+        <Open />
+      </Button>
+      {rail}
+    </div>
+  );
+}
+
 /**
  * One of the three columns. The sources and the Studio are surfaces with 32px corners, 8px of
  * padding inside a 1px invisible border and 12px of space below; the chat (`bare`) sits directly on
@@ -52,8 +126,6 @@ export function Panel({
   children,
 }: PanelProps) {
   const left = side === 'left';
-  const Close = left ? PanelLeftClose : PanelRightClose;
-  const Open = left ? PanelLeftOpen : PanelRightOpen;
 
   return (
     <section
@@ -75,52 +147,24 @@ export function Panel({
           collapsed ? CONTENT_GONE : 'wide:delay-75'
         )}
       >
-        <header
-          className={cn(
-            'flex h-9 shrink-0 items-center justify-between pr-0.5 pl-3',
-            // The switch above the columns names a panel below the wide layout, but a path back
-            // is not a name: it stays.
-            !header && 'max-wide:hidden',
-            bare && 'sr-only'
-          )}
-        >
-          {header ?? <h2 className="text-ui">{title}</h2>}
-          {action ??
-            (onToggle && (
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label={`${title} ausblenden`}
-                tooltip={`${title} ausblenden`}
-                onClick={onToggle}
-              >
-                <Close />
-              </Button>
-            ))}
-        </header>
+        <PanelHeader
+          title={title}
+          left={left}
+          bare={bare}
+          header={header}
+          action={action}
+          onToggle={onToggle}
+        />
         <div className="min-h-0 flex-1">{children}</div>
       </div>
       {onToggle && (
-        <div
-          inert={!collapsed}
-          aria-hidden={!collapsed}
-          className={cn(
-            'absolute inset-0 flex flex-col items-center gap-2 p-2 max-wide:hidden',
-            FACE,
-            !collapsed && RAIL_GONE
-          )}
-        >
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label={`${title} einblenden`}
-            tooltip={`${title} einblenden`}
-            onClick={onToggle}
-          >
-            <Open />
-          </Button>
-          {rail}
-        </div>
+        <PanelRail
+          title={title}
+          left={left}
+          collapsed={collapsed}
+          onToggle={onToggle}
+          rail={rail}
+        />
       )}
     </section>
   );

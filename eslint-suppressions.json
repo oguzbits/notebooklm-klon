@@ -101,22 +101,6 @@
       "count": 1
     }
   },
-  "apps/web/src/components/notebook/customize-notebook-dialog.tsx": {
-    "max-lines-per-function": {
-      "count": 2
-    },
-    "no-nested-ternary": {
-      "count": 1
-    }
-  },
-  "apps/web/src/components/notebook/panel.tsx": {
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "apps/web/src/components/reader/reader-panel.tsx": {
     "complexity": {
       "count": 1
