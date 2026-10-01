@@ -8,6 +8,7 @@ export const STUDIO_KIND = {
   FLASHCARDS: 'FLASHCARDS',
   QUIZ: 'QUIZ',
   MINDMAP: 'MINDMAP',
+  DATA_TABLE: 'DATA_TABLE',
 } as const;
 
 /** The templates of a report. CUSTOM is an instruction the reader writes. */
@@ -31,6 +32,9 @@ export const STUDIO_FEEDBACK = { GOOD: 'GOOD', BAD: 'BAD' } as const;
 /** The longest topic or instruction a reader can give the Studio. */
 export const MAX_STUDIO_FOCUS_CHARS = 2000;
 const MAX_STUDIO_SOURCES = 100;
+/** How many columns a data table has: a table with one column is a list, one with many does not fit. */
+export const MIN_DATA_TABLE_COLUMNS = 2;
+export const MAX_DATA_TABLE_COLUMNS = 8;
 
 export const StudioKindSchema = z.enum(STUDIO_KIND);
 export const ReportFormatSchema = z.enum(REPORT_FORMAT);
@@ -91,6 +95,16 @@ export const MindmapSchema = z.object({
 });
 
 /**
+ * A table of the facts in the sources. A cell whose citation did not hold up is kept empty, so
+ * every row keeps one value per column; a cell with text always has its checked IDs.
+ */
+export const DataTableSchema = z.object({
+  title: text,
+  columns: z.array(text).min(MIN_DATA_TABLE_COLUMNS).max(MAX_DATA_TABLE_COLUMNS),
+  rows: z.array(z.object({ cells: z.array(z.object({ text: z.string().trim(), chunkIds })) })),
+});
+
+/**
  * What the model returns for each kind. Flashcards and quizzes carry the title of the output, and a
  * quiz a hint and a reason for every option, which the stored form may lack (see QuizSchema).
  */
@@ -131,6 +145,7 @@ export const StudioOutputSchema = z.discriminatedUnion('kind', [
   z.object({ ...outputBase, kind: z.literal(STUDIO_KIND.FLASHCARDS), content: FlashcardsSchema }),
   z.object({ ...outputBase, kind: z.literal(STUDIO_KIND.QUIZ), content: QuizSchema }),
   z.object({ ...outputBase, kind: z.literal(STUDIO_KIND.MINDMAP), content: MindmapSchema }),
+  z.object({ ...outputBase, kind: z.literal(STUDIO_KIND.DATA_TABLE), content: DataTableSchema }),
 ]);
 
 export const StudioOutputListSchema = z.array(StudioOutputSchema);
@@ -158,6 +173,7 @@ export const CreateStudioBodySchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal(STUDIO_KIND.FLASHCARDS), ...sizeOptions, ...requestOptions }),
   z.object({ kind: z.literal(STUDIO_KIND.QUIZ), ...sizeOptions, ...requestOptions }),
   z.object({ kind: z.literal(STUDIO_KIND.MINDMAP), ...requestOptions }),
+  z.object({ kind: z.literal(STUDIO_KIND.DATA_TABLE), ...requestOptions }),
 ]);
 
 /** What can change on an output afterwards: its name, what the reader thought, that it was read. */
@@ -182,6 +198,7 @@ export type Report = z.infer<typeof ReportSchema>;
 export type Flashcards = z.infer<typeof FlashcardsSchema>;
 export type Quiz = z.infer<typeof QuizSchema>;
 export type Mindmap = z.infer<typeof MindmapSchema>;
+export type DataTable = z.infer<typeof DataTableSchema>;
 export type StudioOutput = z.infer<typeof StudioOutputSchema>;
 /** An output before it has an ID and a date, and before anyone read or rated it. */
 export type NewStudioOutput = StudioOutput extends infer Output

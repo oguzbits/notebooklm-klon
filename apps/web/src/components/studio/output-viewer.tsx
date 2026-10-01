@@ -1,6 +1,7 @@
 import { type Report, STUDIO_KIND, type StudioOutput } from '@nlm/shared';
 import { type ReactNode, useState } from 'react';
 
+import { DataTableView } from '@/components/studio/data-table-view';
 import { FlashcardsView } from '@/components/studio/flashcards-view';
 import { MindmapView } from '@/components/studio/mindmap-view';
 import { QuizView } from '@/components/studio/quiz-view';
@@ -19,7 +20,7 @@ import { useUpdateStudioOutput } from '@/hooks/use-studio';
 import { describeError } from '@/lib/messages';
 import { reportToText } from '@/lib/report-export';
 
-/** The content of an output as its kind needs it: a report, cards, a quiz or a mind map. */
+/** The content of an output as its kind needs it: a report, cards, a quiz, a mind map or a data table. */
 function OutputContent({
   notebookId,
   output,
@@ -65,6 +66,14 @@ function OutputContent({
           notebookId={notebookId}
           title={output.title}
           mindmap={output.content}
+          onOpenCitation={onOpenCitation}
+        />
+      );
+    case STUDIO_KIND.DATA_TABLE:
+      return (
+        <DataTableView
+          notebookId={notebookId}
+          table={output.content}
           onOpenCitation={onOpenCitation}
         />
       );

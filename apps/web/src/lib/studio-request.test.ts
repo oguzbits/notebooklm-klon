@@ -62,5 +62,8 @@ describe('buildCreateBody', () => {
     expect(buildCreateBody(draft({ kind: STUDIO_KIND.MINDMAP }), [a, b])).toEqual({
       kind: STUDIO_KIND.MINDMAP,
     });
+    expect(buildCreateBody(draft({ kind: STUDIO_KIND.DATA_TABLE }), [a, b])).toEqual({
+      kind: STUDIO_KIND.DATA_TABLE,
+    });
   });
 });

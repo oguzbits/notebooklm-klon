@@ -33,6 +33,7 @@ const QUIZ: CreateStudioBody = {
   difficulty: STUDIO_DIFFICULTY.MEDIUM,
 };
 const MINDMAP: CreateStudioBody = { kind: STUDIO_KIND.MINDMAP };
+const DATA_TABLE: CreateStudioBody = { kind: STUDIO_KIND.DATA_TABLE };
 
 describe('studioRequest', () => {
   it('puts the numbered passages into the message and asks for the requested kind', () => {
@@ -55,6 +56,7 @@ describe('studioRequest', () => {
       [FLASHCARDS, 'cards'],
       [QUIZ, 'questions'],
       [MINDMAP, 'branches'],
+      [DATA_TABLE, 'rows'],
     ] as const;
 
     for (const [body, key] of schemaKeys) {
@@ -140,6 +142,7 @@ describe('studioPrompt', () => {
       /Briefing/
     );
     expect(studioPrompt(MINDMAP)).toMatch(/Mindmap/);
+    expect(studioPrompt(DATA_TABLE)).toMatch(/Tabelle/);
   });
 
   it('names the size, the difficulty and the topic of cards and questions', () => {
@@ -297,5 +300,89 @@ describe('readStudioReply', () => {
   it('throws on a reply that does not fit the contract', () => {
     expect(() => readStudioReply(QUIZ, '{"questions":[{}]}', context)).toThrow();
     expect(() => readStudioReply(QUIZ, 'kein json', context)).toThrow();
+  });
+
+  describe('of a data table', () => {
+    const cell = (text: string, ...chunkIds: string[]) => ({ text, chunkIds });
+    const read = (rows: { cells: ReturnType<typeof cell>[] }[]) =>
+      readStudioReply(
+        DATA_TABLE,
+        JSON.stringify({ title: 'Projekt', columns: ['Name', 'Rolle', 'Budget'], rows }),
+        context
+      );
+
+    it('replaces labels by chunk IDs and keeps the title and the columns', () => {
+      const { output, dropped } = read([
+        {
+          cells: [cell('Brandt', 'c1'), cell('Leitung', 'c1'), cell('1,25 Mio. Euro', 'c2', 'c2')],
+        },
+      ]);
+
+      expect(dropped).toBe(0);
+      expect(output).toMatchObject({
+        kind: STUDIO_KIND.DATA_TABLE,
+        title: 'Projekt',
+        content: {
+          columns: ['Name', 'Rolle', 'Budget'],
+          rows: [
+            {
+              cells: [
+                { text: 'Brandt', chunkIds: ['id-1'] },
+                { text: 'Leitung', chunkIds: ['id-1'] },
+                { text: '1,25 Mio. Euro', chunkIds: ['id-2'] },
+              ],
+            },
+          ],
+        },
+      });
+    });
+
+    it('empties a cell without a valid citation, and keeps the row so the columns line up', () => {
+      const { output, dropped } = read([
+        { cells: [cell('Brandt', 'c1'), cell('Erfunden', 'c8'), cell('1,25 Mio. Euro', 'c2')] },
+      ]);
+
+      expect(dropped).toBe(1);
+      expect(output).toMatchObject({
+        content: {
+          rows: [
+            {
+              cells: [{ text: 'Brandt' }, { text: '', chunkIds: [] }, { text: '1,25 Mio. Euro' }],
+            },
+          ],
+        },
+      });
+    });
+
+    it('drops a row that has no supported first cell, or nothing but its first cell', () => {
+      const { output, dropped } = read([
+        { cells: [cell('Erfunden', 'c8'), cell('Leitung', 'c1'), cell('Viel', 'c2')] },
+        { cells: [cell('Brandt', 'c1'), cell('Leer', 'c8'), cell('Auch leer')] },
+        { cells: [cell('Brandt', 'c1'), cell('Leitung', 'c1'), cell('Viel', 'c2')] },
+      ]);
+
+      expect(dropped).toBe(2);
+      expect(output).toMatchObject({
+        content: {
+          rows: [{ cells: [{ text: 'Brandt' }, { text: 'Leitung' }, { text: 'Viel' }] }],
+        },
+      });
+    });
+
+    it('drops a row with the wrong number of cells', () => {
+      const { output } = read([
+        { cells: [cell('Brandt', 'c1'), cell('Leitung', 'c1')] },
+        { cells: [cell('Brandt', 'c1'), cell('Leitung', 'c1'), cell('Viel', 'c2')] },
+      ]);
+
+      expect(output.kind === STUDIO_KIND.DATA_TABLE && output.content.rows).toHaveLength(1);
+    });
+
+    it('throws when no row is supported by the passages', () => {
+      expect(() => read([{ cells: [cell('A', 'c8'), cell('B', 'c8'), cell('C', 'c8')] }])).toThrow(
+        EmptyStudioOutputError
+      );
+      expect(() => read([])).toThrow(EmptyStudioOutputError);
+    });
   });
 });

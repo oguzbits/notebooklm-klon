@@ -1,5 +1,5 @@
 import { STUDIO_KIND, type StudioKind } from '@nlm/shared';
-import { FileText, Layers, ListChecks, type LucideIcon, Network } from 'lucide-react';
+import { FileText, Layers, ListChecks, type LucideIcon, Network, Table } from 'lucide-react';
 
 import { TILE_LABEL } from '@/components/studio/studio-labels';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -10,6 +10,7 @@ export const KIND_ICON: Record<StudioKind, LucideIcon> = {
   [STUDIO_KIND.FLASHCARDS]: Layers,
   [STUDIO_KIND.QUIZ]: ListChecks,
   [STUDIO_KIND.MINDMAP]: Network,
+  [STUDIO_KIND.DATA_TABLE]: Table,
 };
 
 /** Each format has its own icon color, like in the original. */
@@ -18,6 +19,7 @@ export const KIND_COLOR: Record<StudioKind, string> = {
   [STUDIO_KIND.FLASHCARDS]: 'text-studio-warm',
   [STUDIO_KIND.QUIZ]: 'text-studio-teal',
   [STUDIO_KIND.MINDMAP]: 'text-studio-purple',
+  [STUDIO_KIND.DATA_TABLE]: 'text-studio-blue',
 };
 
 /** The order of the tiles is the one of the original, minus the formats this clone does not make. */
@@ -26,6 +28,7 @@ export const TILE_ORDER: readonly StudioKind[] = [
   STUDIO_KIND.REPORT,
   STUDIO_KIND.FLASHCARDS,
   STUDIO_KIND.QUIZ,
+  STUDIO_KIND.DATA_TABLE,
 ];
 
 /** What a tile says when the pointer rests on it, worded like the original. */
@@ -34,6 +37,7 @@ const KIND_TIP: Record<StudioKind, string> = {
   [STUDIO_KIND.FLASHCARDS]: 'Karteikarten mithilfe von KI basierend auf deinen Quellen erstellen',
   [STUDIO_KIND.QUIZ]: 'Interaktives Quiz auf Grundlage deiner Quellen mit KI erstellen',
   [STUDIO_KIND.MINDMAP]: 'Mindmap mithilfe von KI erstellen, basierend auf deinen Quellen',
+  [STUDIO_KIND.DATA_TABLE]: 'Datentabelle mithilfe von KI erstellen, basierend auf deinen Quellen',
 };
 
 const TILE =

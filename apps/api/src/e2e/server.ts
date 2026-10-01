@@ -46,7 +46,7 @@ import {
   trickle,
 } from './fakes';
 
-const STUDIO_PROPERTIES = ['sections', 'cards', 'questions', 'branches'];
+const STUDIO_PROPERTIES = ['sections', 'cards', 'questions', 'branches', 'rows'];
 
 /** Picks the stand-in by what is asked: the overview, a Studio output or a chat answer. */
 function fakeReply(input: ChatInput): string {

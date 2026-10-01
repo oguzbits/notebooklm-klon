@@ -179,3 +179,23 @@ export const mindmapOutput = (): StudioOutput => ({
     ],
   },
 });
+
+export const dataTableOutput = (): StudioOutput => ({
+  id: OUTPUT_ID,
+  kind: STUDIO_KIND.DATA_TABLE,
+  title: 'Nordlicht-Tabelle',
+  createdAt: CREATED_AT,
+  ...OUTPUT_META,
+  content: {
+    title: 'Nordlicht-Tabelle',
+    columns: ['Person', 'Aufgabe'],
+    rows: [
+      {
+        cells: [
+          { text: 'Dr. Brandt', chunkIds: [CHUNK_ID] },
+          { text: 'Leitet das Projekt', chunkIds: [CHUNK_ID] },
+        ],
+      },
+    ],
+  },
+});

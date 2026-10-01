@@ -1,0 +1,1 @@
+ALTER TYPE "public"."studio_kind" ADD VALUE 'DATA_TABLE';

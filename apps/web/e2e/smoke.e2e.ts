@@ -34,7 +34,7 @@ test('from sign-up to a cited passage, a note and back out', async ({ page }) =>
 
   // A notebook with a source that is read leads its chat with an overview: the cover with the title
   // and the number of sources, and a summary of the sources.
-  await expect(page.getByRole('heading', { name: 'Smoke-Test', level: 3 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Unbenanntes Notebook', level: 3 })).toBeVisible();
   await expect(page.getByText(/^1 Quelle · \d{2}\.\d{2}\.\d{4}$/)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Zusammenfassung kopieren' })).toBeVisible();
 
@@ -78,6 +78,14 @@ test('from sign-up to a cited passage, a note and back out', async ({ page }) =>
   await expect(
     library.getByRole('button', { name: /^Projekt Nordlicht Dr\., 1 Quelle/ })
   ).toBeVisible();
+
+  // The data table is a grid; each filled cell cites its passage, and the table opens from the list.
+  await page.getByRole('button', { name: 'Datentabelle', exact: true }).click();
+  await page.getByRole('button', { name: 'Generieren' }).click();
+  await library.getByRole('button', { name: /^Ungelesen: / }).click();
+  await expect(page.getByRole('columnheader', { name: 'Aussage' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Quelle 1 anzeigen' }).last()).toBeVisible();
+  await page.getByRole('button', { name: 'Zurück zum Studio' }).click();
 
   // A note of your own: written in the editor, saved as it is typed.
   await page.getByRole('button', { name: 'Notiz hinzufügen' }).click();

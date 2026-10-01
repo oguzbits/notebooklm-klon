@@ -120,6 +120,13 @@
       "when": 1790864773727,
       "tag": "0016_mature_ser_duncan",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1790889844096,
+      "tag": "0017_chilly_gunslinger",
+      "breakpoints": true
     }
   ]
 }

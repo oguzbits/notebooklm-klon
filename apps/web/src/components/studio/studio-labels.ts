@@ -16,6 +16,7 @@ export const KIND_LABEL: Record<StudioKind, string> = {
   [STUDIO_KIND.FLASHCARDS]: 'Karteikarten',
   [STUDIO_KIND.QUIZ]: 'Quiz',
   [STUDIO_KIND.MINDMAP]: 'Mindmap',
+  [STUDIO_KIND.DATA_TABLE]: 'Datentabelle',
 };
 
 /** What the button that closes the full view of an output says, like "Berichtsansicht schließen". */
@@ -24,6 +25,7 @@ export const CLOSE_VIEW_LABEL: Record<StudioKind, string> = {
   [STUDIO_KIND.FLASHCARDS]: 'Karteikartenansicht schließen',
   [STUDIO_KIND.QUIZ]: 'Quizansicht schließen',
   [STUDIO_KIND.MINDMAP]: 'Mindmapansicht schließen',
+  [STUDIO_KIND.DATA_TABLE]: 'Tabellenansicht schließen',
 };
 
 export const CLOSE_NOTE_LABEL = 'Notizansicht schließen';
@@ -32,6 +34,7 @@ export const CLOSE_NOTE_LABEL = 'Notizansicht schließen';
 export const TILE_LABEL: Record<StudioKind, string> = {
   ...KIND_LABEL,
   [STUDIO_KIND.REPORT]: 'Berichte',
+  [STUDIO_KIND.DATA_TABLE]: 'Datentabelle',
 };
 
 /** The templates of a report in the order of the dialog (the one the reader writes comes first). */

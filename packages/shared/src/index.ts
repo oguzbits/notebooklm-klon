@@ -102,6 +102,8 @@ export {
 export {
   type CreateStudioBody,
   CreateStudioBodySchema,
+  type DataTable,
+  DataTableSchema,
   type Flashcards,
   type FlashcardsReply,
   FlashcardsReplySchema,

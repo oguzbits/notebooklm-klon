@@ -49,6 +49,7 @@ export function buildCreateBody(
     case STUDIO_KIND.REPORT:
       return format === null ? null : { kind, format, ...options };
     case STUDIO_KIND.MINDMAP:
+    case STUDIO_KIND.DATA_TABLE:
       return { kind, ...options };
     default:
       return { kind, size, difficulty, ...options };

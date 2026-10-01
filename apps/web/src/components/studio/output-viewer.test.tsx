@@ -12,6 +12,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   CHUNK_ID,
+  dataTableOutput,
   flashcardsOutput,
   mindmapOutput,
   NOTEBOOK_ID,
@@ -64,6 +65,7 @@ describe('OutputViewer', () => {
       [flashcardsOutput(), /Wer leitet das Projekt\?/],
       [quizOutput(), /Wer leitet das Projekt\?/],
       [mindmapOutput(), /Leitung/],
+      [dataTableOutput(), /Leitet das Projekt/],
     ];
     for (const [output, text] of kinds) {
       const { unmount } = renderWithProviders(
