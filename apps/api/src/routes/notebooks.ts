@@ -26,6 +26,7 @@ import {
   updateNotebook,
 } from '../db/notebook-repository';
 import { coverKey } from '../storage/cover-key';
+import { removeObjectQuietly } from '../storage/remove-quietly';
 import { json, notFound, unauthenticated } from './openapi';
 
 const OK = 200;
@@ -178,7 +179,12 @@ export function notebookRoutes(deps: AppDeps) {
       if (!deleted) return c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
       // The cover image goes with the notebook.
       if (existing?.coverVersion) {
-        await deps.objectStore?.remove(coverKey(userId, notebookId, existing.coverVersion));
+        if (deps.objectStore) {
+          await removeObjectQuietly(
+            deps.objectStore,
+            coverKey(userId, notebookId, existing.coverVersion)
+          );
+        }
       }
       return c.body(null, NO_CONTENT);
     })

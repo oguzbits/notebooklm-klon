@@ -133,6 +133,42 @@ describe('the cover image of a notebook', () => {
     expect(store.keys()).toEqual([]);
   });
 
+  it('refuses a body far over the limit before it reads the file', async () => {
+    const id = await createNotebook(alice);
+    const huge = new Uint8Array(COVER_IMAGE.MAX_BYTES * 3);
+    huge.set(PNG);
+
+    const response = await app.request(cover(id), upload(alice, huge));
+
+    expect(response.status).toBe(400);
+    expect(ApiErrorSchema.parse(await response.json()).code).toBe(API_ERROR.COVER_INVALID);
+    expect(store.keys()).toEqual([]);
+  });
+
+  it('still succeeds when the old file cannot be removed from the store', async () => {
+    const failing = createMemoryObjectStore();
+    const remove = async () => {
+      throw new Error('store down');
+    };
+    const tolerant = createHarness({ objectStore: { ...failing, remove } });
+    const tolerantApp = createApp(tolerant.deps);
+    const cookie = await signUp(tolerant, 'carol@example.test');
+    const id = await createNotebook(cookie, tolerantApp);
+    await tolerantApp.request(cover(id), upload(cookie, PNG));
+
+    const replaced = await tolerantApp.request(cover(id), upload(cookie, PNG_2));
+    const removed = await tolerantApp.request(cover(id), { method: 'DELETE', headers: { cookie } });
+    const gone = await tolerantApp.request(`/api/notebooks/${id}`, {
+      method: 'DELETE',
+      headers: { cookie },
+    });
+
+    expect(replaced.status).toBe(200);
+    expect(removed.status).toBe(204);
+    expect(gone.status).toBe(204);
+    await tolerant.pool.end();
+  });
+
   it("is invisible and untouchable for another user's notebook", async () => {
     const id = await createNotebook(alice);
     await app.request(cover(id), upload(alice, PNG));

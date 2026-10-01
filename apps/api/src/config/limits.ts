@@ -34,6 +34,8 @@ export const LIMITS = {
   WEB_SEARCHES_PER_USER_PER_HOUR: 10,
   /** Web search: searches everybody together may make per day (the service gives 1000 credits a month). */
   WEB_SEARCHES_PER_DAY: 30,
+  /** Web search: longest wait for the search service before the request gives up. */
+  WEB_SEARCH_TIMEOUT_MS: 10_000,
   /** Ingestion: chunks per embedding request. */
   EMBED_BATCH_SIZE: 16,
 } as const;

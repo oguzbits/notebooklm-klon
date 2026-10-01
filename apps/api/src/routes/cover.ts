@@ -2,12 +2,14 @@ import { randomUUID } from 'node:crypto';
 
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
 import { API_ERROR, ApiErrorSchema, COVER_IMAGE, NotebookSchema } from '@nlm/shared';
+import { bodyLimit } from 'hono/body-limit';
 
 import type { AppDeps } from '../app-deps';
 import type { AuthVariables } from '../auth/session';
 import { detectImageType } from '../core/image-type';
 import { findNotebook, setCoverVersion } from '../db/notebook-repository';
 import { coverKey } from '../storage/cover-key';
+import { removeObjectQuietly } from '../storage/remove-quietly';
 import { json, notFound, unauthenticated } from './openapi';
 
 const OK = 200;
@@ -16,6 +18,7 @@ const BAD_REQUEST = 400;
 const NOT_FOUND = 404;
 const UNAVAILABLE = 503;
 const ONE_YEAR_SECONDS = 31_536_000;
+const MULTIPART_OVERHEAD_BYTES = 64 * 1024;
 
 const params = z.object({ notebookId: z.string().min(1) });
 const unavailable = json(ApiErrorSchema, 'Cover images are not set up');
@@ -53,6 +56,15 @@ const deleteRoute = createRoute({
 export function coverRoutes(deps: AppDeps) {
   const app = new OpenAPIHono<{ Variables: AuthVariables }>();
 
+  // Before the route parses the form, so a body far over the limit is never read into memory.
+  app.use(
+    '/:notebookId/cover',
+    bodyLimit({
+      maxSize: COVER_IMAGE.MAX_BYTES + MULTIPART_OVERHEAD_BYTES,
+      onError: (c) => c.json({ code: API_ERROR.COVER_INVALID }, BAD_REQUEST),
+    })
+  );
+
   return (
     app
       .openapi(putRoute, async (c) => {
@@ -78,11 +90,11 @@ export function coverRoutes(deps: AppDeps) {
         await objectStore.put(coverKey(userId, notebookId, version), { bytes, contentType });
         const changed = await setCoverVersion(deps.db, userId, notebookId, version);
         if (!changed) {
-          await objectStore.remove(coverKey(userId, notebookId, version));
+          await removeObjectQuietly(objectStore, coverKey(userId, notebookId, version));
           return c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
         }
         if (changed.previous)
-          await objectStore.remove(coverKey(userId, notebookId, changed.previous));
+          await removeObjectQuietly(objectStore, coverKey(userId, notebookId, changed.previous));
         return c.json(changed.notebook, OK);
       })
       .openapi(deleteRoute, async (c) => {
@@ -93,7 +105,7 @@ export function coverRoutes(deps: AppDeps) {
         const changed = await setCoverVersion(deps.db, userId, notebookId, null);
         if (!changed) return c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
         if (changed.previous)
-          await objectStore.remove(coverKey(userId, notebookId, changed.previous));
+          await removeObjectQuietly(objectStore, coverKey(userId, notebookId, changed.previous));
         return c.body(null, NO_CONTENT);
       })
       // Not described for OpenAPI: it answers with the bytes of an image, not with JSON.

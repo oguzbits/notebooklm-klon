@@ -18,6 +18,7 @@ import { createProviders } from './providers';
 import { createTavilySearch } from './search/tavily-search';
 import { userCoverPrefix } from './storage/cover-key';
 import type { ObjectStore } from './storage/object-store';
+import { removePrefixQuietly } from './storage/remove-quietly';
 import { s3ConfigFromEnv } from './storage/s3-config';
 import { createS3ObjectStore } from './storage/s3-object-store';
 import { serveWeb } from './web/serve-web';
@@ -103,7 +104,9 @@ async function removeExpiredGuests() {
     db,
     new Date(Date.now() - LIMITS.GUEST_LIFETIME_DAYS * DAY_MS)
   );
-  for (const userId of deleted) await objectStore?.removePrefix(userCoverPrefix(userId));
+  if (objectStore) {
+    for (const userId of deleted) await removePrefixQuietly(objectStore, userCoverPrefix(userId));
+  }
   if (deleted.length > 0)
     log({ level: 'info', msg: 'expired guests deleted', count: deleted.length });
 }

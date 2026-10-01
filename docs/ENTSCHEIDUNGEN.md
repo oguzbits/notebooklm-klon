@@ -531,3 +531,27 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   der Antworten lässt sich je Notizbuch unter „Chat konfigurieren“ wählen), „Alle Notizen als Quelle festlegen“.
 - **Offen:** Die Deploy-Dateien für Hetzner brauchen den S3-Dienst im Compose (siehe `docker-compose.yml`, Dienst `s3`) und ein
   Volume statt `tmpfs`.
+
+### Review von Runde 4 (2026-10-01)
+
+Ein Code-Review (Superpowers) und ein Audit der Oberfläche (Impeccable) ergaben keinen kritischen Fehler. Behoben:
+
+- **Titelbild-Upload hat ein Größenlimit vor dem Einlesen:** `bodyLimit` (2 MB plus 64 KB für den Rahmen der Anfrage) steht vor der
+  Route, wie beim Quellen-Upload. Die Prüfung im Handler bleibt. Antwort bei zu großem Inhalt: 400 `COVER_INVALID`.
+- **Zeitlimit der Websuche:** `LIMITS.WEB_SEARCH_TIMEOUT_MS` (10 s) wird als `AbortSignal` an Tavily übergeben. Ein Zeitablauf ist ein
+  Fehler (500), ohne Ersatzantwort.
+- **Aufräumen im Speicher ist „Best Effort“ (bewusste Ausnahme von „kein stilles Abfangen“):** `removeObjectQuietly` und
+  `removePrefixQuietly` (`storage/remove-quietly.ts`) protokollieren einen Fehler (Schlüssel, Fehlername) und werfen nicht. Grund: Die
+  Änderung in der Datenbank ist dann schon gemacht, ein Ausfall des Speichers darf daraus keinen 500 machen. Folge: Eine Datei kann
+  ohne Verweis übrig bleiben. Ein Aufräumlauf dafür ist nicht gebaut (Dateien sind höchstens 2 MB und Titelbilder sind optional).
+  Beim Löschen abgelaufener Gäste läuft die Schleife nun auch nach einem Fehler weiter.
+
+Bewusst nicht geändert (Notiz):
+
+- **Suchgrenzen werden nicht zurückgegeben:** Eine fehlgeschlagene Tavily-Anfrage verbraucht trotzdem einen Platz (je Nutzer und
+  für alle). Das schützt das Monatskontingent (1000) auch bei Fehlern. Wer das ändert, braucht eine Rückgabe im `createWindowLimit`.
+- **`createWindowLimit` leert leere Fenster nicht:** Der Speicher wächst mit der Zahl der Nutzer, die je gesucht haben (klein, ein Container).
+- **`chrislusf/seaweedfs:latest` ist nicht festgelegt:** Eine feste Version (vorher in der Doku prüfen) gehört in die Deploy-Dateien.
+- **Oberfläche:** Bedienflächen von 36 bis 40 px und Reiter mit 28 px Höhe folgen dem Original, nicht den 44 px der Empfehlung.
+  `prefers-reduced-motion` setzt alle Übergänge auf 0,01 ms (`index.css`), ohne Ersatz für die Rückmeldung. Weder `PRODUCT.md` noch
+  `DESIGN.md` gibt es; der Abgleich liegt in [DESIGN-ABGLEICH.md](DESIGN-ABGLEICH.md).

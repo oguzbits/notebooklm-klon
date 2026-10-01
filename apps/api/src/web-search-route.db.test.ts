@@ -19,10 +19,12 @@ const RESULT = {
 };
 
 const searched: string[] = [];
+const signals: (AbortSignal | undefined)[] = [];
 const available = createHarness({
   webSearch: {
-    search: async (query) => {
+    search: async (query, signal) => {
       searched.push(query);
+      signals.push(signal);
       return [RESULT];
     },
   },
@@ -76,6 +78,16 @@ describe('POST /api/web-search', () => {
     expect(response.status).toBe(200);
     expect(WebSearchResponseSchema.parse(await response.json()).results).toEqual([RESULT]);
     expect(searched).toEqual(['RAG erklärt']);
+  });
+
+  it('gives the search service a signal that ends the wait', async () => {
+    signals.length = 0;
+
+    await availableApp.request('/api/web-search', post(alice, { query: 'RAG' }));
+
+    expect(signals).toHaveLength(1);
+    expect(signals[0]).toBeInstanceOf(AbortSignal);
+    expect(signals[0]?.aborted).toBe(false);
   });
 
   it('needs a signed-in user and a valid query, and never searches without them', async () => {

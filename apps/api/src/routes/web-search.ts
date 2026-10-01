@@ -74,7 +74,10 @@ export function webSearchRoutes(deps: AppDeps) {
     const { query } = c.req.valid('json');
     const started = Date.now();
     try {
-      const results = await webSearch.search(query);
+      const results = await webSearch.search(
+        query,
+        AbortSignal.timeout(LIMITS.WEB_SEARCH_TIMEOUT_MS)
+      );
       // Only lengths and counts: the query is the reader's text.
       log({
         level: 'info',
