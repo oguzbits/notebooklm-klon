@@ -19,13 +19,18 @@ interface CitationChipProps {
 export function CitationChip({ notebookId, chunkId, number, onOpen }: CitationChipProps) {
   const [open, setOpen] = useState(false);
   const chunk = useChunk(notebookId, chunkId, open);
+  // The passage opens on hover and on focus. Opening the source closes it, or it stays on top of the source.
+  const show = () => {
+    setOpen(false);
+    onOpen(chunkId);
+  };
 
   return (
     <HoverCard open={open} onOpenChange={setOpen} openDelay={150} closeDelay={100}>
       <HoverCardTrigger asChild>
         <button
           type="button"
-          onClick={() => onOpen(chunkId)}
+          onClick={show}
           aria-label={`Quelle ${number} anzeigen`}
           className="veil ml-1 inline-flex size-[22px] items-center justify-center rounded-full bg-secondary align-middle text-[0.6875rem] leading-4 font-[500] text-meta"
         >
@@ -55,11 +60,7 @@ export function CitationChip({ notebookId, chunkId, number, onOpen }: CitationCh
               <SourceText text={chunk.data.text} kind={chunk.data.sourceKind} />
             </div>
             <div className="shrink-0 border-t border-[var(--table-line)] p-4 text-[0.875rem] leading-6">
-              <button
-                type="button"
-                className="rounded-sm text-link hover:underline"
-                onClick={() => onOpen(chunkId)}
-              >
+              <button type="button" className="rounded-sm text-link hover:underline" onClick={show}>
                 Quelle anzeigen
               </button>
             </div>

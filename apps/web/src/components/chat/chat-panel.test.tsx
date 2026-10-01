@@ -148,6 +148,26 @@ describe('ChatPanel', () => {
     expect(screen.getByRole('button', { name: 'Quelle anzeigen' })).toBeTruthy();
   });
 
+  it('closes the passage when the chip is used, so it does not cover the opened source', async () => {
+    server.use(
+      sources(),
+      history([answer([{ text: 'Aussage.', chunkIds: [CHUNK_ID] }])]),
+      http.get(`${base}/chunks/${CHUNK_ID}`, () => HttpResponse.json(chunkDetail()))
+    );
+    renderChat();
+    const user = userEvent.setup();
+    const chip = await screen.findByRole('button', { name: 'Quelle 1 anzeigen' });
+    // The passage also opens when the chip has the focus, and then it stays until the focus leaves.
+    chip.focus();
+    await screen.findByText('Dr. Brandt leitet das Projekt Nordlicht.');
+
+    await user.keyboard('{Enter}');
+
+    await waitFor(() =>
+      expect(screen.queryByText('Dr. Brandt leitet das Projekt Nordlicht.')).toBeNull()
+    );
+  });
+
   it('cannot ask while no ready source is selected, and says why', async () => {
     server.use(sources([source({ status: SOURCE_STATUS.PROCESSING })]), history([]));
     renderChat();

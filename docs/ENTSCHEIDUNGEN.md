@@ -590,7 +590,9 @@ eigener Code durch ein Paket ersetzbar ist. Ergebnis: Es bleibt, wie es ist.
 CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `test:db`, `e2e` und Semgrep aus, und der Agent sah CI nicht.
 
 - **Ursachen und Behebung:** (1) `test-db` brauchte den S3-Dienst, den der Job nicht startete: Schritt `docker compose up -d --wait s3`.
-  (2) Im Browser-Test verdeckte das noch offene Hover-Fenster der Quellenmarke den Schließen-Knopf: Der Test bewegt vorher die Maus weg.
+  (2) Im Browser-Test verdeckte das Hover-Fenster der Quellenmarke den Schließen-Knopf der Quellenansicht: Es geht auch beim Fokus auf
+  und blieb nach dem Klick offen. Behoben in der App (`CitationChip` schließt es, wenn die Quelle aufgeht, mit Test), nicht im Test.
+  Ein erster Versuch, im Test die Maus wegzubewegen, war ein Umweg und hielt in CI nicht.
   (3) Semgrep: zwei gleiche handgeschriebene Escape-Funktionen. Zuerst durch eine gemeinsame ersetzt, dann die Ursache beseitigt: Markup
   wird nicht mehr aus Textschnipseln gebaut. Das Mindmap-Bild (`components/studio/mindmap-picture.tsx`) und der Bericht zum Einfügen
   (`report-html.tsx`) sind JSX und werden mit `renderToStaticMarkup` zu Text; React maskiert dabei jeden Text selbst. Der Renderer
