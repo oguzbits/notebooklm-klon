@@ -34,6 +34,7 @@ import { KIND_COLOR, KIND_ICON, Tile, TILE_ORDER } from '@/components/studio/stu
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { RenameDialog } from '@/components/ui/rename-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCreateWrittenNote, useDeleteNote, useNotes } from '@/hooks/use-notes';
 import { useSources } from '@/hooks/use-sources';
@@ -155,6 +156,7 @@ export function StudioPanel({
   const addNote = useCreateWrittenNote(notebookId);
   const [open, setOpen] = useState<OpenEntry | null>(null);
   const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
+  const [outputToRename, setOutputToRename] = useState<StudioOutput | null>(null);
   const [, startTransition] = useTransition();
 
   const usableSources = (sources.data ?? []).filter(
@@ -213,6 +215,22 @@ export function StudioPanel({
             show(null);
           },
         })
+      }
+    />
+  );
+
+  const renameOutputDialog = (
+    <RenameDialog
+      heading="Umbenennen"
+      label="Name"
+      value={outputToRename?.title ?? ''}
+      open={outputToRename !== null}
+      onOpenChange={(isOpen) => !isOpen && setOutputToRename(null)}
+      pending={update.isPending}
+      error={update.isError ? describeError(update.error) : null}
+      onSave={(title, close) =>
+        outputToRename &&
+        update.mutate({ outputId: outputToRename.id, changes: { title } }, { onSuccess: close })
       }
     />
   );
@@ -361,6 +379,7 @@ export function StudioPanel({
                         unread={entry.output.unread}
                         deleting={remove.isPending && remove.variables === entry.output.id}
                         onOpen={() => openEntry({ type: ENTRY.OUTPUT, id: entry.output.id })}
+                        onRename={() => setOutputToRename(entry.output)}
                         onDelete={() => remove.mutate(entry.output.id)}
                       />
                     ) : (
@@ -467,6 +486,7 @@ export function StudioPanel({
     >
       {content}
       {deleteNoteDialog}
+      {renameOutputDialog}
     </Panel>
   );
 }

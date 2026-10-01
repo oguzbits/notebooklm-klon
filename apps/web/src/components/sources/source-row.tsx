@@ -3,7 +3,6 @@ import { EllipsisVertical, LoaderCircle, Pencil, Trash2, TriangleAlert } from 'l
 import { useState } from 'react';
 
 import { SourceKindIcon } from '@/components/sources/kind-icon';
-import { RenameSourceDialog } from '@/components/sources/rename-source-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -13,8 +12,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { RenameDialog } from '@/components/ui/rename-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { FAILURE_MESSAGE, STATUS_LABEL } from '@/lib/messages';
+import { useRenameSource } from '@/hooks/use-sources';
+import { describeError, FAILURE_MESSAGE, STATUS_LABEL } from '@/lib/messages';
 
 const FAILED_HINT = 'Entferne die Quelle und füge sie noch einmal hinzu.';
 
@@ -41,6 +42,7 @@ export function SourceRow({
   onRemove,
 }: SourceRowProps) {
   const [renaming, setRenaming] = useState(false);
+  const rename = useRenameSource(notebookId);
   const ready = source.status === SOURCE_STATUS.READY;
   const failed = source.status === SOURCE_STATUS.FAILED;
   const working = !ready && !failed;
@@ -86,12 +88,17 @@ export function SourceRow({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <RenameSourceDialog
-          notebookId={notebookId}
-          sourceId={source.id}
-          title={source.title}
+        <RenameDialog
+          heading="Quelle umbenennen"
+          label="Name der Quelle"
+          value={source.title}
           open={renaming}
           onOpenChange={setRenaming}
+          pending={rename.isPending}
+          error={rename.isError ? describeError(rename.error) : null}
+          onSave={(title, close) =>
+            rename.mutate({ sourceId: source.id, title }, { onSuccess: close })
+          }
         />
         <Checkbox
           checked={source.selected && ready}
