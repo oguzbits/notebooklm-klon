@@ -181,8 +181,8 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   und Screenshots liegen lokal in `spikes/reference/`, sie sind nicht im Repo). Wichtigste Folgen:
   die Palette ist neutral grau statt blau (Seite #faf9f9 / #0f0f0f, Flächen #fff / #1f1f1f, innen #f2f0f0 /
   #171717), Blau nur als Akzent für Fokus und Links (#4259ff / #a1c9ff); Panels haben 32 px Radius, Dialoge 28,
-  Menüs 20, die Sprechblase 40; UI-Text ist 15/20 mit Schriftbreite 92 %, Lesetext 16/24 (`font-stretch`,
-  Gewichte 370 und 470); Hover ist eine 8-%-Schicht der Textfarbe (`veil`), der Fokus ein 3-px-Ring.
+  Menüs 20, die Sprechblase 40; UI-Text ist 15/20 mit Schriftbreite 92 % des Originals (bei uns 99 %, siehe unten), Lesetext 16/24
+  (`font-stretch`, Gewichte 370 und 470); Hover ist eine 8-%-Schicht der Textfarbe (`veil`), der Fokus ein 3-px-Ring.
   Spalten sind 24,58 % / Rest / 24,58 % der Fensterbreite, ab 1056 px (`wide`) dreispaltig, darunter ein
   Segment-Schalter oben (nicht mehr unten). Öffnet man eine Studio-Ausgabe, wächst das Studio auf 37,5 % und
   die Quellen schrumpfen auf 20,6 %. Der Chat hat keine Karte mehr.
@@ -669,3 +669,16 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
   und bietet „Erneut versuchen“ (es gibt keine Toasts im Projekt).
 - Die übrige Oberfläche sagt weiter „Notizbuch“; nur diese beiden Beschriftungen folgen dem Wunsch „Notebook“.
 - Keine Daumen (gute/schlechte Antwort): Es gibt keinen Speicher für Rückmeldungen und keinen Nutzen, also nicht gebaut.
+
+## 2026-10-01 (Schriftbreite und Abstände an das Original angeglichen)
+
+- Messung statt Annahme: Derselbe Text („Notiz hinzufügen“, UI 15 px) ist im Original 113,5 px breit, bei uns mit
+  `font-stretch: 92 %` nur 108,5 px. Der Fontsource-Build von Google Sans Flex liegt bei gleichem Wert der Breitenachse etwa
+  4,5 % unter der Schrift des Originals. Der Wert 92 war aus dem Original übernommen, nicht an der Breite geprüft.
+  Jetzt: UI 99 % (Knopfbreiten 169/170, „Quellen“ 52, „Studio“ 43/44 wie im Original), Lesetext (`.text-read`) 102,5 % (derselbe
+  Satz 551 px in beiden). Das Gewicht der Knöpfe bleibt 370 (so misst es das Original); eine kurze Umstellung auf 400 war falsch.
+- Fett im Lesetext: Zusammenfassung 600, Chat-Antwort 540 (Original), vorher der Browser-Standard 700.
+- Knöpfe mit Symbol: Innenabstand 8 links und 12 rechts (Standard), 12/16 bei `xl` und beim Knopf „Notebook erstellen“ in der Kopfzeile.
+  Das Suchfeld für das Web hat 15/20 wie im Original.
+- Noch nicht gemessen: der Dokumenttext in der Quellenansicht (`.source-text`, im Original „Google Sans Text“), Symbolstärke
+  (lucide 2 px gegen dünnere Symbole im Original).

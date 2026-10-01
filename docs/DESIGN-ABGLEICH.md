@@ -94,6 +94,10 @@ Stand 2026-10-01, Maße gegen das Original im Browser geprüft (Spalten bei 1720
 | Handy 390 px               | Tab-Leiste 12 px unter der Kopfzeile, Bottom-Sheets, Platzhalter wie Desktop. Titel bleibt sichtbar (Original blendet ihn aus Platzmangel aus). Screenshots 390x844 verglichen: Tab-Leiste, Eingabeleiste und Hinweistext stehen an gleicher Stelle; in der Kopfzeile fehlen Freigeben, PRO und Apps (Abschnitt 4).                                                                                                                                                                                                                                                                                             | ✔      |
 | Seite als Ganzes           | Schrift, Fokusring 3 px, Auswahlfarbe, Scrollbalken, `prefers-reduced-motion` (Schimmer steht still).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | ✔      |
 
+**Schrift (2026-10-01):** Breite, Gewichte und Knopfabstände sind an der Breite desselben Textes im Original gemessen und
+angeglichen (Begründung und Werte in [ENTSCHEIDUNGEN.md](ENTSCHEIDUNGEN.md), Abschnitt „Schriftbreite und Abstände“).
+Nicht gemessen: Dokumenttext der Quellenansicht, Symbolstärke.
+
 **Offen, nicht gebaut** (nicht ohne neuen Umfang möglich): Filter und Sammlungen auf der Startseite,
 Ausgabesprache als Kontoeinstellung, „Alle Notizen als Quelle festlegen“.
 

@@ -88,11 +88,7 @@ export function NotebookListPage() {
         <div className="flex flex-col gap-2 px-6 pb-10">
           <div className="flex flex-wrap items-center justify-between gap-3 pt-6">
             <h1 className="text-2xl leading-8">Deine Notizbücher</h1>
-            <CreateNotebookButton
-              label="Neues Notebook"
-              variant="prominent"
-              className="pr-3 pl-2"
-            />
+            <CreateNotebookButton label="Neues Notebook" variant="prominent" />
           </div>
           <QueryBoundary
             query={notebooks}

@@ -116,7 +116,11 @@ export function NotebookActions({ notebook, onCustomize }: NotebookActionsProps)
 
   return (
     <>
-      <CreateNotebookButton label="Notebook erstellen" variant="ghost" className="pr-4 pl-3" />
+      <CreateNotebookButton
+        label="Notebook erstellen"
+        variant="ghost"
+        className="has-[>svg]:pr-4 has-[>svg]:pl-3"
+      />
       <NotebookMenu onPick={setDialog} onCustomize={onCustomize} />
       <NotebookDialogs notebook={notebook} dialog={dialog} onClose={() => setDialog(null)} />
     </>

@@ -167,7 +167,7 @@ function OverviewBody({
       )}
       {overview && !failure && (
         <>
-          <p className="text-read text-body">
+          <p className="text-read text-body [&_strong]:font-[600]">
             <InlineText text={overview.summary} />
           </p>
           <SummaryActions notebookId={notebookId} summary={overview.summary} />
