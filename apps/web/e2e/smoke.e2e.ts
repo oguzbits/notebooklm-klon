@@ -47,6 +47,43 @@ test('from sign-up to a cited passage, a note and back out', async ({ page }) =>
   await expect(chip).toBeVisible();
 
   // Hover shows the passage, a click opens the source with the passage marked.
+  await page.evaluate(() => {
+    const t0 = performance.now();
+    const stamp = (what: string) => {
+      document.body.dataset.log = `${document.body.dataset.log ?? ''}${Math.round(performance.now() - t0)}ms ${what}\n`;
+    };
+    for (const type of [
+      'pointermove',
+      'pointerdown',
+      'pointerup',
+      'click',
+      'focusin',
+      'focusout',
+    ]) {
+      document.addEventListener(
+        type,
+        (e) => {
+          const el = e.target as HTMLElement;
+          const m = e as MouseEvent;
+          stamp(
+            `${type} ${el.tagName}:${el.getAttribute?.('aria-label') ?? ''} @${m.clientX ?? ''},${m.clientY ?? ''}`
+          );
+        },
+        true
+      );
+    }
+    new MutationObserver((records) => {
+      for (const r of records) {
+        const el = r.target as HTMLElement;
+        if (
+          r.attributeName === 'data-state' &&
+          el.getAttribute('aria-label') === 'Quelle 1 anzeigen'
+        ) {
+          stamp(`chip data-state=${el.getAttribute('data-state')}`);
+        }
+      }
+    }).observe(document.body, { attributes: true, subtree: true, attributeFilter: ['data-state'] });
+  });
   await chip.hover();
   await expect(page.getByText('nordlicht.txt').last()).toBeVisible();
   await chip.click();
@@ -68,6 +105,7 @@ test('from sign-up to a cited passage, a note and back out', async ({ page }) =>
           return r && [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)];
         };
         return {
+          log: (document.body.dataset.log ?? '').split('\n').slice(-45),
           viewport: [innerWidth, innerHeight],
           poppers: [...document.querySelectorAll('[data-radix-popper-content-wrapper]')].map((e) =>
             rect(e)
