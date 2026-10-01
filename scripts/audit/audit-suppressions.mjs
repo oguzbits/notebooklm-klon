@@ -11,7 +11,7 @@
 
 import fs from 'node:fs';
 
-const MAX_SUPPRESSED = 8;
+const MAX_SUPPRESSED = 4;
 const FILE = 'eslint-suppressions.json';
 
 const suppressions = JSON.parse(fs.readFileSync(FILE, 'utf8'));

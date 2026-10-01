@@ -1,11 +1,11 @@
-import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
+import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
 import { API_ERROR, NotebookOverviewResponseSchema } from '@nlm/shared';
 
 import type { AppDeps } from '../app-deps';
 import type { AuthVariables } from '../auth/session';
 import { getOrCreateNotebookOverview } from '../chat/notebook-overview';
 import { createNotebookOverviewPorts } from '../chat/notebook-overview-ports';
-import { json, notFound, unauthenticated } from './openapi';
+import { json, notebookParams, notFound, unauthenticated } from './openapi';
 
 const OK = 200;
 const NOT_FOUND = 404;
@@ -13,7 +13,7 @@ const NOT_FOUND = 404;
 const overviewRoute = createRoute({
   method: 'get',
   path: '/{notebookId}/overview',
-  request: { params: z.object({ notebookId: z.string().min(1) }) },
+  request: { params: notebookParams },
   responses: {
     [OK]: json(
       NotebookOverviewResponseSchema,

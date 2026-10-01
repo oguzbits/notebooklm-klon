@@ -1,20 +1,18 @@
-import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
+import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
 import { API_ERROR, ApiErrorSchema, ChatConfigSchema } from '@nlm/shared';
 
 import type { AppDeps } from '../app-deps';
 import type { AuthVariables } from '../auth/session';
 import { getChatConfig, setChatConfig } from '../db/chat-config-repository';
-import { json, notFound, unauthenticated } from './openapi';
+import { json, notebookParams, notFound, unauthenticated } from './openapi';
 
 const OK = 200;
 const NOT_FOUND = 404;
 
-const params = z.object({ notebookId: z.string().min(1) });
-
 const readRoute = createRoute({
   method: 'get',
   path: '/{notebookId}/chat-config',
-  request: { params },
+  request: { params: notebookParams },
   responses: {
     [OK]: json(ChatConfigSchema, 'How the assistant talks in this notebook'),
     401: unauthenticated,
@@ -26,7 +24,7 @@ const writeRoute = createRoute({
   method: 'put',
   path: '/{notebookId}/chat-config',
   request: {
-    params,
+    params: notebookParams,
     body: { content: { 'application/json': { schema: ChatConfigSchema } }, required: true },
   },
   responses: {

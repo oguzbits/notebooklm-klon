@@ -1,4 +1,4 @@
-import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
+import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
 import {
   API_ERROR,
   ApiErrorSchema,
@@ -18,7 +18,7 @@ import { fetchPublicUrl } from '../import/fetch-url';
 import { submitSource } from '../ingestion/submit';
 import { pageTitle } from '../parsing/parse-web';
 import { countPdfPages } from '../parsing/pdf-pages';
-import { json } from './openapi';
+import { json, notebookParams } from './openapi';
 
 const ACCEPTED = 202;
 const BAD_REQUEST = 400;
@@ -35,7 +35,7 @@ const urlRoute = createRoute({
   method: 'post',
   path: '/{notebookId}/sources/url',
   request: {
-    params: z.object({ notebookId: z.string().min(1) }),
+    params: notebookParams,
     body: { content: { 'application/json': { schema: UrlSourceBodySchema } }, required: true },
   },
   responses: {
@@ -75,6 +75,39 @@ async function addToNotebook(
   return result;
 }
 
+type Refusal = {
+  ok: false;
+  status: typeof TOO_LARGE | typeof UNSUPPORTED | typeof UNPROCESSABLE;
+  code: (typeof API_ERROR)[keyof typeof API_ERROR];
+};
+type Upload = { ok: true; kind: SourceKind; bytes: Uint8Array } | Refusal;
+
+const UNREADABLE: Refusal = { ok: false, status: UNSUPPORTED, code: API_ERROR.UNSUPPORTED_FILE };
+const TOO_MANY: Refusal = { ok: false, status: UNPROCESSABLE, code: API_ERROR.TOO_MANY_PAGES };
+
+/** Why a PDF is refused: it cannot be read (the user's file, not our error) or has too many pages. */
+async function pdfRefusal(bytes: Uint8Array): Promise<Refusal | null> {
+  try {
+    const pages = await countPdfPages(bytes);
+    return pages > LIMITS.UPLOAD_MAX_PDF_PAGES ? TOO_MANY : null;
+  } catch (caught) {
+    if (caught instanceof Error) return UNREADABLE;
+    throw caught;
+  }
+}
+
+/** Looks at an uploaded file before anything is stored: size, kind, and for a PDF its pages. */
+async function checkUpload(file: File): Promise<Upload> {
+  if (file.size > LIMITS.UPLOAD_MAX_BYTES) {
+    return { ok: false, status: TOO_LARGE, code: API_ERROR.FILE_TOO_LARGE };
+  }
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const kind = detectSourceKind(file.name, bytes);
+  if (kind === null) return UNREADABLE;
+  const refusal = kind === SOURCE_KIND.PDF ? await pdfRefusal(bytes) : null;
+  return refusal ?? { ok: true, kind, bytes };
+}
+
 /** Adding sources: a file upload and a URL import. Both end in the same ingestion job. */
 export function sourceRoutes(deps: AppDeps) {
   const app = new OpenAPIHono<{ Variables: AuthVariables }>();
@@ -96,28 +129,9 @@ export function sourceRoutes(deps: AppDeps) {
       const form = await c.req.parseBody();
       const file = form.file;
       if (!(file instanceof File)) return c.json(error(API_ERROR.INVALID_REQUEST), BAD_REQUEST);
-      if (file.size > LIMITS.UPLOAD_MAX_BYTES) {
-        return c.json(error(API_ERROR.FILE_TOO_LARGE), TOO_LARGE);
-      }
-
-      const bytes = new Uint8Array(await file.arrayBuffer());
-      const kind = detectSourceKind(file.name, bytes);
-      if (kind === null) return c.json(error(API_ERROR.UNSUPPORTED_FILE), UNSUPPORTED);
-
-      if (kind === SOURCE_KIND.PDF) {
-        let pages: number;
-        try {
-          pages = await countPdfPages(bytes);
-        } catch (caught) {
-          // A damaged or encrypted PDF cannot be read by pdf-lib. That is the user's file, not ours.
-          if (caught instanceof Error)
-            return c.json(error(API_ERROR.UNSUPPORTED_FILE), UNSUPPORTED);
-          throw caught;
-        }
-        if (pages > LIMITS.UPLOAD_MAX_PDF_PAGES) {
-          return c.json(error(API_ERROR.TOO_MANY_PAGES), UNPROCESSABLE);
-        }
-      }
+      const upload = await checkUpload(file);
+      if (!upload.ok) return c.json(error(upload.code), upload.status);
+      const { kind, bytes } = upload;
 
       const result = await addToNotebook(deps, {
         userId,

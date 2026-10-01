@@ -13,6 +13,7 @@ import { chatConfigRoutes } from './routes/chat-config';
 import { coverRoutes } from './routes/cover';
 import { guestRoutes } from './routes/guest';
 import { notebookOverviewRoutes } from './routes/notebook-overview';
+import { notebookSourceRoutes } from './routes/notebook-sources';
 import { notebookRoutes } from './routes/notebooks';
 import { noteRoutes } from './routes/notes';
 import { overviewRoutes } from './routes/overview';
@@ -76,6 +77,7 @@ export function createApp(deps: AppDeps) {
     .route('/api/web-search', webSearchRoutes(deps))
     .route('/api/capabilities', capabilityRoutes(deps))
     .route('/api/notebooks', notebookRoutes(deps))
+    .route('/api/notebooks', notebookSourceRoutes(deps))
     .route('/api/notebooks', coverRoutes(deps))
     .route('/api/notebooks', sourceRoutes(deps))
     .route('/api/notebooks', chatRoutes(deps))

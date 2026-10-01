@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto';
 
-import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
+import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
 import { API_ERROR, ApiErrorSchema, COVER_IMAGE, NotebookSchema } from '@nlm/shared';
+import type { Context } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 
 import type { AppDeps } from '../app-deps';
@@ -10,7 +11,7 @@ import { detectImageType } from '../core/image-type';
 import { findNotebook, setCoverVersion } from '../db/notebook-repository';
 import { coverKey } from '../storage/cover-key';
 import { removeObjectQuietly } from '../storage/remove-quietly';
-import { json, notFound, unauthenticated } from './openapi';
+import { json, notebookParams, notFound, unauthenticated } from './openapi';
 
 const OK = 200;
 const NO_CONTENT = 204;
@@ -20,13 +21,12 @@ const UNAVAILABLE = 503;
 const ONE_YEAR_SECONDS = 31_536_000;
 const MULTIPART_OVERHEAD_BYTES = 64 * 1024;
 
-const params = z.object({ notebookId: z.string().min(1) });
 const unavailable = json(ApiErrorSchema, 'Cover images are not set up');
 
 const putRoute = createRoute({
   method: 'put',
   path: '/{notebookId}/cover',
-  request: { params },
+  request: { params: notebookParams },
   responses: {
     [OK]: json(NotebookSchema, 'The notebook with its new cover image'),
     [BAD_REQUEST]: json(ApiErrorSchema, 'No image, not a PNG, JPEG or WebP, or too large'),
@@ -39,7 +39,7 @@ const putRoute = createRoute({
 const deleteRoute = createRoute({
   method: 'delete',
   path: '/{notebookId}/cover',
-  request: { params },
+  request: { params: notebookParams },
   responses: {
     [NO_CONTENT]: { description: 'The notebook has no cover image any more' },
     401: unauthenticated,
@@ -47,6 +47,39 @@ const deleteRoute = createRoute({
     [UNAVAILABLE]: unavailable,
   },
 });
+
+/**
+ * The image in the form of an upload, with the type its first bytes show; null for anything that is
+ * no cover: no file, an empty or too large one, or one that is not a PNG, JPEG or WebP.
+ */
+async function readCoverImage(request: Request) {
+  const form = await request.formData().catch(() => null);
+  const file = form?.get('file');
+  if (!(file instanceof File) || file.size === 0 || file.size > COVER_IMAGE.MAX_BYTES) return null;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const contentType = detectImageType(bytes);
+  return contentType ? { bytes, contentType } : null;
+}
+
+/** Hands out the image of a notebook's cover with the type it was stored with and nothing else. */
+const serveCover =
+  (deps: AppDeps) => async (c: Context<{ Variables: AuthVariables }, '/:notebookId/cover'>) => {
+    const { objectStore } = deps;
+    if (!objectStore) return c.json({ code: API_ERROR.COVER_UNAVAILABLE }, UNAVAILABLE);
+    const { userId } = c.var;
+    const notebookId = c.req.param('notebookId');
+    const notebook = await findNotebook(deps.db, userId, notebookId);
+    if (!notebook?.coverVersion) return c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
+
+    const stored = await objectStore.get(coverKey(userId, notebookId, notebook.coverVersion));
+    if (!stored) return c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
+    return c.body(stored.bytes.slice(), OK, {
+      'content-type': stored.contentType,
+      // The address carries the version, so a cached copy is never stale. Not shared between users.
+      'cache-control': `private, max-age=${ONE_YEAR_SECONDS}, immutable`,
+      'x-content-type-options': 'nosniff',
+    });
+  };
 
 /**
  * The cover image of a notebook. The file goes to the object store under a key with a new version
@@ -76,16 +109,10 @@ export function coverRoutes(deps: AppDeps) {
           return c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
         }
 
-        const form = await c.req.formData().catch(() => null);
-        const file = form?.get('file');
-        const invalid = { code: API_ERROR.COVER_INVALID };
-        if (!(file instanceof File) || file.size === 0 || file.size > COVER_IMAGE.MAX_BYTES) {
-          return c.json(invalid, BAD_REQUEST);
-        }
-        const bytes = new Uint8Array(await file.arrayBuffer());
-        const contentType = detectImageType(bytes);
-        if (!contentType) return c.json(invalid, BAD_REQUEST);
+        const image = await readCoverImage(c.req.raw);
+        if (!image) return c.json({ code: API_ERROR.COVER_INVALID }, BAD_REQUEST);
 
+        const { bytes, contentType } = image;
         const version = randomUUID();
         await objectStore.put(coverKey(userId, notebookId, version), { bytes, contentType });
         const changed = await setCoverVersion(deps.db, userId, notebookId, version);
@@ -109,22 +136,6 @@ export function coverRoutes(deps: AppDeps) {
         return c.body(null, NO_CONTENT);
       })
       // Not described for OpenAPI: it answers with the bytes of an image, not with JSON.
-      .get('/:notebookId/cover', async (c) => {
-        const { objectStore } = deps;
-        if (!objectStore) return c.json({ code: API_ERROR.COVER_UNAVAILABLE }, UNAVAILABLE);
-        const { userId } = c.var;
-        const notebookId = c.req.param('notebookId');
-        const notebook = await findNotebook(deps.db, userId, notebookId);
-        if (!notebook?.coverVersion) return c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
-
-        const stored = await objectStore.get(coverKey(userId, notebookId, notebook.coverVersion));
-        if (!stored) return c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
-        return c.body(stored.bytes.slice(), OK, {
-          'content-type': stored.contentType,
-          // The address carries the version, so a cached copy is never stale. Not shared between users.
-          'cache-control': `private, max-age=${ONE_YEAR_SECONDS}, immutable`,
-          'x-content-type-options': 'nosniff',
-        });
-      })
+      .get('/:notebookId/cover', serveCover(deps))
   );
 }

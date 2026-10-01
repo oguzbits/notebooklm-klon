@@ -10,13 +10,11 @@ import {
   findSourceText,
   listChatMessages,
 } from '../db/reader-repository';
-import { json, notFound, unauthenticated } from './openapi';
+import { json, notebookParams, notFound, unauthenticated } from './openapi';
 
 const OK = 200;
 const NO_CONTENT = 204;
 const NOT_FOUND = 404;
-
-const notebookParams = z.object({ notebookId: z.string().min(1) });
 
 const chunkRoute = createRoute({
   method: 'get',

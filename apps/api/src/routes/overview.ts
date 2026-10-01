@@ -1,11 +1,11 @@
-import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
+import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
 import { API_ERROR, SourceOverviewSchema } from '@nlm/shared';
 
 import type { AppDeps } from '../app-deps';
 import type { AuthVariables } from '../auth/session';
 import { getOrCreateOverview } from '../chat/overview';
 import { createOverviewPorts } from '../chat/overview-ports';
-import { json, notFound, unauthenticated } from './openapi';
+import { json, notFound, sourceParams, unauthenticated } from './openapi';
 
 const OK = 200;
 const NOT_FOUND = 404;
@@ -13,7 +13,7 @@ const NOT_FOUND = 404;
 const overviewRoute = createRoute({
   method: 'get',
   path: '/{notebookId}/sources/{sourceId}/overview',
-  request: { params: z.object({ notebookId: z.string().min(1), sourceId: z.string().min(1) }) },
+  request: { params: sourceParams },
   responses: {
     [OK]: json(SourceOverviewSchema, 'Summary, key topics and suggested questions of a source'),
     401: unauthenticated,

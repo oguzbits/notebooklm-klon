@@ -13,25 +13,5 @@
     "max-lines-per-function": {
       "count": 1
     }
-  },
-  "apps/api/src/routes/cover.ts": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "apps/api/src/routes/notebooks.ts": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "apps/api/src/routes/sources.ts": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "apps/api/src/storage/s3-object-store.ts": {
-    "max-lines-per-function": {
-      "count": 1
-    }
   }
 }

@@ -21,6 +21,21 @@ export interface S3Config {
   secretAccessKey: string;
 }
 
+/** Deletes every object whose key starts with the prefix, page by page of the listing. */
+async function removeAllUnder(client: S3Client, Bucket: string, prefix: string): Promise<void> {
+  let token: string | undefined;
+  do {
+    const page = await client.send(
+      new ListObjectsV2Command({ Bucket, Prefix: prefix, ContinuationToken: token })
+    );
+    const keys = (page.Contents ?? []).flatMap((entry) => (entry.Key ? [{ Key: entry.Key }] : []));
+    if (keys.length > 0) {
+      await client.send(new DeleteObjectsCommand({ Bucket, Delete: { Objects: keys } }));
+    }
+    token = page.IsTruncated ? page.NextContinuationToken : undefined;
+  } while (token);
+}
+
 /** The ports of the object store on any S3-compatible service (path-style addresses, as they all accept). */
 export function createS3ObjectStore(
   config: S3Config
@@ -73,20 +88,6 @@ export function createS3ObjectStore(
       await client.send(new DeleteObjectCommand({ Bucket, Key: key }));
     },
 
-    async removePrefix(prefix) {
-      let token: string | undefined;
-      do {
-        const page = await client.send(
-          new ListObjectsV2Command({ Bucket, Prefix: prefix, ContinuationToken: token })
-        );
-        const keys = (page.Contents ?? []).flatMap((entry) =>
-          entry.Key ? [{ Key: entry.Key }] : []
-        );
-        if (keys.length > 0) {
-          await client.send(new DeleteObjectsCommand({ Bucket, Delete: { Objects: keys } }));
-        }
-        token = page.IsTruncated ? page.NextContinuationToken : undefined;
-      } while (token);
-    },
+    removePrefix: (prefix) => removeAllUnder(client, Bucket, prefix),
   };
 }
