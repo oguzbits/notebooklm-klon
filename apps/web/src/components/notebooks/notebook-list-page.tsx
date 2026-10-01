@@ -134,13 +134,19 @@ export function NotebookListPage() {
         onOpenChange={(open) => !open && setToDelete(null)}
         title="Notizbuch löschen?"
         description={
-          <>
-            „{toDelete?.title}“ wird mit allen Quellen und dem Verlauf der Fragen gelöscht. Das
-            lässt sich nicht rückgängig machen.
-          </>
+          remove.isError ? (
+            describeError(remove.error)
+          ) : (
+            <>
+              „{toDelete?.title}“ wird mit allen Quellen und dem Verlauf der Fragen gelöscht. Das
+              lässt sich nicht rückgängig machen.
+            </>
+          )
         }
         pending={remove.isPending}
-        onConfirm={() => toDelete && remove.mutate(toDelete.id)}
+        onConfirm={() =>
+          toDelete && remove.mutate(toDelete.id, { onSuccess: () => setToDelete(null) })
+        }
       />
     </>
   );
