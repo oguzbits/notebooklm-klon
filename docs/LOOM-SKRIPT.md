@@ -5,8 +5,8 @@ Gliederung nach [PLAN.md](PLAN.md#tagesplan). Vorher einmal komplett üben, mit 
 ## 1. Ziel und Umfang (1 Minute)
 
 - Aufgabe: NotebookLM-Klon in production-ready Qualität. Kern: ein Chat, der nur auf eigenen Quellen antwortet und jede Aussage belegt.
-- Gebaut: Anmeldung, Notizbücher, Quellen (PDF, DOCX, TXT, MD, Link), Chat mit Streaming, nummerierte Zitate mit Hover und Sprung zur Textstelle, Übersicht pro Quelle, Vorschlagsfragen, Notizen.
-- Bewusst nicht gebaut: Studio (Bericht, Karteikarten, Quiz), Chat-Konfiguration, Mindmap. Grund: wenige Funktionen in hoher Qualität statt vieler halber.
+- Gebaut: Anmeldung, Notizbücher, Quellen (PDF, DOCX, TXT, MD, Link), Chat mit Streaming, nummerierte Zitate mit Hover und Sprung zur Textstelle, Übersicht pro Quelle und pro Notizbuch, Vorschlagsfragen, Notizen mit Editor, Studio (Bericht, Karteikarten, Quiz, Mindmap), Chat-Konfiguration.
+- Bewusst nicht gebaut: Audio, Präsentation, Video, Infografik, Daumen an Antworten. Grund: wenige Funktionen in hoher Qualität statt vieler halber.
 
 ## 2. Vorgehen und Architektur (3 Minuten)
 
@@ -29,7 +29,8 @@ Vorbereitung: Beispiel-Notizbuch ist da, ein zweites, leeres Notizbuch für den 
 5. Quelle **abwählen** und dieselbe Frage stellen: Die Antwort stützt sich nur noch auf die gewählten Quellen.
 6. Im zweiten Notizbuch ein PDF hochladen: Status „Wird gelesen“, dann bereit. Danach eine Frage zu einer Tabelle.
 7. Antwort als **Notiz** speichern, im Tab „Notizen“ zeigen, Chip dort anklicken.
-8. Optional: nicht unterstützte Datei hochladen, um die verständliche Fehlermeldung zu zeigen.
+8. **Studio** zeigen: einen Bericht erzeugen (Umfang wählen), öffnen, Chip anklicken. Karteikarten oder Quiz nur, wenn das Kontingent reicht.
+9. Optional: nicht unterstützte Datei hochladen, um die verständliche Fehlermeldung zu zeigen.
 
 ## 4. Trade-offs und Grenzen (1 Minute)
 

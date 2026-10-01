@@ -435,7 +435,7 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   wie die Zeit darunter), nach der Zeitzone des Lesers. Rein darstellend, ohne Schnittstelle (`formatWeekday`, `isSameDay`
   in `lib/day.ts`). Gemessen ist nur der Trenner über der ersten Nachricht; dass das Original ihn an jedem Tageswechsel
   wiederholt, ist eine Annahme.
-- **Keine Daumen („Gute / Schlechte Antwort“):** Sie bräuchten gespeicherte Bewertungen (Tabelle, Schnittstelle, Tests) und
+- **Keine Daumen an Chat-Antworten und an der Notizbuch-Zusammenfassung („Gute / Schlechte Antwort“):** Bei Studio-Ausgaben gibt es sie. Im Chat bräuchten gespeicherte Bewertungen (Tabelle, Schnittstelle, Tests) und
   zeigen für die Aufgabe nichts, was Zitate, Notizen und Studio nicht schon zeigen. Bewusst weggelassen.
 - **Der leere Chat:** Mit Cover stehen darunter ein Satz zu den Nummern an den Aussagen und die Vorschlagsfragen; die große
   Überschrift „Stelle deine erste Frage“ gibt es nur noch ohne fertige Quelle. Der Demo-Seed macht die Übersicht mit, der erste
