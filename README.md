@@ -10,7 +10,7 @@ Bewerbungsaufgabe für Everlast AI (zweite Runde). Der Schwerpunkt liegt auf dem
 | Demo-Zugang | Auf der Anmeldeseite **„Beispiel ausprobieren“**: ein Gastkonto mit einer eigenen Kopie des Beispiel-Notizbuchs, ohne E-Mail und Passwort. Es wird nach 7 Tagen gelöscht. |
 | Video       | _Loom-Link folgt_                                                                                                                                                         |
 
-> Hinweis für die Demo: Keine sensiblen Dokumente hochladen. Im kostenlosen Tarif von Google können Eingaben zur Verbesserung der Modelle genutzt werden. Läuft die Demo auf dem kostenlosen Hosting-Tarif (Render), schläft sie nach 15 Minuten Leerlauf ein und der erste Aufruf danach dauert etwa eine Minute. Auf dem geplanten Hetzner-Server entfällt das (siehe Abschnitt „Deployment“).
+> Hinweis für die Demo: Keine sensiblen Dokumente hochladen. Im kostenlosen Tarif von Google können Eingaben zur Verbesserung der Modelle genutzt werden. Die Demo soll auf einem Hetzner-Server laufen und schläft dort nicht ein (siehe Abschnitt „Deployment“). Auf dem kostenlosen Tarif von Render (Plan B) dauert der erste Aufruf nach 15 Minuten Leerlauf etwa eine Minute.
 
 ## Was es kann
 
@@ -36,16 +36,20 @@ flowchart LR
   subgraph Browser
     Web["React 19<br/>TanStack Query, shadcn"]
   end
-  subgraph Container["Ein Container (Render oder Hetzner)"]
-    Api["Hono API<br/>Zod-Schemas aus packages/shared"]
-    Worker["Ingestion-Worker<br/>pg-boss"]
+  subgraph Server["Hetzner-Server (Docker Compose)"]
+    Caddy["Caddy<br/>HTTPS"]
+    subgraph Container["App-Container"]
+      Api["Hono API<br/>Zod-Schemas aus packages/shared"]
+      Worker["Ingestion-Worker<br/>pg-boss"]
+    end
+    DB[("PostgreSQL mit pgvector<br/>Volltextsuche, Sitzungen,<br/>Job-Queue")]
+    S3[("SeaweedFS (S3-kompatibel)<br/>Titelbilder (optional)")]
   end
-  DB[("PostgreSQL (Neon)<br/>pgvector, Volltextsuche,<br/>Sitzungen, Job-Queue")]
   Gemini["Gemini API<br/>PDF lesen, Einbettungen, Antwort"]
   Tavily["Tavily<br/>Websuche (optional)"]
-  S3[("S3-kompatibler Speicher<br/>Titelbilder (optional)")]
 
-  Web -- "HTTP + SSE, eine Origin" --> Api
+  Web -- "HTTPS" --> Caddy
+  Caddy -- "HTTP + SSE, eine Origin" --> Api
   Api --> DB
   Api -- "Antwort streamen" --> Gemini
   Api -- "nur Suchbegriffe" --> Tavily
@@ -54,7 +58,7 @@ flowchart LR
   Worker -- "PDF lesen, einbetten" --> Gemini
 ```
 
-Das Frontend wird vom selben Prozess ausgeliefert wie die API (`WEB_DIST_DIR`), im Entwicklungsbetrieb leitet Vite `/api` weiter. Es gibt deshalb nur eine Origin, kein CORS und keine zweite Liste vertrauter Adressen.
+Das Diagramm zeigt die geplante Produktion (noch nicht live, siehe „Deployment“); lokal laufen Postgres und der Speicher aus `pnpm db:up`. Das Frontend wird vom selben Prozess ausgeliefert wie die API (`WEB_DIST_DIR`), im Entwicklungsbetrieb leitet Vite `/api` weiter. Es gibt deshalb nur eine Origin, kein CORS und keine zweite Liste vertrauter Adressen.
 
 ### Schichten
 

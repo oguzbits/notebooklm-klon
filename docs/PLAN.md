@@ -99,7 +99,7 @@ React-Frontend und Node.js-Backend in einem Monorepo, ein Container, Postgres mi
 | Frontend         | React 19, Vite, React Router, TanStack Query, Tailwind, shadcn/ui, react-markdown                                         | Anzeige nennt React. Ein getrenntes Frontend zeigt API-Design sichtbar                                                     |
 | Backend          | Hono mit `@hono/zod-openapi`, SSE-Streaming, liefert auch das Frontend aus                                                | Typisierter RPC-Client und OpenAPI aus Zod-Schemas. Fastify, Express oder NestJS wären gleichwertig, Hono ist austauschbar |
 | Auth             | Better Auth mit Drizzle-Adapter                                                                                           | Nutzer in der eigenen Postgres. Supabase Auth bringt bei direkter DB-Verbindung keinen RLS-Vorteil                         |
-| Datenbank        | Neon Postgres (dauerhaft kostenlos, 500 MB), pgvector mit HNSW, Postgres-Volltextsuche, Drizzle ORM                       | Render-Postgres läuft im Gratis-Tarif nach 30 Tagen ab                                                                     |
+| Datenbank        | PostgreSQL mit pgvector (HNSW), Postgres-Volltextsuche, Drizzle ORM; in Produktion ein Container auf dem Hetzner-Server | Neon (500 MB, schläft nach 5 Minuten ein) ist Plan B. Render-Postgres läuft im Gratis-Tarif nach 30 Tagen ab               |
 | Jobs             | pg-boss                                                                                                                   | Etablierte Postgres-Queue statt Eigenbau. Pooler-Modus des Hosts prüfen                                                    |
 | Parsing          | PDF: Gemini 3.1 Flash-Lite (Spike entschieden, [Ergebnisse](SPIKE-ERGEBNISSE.md)). DOCX: mammoth. TXT/MD direkt. URL: Readability. DOCX und URL werden als Markdown gespeichert (Links, Fett, Tabellen), TXT bleibt Klartext. Fallback: liteparse | ParseBench (Tabellen / Inhaltstreue): Gemini 3.1 Flash-Lite 85,5 / 89,5, Docling 66,4 / 66,9, LiteParse 42,4 / 70,0        |
 | Embeddings       | Gemini Embedding 2 mit 768 Dimensionen, Fallback `gemini-embedding-001`                                                   | Limits bekannt (RPM 100, TPM 30K, RPD 1000), im Spike gleichauf mit 001 (17 gegen 16 von 18). Die Vektorräume beider Modelle sind inkompatibel                              |
@@ -107,7 +107,7 @@ React-Frontend und Node.js-Backend in einem Monorepo, ein Container, Postgres mi
 | LLM-Schicht      | Eigener schlanker Gemini-Client statt Vercel AI SDK (siehe ENTSCHEIDUNGEN), Modell-IDs und Limits in der Config                                                                        | Chat: Gemini 3.5 Flash-Lite (Spike entschieden, GPT-6 Luna ungemessen). Studio: 3.x Flash, Fallback Flash-Lite  |
 | Zitate           | Strukturierte Ausgabe mit Chunk-Nummern, Server prüft, dass die zitierten Chunks im Kontext waren                         | Anthropic-Citations verworfen (Kosten, Anbieter-Bindung)                                                                   |
 | Tests, Qualität  | Vitest, Playwright-Nutzerreisen, Eval-Skript, ESLint, Prettier, GitHub Actions                                                   | Tests ohne echte API-Aufrufe                                                                                               |
-| Hosting          | Render (kostenloser Web Service) plus Neon; geplant ist stattdessen ein Hetzner-Server (siehe ENTSCHEIDUNGEN)                                                                                | Kaltstart etwa 1 Minute nach 15 Minuten Leerlauf, im README erwähnen                                                       |
+| Hosting          | Hetzner Cloud: Docker Compose mit Caddy, App, Postgres und SeaweedFS, Deployment per GitHub Actions ([DEPLOYMENT.md](DEPLOYMENT.md)); noch nicht live. Plan B: Render plus Neon | Läuft dauerhaft, kein Kaltstart. Render schläft nach 15 Minuten (Kaltstart etwa 1 Minute)                                  |
 
 **Abgrenzung zu notar-agent:** Übernommen werden Zod, Drizzle, pgvector und das Hybrid-Retrieval mit RRF. Neu bzw. geändert sind Auth, Queue (pg-boss statt Eigenbau), Parsing (Gemini statt liteparse plus mammoth für alles) und der Verzicht auf Supabase.
 
@@ -181,7 +181,7 @@ Das größte Risiko ist das Free-Tier-Kontingent im Live-Demo. Danach folgen Par
 - **Parsing per LLM** ist nicht deterministisch und kann auslassen. Gegenmittel: Stichprobentests und liteparse als Fallback.
 - **ParseBench** stammt von LlamaIndex, deckt Enterprise-PDFs ab und enthält kein DOCX. Deshalb der eigene Spike.
 - **Datennutzung im Free Tier:** Bedingungen lesen, Hinweis im Demo.
-- **Hosting:** Kaltstart von etwa 1 Minute, kostenlose Bandbreite bei Render eingeschränkt.
+- **Hosting:** Der Hetzner-Weg ist geschrieben, aber auf einem echten Server ungetestet. Bei Plan B (Render) gilt: Kaltstart von etwa 1 Minute.
 - **Billing:** Unklar, ob Free-Kontingente nach dem Verknüpfen bleiben und ob das Guthaben hart begrenzt ist.
 - **Preise und Benchmarks** aus Drittquellen vor dem Bau auf den offiziellen Seiten prüfen.
 - **Take-home-Repos** sind nur Ideengeber: keinen Code kopieren.

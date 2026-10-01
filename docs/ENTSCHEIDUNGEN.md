@@ -756,3 +756,10 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
   „Einstellungen“), blieb der Tooltip beim Antippen aus. Das Blinken betrifft also nur diesen einen Knopf.
 - Der Knopf hat jetzt keinen Tooltip mehr; das `aria-label` bleibt. Das Pfeilsymbol erklärt sich selbst, und ein
   Tooltip ist auf Touch ohnehin nutzlos. Eine globale Touch-Regel wäre mehr Code für einen einzigen Fall.
+
+## 2026-10-02 (Doku auf Hetzner umgestellt)
+
+- README-Architekturdiagramm, Hinweis zur Demo, [PLAN.md](PLAN.md) (Tabellenzeilen Datenbank und Hosting, Risiko Hosting) nennen
+  jetzt Hetzner als Zielbild; Render + Neon steht nur noch als Plan B. Die älteren Abschnitte dieses Protokolls bleiben
+  unverändert, sie halten den Stand des jeweiligen Tages fest. Die Doku beschreibt das Ziel, bevor der Server gebucht ist,
+  weil der Code dafür fertig ist; „noch nicht live“ steht deshalb überall dabei.
