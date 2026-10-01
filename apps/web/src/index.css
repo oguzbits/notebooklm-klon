@@ -71,6 +71,8 @@
   --stage: #212121;
   --stage-wrong: #ff7a5c;
   --stage-right: #3ddc97;
+  /* The soft green glow at the foot of the stage, the same in both themes. */
+  --stage-glow: rgb(70 120 100 / 0.28);
   /* The one colored action of the Studio viewers ("Weiter"), and the nodes of the mind map. */
   --action: #5d5cf4;
   --action-foreground: #ffffff;

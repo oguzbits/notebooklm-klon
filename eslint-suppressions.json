@@ -183,11 +183,6 @@
       "count": 1
     }
   },
-  "apps/web/src/components/studio/flashcards-view.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "apps/web/src/components/studio/library-row.tsx": {
     "max-lines-per-function": {
       "count": 1
@@ -212,14 +207,6 @@
     }
   },
   "apps/web/src/components/studio/prompt-chip.tsx": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
-  "apps/web/src/components/studio/quiz-view.tsx": {
-    "complexity": {
-      "count": 1
-    },
     "max-lines-per-function": {
       "count": 1
     }
