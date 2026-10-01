@@ -115,7 +115,7 @@ describe('parseTestDatabaseEnv', () => {
   });
 
   it('refuses a database whose name does not end with _test, so it is never reset by accident', () => {
-    const production = `postgresql://user:${DB_PASSWORD}@host.example/neondb`;
+    const production = `postgresql://user:${DB_PASSWORD}@host.example/nlm`;
     const message = messageOf(() => parseTestDatabaseEnv({ TEST_DATABASE_URL: production }));
 
     expect(message).toMatch(/TEST_DATABASE_URL.*_test/);

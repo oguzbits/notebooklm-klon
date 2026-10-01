@@ -2,7 +2,6 @@
 
 Wie die App auf einem Hetzner-Server läuft, wie man sie dort einrichtet, aktualisiert und wiederherstellt. Die
 Begründung der Wahl steht in [ENTSCHEIDUNGEN.md](ENTSCHEIDUNGEN.md), Abschnitt „Deployment: Entscheidung und Stand“.
-Plan B (Render + Neon) steht am Ende.
 
 ## Überblick
 
@@ -126,16 +125,3 @@ braucht einen neuen Deploy (`BETTER_AUTH_URL` wird aus `SITE_ADDRESS` gebildet).
 | „Beispiel ausprobieren“ antwortet mit Fehler | `SEED_DEMO_EMAIL` fehlt oder `pnpm seed:demo` wurde nicht ausgeführt                                               |
 | Titelbilder fehlen nach Neustart des Servers | Volume `s3data` gelöscht? Es ist nicht im Backup; Bilder neu hochladen                                             |
 | Server träge, Container beendet              | `docker stats`, `free -h`: Speicher knapp; größeren Server wählen oder Swap prüfen                                 |
-
-## Plan B: Render + Neon
-
-Ein Container aus dem [Dockerfile](../Dockerfile), beschrieben in [render.yaml](../render.yaml) (Render, Region Frankfurt),
-Datenbank bei Neon (kostenlos, 500 MB, pgvector). Beide schlafen im kostenlosen Tarif nach einigen Minuten ein, der erste
-Aufruf wartet dann.
-
-1. Neon-Projekt anlegen, die **direkte** Verbindung (ohne `-pooler` im Host) als `DATABASE_URL` nehmen. Migrationen und die
-   Job-Queue brauchen Funktionen, die ein Pooler nicht bietet.
-2. Auf Render ein Blueprint aus diesem Repository anlegen und die abgefragten Werte eintragen (eigenes Google-Projekt).
-3. Nach dem ersten Deploy die URL des Dienstes als `BETTER_AUTH_URL` eintragen und neu deployen.
-4. `SEED_DEMO_EMAIL` in der Umgebung der App setzen, dann einmalig von einem Rechner aus mit der Produktions-`DATABASE_URL`
-   `pnpm seed:demo` ausführen.

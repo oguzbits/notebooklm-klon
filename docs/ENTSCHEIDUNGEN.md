@@ -763,3 +763,7 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
   jetzt Hetzner als Zielbild; Render + Neon steht nur noch als Plan B. Die älteren Abschnitte dieses Protokolls bleiben
   unverändert, sie halten den Stand des jeweiligen Tages fest. Die Doku beschreibt das Ziel, bevor der Server gebucht ist,
   weil der Code dafür fertig ist; „noch nicht live“ steht deshalb überall dabei.
+- **Plan B (Render + Neon) ist gestrichen:** `render.yaml` und der Abschnitt in [DEPLOYMENT.md](DEPLOYMENT.md) sind
+  entfernt, README, [PLAN.md](PLAN.md) und [PRODUCT.md](../PRODUCT.md) nennen nur noch Hetzner. Die älteren Abschnitte
+  oben, die Render und Neon erwähnen, bleiben als Protokoll stehen. Es gibt keinen Pooler (PgBouncer) in der Architektur:
+  `pg-boss` und die Migrationen laufen über eine direkte Postgres-Verbindung.

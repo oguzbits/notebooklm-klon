@@ -10,7 +10,7 @@ Bewerbungsaufgabe für Everlast AI (zweite Runde). Der Schwerpunkt liegt auf dem
 | Demo-Zugang | Auf der Anmeldeseite **„Beispiel ausprobieren“**: ein Gastkonto mit einer eigenen Kopie des Beispiel-Notizbuchs, ohne E-Mail und Passwort. Es wird nach 7 Tagen gelöscht. |
 | Video       | _Loom-Link folgt_                                                                                                                                                         |
 
-> Hinweis für die Demo: Keine sensiblen Dokumente hochladen. Im kostenlosen Tarif von Google können Eingaben zur Verbesserung der Modelle genutzt werden. Die Demo soll auf einem Hetzner-Server laufen und schläft dort nicht ein (siehe Abschnitt „Deployment“). Auf dem kostenlosen Tarif von Render (Plan B) dauert der erste Aufruf nach 15 Minuten Leerlauf etwa eine Minute.
+> Hinweis für die Demo: Keine sensiblen Dokumente hochladen. Im kostenlosen Tarif von Google können Eingaben zur Verbesserung der Modelle genutzt werden. Die Demo soll auf einem Hetzner-Server laufen und schläft dort nicht ein (siehe Abschnitt „Deployment“).
 
 ## Was es kann
 
@@ -172,12 +172,11 @@ Beispiel-Notizbuch anlegen (braucht den Schlüssel, liest drei Beispieldokumente
 
 ## Deployment
 
-> Stand: Es ist noch nichts deployt. Vorbereitet ist ein Hetzner-Server (Weg 1). Weg 2 (Render + Neon) ist der Plan B, schläft aber im kostenlosen Tarif ein. Begründung: [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md), Abschnitt „Deployment: Entscheidung und Stand“.
+> Stand: Es ist noch nichts deployt. Vorbereitet ist ein Hetzner-Server. Begründung: [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md), Abschnitt „Deployment: Entscheidung und Stand“.
 
-Die vollständige Anleitung (Einrichtung, Betrieb, Backup, Fehlersuche, Plan B) steht in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+Die vollständige Anleitung (Einrichtung, Betrieb, Backup, Fehlersuche) steht in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
-- **Weg 1: Hetzner Cloud** (Docker Compose, Caddy). Dateien in [deploy/](deploy/): [docker-compose.prod.yml](deploy/docker-compose.prod.yml) (Caddy mit automatischem HTTPS, App, Postgres mit pgvector, SeaweedFS für die Titelbilder), [Caddyfile](deploy/Caddyfile), [bootstrap.sh](deploy/bootstrap.sh), [backup.sh](deploy/backup.sh). Der Workflow [deploy.yml](.github/workflows/deploy.yml) baut das Image, schickt es per SSH an den Server und startet den Stack, sobald CI auf `main` grün ist.
-- **Weg 2: Render + Neon** (Plan B): ein Container aus dem [Dockerfile](Dockerfile), beschrieben in [render.yaml](render.yaml).
+- **Hetzner Cloud** (Docker Compose, Caddy). Dateien in [deploy/](deploy/): [docker-compose.prod.yml](deploy/docker-compose.prod.yml) (Caddy mit automatischem HTTPS, App, Postgres mit pgvector, SeaweedFS für die Titelbilder), [Caddyfile](deploy/Caddyfile), [bootstrap.sh](deploy/bootstrap.sh), [backup.sh](deploy/backup.sh). Der Workflow [deploy.yml](.github/workflows/deploy.yml) baut das Image, schickt es per SSH an den Server und startet den Stack, sobald CI auf `main` grün ist.
 
 ## Wo es zuerst brechen würde
 
