@@ -18,7 +18,12 @@ import { useCopyNotebook, useDeleteNotebook } from '@/hooks/use-notebooks';
 import { describeError } from '@/lib/messages';
 import { ROUTES } from '@/lib/routes';
 
-const DIALOG = { CHAT: 'CHAT', COPY: 'COPY', CLEAR: 'CLEAR', DELETE: 'DELETE' } as const;
+const DIALOG = {
+  CHAT: 'CHAT_SETTINGS',
+  COPY: 'COPY',
+  CLEAR: 'CLEAR',
+  DELETE: 'DELETE',
+} as const;
 type Dialog = (typeof DIALOG)[keyof typeof DIALOG];
 
 /** What the header offers for one notebook: make a new one, and the menu with its settings. */

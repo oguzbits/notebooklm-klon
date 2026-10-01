@@ -7,9 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useChunk, useSourceText } from '@/hooks/use-reader';
-
-/** What the reader shows: a whole source, or a source with one cited passage marked. */
-export type ReaderTarget = { sourceId: string } | { chunkId: string };
+import type { ReaderTarget } from '@/lib/reader-target';
 
 /** The button in the header of the sources that leaves the reader, like in the original. */
 export function CloseReaderButton({ onClick }: { onClick: () => void }) {
