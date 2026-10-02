@@ -4,6 +4,7 @@ import { AppHeader } from '@/components/layout/app-header';
 import { NotebookActions } from '@/components/notebook/notebook-actions';
 import { NotebookTitle } from '@/components/notebook/notebook-title';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useDocumentTitle } from '@/hooks/use-document-title';
 
 /** The header of a notebook page: its title and menu, or a placeholder while it loads. */
 export function NotebookHeader({
@@ -13,6 +14,7 @@ export function NotebookHeader({
   notebook: Notebook | undefined;
   onCustomize: () => void;
 }) {
+  useDocumentTitle(notebook?.title);
   return (
     <AppHeader
       title={

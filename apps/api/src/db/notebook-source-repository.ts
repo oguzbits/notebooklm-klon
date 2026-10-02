@@ -2,6 +2,7 @@ import { SOURCE_FAILURE, SOURCE_STATUS, type SourceFailure, type SourceSummary }
 import { and, asc, count, eq, gte, sql } from 'drizzle-orm';
 
 import type { Database } from './client';
+import { ownedNotebookSource } from './ownership';
 import { notebooks, notebookSources, sources } from './schema';
 import { UUID } from './uuid';
 
@@ -34,13 +35,7 @@ export async function listNotebookSources(
     .from(notebookSources)
     .innerJoin(notebooks, eq(notebooks.id, notebookSources.notebookId))
     .innerJoin(sources, eq(sources.id, notebookSources.sourceId))
-    .where(
-      and(
-        eq(notebookSources.notebookId, notebookId),
-        eq(notebooks.userId, userId),
-        eq(sources.userId, userId)
-      )
-    )
+    .where(ownedNotebookSource(notebookId, userId))
     .orderBy(asc(notebookSources.addedAt), asc(sources.id));
   return rows.map((row) => ({
     id: row.id,
@@ -68,10 +63,8 @@ export async function selectedReadySourceIds(
     .innerJoin(sources, eq(sources.id, notebookSources.sourceId))
     .where(
       and(
-        eq(notebookSources.notebookId, notebookId),
+        ownedNotebookSource(notebookId, userId),
         eq(notebookSources.selected, true),
-        eq(notebooks.userId, userId),
-        eq(sources.userId, userId),
         eq(sources.status, SOURCE_STATUS.READY)
       )
     )
@@ -102,14 +95,7 @@ export async function linkSource(
     .from(notebookSources)
     .innerJoin(notebooks, eq(notebooks.id, notebookSources.notebookId))
     .innerJoin(sources, eq(sources.id, notebookSources.sourceId))
-    .where(
-      and(
-        eq(notebookSources.notebookId, notebookId),
-        eq(notebookSources.sourceId, sourceId),
-        eq(notebooks.userId, userId),
-        eq(sources.userId, userId)
-      )
-    );
+    .where(and(ownedNotebookSource(notebookId, userId), eq(notebookSources.sourceId, sourceId)));
   return existing !== undefined;
 }
 

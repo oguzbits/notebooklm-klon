@@ -45,7 +45,7 @@ function ReaderFailure({
     <Alert>
       <AlertDescription>
         {chunk.isError
-          ? 'Diese Quelle ist nicht mehr in deinem Notizbuch.'
+          ? 'Diese Quelle ist nicht mehr in deinem Notebook.'
           : 'Der Text dieser Quelle ist noch nicht verfügbar.'}
         {source.isError && (
           <ErrorNotice

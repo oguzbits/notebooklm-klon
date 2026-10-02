@@ -93,6 +93,16 @@ describe('CreateDialog', () => {
     expect(onCreate).toHaveBeenCalledWith({ kind: STUDIO_KIND.MINDMAP });
   });
 
+  it('asks a data table for nothing but the sources and the topic', async () => {
+    const { user, onCreate } = open(STUDIO_KIND.DATA_TABLE);
+
+    await user.click(screen.getByRole('button', { name: 'Öffnen' }));
+    expect(within(dialog()).queryByRole('radiogroup')).toBeNull();
+    await user.click(within(dialog()).getByRole('button', { name: 'Generieren' }));
+
+    expect(onCreate).toHaveBeenCalledWith({ kind: STUDIO_KIND.DATA_TABLE });
+  });
+
   it('can limit the output to some of the sources, and needs at least one', async () => {
     const { user, onCreate } = open(STUDIO_KIND.MINDMAP);
 

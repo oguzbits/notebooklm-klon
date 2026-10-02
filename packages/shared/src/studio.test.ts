@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import {
   CreateStudioBodySchema,
+  DataTableSchema,
   FlashcardsReplySchema,
+  MAX_DATA_TABLE_COLUMNS,
   MAX_STUDIO_FOCUS_CHARS,
+  MIN_DATA_TABLE_COLUMNS,
   QuizReplySchema,
   REPORT_FORMAT,
   STUDIO_DIFFICULTY,
@@ -44,6 +47,19 @@ const quiz = {
   },
 };
 
+const table = {
+  title: 'Vergleich',
+  columns: ['Name', 'Rolle'],
+  rows: [
+    {
+      cells: [
+        { text: 'Anna', chunkIds: [CHUNK] },
+        { text: 'Leitung', chunkIds: [CHUNK] },
+      ],
+    },
+  ],
+};
+
 describe('studio output contract', () => {
   it('parses every kind of output with its own content', () => {
     const flashcards = {
@@ -72,7 +88,9 @@ describe('studio output contract', () => {
       },
     };
 
-    const list = StudioOutputListSchema.parse([report, flashcards, quiz, mindmap]);
+    const dataTable = { ...base, kind: STUDIO_KIND.DATA_TABLE, content: table };
+
+    const list = StudioOutputListSchema.parse([report, flashcards, quiz, mindmap, dataTable]);
 
     expect(list.map((output) => output.kind)).toEqual(Object.values(STUDIO_KIND));
   });
@@ -238,5 +256,41 @@ describe('studio output contract', () => {
     expect(StudioUpdateBodySchema.parse({ read: true })).toEqual({ read: true });
     expect(StudioUpdateBodySchema.safeParse({}).success).toBe(false);
     expect(StudioUpdateBodySchema.safeParse({ title: '   ' }).success).toBe(false);
+  });
+});
+
+describe('data table contract', () => {
+  it('needs a title and between two and eight named columns', () => {
+    const withColumns = (count: number) => ({
+      ...table,
+      columns: Array.from({ length: count }, (_, index) => `Spalte ${index + 1}`),
+    });
+
+    expect(DataTableSchema.safeParse(table).success).toBe(true);
+    expect(DataTableSchema.safeParse(withColumns(MIN_DATA_TABLE_COLUMNS - 1)).success).toBe(false);
+    expect(DataTableSchema.safeParse(withColumns(MAX_DATA_TABLE_COLUMNS)).success).toBe(true);
+    expect(DataTableSchema.safeParse(withColumns(MAX_DATA_TABLE_COLUMNS + 1)).success).toBe(false);
+    expect(DataTableSchema.safeParse({ ...table, columns: ['Name', '  '] }).success).toBe(false);
+    expect(DataTableSchema.safeParse({ ...table, title: ' ' }).success).toBe(false);
+  });
+
+  it('keeps a cell without text, because the server blanks a cell that has no valid citation', () => {
+    const blank = {
+      cells: [
+        { text: '', chunkIds: [] },
+        { text: 'Leitung', chunkIds: [CHUNK] },
+      ],
+    };
+
+    expect(DataTableSchema.safeParse({ ...table, rows: [blank] }).success).toBe(true);
+  });
+
+  it('is requested with the sources and a topic, but no size', () => {
+    expect(
+      CreateStudioBodySchema.parse({ kind: STUDIO_KIND.DATA_TABLE, focus: ' Preise ' })
+    ).toEqual({ kind: STUDIO_KIND.DATA_TABLE, focus: 'Preise' });
+    expect(
+      CreateStudioBodySchema.parse({ kind: STUDIO_KIND.DATA_TABLE, size: STUDIO_SIZE.MORE })
+    ).toEqual({ kind: STUDIO_KIND.DATA_TABLE });
   });
 });

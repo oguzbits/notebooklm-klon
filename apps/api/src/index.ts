@@ -13,7 +13,7 @@ import { systemDeps } from './import/system-deps';
 import { IngestError } from './ingestion/ingest';
 import { runIngestJob, type SubmitPorts } from './ingestion/submit';
 import { createJobQueue } from './jobs/queue';
-import { log } from './logger';
+import { errorName, log } from './logger';
 import { createProviders } from './providers';
 import { createTavilySearch } from './search/tavily-search';
 import { userCoverPrefix } from './storage/cover-key';
@@ -61,7 +61,7 @@ await queue.work(async (payload) => {
     log({
       level: 'error',
       msg: 'ingestion job failed',
-      name: error instanceof Error ? error.name : 'unknown',
+      name: errorName(error),
       code: error instanceof IngestError ? error.code : undefined,
       durationMs: Date.now() - started,
     });
@@ -91,7 +91,7 @@ const app = createApp({
       log({
         level: 'error',
         msg: 'chat failed',
-        name: error instanceof Error ? error.name : 'unknown',
+        name: errorName(error),
       }),
   },
 });
@@ -116,7 +116,7 @@ setInterval(() => {
     log({
       level: 'error',
       msg: 'guest cleanup failed',
-      name: error instanceof Error ? error.name : 'unknown',
+      name: errorName(error),
     })
   );
 }, HOUR_MS).unref();

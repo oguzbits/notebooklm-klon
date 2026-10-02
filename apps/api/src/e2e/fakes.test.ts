@@ -1,6 +1,7 @@
 import {
   AnswerSchema,
   CHAT_LANGUAGE,
+  DataTableSchema,
   FlashcardsReplySchema,
   MindmapSchema,
   NotebookOverviewSchema,
@@ -138,6 +139,7 @@ describe('fakeStudio', () => {
       QuizReplySchema,
     ],
     [{ kind: STUDIO_KIND.MINDMAP }, MindmapSchema],
+    [{ kind: STUDIO_KIND.DATA_TABLE }, DataTableSchema],
   ] as const;
 
   it.each(kinds)(

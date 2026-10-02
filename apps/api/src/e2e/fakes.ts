@@ -173,6 +173,18 @@ export function fakeStudio(schema: Record<string, unknown>, userMessage: string)
       })),
     });
   }
+  if (properties.includes('rows')) {
+    return JSON.stringify({
+      title,
+      columns: ['Quelle', 'Aussage'],
+      rows: passages.map((p) => ({
+        cells: [
+          { text: firstWords(p.sentence, STUDIO_TITLE_WORDS), chunkIds: [p.label] },
+          { text: p.sentence, chunkIds: [p.label] },
+        ],
+      })),
+    });
+  }
   if (properties.includes('branches')) {
     return JSON.stringify({
       title,

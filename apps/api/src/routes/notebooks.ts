@@ -17,19 +17,18 @@ import {
   listNotebooks,
   updateNotebook,
 } from '../db/notebook-repository';
+import { HTTP_STATUS } from '../http-status';
 import { coverKey } from '../storage/cover-key';
 import { removeObjectQuietly } from '../storage/remove-quietly';
 import { invalid, json, notebookParams, notFound, unauthenticated } from './openapi';
 
-const OK = 200;
-const CREATED = 201;
-const NO_CONTENT = 204;
-const NOT_FOUND = 404;
-
 const listRoute = createRoute({
   method: 'get',
   path: '/',
-  responses: { [OK]: json(NotebookListSchema, 'The own notebooks'), 401: unauthenticated },
+  responses: {
+    [HTTP_STATUS.OK]: json(NotebookListSchema, 'The own notebooks'),
+    401: unauthenticated,
+  },
 });
 
 const createRoute_ = createRoute({
@@ -39,7 +38,7 @@ const createRoute_ = createRoute({
     body: { content: { 'application/json': { schema: CreateNotebookBodySchema } }, required: true },
   },
   responses: {
-    [CREATED]: json(NotebookSchema, 'The new notebook'),
+    [HTTP_STATUS.CREATED]: json(NotebookSchema, 'The new notebook'),
     400: invalid,
     401: unauthenticated,
   },
@@ -53,10 +52,10 @@ const updateRoute = createRoute({
     body: { content: { 'application/json': { schema: UpdateNotebookBodySchema } }, required: true },
   },
   responses: {
-    [OK]: json(NotebookSchema, 'The changed notebook'),
+    [HTTP_STATUS.OK]: json(NotebookSchema, 'The changed notebook'),
     400: invalid,
     401: unauthenticated,
-    [NOT_FOUND]: notFound,
+    [HTTP_STATUS.NOT_FOUND]: notFound,
   },
 });
 
@@ -65,9 +64,12 @@ const copyRoute = createRoute({
   path: '/{notebookId}/copy',
   request: { params: notebookParams },
   responses: {
-    [CREATED]: json(NotebookSchema, 'The copy: same sources, summaries and settings, no chat'),
+    [HTTP_STATUS.CREATED]: json(
+      NotebookSchema,
+      'The copy: same sources, summaries and settings, no chat'
+    ),
     401: unauthenticated,
-    [NOT_FOUND]: notFound,
+    [HTTP_STATUS.NOT_FOUND]: notFound,
   },
 });
 
@@ -76,9 +78,9 @@ const deleteRoute = createRoute({
   path: '/{notebookId}',
   request: { params: notebookParams },
   responses: {
-    [NO_CONTENT]: { description: 'The notebook and its chat history are deleted' },
+    [HTTP_STATUS.NO_CONTENT]: { description: 'The notebook and its chat history are deleted' },
     401: unauthenticated,
-    [NOT_FOUND]: notFound,
+    [HTTP_STATUS.NOT_FOUND]: notFound,
   },
 });
 
@@ -87,33 +89,39 @@ export function notebookRoutes(deps: AppDeps) {
   const app = new OpenAPIHono<{ Variables: AuthVariables }>();
 
   return app
-    .openapi(listRoute, async (c) => c.json(await listNotebooks(deps.db, c.var.userId), OK))
+    .openapi(listRoute, async (c) =>
+      c.json(await listNotebooks(deps.db, c.var.userId), HTTP_STATUS.OK)
+    )
     .openapi(createRoute_, async (c) => {
       const { title } = c.req.valid('json');
-      return c.json(await createNotebook(deps.db, c.var.userId, title), CREATED);
+      return c.json(await createNotebook(deps.db, c.var.userId, title), HTTP_STATUS.CREATED);
     })
     .openapi(updateRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
       const changes = c.req.valid('json');
       const updated = await updateNotebook(deps.db, c.var.userId, notebookId, changes);
-      return updated ? c.json(updated, OK) : c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
+      return updated
+        ? c.json(updated, HTTP_STATUS.OK)
+        : c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);
     })
     .openapi(copyRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
       const copy = await duplicateNotebook(deps.db, c.var.userId, notebookId);
-      return copy ? c.json(copy, CREATED) : c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
+      return copy
+        ? c.json(copy, HTTP_STATUS.CREATED)
+        : c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);
     })
     .openapi(deleteRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
       const { userId } = c.var;
       const existing = await findNotebook(deps.db, userId, notebookId);
       const deleted = await deleteNotebook(deps.db, userId, notebookId);
-      if (!deleted) return c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
+      if (!deleted) return c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);
       // The cover image goes with the notebook.
       if (existing?.coverVersion && deps.objectStore) {
         const key = coverKey(userId, notebookId, existing.coverVersion);
         await removeObjectQuietly(deps.objectStore, key);
       }
-      return c.body(null, NO_CONTENT);
+      return c.body(null, HTTP_STATUS.NO_CONTENT);
     });
 }

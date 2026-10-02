@@ -11,13 +11,10 @@ import type { AppDeps } from '../app-deps';
 import type { AuthVariables } from '../auth/session';
 import { LIMITS } from '../config/limits';
 import { createWindowLimit } from '../core/window-limit';
+import { HTTP_STATUS } from '../http-status';
 import { log } from '../logger';
-import { WebSearchError } from '../search/tavily-search';
 import { json, unauthenticated } from './openapi';
 
-const OK = 200;
-const TOO_MANY_REQUESTS = 429;
-const UNAVAILABLE = 503;
 const HOUR_MS = 3_600_000;
 const DAY_MS = 24 * HOUR_MS;
 
@@ -28,11 +25,11 @@ const searchRoute = createRoute({
     body: { content: { 'application/json': { schema: WebSearchBodySchema } }, required: true },
   },
   responses: {
-    [OK]: json(WebSearchResponseSchema, 'Pages that could be added as sources'),
+    [HTTP_STATUS.OK]: json(WebSearchResponseSchema, 'Pages that could be added as sources'),
     400: json(ApiErrorSchema, 'The request is invalid'),
     401: unauthenticated,
-    [TOO_MANY_REQUESTS]: json(ApiErrorSchema, 'Too many searches'),
-    [UNAVAILABLE]: json(ApiErrorSchema, 'The web search is not set up'),
+    [HTTP_STATUS.TOO_MANY_REQUESTS]: json(ApiErrorSchema, 'Too many searches'),
+    [HTTP_STATUS.SERVICE_UNAVAILABLE]: json(ApiErrorSchema, 'The web search is not set up'),
   },
 });
 
@@ -40,7 +37,7 @@ const capabilitiesRoute = createRoute({
   method: 'get',
   path: '/',
   responses: {
-    [OK]: json(CapabilitiesSchema, 'What this installation can do'),
+    [HTTP_STATUS.OK]: json(CapabilitiesSchema, 'What this installation can do'),
     401: unauthenticated,
   },
 });
@@ -65,34 +62,28 @@ export function webSearchRoutes(deps: AppDeps) {
 
   return app.openapi(searchRoute, async (c) => {
     const { webSearch } = deps;
-    if (!webSearch) return c.json({ code: API_ERROR.WEB_SEARCH_UNAVAILABLE }, UNAVAILABLE);
+    if (!webSearch)
+      return c.json({ code: API_ERROR.WEB_SEARCH_UNAVAILABLE }, HTTP_STATUS.SERVICE_UNAVAILABLE);
     const limited = { code: API_ERROR.WEB_SEARCH_LIMIT_REACHED };
     if (!perUser.take(c.var.userId) || !everybody.take('all')) {
-      return c.json(limited, TOO_MANY_REQUESTS);
+      return c.json(limited, HTTP_STATUS.TOO_MANY_REQUESTS);
     }
 
     const { query } = c.req.valid('json');
     const started = Date.now();
-    try {
-      const results = await webSearch.search(
-        query,
-        AbortSignal.timeout(LIMITS.WEB_SEARCH_TIMEOUT_MS)
-      );
-      // Only lengths and counts: the query is the reader's text.
-      log({
-        level: 'info',
-        msg: 'web search',
-        queryChars: query.length,
-        results: results.length,
-        durationMs: Date.now() - started,
-      });
-      return c.json({ results }, OK);
-    } catch (error) {
-      if (error instanceof WebSearchError && error.quotaExhausted) {
-        return c.json(limited, TOO_MANY_REQUESTS);
-      }
-      throw error;
-    }
+    const results = await webSearch.search(
+      query,
+      AbortSignal.timeout(LIMITS.WEB_SEARCH_TIMEOUT_MS)
+    );
+    // Only lengths and counts: the query is the reader's text.
+    log({
+      level: 'info',
+      msg: 'web search',
+      queryChars: query.length,
+      results: results.length,
+      durationMs: Date.now() - started,
+    });
+    return c.json({ results }, HTTP_STATUS.OK);
   });
 }
 
@@ -100,6 +91,9 @@ export function webSearchRoutes(deps: AppDeps) {
 export function capabilityRoutes(deps: AppDeps) {
   const app = new OpenAPIHono<{ Variables: AuthVariables }>();
   return app.openapi(capabilitiesRoute, (c) =>
-    c.json({ webSearch: deps.webSearch !== null, coverImage: deps.objectStore !== null }, OK)
+    c.json(
+      { webSearch: deps.webSearch !== null, coverImage: deps.objectStore !== null },
+      HTTP_STATUS.OK
+    )
   );
 }

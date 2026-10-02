@@ -198,7 +198,7 @@ export function ChatSettingsDialog({ notebookId, open, onOpenChange }: ChatSetti
         <DialogHeader>
           <DialogTitle>Chat konfigurieren</DialogTitle>
           <DialogDescription>
-            Gilt für dieses Notizbuch. Jede Aussage bleibt mit einer Quelle belegt, was du auch
+            Gilt für dieses Notebook. Jede Aussage bleibt mit einer Quelle belegt, was du auch
             einstellst.
           </DialogDescription>
         </DialogHeader>

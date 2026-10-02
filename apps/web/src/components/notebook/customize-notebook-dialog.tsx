@@ -161,7 +161,7 @@ function SummaryField({ writing, summary, onWriting, onSummary }: SummaryFieldPr
         <Switch id="own-summary-switch" checked={writing} onCheckedChange={onWriting} />
       </div>
       <p className="text-ui text-muted-foreground">
-        Standardmäßig fasst das Notizbuch deine Quellen selbst zusammen. Mit einer eigenen
+        Standardmäßig fasst das Notebook deine Quellen selbst zusammen. Mit einer eigenen
         Zusammenfassung ersetzt du diesen Text.
       </p>
       {writing && (
@@ -170,7 +170,7 @@ function SummaryField({ writing, summary, onWriting, onSummary }: SummaryFieldPr
           value={summary}
           maxLength={MAX_SUMMARY_CHARS}
           rows={5}
-          placeholder="Worum geht es in diesem Notizbuch?"
+          placeholder="Worum geht es in diesem Notebook?"
           onChange={(event) => onSummary(event.target.value)}
         />
       )}
@@ -205,7 +205,7 @@ function CustomizeForm({ notebook, onDone }: CustomizeFormProps) {
       </DialogHeader>
       {capabilities.data?.coverImage && <CoverPicker notebook={notebook} />}
       <div className="grid gap-2">
-        <Label htmlFor="notebook-title-field">Titel des Notizbuchs</Label>
+        <Label htmlFor="notebook-title-field">Titel des Notebooks</Label>
         <Input
           id="notebook-title-field"
           value={draft.title}

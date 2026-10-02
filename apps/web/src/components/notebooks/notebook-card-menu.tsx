@@ -37,7 +37,7 @@ export function NotebookCardMenu({
             variant="ghost"
             size="icon-xs"
             className="absolute top-6 right-6"
-            aria-label={`Weitere Aktionen für Notizbuch „${notebook.title}“`}
+            aria-label={`Weitere Aktionen für Notebook „${notebook.title}“`}
             tooltip="Mehr"
           >
             <EllipsisVertical />
@@ -62,7 +62,7 @@ export function NotebookCardMenu({
       </DropdownMenu>
       <RenameDialog
         heading="Titel bearbeiten"
-        label="Titel des Notizbuchs"
+        label="Titel des Notebooks"
         value={notebook.title}
         open={renaming}
         onOpenChange={setRenaming}

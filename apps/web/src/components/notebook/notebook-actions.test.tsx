@@ -25,7 +25,7 @@ function Page() {
       onCustomize={onCustomize}
     />
   ) : (
-    <p>Neues Notizbuch offen</p>
+    <p>Neues Notebook offen</p>
   );
 }
 
@@ -40,7 +40,7 @@ function renderActions() {
 }
 
 const openMenu = async (user: ReturnType<typeof userEvent.setup>) =>
-  user.click(screen.getByRole('button', { name: 'Notizbuch-Konfiguration' }));
+  user.click(screen.getByRole('button', { name: 'Notebook-Konfiguration' }));
 
 describe('NotebookActions', () => {
   it('copies the notebook after asking and opens the copy', async () => {
@@ -55,10 +55,10 @@ describe('NotebookActions', () => {
     const user = userEvent.setup();
 
     await openMenu(user);
-    await user.click(await screen.findByRole('menuitem', { name: 'Notizbuch kopieren' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Notebook kopieren' }));
     await user.click(await screen.findByRole('button', { name: 'Kopieren' }));
 
-    expect(await screen.findByText('Neues Notizbuch offen')).toBeTruthy();
+    expect(await screen.findByText('Neues Notebook offen')).toBeTruthy();
   });
 
   it('says so in the dialog when the copy fails', async () => {
@@ -71,11 +71,11 @@ describe('NotebookActions', () => {
     const user = userEvent.setup();
 
     await openMenu(user);
-    await user.click(await screen.findByRole('menuitem', { name: 'Notizbuch kopieren' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Notebook kopieren' }));
     await user.click(await screen.findByRole('button', { name: 'Kopieren' }));
 
     expect(await screen.findByRole('alertdialog')).toBeTruthy();
-    expect(screen.queryByText('Neues Notizbuch offen')).toBeNull();
+    expect(screen.queryByText('Neues Notebook offen')).toBeNull();
   });
 
   it('offers to customize the notebook', async () => {
@@ -83,7 +83,7 @@ describe('NotebookActions', () => {
     const user = userEvent.setup();
 
     await openMenu(user);
-    await user.click(await screen.findByRole('menuitem', { name: 'Notizbuch anpassen' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Notebook anpassen' }));
 
     expect(onCustomize).toHaveBeenCalledOnce();
   });
@@ -127,7 +127,7 @@ describe('NotebookActions', () => {
     const user = userEvent.setup();
 
     await openMenu(user);
-    await user.click(await screen.findByRole('menuitem', { name: 'Notizbuch löschen' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Notebook löschen' }));
     await user.click(await screen.findByRole('button', { name: 'Löschen' }));
 
     expect(await screen.findByText('Liste')).toBeTruthy();
@@ -138,7 +138,7 @@ describe('NotebookActions', () => {
     const user = userEvent.setup();
 
     await openMenu(user);
-    await user.click(await screen.findByRole('menuitem', { name: 'Notizbuch löschen' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Notebook löschen' }));
     await user.click(await screen.findByRole('button', { name: 'Abbrechen' }));
 
     expect(screen.queryByRole('alertdialog')).toBeNull();
@@ -157,10 +157,8 @@ describe('NotebookActions', () => {
     renderActions();
     const user = userEvent.setup();
 
-    await user.click(screen.getByRole('button', { name: /Notizbuch erstellen/ }));
-    await user.type(await screen.findByLabelText('Titel des Notizbuchs'), 'Neu');
-    await user.click(screen.getByRole('button', { name: 'Anlegen' }));
+    await user.click(screen.getByRole('button', { name: /Notebook erstellen/ }));
 
-    expect(await screen.findByText('Neues Notizbuch offen')).toBeTruthy();
+    expect(await screen.findByText('Neues Notebook offen')).toBeTruthy();
   });
 });

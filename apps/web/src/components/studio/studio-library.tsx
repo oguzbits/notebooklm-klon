@@ -19,8 +19,8 @@ export function EmptyLibrary() {
         Hier wird die Ausgabe von Studio gespeichert.
       </p>
       <p className="text-[0.875rem] leading-6 text-muted-foreground">
-        Nachdem du Quellen hinzugefügt hast, klicke oben, um Berichte, Karteikarten, Quizze und
-        Mindmaps zu erstellen.
+        Nachdem du Quellen hinzugefügt hast, klicke oben, um Berichte, Karteikarten, Quizze,
+        Mindmaps und Datentabellen zu erstellen.
       </p>
     </div>
   );

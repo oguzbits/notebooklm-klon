@@ -1,12 +1,12 @@
-import { type Notebook, type UpdateNotebookBody } from '@nlm/shared';
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { type Notebook, NOTEBOOK_TITLE_MAX_CHARS, type UpdateNotebookBody } from '@nlm/shared';
+import { desc, eq, sql } from 'drizzle-orm';
 
 import type { Database } from './client';
+import { ownedNotebook } from './ownership';
 import { notebooks, notebookSources } from './schema';
 import { UUID } from './uuid';
 
 const COPY_PREFIX = 'Kopie von ';
-const MAX_NOTEBOOK_TITLE_CHARS = 200;
 /** Every function below takes the user ID from the session and filters by it in SQL. */
 
 /** The number of sources linked to a notebook, counted by the database. */
@@ -80,7 +80,7 @@ export async function findNotebook(
   const [row] = await db
     .select(notebookColumns)
     .from(notebooks)
-    .where(and(eq(notebooks.id, notebookId), eq(notebooks.userId, userId)));
+    .where(ownedNotebook(notebookId, userId));
   return row ? toNotebook(row) : null;
 }
 
@@ -102,7 +102,7 @@ export async function updateNotebook(
       ...(changes.customSummary !== undefined && { customSummary: changes.customSummary }),
       ...(changes.pinned !== undefined && { pinnedAt: changes.pinned ? new Date() : null }),
     })
-    .where(and(eq(notebooks.id, notebookId), eq(notebooks.userId, userId)))
+    .where(ownedNotebook(notebookId, userId))
     .returning({ id: notebooks.id });
   return updated.length === 1 ? findNotebook(db, userId, notebookId) : null;
 }
@@ -122,7 +122,7 @@ export async function setCoverVersion(
     const [before] = await tx
       .select({ coverVersion: notebooks.coverVersion })
       .from(notebooks)
-      .where(and(eq(notebooks.id, notebookId), eq(notebooks.userId, userId)))
+      .where(ownedNotebook(notebookId, userId))
       .for('update');
     if (!before) return null;
     await tx.update(notebooks).set({ coverVersion: version }).where(eq(notebooks.id, notebookId));
@@ -146,16 +146,13 @@ export async function duplicateNotebook(
 ): Promise<Notebook | null> {
   if (!UUID.test(notebookId)) return null;
   const copyId = await db.transaction(async (tx) => {
-    const [original] = await tx
-      .select()
-      .from(notebooks)
-      .where(and(eq(notebooks.id, notebookId), eq(notebooks.userId, userId)));
+    const [original] = await tx.select().from(notebooks).where(ownedNotebook(notebookId, userId));
     if (!original) return null;
     const [copy] = await tx
       .insert(notebooks)
       .values({
         userId,
-        title: `${COPY_PREFIX}${original.title}`.slice(0, MAX_NOTEBOOK_TITLE_CHARS),
+        title: `${COPY_PREFIX}${original.title}`.slice(0, NOTEBOOK_TITLE_MAX_CHARS),
         chatConfig: original.chatConfig,
         overview: original.overview,
         overviewKey: original.overviewKey,
@@ -184,7 +181,7 @@ export async function deleteNotebook(
   if (!UUID.test(notebookId)) return false;
   const deleted = await db
     .delete(notebooks)
-    .where(and(eq(notebooks.id, notebookId), eq(notebooks.userId, userId)))
+    .where(ownedNotebook(notebookId, userId))
     .returning({ id: notebooks.id });
   return deleted.length === 1;
 }

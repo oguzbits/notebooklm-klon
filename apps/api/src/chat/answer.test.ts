@@ -127,6 +127,27 @@ describe('prepareAnswer', () => {
 });
 
 describe('answerQuestion', () => {
+  it('hands the signal of the request to the model and stays silent when the reader left', async () => {
+    const reader = new AbortController();
+    let received: AbortSignal | undefined;
+    const { ports, calls } = fakePorts({
+      stream: async function* (input) {
+        received = input.signal;
+        reader.abort();
+        throw new DOMException('This operation was aborted', 'AbortError');
+        yield '';
+      },
+    });
+    const prepared = await prepareAnswer(INPUT, ports);
+
+    const events: ChatEvent[] = [];
+    for await (const event of answerQuestion(prepared, ports, reader.signal)) events.push(event);
+
+    expect(received).toBe(reader.signal);
+    expect(events).toEqual([]);
+    expect(calls.errors).toEqual([]);
+  });
+
   it('streams a statement with real chunk IDs and then closes with the counts', async () => {
     const { ports } = fakePorts();
 

@@ -98,4 +98,38 @@ describe('RateLimiter', () => {
 
     expect(order).toEqual(['a', 'b', 'c']);
   });
+
+  it('does not run or count a call whose signal is already aborted', async () => {
+    const clock = fakeClock();
+    const limiter = new RateLimiter({ requestsPerMinute: 1, tokensPerMinute: 1000 }, clock);
+    let ran = false;
+
+    const aborted = limiter.schedule(
+      1,
+      async () => {
+        ran = true;
+      },
+      AbortSignal.abort()
+    );
+    await expect(aborted).rejects.toThrow();
+    await limiter.schedule(1, async () => undefined);
+
+    expect(ran).toBe(false);
+    expect(clock.sleeps).toEqual([]);
+  });
+
+  it('stops a queued call that waits for the window when its signal aborts', async () => {
+    const reader = new AbortController();
+    const clock = {
+      now: () => 0,
+      sleep: () => new Promise<void>(() => undefined),
+    };
+    const limiter = new RateLimiter({ requestsPerMinute: 1, tokensPerMinute: 1000 }, clock);
+    await limiter.schedule(1, async () => undefined);
+
+    const waiting = limiter.schedule(1, async () => 'late', reader.signal);
+    setTimeout(() => reader.abort(), 20);
+
+    await expect(waiting).rejects.toThrow();
+  });
 });

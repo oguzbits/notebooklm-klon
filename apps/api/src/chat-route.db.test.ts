@@ -219,6 +219,18 @@ describe('POST /api/notebooks/:id/chat', () => {
     expect(kept).not.toBe(dropped);
   });
 
+  it('gives the model a signal that ends the request when the reader leaves', async () => {
+    const notebook = await createNotebook(alice);
+    await addText(alice, notebook, 'a.txt', 'Text zum Antworten');
+    await harness.runJobs();
+
+    await (
+      await app.request(`/api/notebooks/${notebook}/chat`, post(alice, { question: 'Frage?' }))
+    ).text();
+
+    expect(harness.modelInputs[0]?.signal).toBeInstanceOf(AbortSignal);
+  });
+
   it('ends the stream with an error event when the model fails midway', async () => {
     const failing = createHarness({
       model: async function* () {

@@ -1,9 +1,9 @@
-import { createGeminiChat } from './ai/gemini-chat';
+import { type ChatInput, createGeminiChat } from './ai/gemini-chat';
 import { createGeminiEmbedder } from './ai/gemini-embedder';
 import { createGeminiPdfParser } from './ai/gemini-pdf-parser';
 import { RateLimiter, systemClock } from './ai/rate-limiter';
 import type { Env } from './config/env';
-import { PROVIDER_LIMITS } from './config/limits';
+import { LIMITS, PROVIDER_LIMITS } from './config/limits';
 import { log } from './logger';
 import { createParseSource } from './parsing/parse-source';
 
@@ -27,11 +27,13 @@ export function createProviders(
   const embedder = createGeminiEmbedder({
     ...provider,
     model: env.EMBEDDING_MODEL,
+    timeoutMs: LIMITS.EMBED_TIMEOUT_MS,
     limiter: new RateLimiter(PROVIDER_LIMITS.EMBED),
   });
   const chat = createGeminiChat({
     ...provider,
     model: env.AI_MODEL,
+    timeoutMs: LIMITS.CHAT_TIMEOUT_MS,
     limiter: new RateLimiter(PROVIDER_LIMITS.CHAT),
     onUsage: (usage) => log({ level: 'info', msg: 'chat usage', ...usage }),
   });
@@ -40,6 +42,6 @@ export function createProviders(
     parse: createParseSource(pdfParser),
     embedDocuments: (texts: string[]) => embedder.embedDocuments(texts),
     embedQuery: (text: string) => embedder.embedQuery(text),
-    stream: (input: Parameters<typeof chat.stream>[0]) => chat.stream(input),
+    stream: (input: ChatInput) => chat.stream(input),
   };
 }

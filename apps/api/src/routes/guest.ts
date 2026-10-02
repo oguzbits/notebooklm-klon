@@ -8,10 +8,8 @@ import { DEMO_NOTEBOOK_TITLE } from '../config/demo';
 import { user } from '../db/auth-schema';
 import { copyNotebookToUser, countGuests, findDemoTemplate } from '../db/guest-repository';
 import { startGuest } from '../guest/start-guest';
+import { HTTP_STATUS } from '../http-status';
 import { json } from './openapi';
-
-const OK = 200;
-const UNAVAILABLE = 503;
 
 const SignedInSchema = z.object({ user: z.object({ id: z.string() }) });
 
@@ -19,8 +17,11 @@ const guestRoute = createRoute({
   method: 'post',
   path: '/',
   responses: {
-    [OK]: json(GuestStartSchema, 'A guest is signed in, with a copy of the example notebook'),
-    [UNAVAILABLE]: json(ApiErrorSchema, 'No guest can be started now'),
+    [HTTP_STATUS.OK]: json(
+      GuestStartSchema,
+      'A guest is signed in, with a copy of the example notebook'
+    ),
+    [HTTP_STATUS.SERVICE_UNAVAILABLE]: json(ApiErrorSchema, 'No guest can be started now'),
   },
 });
 
@@ -53,9 +54,10 @@ export function guestRoutes(deps: AppDeps) {
           },
         })
       : null;
-    if (!started) return c.json({ code: API_ERROR.GUEST_UNAVAILABLE }, UNAVAILABLE);
+    if (!started)
+      return c.json({ code: API_ERROR.GUEST_UNAVAILABLE }, HTTP_STATUS.SERVICE_UNAVAILABLE);
 
-    const response = c.json({ notebookId: started.notebookId }, OK);
+    const response = c.json({ notebookId: started.notebookId }, HTTP_STATUS.OK);
     // The session cookie that Better Auth made for the guest.
     for (const cookie of started.response.headers.getSetCookie()) {
       response.headers.append('set-cookie', cookie);

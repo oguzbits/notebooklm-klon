@@ -49,7 +49,7 @@
   --table-line: #dde1eb;
   --table-head-line: #919191;
   --highlight-foreground: #1b1b1c;
-  /* The one soft blue action ("Neues Notizbuch"). */
+  /* The one soft blue action ("Neues Notebook"). */
   --prominent: #9dd2ff;
   --prominent-foreground: #1b1b1c;
   --success: #008052;
@@ -237,8 +237,9 @@
     @apply border-border outline-ring/50;
   }
   html {
-    /* The interface is set a little narrower than reading text (the width axis of the font). */
-    font-stretch: 92%;
+    /* The width axis of our font build runs about 8 points narrower than the original at the same
+       value (measured on the width of the same label), so 99 % here is the original's 92. */
+    font-stretch: 99%;
   }
   body {
     @apply bg-background font-sans text-foreground antialiased;
@@ -275,11 +276,12 @@
   }
 }
 
-/* Reading text (answers, sources, reports) is set 16/24 at normal width. */
+/* Reading text (answers, summary) is set 16/24. The original shows it at its normal width; in our
+   font build the same width is 102.5 % (the same sentence is 551 px wide in both). */
 .text-read {
   font-size: 1rem;
   line-height: 1.5rem;
-  font-stretch: 100%;
+  font-stretch: 102.5%;
 }
 
 /* A source as formatted text. Every size is measured on the document view of the original: body

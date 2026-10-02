@@ -1,17 +1,16 @@
 import type { Notebook } from '@nlm/shared';
-import { NotebookPen, Plus, SearchX } from 'lucide-react';
+import { NotebookPen, SearchX } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 
 import { AppHeader } from '@/components/layout/app-header';
-import { CreateNotebookDialog } from '@/components/notebooks/create-notebook-dialog';
+import { CreateNotebookButton } from '@/components/notebooks/create-notebook-button';
 import { DeleteNotebookDialog } from '@/components/notebooks/delete-notebook-dialog';
 import { NotebookCardMenu } from '@/components/notebooks/notebook-card-menu';
 import { NotebookSearch } from '@/components/notebooks/notebook-search';
 import { QueryBoundary } from '@/components/query-boundary';
 import { NotebookCardsSkeleton } from '@/components/skeletons';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
 import { useNotebooks } from '@/hooks/use-notebooks';
 import { formatDay } from '@/lib/day';
 import { describeError } from '@/lib/messages';
@@ -25,8 +24,8 @@ function NoNotebooks() {
   return (
     <div className="mt-4 flex flex-col items-center gap-2 rounded-panel bg-secondary p-10 text-center">
       <NotebookPen className="size-10 text-muted-foreground" aria-hidden />
-      <p className="text-xl font-title">Noch kein Notizbuch</p>
-      <p className="text-ui text-muted-foreground">Lege dein erstes Notizbuch an.</p>
+      <p className="text-xl font-title">Noch kein Notebook</p>
+      <p className="text-ui text-muted-foreground">Lege dein erstes Notebook an.</p>
     </div>
   );
 }
@@ -36,8 +35,8 @@ function NoMatch({ search }: { search: string }) {
   return (
     <div className="mt-4 flex flex-col items-center gap-2 py-16 text-center">
       <SearchX className="size-10 text-muted-foreground" aria-hidden />
-      <p className="text-xl font-title">Kein Notizbuch gefunden</p>
-      <p className="text-ui text-muted-foreground">Zu „{search}“ gibt es kein Notizbuch.</p>
+      <p className="text-xl font-title">Kein Notebook gefunden</p>
+      <p className="text-ui text-muted-foreground">Zu „{search}“ gibt es kein Notebook.</p>
     </div>
   );
 }
@@ -88,15 +87,8 @@ export function NotebookListPage() {
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex flex-col gap-2 px-6 pb-10">
           <div className="flex flex-wrap items-center justify-between gap-3 pt-6">
-            <h1 className="text-2xl leading-8">Deine Notizbücher</h1>
-            <CreateNotebookDialog
-              trigger={
-                <Button variant="prominent" className="pr-3 pl-2">
-                  <Plus />
-                  Neues Notizbuch
-                </Button>
-              }
-            />
+            <h1 className="text-2xl leading-8">Deine Notebooks</h1>
+            <CreateNotebookButton label="Neues Notebook" variant="prominent" />
           </div>
           <QueryBoundary
             query={notebooks}

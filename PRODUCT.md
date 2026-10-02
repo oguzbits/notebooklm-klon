@@ -52,7 +52,7 @@ verifiability, not about a new look.
   Research, Drive import, sharing and collaboration, answer ratings (thumbs), PPTX as source.
 - UI language is German, free of technical terms (no "RAG", "Embedding", "Chunk" for users). Terms follow
   the original: "Quellen", "Studio", "Notizen", "Chat".
-- Undecided: the Hetzner deployment files (they need the object store service and a volume).
+- Prepared, not yet live: the Hetzner deployment (files in `deploy/`, guide in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)).
 
 ## Brand Commitments
 

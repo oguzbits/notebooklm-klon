@@ -9,6 +9,7 @@ import {
 import { and, desc, eq, sql } from 'drizzle-orm';
 
 import type { Database } from './client';
+import { ownedNotebook } from './ownership';
 import { notebooks, studioOutputs } from './schema';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -50,7 +51,7 @@ export async function createStudioOutput(
   const [owned] = await db
     .select({ id: notebooks.id })
     .from(notebooks)
-    .where(and(eq(notebooks.id, notebookId), eq(notebooks.userId, userId)));
+    .where(ownedNotebook(notebookId, userId));
   if (!owned) return null;
   const [row] = await db
     .insert(studioOutputs)

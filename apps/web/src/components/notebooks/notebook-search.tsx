@@ -15,8 +15,8 @@ export function NotebookSearch({
         type="search"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        placeholder="Notizbücher durchsuchen"
-        aria-label="Notizbücher durchsuchen"
+        placeholder="Notebooks durchsuchen"
+        aria-label="Notebooks durchsuchen"
         className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted-foreground [&::-webkit-search-cancel-button]:hidden"
       />
     </label>

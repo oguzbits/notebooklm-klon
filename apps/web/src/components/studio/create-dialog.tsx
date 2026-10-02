@@ -44,6 +44,7 @@ const DIALOG_TITLE: Record<StudioKind, string> = {
   [STUDIO_KIND.FLASHCARDS]: 'Lernkarten',
   [STUDIO_KIND.QUIZ]: 'Quiz',
   [STUDIO_KIND.MINDMAP]: 'Mindmap',
+  [STUDIO_KIND.DATA_TABLE]: 'Datentabelle',
 };
 
 const COUNT_LABEL = {
@@ -84,6 +85,11 @@ const IDEAS: Record<StudioKind, readonly string[]> = {
     'Die Mindmap muss auf eine bestimmte Quelle beschränkt sein, z. B. „der Artikel über Italien“',
     'Die Mindmap muss sich ausschließlich auf die wichtigsten Konzepte der Quantenphysik konzentrieren',
     'Eine Mindmap, die mir dabei hilft, mir die Ursachen des Ersten Weltkriegs zu merken',
+  ],
+  [STUDIO_KIND.DATA_TABLE]: [
+    'Die Tabelle vergleicht die Quellen nach Fristen, Kosten und Zuständigkeiten',
+    'Die Tabelle muss auf eine bestimmte Quelle beschränkt sein (z. B. „der Artikel über Italien“)',
+    'Eine Tabelle mit den wichtigsten Personen, ihren Aufgaben und seit wann sie dabei sind',
   ],
 };
 

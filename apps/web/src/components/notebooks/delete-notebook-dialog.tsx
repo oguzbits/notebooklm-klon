@@ -18,7 +18,7 @@ export function DeleteNotebookDialog({
     <ConfirmDialog
       open={notebook !== null}
       onOpenChange={(open) => !open && onClose()}
-      title="Notizbuch löschen?"
+      title="Notebook löschen?"
       description={
         remove.isError ? (
           describeError(remove.error)

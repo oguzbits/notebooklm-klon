@@ -1,15 +1,13 @@
-import { Moon, Settings, Smartphone, Sun } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -24,21 +22,18 @@ const THEME_LABEL: Record<ThemePreference, string> = {
   [THEME_PREFERENCE.LIGHT]: 'Hell',
   [THEME_PREFERENCE.DARK]: 'Dunkel',
 };
-const THEME_ICON = {
-  [THEME_PREFERENCE.DEVICE]: Smartphone,
-  [THEME_PREFERENCE.LIGHT]: Sun,
-  [THEME_PREFERENCE.DARK]: Moon,
-} as const;
 const THEME_ORDER = [
   THEME_PREFERENCE.DEVICE,
   THEME_PREFERENCE.LIGHT,
   THEME_PREFERENCE.DARK,
 ] as const;
 
-/** The gear in the header: the look of the app, which follows the device unless told otherwise. */
+/**
+ * The gear in the header: the look of the app, which follows the device unless told otherwise. The
+ * three choices stand in the menu itself: a submenu does not fit beside it on a phone.
+ */
 export function SettingsMenu() {
   const [theme, setTheme] = useState<ThemePreference>(readThemePreference);
-  const Icon = THEME_ICON[theme];
 
   return (
     <DropdownMenu>
@@ -54,29 +49,22 @@ export function SettingsMenu() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60">
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger>
-            <Icon aria-hidden />
-            {THEME_LABEL[theme]}
-          </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent>
-            <DropdownMenuRadioGroup
-              value={theme}
-              onValueChange={(value) => {
-                const chosen = THEME_ORDER.find((entry) => entry === value);
-                if (!chosen) return;
-                setTheme(chosen);
-                setThemePreference(chosen);
-              }}
-            >
-              {THEME_ORDER.map((entry) => (
-                <DropdownMenuRadioItem key={entry} value={entry}>
-                  {THEME_LABEL[entry]}
-                </DropdownMenuRadioItem>
-              ))}
-            </DropdownMenuRadioGroup>
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
+        <DropdownMenuLabel>Darstellung</DropdownMenuLabel>
+        <DropdownMenuRadioGroup
+          value={theme}
+          onValueChange={(value) => {
+            const chosen = THEME_ORDER.find((entry) => entry === value);
+            if (!chosen) return;
+            setTheme(chosen);
+            setThemePreference(chosen);
+          }}
+        >
+          {THEME_ORDER.map((entry) => (
+            <DropdownMenuRadioItem key={entry} value={entry}>
+              {THEME_LABEL[entry]}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );

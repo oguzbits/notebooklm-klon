@@ -1,9 +1,10 @@
 import { API_ERROR } from '@nlm/shared';
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 
+import { UNTITLED_NOTEBOOK } from '@/components/notebooks/create-notebook-button';
 import { notebookEmoji } from '@/lib/notebook-emoji';
 import { notebook } from '@/test/fixtures';
 import { renderWithProviders } from '@/test/render';
@@ -28,7 +29,7 @@ describe('NotebookListPage', () => {
     server.use(list([]));
     renderWithProviders(<NotebookListPage />);
 
-    expect(await screen.findByText('Noch kein Notizbuch')).toBeTruthy();
+    expect(await screen.findByText('Noch kein Notebook')).toBeTruthy();
   });
 
   it('shows a German error with a retry that loads the list again', async () => {
@@ -49,27 +50,44 @@ describe('NotebookListPage', () => {
     expect(await screen.findByText('Wieder da')).toBeTruthy();
   });
 
-  it('creates a notebook with the typed title and reloads the list', async () => {
+  it('makes an untitled notebook at once, without asking for a title', async () => {
     let created: unknown;
-    let notebooks: unknown[] = [];
     server.use(
-      http.get('*/api/notebooks', () => HttpResponse.json(notebooks)),
+      http.get('*/api/notebooks', () => HttpResponse.json([])),
       http.post('*/api/notebooks', async ({ request }) => {
         created = await request.json();
-        notebooks = [notebook({ title: 'Neu' })];
-        return HttpResponse.json(notebook({ title: 'Neu' }), { status: 201 });
+        return HttpResponse.json(notebook({ title: UNTITLED_NOTEBOOK }), { status: 201 });
       })
     );
     renderWithProviders(<NotebookListPage />);
-    await screen.findByText('Noch kein Notizbuch');
+    await screen.findByText('Noch kein Notebook');
 
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Neues Notebook' }));
+
+    await waitFor(() => expect(created).toEqual({ title: UNTITLED_NOTEBOOK }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('tells why no notebook was made and tries again on request', async () => {
+    let calls = 0;
+    server.use(
+      http.get('*/api/notebooks', () => HttpResponse.json([])),
+      http.post('*/api/notebooks', () => {
+        calls += 1;
+        return calls === 1
+          ? HttpResponse.json({ code: API_ERROR.INTERNAL }, { status: 500 })
+          : HttpResponse.json(notebook({ title: UNTITLED_NOTEBOOK }), { status: 201 });
+      })
+    );
+    renderWithProviders(<NotebookListPage />);
+    await screen.findByText('Noch kein Notebook');
     const user = userEvent.setup();
-    await user.click(screen.getByRole('button', { name: 'Neues Notizbuch' }));
-    await user.type(await screen.findByLabelText('Titel des Notizbuchs'), '  Neu ');
-    await user.click(screen.getByRole('button', { name: 'Anlegen' }));
 
-    expect(await screen.findByText('Neu')).toBeTruthy();
-    expect(created).toEqual({ title: 'Neu' });
+    await user.click(screen.getByRole('button', { name: 'Neues Notebook' }));
+    expect(await screen.findByText('Notebook konnte nicht erstellt werden')).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Erneut versuchen' }));
+
+    await waitFor(() => expect(calls).toBe(2));
   });
 
   it('asks before deleting and deletes after the confirmation', async () => {
@@ -87,14 +105,14 @@ describe('NotebookListPage', () => {
     const user = userEvent.setup();
 
     await user.click(
-      await screen.findByRole('button', { name: /Weitere Aktionen für Notizbuch „Weg damit“/ })
+      await screen.findByRole('button', { name: /Weitere Aktionen für Notebook „Weg damit“/ })
     );
     await user.click(await screen.findByRole('menuitem', { name: 'Löschen' }));
     expect(deleted).toBe(false);
     const dialog = await screen.findByRole('alertdialog');
     await user.click(within(dialog).getByRole('button', { name: 'Löschen' }));
 
-    expect(await screen.findByText('Noch kein Notizbuch')).toBeTruthy();
+    expect(await screen.findByText('Noch kein Notebook')).toBeTruthy();
   });
 
   it('changes the title from the menu of a card', async () => {
@@ -110,10 +128,10 @@ describe('NotebookListPage', () => {
     const user = userEvent.setup();
 
     await user.click(
-      await screen.findByRole('button', { name: /Weitere Aktionen für Notizbuch „Alt“/ })
+      await screen.findByRole('button', { name: /Weitere Aktionen für Notebook „Alt“/ })
     );
     await user.click(await screen.findByRole('menuitem', { name: 'Titel bearbeiten' }));
-    const field = await screen.findByLabelText('Titel des Notizbuchs');
+    const field = await screen.findByLabelText('Titel des Notebooks');
     await user.clear(field);
     await user.type(field, 'Neu');
     await user.click(screen.getByRole('button', { name: 'Speichern' }));
@@ -137,7 +155,7 @@ describe('NotebookListPage', () => {
     renderWithProviders(<NotebookListPage />);
     const user = userEvent.setup();
     const open = async () =>
-      user.click(await screen.findByRole('button', { name: /Weitere Aktionen für Notizbuch/ }));
+      user.click(await screen.findByRole('button', { name: /Weitere Aktionen für Notebook/ }));
 
     await open();
     await user.click(await screen.findByRole('menuitem', { name: 'Oben anpinnen' }));
@@ -195,11 +213,11 @@ describe('NotebookListPage', () => {
     const user = userEvent.setup();
     await screen.findByText('Steuerrecht');
 
-    await user.type(screen.getByRole('searchbox', { name: 'Notizbücher durchsuchen' }), 'forsch');
+    await user.type(screen.getByRole('searchbox', { name: 'Notebooks durchsuchen' }), 'forsch');
     expect(screen.queryByText('Steuerrecht')).toBeNull();
     expect(screen.getByText('Forschung')).toBeTruthy();
 
     await user.type(screen.getByRole('searchbox'), 'xyz');
-    expect(await screen.findByText('Kein Notizbuch gefunden')).toBeTruthy();
+    expect(await screen.findByText('Kein Notebook gefunden')).toBeTruthy();
   });
 });

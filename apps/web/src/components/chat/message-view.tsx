@@ -25,7 +25,7 @@ export function AnswerView({ notebookId, statements, finished, onOpenCitation }:
     return finished ? <p className="text-muted-foreground">{NO_ANSWER}</p> : null;
   }
   return (
-    <p className="text-read text-body">
+    <p className="text-read text-body [&_strong]:font-[540]">
       {numberCitations(statements).map((statement, index) => (
         <span key={index}>
           <InlineText text={statement.text} />

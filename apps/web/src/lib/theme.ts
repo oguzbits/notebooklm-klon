@@ -14,12 +14,14 @@ const COOKIE_NAME = 'nlm-theme';
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 const CHANGED_EVENT = 'nlm-theme-changed';
 
-const PREFERENCES: readonly string[] = Object.values(THEME_PREFERENCE);
+/** The preference a stored value stands for, or null for anything else. */
+const asPreference = (value: string | undefined) =>
+  Object.values(THEME_PREFERENCE).find((preference) => preference === value) ?? null;
 
 export function readThemePreference(): ThemePreference {
   const entry = document.cookie.split('; ').find((part) => part.startsWith(`${COOKIE_NAME}=`));
   const value = entry?.slice(COOKIE_NAME.length + 1);
-  return PREFERENCES.includes(value ?? '') ? (value as ThemePreference) : THEME_PREFERENCE.DEVICE;
+  return asPreference(value) ?? THEME_PREFERENCE.DEVICE;
 }
 
 /** Remembers the choice and applies it at once. */

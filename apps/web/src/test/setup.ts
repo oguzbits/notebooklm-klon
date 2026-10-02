@@ -11,6 +11,7 @@ class ResizeObserverStub {
 }
 globalThis.ResizeObserver = ResizeObserverStub;
 Element.prototype.hasPointerCapture = () => false;
+Element.prototype.setPointerCapture = () => {};
 Element.prototype.releasePointerCapture = () => {};
 Element.prototype.scrollIntoView = () => {};
 // ProseMirror (the note editor) measures text with ranges and looks up the element under a click,

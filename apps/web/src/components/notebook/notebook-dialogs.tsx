@@ -21,7 +21,7 @@ export function CopyNotebookDialog({ notebook, open, onClose }: NotebookDialogPr
     <ConfirmDialog
       open={open}
       onOpenChange={(next) => !next && onClose()}
-      title="Notizbuch kopieren?"
+      title="Notebook kopieren?"
       description={
         copy.isError
           ? describeError(copy.error)
@@ -52,7 +52,7 @@ export function ClearChatDialog({ notebook, open, onClose }: NotebookDialogProps
       description={
         clear.isError
           ? describeError(clear.error)
-          : 'Alle Fragen und Antworten dieses Notizbuchs werden gelöscht. Quellen und Notizen bleiben. Das lässt sich nicht rückgängig machen.'
+          : 'Alle Fragen und Antworten dieses Notebooks werden gelöscht. Quellen und Notizen bleiben. Das lässt sich nicht rückgängig machen.'
       }
       pending={clear.isPending}
       onConfirm={() => clear.mutate(undefined, { onSuccess: onClose })}

@@ -15,18 +15,13 @@ import { LIMITS } from '../config/limits';
 import { detectSourceKind } from '../core/file-kind';
 import { findNotebook } from '../db/notebook-repository';
 import { linkSource } from '../db/notebook-source-repository';
+import { HTTP_STATUS } from '../http-status';
 import { fetchPublicUrl } from '../import/fetch-url';
 import { submitSource } from '../ingestion/submit';
 import { pageTitle } from '../parsing/parse-web';
 import { countPdfPages } from '../parsing/pdf-pages';
 import { json, notebookParams } from './openapi';
 
-const ACCEPTED = 202;
-const BAD_REQUEST = 400;
-const NOT_FOUND = 404;
-const TOO_LARGE = 413;
-const UNSUPPORTED = 415;
-const UNPROCESSABLE = 422;
 // Room for the multipart framing around a file that is exactly at the limit.
 const MULTIPART_OVERHEAD_BYTES = 64 * 1024;
 
@@ -40,10 +35,10 @@ const urlRoute = createRoute({
     body: { content: { 'application/json': { schema: UrlSourceBodySchema } }, required: true },
   },
   responses: {
-    [ACCEPTED]: json(SubmitSourceResultSchema, 'The page is being processed'),
-    [BAD_REQUEST]: json(ApiErrorSchema, 'The URL is not allowed or could not be read'),
+    [HTTP_STATUS.ACCEPTED]: json(SubmitSourceResultSchema, 'The page is being processed'),
+    [HTTP_STATUS.BAD_REQUEST]: json(ApiErrorSchema, 'The URL is not allowed or could not be read'),
     401: json(ApiErrorSchema, 'Not signed in'),
-    [NOT_FOUND]: json(ApiErrorSchema, 'Notebook not found'),
+    [HTTP_STATUS.NOT_FOUND]: json(ApiErrorSchema, 'Notebook not found'),
     429: json(ApiErrorSchema, 'The quota for new sources is used up'),
   },
 });
@@ -78,29 +73,35 @@ async function addToNotebook(
 
 type Refusal = {
   ok: false;
-  status: typeof TOO_LARGE | typeof UNSUPPORTED | typeof UNPROCESSABLE;
+  status:
+    | typeof HTTP_STATUS.PAYLOAD_TOO_LARGE
+    | typeof HTTP_STATUS.UNSUPPORTED_MEDIA_TYPE
+    | typeof HTTP_STATUS.UNPROCESSABLE_ENTITY;
   code: (typeof API_ERROR)[keyof typeof API_ERROR];
 };
 type Upload = { ok: true; kind: SourceKind; bytes: Uint8Array } | Refusal;
 
-const UNREADABLE: Refusal = { ok: false, status: UNSUPPORTED, code: API_ERROR.UNSUPPORTED_FILE };
-const TOO_MANY: Refusal = { ok: false, status: UNPROCESSABLE, code: API_ERROR.TOO_MANY_PAGES };
+const UNREADABLE: Refusal = {
+  ok: false,
+  status: HTTP_STATUS.UNSUPPORTED_MEDIA_TYPE,
+  code: API_ERROR.UNSUPPORTED_FILE,
+};
+const TOO_MANY: Refusal = {
+  ok: false,
+  status: HTTP_STATUS.UNPROCESSABLE_ENTITY,
+  code: API_ERROR.TOO_MANY_PAGES,
+};
 
-/** Why a PDF is refused: it cannot be read (the user's file, not our error) or has too many pages. */
+/** Why a PDF is refused: too many pages. An unreadable one throws UnreadablePdfError (415). */
 async function pdfRefusal(bytes: Uint8Array): Promise<Refusal | null> {
-  try {
-    const pages = await countPdfPages(bytes);
-    return pages > LIMITS.UPLOAD_MAX_PDF_PAGES ? TOO_MANY : null;
-  } catch (caught) {
-    if (caught instanceof Error) return UNREADABLE;
-    throw caught;
-  }
+  const pages = await countPdfPages(bytes);
+  return pages > LIMITS.UPLOAD_MAX_PDF_PAGES ? TOO_MANY : null;
 }
 
 /** Looks at an uploaded file before anything is stored: size, kind, and for a PDF its pages. */
 async function checkUpload(file: File): Promise<Upload> {
   if (file.size > LIMITS.UPLOAD_MAX_BYTES) {
-    return { ok: false, status: TOO_LARGE, code: API_ERROR.FILE_TOO_LARGE };
+    return { ok: false, status: HTTP_STATUS.PAYLOAD_TOO_LARGE, code: API_ERROR.FILE_TOO_LARGE };
   }
   const bytes = new Uint8Array(await file.arrayBuffer());
   const kind = detectSourceKind(file.name, bytes);
@@ -118,18 +119,19 @@ export function sourceRoutes(deps: AppDeps) {
     '/:notebookId/sources/file',
     bodyLimit({
       maxSize: LIMITS.UPLOAD_MAX_BYTES + MULTIPART_OVERHEAD_BYTES,
-      onError: (c) => c.json(error(API_ERROR.FILE_TOO_LARGE), TOO_LARGE),
+      onError: (c) => c.json(error(API_ERROR.FILE_TOO_LARGE), HTTP_STATUS.PAYLOAD_TOO_LARGE),
     }),
     async (c) => {
       const { userId } = c.var;
       const notebookId = c.req.param('notebookId');
       if (!(await findNotebook(deps.db, userId, notebookId))) {
-        return c.json(error(API_ERROR.NOT_FOUND), NOT_FOUND);
+        return c.json(error(API_ERROR.NOT_FOUND), HTTP_STATUS.NOT_FOUND);
       }
 
       const form = await c.req.parseBody();
       const file = form.file;
-      if (!(file instanceof File)) return c.json(error(API_ERROR.INVALID_REQUEST), BAD_REQUEST);
+      if (!(file instanceof File))
+        return c.json(error(API_ERROR.INVALID_REQUEST), HTTP_STATUS.BAD_REQUEST);
       const upload = await checkUpload(file);
       if (!upload.ok) return c.json(error(upload.code), upload.status);
       const { kind, bytes } = upload;
@@ -142,7 +144,7 @@ export function sourceRoutes(deps: AppDeps) {
         sourceUrl: null,
         bytes,
       });
-      return c.json(result, ACCEPTED);
+      return c.json(result, HTTP_STATUS.ACCEPTED);
     }
   );
 
@@ -151,7 +153,7 @@ export function sourceRoutes(deps: AppDeps) {
     const { notebookId } = c.req.valid('param');
     const { url } = c.req.valid('json');
     if (!(await findNotebook(deps.db, userId, notebookId))) {
-      return c.json(error(API_ERROR.NOT_FOUND), NOT_FOUND);
+      return c.json(error(API_ERROR.NOT_FOUND), HTTP_STATUS.NOT_FOUND);
     }
 
     // An ImportError from here is turned into a 400 by the app-wide error handler.
@@ -165,6 +167,6 @@ export function sourceRoutes(deps: AppDeps) {
       sourceUrl: page.finalUrl,
       bytes: page.body,
     });
-    return c.json(result, ACCEPTED);
+    return c.json(result, HTTP_STATUS.ACCEPTED);
   });
 }

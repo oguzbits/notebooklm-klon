@@ -1,31 +1,31 @@
 # NotebookLM-Klon
 
-Ein Notizbuch, das nur auf deinen eigenen Quellen antwortet und jede Aussage mit einer Nummer belegt. Ein Klick auf die Nummer öffnet den Quelltext an der zitierten Stelle.
+Ein Notebook, das nur auf deinen eigenen Quellen antwortet und jede Aussage mit einer Nummer belegt. Ein Klick auf die Nummer öffnet den Quelltext an der zitierten Stelle.
 
 Bewerbungsaufgabe für Everlast AI (zweite Runde). Der Schwerpunkt liegt auf dem Weg von der Quelle zum nachprüfbaren Zitat: Aufnahme, Suche, Antwort mit geprüften Zitaten, Auswertung. Die Oberfläche ist deutsch, Quellen und Fragen dürfen englisch sein.
 
-|             |                                                                                                                                                                           |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Live-Demo   | _wird nach dem Deployment eingetragen_                                                                                                                                    |
-| Demo-Zugang | Auf der Anmeldeseite **„Beispiel ausprobieren“**: ein Gastkonto mit einer eigenen Kopie des Beispiel-Notizbuchs, ohne E-Mail und Passwort. Es wird nach 7 Tagen gelöscht. |
-| Video       | _Loom-Link folgt_                                                                                                                                                         |
+|             |                                                                                                                                                                          |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Live-Demo   | _wird nach dem Deployment eingetragen_                                                                                                                                   |
+| Demo-Zugang | Auf der Anmeldeseite **„Beispiel ausprobieren“**: ein Gastkonto mit einer eigenen Kopie des Beispiel-Notebooks, ohne E-Mail und Passwort. Es wird nach 7 Tagen gelöscht. |
+| Video       | _Loom-Link folgt_                                                                                                                                                        |
 
-> Hinweis für die Demo: Keine sensiblen Dokumente hochladen. Im kostenlosen Tarif von Google können Eingaben zur Verbesserung der Modelle genutzt werden. Läuft die Demo auf dem kostenlosen Hosting-Tarif (Render), schläft sie nach 15 Minuten Leerlauf ein und der erste Aufruf danach dauert etwa eine Minute. Auf dem geplanten Hetzner-Server entfällt das (siehe Abschnitt „Deployment“).
+> Hinweis für die Demo: Keine sensiblen Dokumente hochladen. Im kostenlosen Tarif von Google können Eingaben zur Verbesserung der Modelle genutzt werden. Die Demo soll auf einem Hetzner-Server laufen und schläft dort nicht ein (siehe Abschnitt „Deployment“).
 
 ## Was es kann
 
-- **Anmelden und Notizbücher** anlegen, öffnen, löschen (E-Mail und Passwort, Sitzung in der eigenen Datenbank).
+- **Anmelden und Notebooks** anlegen, öffnen, löschen (E-Mail und Passwort, Sitzung in der eigenen Datenbank).
 - **Quellen** hinzufügen: PDF, DOCX, TXT, MD und Webseiten per Link. Die Verarbeitung läuft im Hintergrund mit sichtbarem Status und verständlichen Fehlermeldungen. Quellen lassen sich an- und abwählen, die Auswahl begrenzt auch die Suche.
 - **Chat** mit Streaming. Jede aussagekräftige Antwort besteht aus Aussagen mit nummerierten Chips. Hover zeigt die Textstelle mit Quellenname, Klick öffnet den Quelltext mit hervorgehobenem Abschnitt.
 - **Übersicht pro Quelle**: Zusammenfassung, Schlüsselthemen und Vorschlagsfragen, die das Gespräch starten.
-- **Übersicht des Notizbuchs** am Anfang des Chats: ein Emoji, der Titel, die Zahl der Quellen und eine Zusammenfassung aller fertigen Quellen mit fetten Schlüsselbegriffen. Sie entsteht einmal, wenn sich die Quellen ändern, und lässt sich als Notiz speichern oder kopieren.
+- **Übersicht des Notebooks** am Anfang des Chats: ein Emoji, der Titel, die Zahl der Quellen und eine Zusammenfassung aller fertigen Quellen mit fetten Schlüsselbegriffen. Sie entsteht einmal, wenn sich die Quellen ändern, und lässt sich als Notiz speichern oder kopieren.
 - **Notizen** aus Antworten, mit erhaltenen Zitaten, und eigene Notizen mit Editor (Format-Leiste, wird beim Tippen gespeichert, auf Wunsch als Quelle).
-- **Studio**: Bericht (Briefing, FAQ, Lernleitfaden, Blogbeitrag oder eigene Anweisung), Karteikarten, Quiz und Mindmap aus den gewählten Quellen. Vor dem Erzeugen lassen sich Umfang und Schwierigkeit wählen; die Ausgaben tragen dieselben geprüften Zitate wie der Chat.
+- **Studio**: Bericht (Briefing, FAQ, Lernleitfaden, Blogbeitrag oder eigene Anweisung), Karteikarten, Quiz, Mindmap und Datentabelle aus den gewählten Quellen. Vor dem Erzeugen lassen sich Umfang und Schwierigkeit wählen; die Ausgaben tragen dieselben geprüften Zitate wie der Chat.
 - **Suche im Web** unter „Quellen hinzufügen“: Treffer ansehen und als Quelle übernehmen (Tavily, optional, mit Grenzen pro Nutzer und Tag).
-- **Notizbuch anpassen**: Titel, eigene Zusammenfassung und Titelbild (liegt in einem S3-kompatiblen Speicher, optional). Notizbücher lassen sich kopieren, auf der Startseite anpinnen und umbenennen.
+- **Notebook anpassen**: Titel, eigene Zusammenfassung und Titelbild (liegt in einem S3-kompatiblen Speicher, optional). Notebooks lassen sich kopieren, auf der Startseite anpinnen und umbenennen.
 - **Quellen und Ausgaben** sortieren und umbenennen; der Chat hat „Nach unten springen“ und zeigt je Antwort das **Vorgehen** (wie viele Quellen und Stellen geprüft wurden).
-- **Chat-Konfiguration** pro Notizbuch und Vorschlagsfragen unter der letzten Antwort.
-- **Verlauf** bleibt pro Notizbuch erhalten, gegliedert nach Tagen.
+- **Chat-Konfiguration** pro Notebook und Vorschlagsfragen unter der letzten Antwort.
+- **Verlauf** bleibt pro Notebook erhalten, gegliedert nach Tagen.
 
 Nicht gebaut (siehe [docs/PLAN.md](docs/PLAN.md), Kategorien Should und Stretch): Audio, Präsentation, Video und Infografik im Studio, PPTX als Quelle, agentische Suche im Chat, Deep Research, Drive-Anbindung, Bewertung von Chat-Antworten (Daumen). Der Umfang wurde bewusst auf die Kernstrecke begrenzt, die Gründe stehen in [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md).
 
@@ -36,16 +36,20 @@ flowchart LR
   subgraph Browser
     Web["React 19<br/>TanStack Query, shadcn"]
   end
-  subgraph Container["Ein Container (Render oder Hetzner)"]
-    Api["Hono API<br/>Zod-Schemas aus packages/shared"]
-    Worker["Ingestion-Worker<br/>pg-boss"]
+  subgraph Server["Hetzner-Server (Docker Compose)"]
+    Caddy["Caddy<br/>HTTPS"]
+    subgraph Container["App-Container"]
+      Api["Hono API<br/>Zod-Schemas aus packages/shared"]
+      Worker["Ingestion-Worker<br/>pg-boss"]
+    end
+    DB[("PostgreSQL mit pgvector<br/>Volltextsuche, Sitzungen,<br/>Job-Queue")]
+    S3[("SeaweedFS (S3-kompatibel)<br/>Titelbilder (optional)")]
   end
-  DB[("PostgreSQL (Neon)<br/>pgvector, Volltextsuche,<br/>Sitzungen, Job-Queue")]
   Gemini["Gemini API<br/>PDF lesen, Einbettungen, Antwort"]
   Tavily["Tavily<br/>Websuche (optional)"]
-  S3[("S3-kompatibler Speicher<br/>Titelbilder (optional)")]
 
-  Web -- "HTTP + SSE, eine Origin" --> Api
+  Web -- "HTTPS" --> Caddy
+  Caddy -- "HTTP + SSE, eine Origin" --> Api
   Api --> DB
   Api -- "Antwort streamen" --> Gemini
   Api -- "nur Suchbegriffe" --> Tavily
@@ -54,7 +58,7 @@ flowchart LR
   Worker -- "PDF lesen, einbetten" --> Gemini
 ```
 
-Das Frontend wird vom selben Prozess ausgeliefert wie die API (`WEB_DIST_DIR`), im Entwicklungsbetrieb leitet Vite `/api` weiter. Es gibt deshalb nur eine Origin, kein CORS und keine zweite Liste vertrauter Adressen.
+Das Diagramm zeigt die geplante Produktion (noch nicht live, siehe „Deployment“); lokal laufen Postgres und der Speicher aus `pnpm db:up`. Das Frontend wird vom selben Prozess ausgeliefert wie die API (`WEB_DIST_DIR`), im Entwicklungsbetrieb leitet Vite `/api` weiter. Es gibt deshalb nur eine Origin, kein CORS und keine zweite Liste vertrauter Adressen.
 
 ### Schichten
 
@@ -101,7 +105,7 @@ sequenceDiagram
   participant G as Gemini
   U->>A: Frage
   A->>G: Frage einbetten
-  A->>D: Hybridsuche (Vektor + Volltext, RRF) nach Nutzer, Notizbuch, gewählten Quellen
+  A->>D: Hybridsuche (Vektor + Volltext, RRF) nach Nutzer, Notebook, gewählten Quellen
   D-->>A: 8 Abschnitte
   A->>G: Abschnitte als c1 bis c8 und Frage, strukturierte Ausgabe
   loop je Aussage, sobald sie fertig ist
@@ -121,6 +125,7 @@ Die Entscheidungen mit Zahlen stehen im Repository, damit sie im Video zeigbar s
 - [docs/SPIKE-ERGEBNISSE.md](docs/SPIKE-ERGEBNISSE.md): Modell-Spike zu PDF-Parsing, Einbettungen, Chat und Zitat-Format, dazu die Hybridsuche.
 - [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md): kleine Entscheidungen mit Begründung und was sie später ändern würde.
 - [docs/PLAN.md](docs/PLAN.md): Anforderungen, Stack, Kostenstrategie und Risiken.
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md): Einrichtung, Betrieb und Wiederherstellung auf dem Hetzner-Server.
 
 Kurz: PDFs liest ein Gemini-Modell (Tabellen und Scans bleiben erhalten), die Suche ist ein Hybrid aus Vektor und Volltext in einer SQL-Abfrage, Zitate sind chunk-genau, weil auch NotebookLM ganze Absätze hervorhebt. Der Stack ist bewusst klein: eine Datenbank für alles, ein Container.
 
@@ -128,8 +133,8 @@ Kurz: PDFs liest ein Gemini-Modell (Tabellen und Scans bleiben erhalten), die Su
 
 - `pnpm check`: TypeScript strict, ESLint, Architekturregeln, tote Abhängigkeiten, Duplikate (unter 2 %), Magic-String-Audit.
 - `pnpm test`: Vitest ohne Netzwerk. MSW lehnt jede nicht abgefangene Anfrage ab, kein Test kann Kontingent verbrauchen.
-- `pnpm test:db`: Tests gegen Postgres mit pgvector (`pnpm db:up`), darunter alle Zugriffsregeln: jede Abfrage filtert nach Nutzer, Notizbuch und gewählten Quellen.
-- `pnpm e2e`: Playwright-Smoke-Test gegen den Offline-Server (echte Datenbank, echte App, gefälschte Modelle).
+- `pnpm test:db`: Tests gegen Postgres mit pgvector (`pnpm db:up`), darunter alle Zugriffsregeln: jede Abfrage filtert nach Nutzer, Notebook und gewählten Quellen.
+- `pnpm e2e`: Playwright-Nutzerreisen gegen den Offline-Server (Konto, Notebooks, Quellen, Trennung der Konten, Studio mit Quiz, Mindmap und Bericht, Darstellung auf dem Telefon; echte Datenbank, echte App, gefälschte Modelle, keine Token).
 - `pnpm eval:live`: die 18 Golden Questions gegen die echten Modelle, mit Trefferquote der Suche, Fakten in der Antwort und im zitierten Abschnitt und der Zahl der vom Server verworfenen Aussagen. Kostet Kontingent, läuft nicht in CI.
 - CI (GitHub Actions): Qualität, Unit-Tests, Datenbank-Tests, Browser-Test, Build, Semgrep.
 
@@ -161,24 +166,21 @@ pnpm --filter @nlm/api dev:offline   # dazu in einem zweiten Terminal: pnpm --fi
 
 Suche im Web (optional): `TAVILY_API_KEY` setzen (Tavily, kostenloser Tarif mit 1000 Suchen im Monat; an Tavily gehen nur die Suchbegriffe). Ohne Schlüssel zeigt die Oberfläche das Suchfeld nicht. Pro Nutzer sind 10 Suchen pro Stunde und für alle zusammen 30 pro Tag erlaubt.
 
-Titelbilder (optional): Ein S3-kompatibler Speicher, dazu `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID` und `S3_SECRET_ACCESS_KEY` setzen (alle vier oder keins). Lokal startet `pnpm db:up` einen (SeaweedFS). Ohne Speicher zeigt der Dialog „Notizbuch anpassen“ keine Bildfläche. Die Bilder liegen im Speicher, nicht in der Datenbank: Der lokale Dienst aus `pnpm db:up` hält die Bilder nur im Arbeitsspeicher (`tmpfs`): nach `pnpm db:down` sind sie weg. Bei einem Docker-Volume (Deployment) sind sie dauerhaft, aber nicht gesichert.
+Titelbilder (optional): Ein S3-kompatibler Speicher, dazu `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID` und `S3_SECRET_ACCESS_KEY` setzen (alle vier oder keins). Lokal startet `pnpm db:up` einen (SeaweedFS). Ohne Speicher zeigt der Dialog „Notebook anpassen“ keine Bildfläche. Die Bilder liegen im Speicher, nicht in der Datenbank: Der lokale Dienst aus `pnpm db:up` hält die Bilder nur im Arbeitsspeicher (`tmpfs`): nach `pnpm db:down` sind sie weg. Bei einem Docker-Volume (Deployment) sind sie dauerhaft, aber nicht gesichert.
 
-Beispiel-Notizbuch anlegen (braucht den Schlüssel, liest drei Beispieldokumente einmal ein): `SEED_DEMO_EMAIL` und `SEED_DEMO_PASSWORD` setzen, dann `pnpm seed:demo`. Der Befehl kann wiederholt werden. Gäste („Beispiel ausprobieren“) bekommen eine Kopie dieses Notizbuchs, dafür muss `SEED_DEMO_EMAIL` auch in der Umgebung der App stehen.
+Beispiel-Notebook anlegen (braucht den Schlüssel, liest drei Beispieldokumente einmal ein): `SEED_DEMO_EMAIL` und `SEED_DEMO_PASSWORD` setzen, dann `pnpm seed:demo`. Der Befehl kann wiederholt werden. Gäste („Beispiel ausprobieren“) bekommen eine Kopie dieses Notebooks, dafür muss `SEED_DEMO_EMAIL` auch in der Umgebung der App stehen.
 
 ## Deployment
 
-> Stand: Es ist noch nichts deployt. Vorbereitet ist der Weg unten (Render + Neon). Geplant ist stattdessen ein Hetzner-Server, weil Render und Neon im kostenlosen Tarif einschlafen. Begründung und Setup: [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md), Abschnitt „Deployment: Entscheidung und Stand“.
+> Stand: Es ist noch nichts deployt. Vorbereitet ist ein Hetzner-Server. Begründung: [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md), Abschnitt „Deployment: Entscheidung und Stand“.
 
-Ein Container aus dem [Dockerfile](Dockerfile), beschrieben in [render.yaml](render.yaml) (Render, Region Frankfurt). Die Datenbank ist Neon (kostenlos, 500 MB, pgvector). Ablauf:
+Die vollständige Anleitung (Einrichtung, Betrieb, Backup, Fehlersuche) steht in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
-1. Neon-Projekt anlegen, die **direkte** Verbindung (ohne `-pooler` im Host) als `DATABASE_URL` nehmen. Migrationen und die Job-Queue brauchen Funktionen, die ein Pooler nicht bietet.
-2. Auf Render ein Blueprint aus diesem Repository anlegen und die abgefragten Werte eintragen. Für den Schlüssel ein eigenes Google-Projekt nutzen, damit das Testen das Kontingent der Prüfer nicht verbraucht.
-3. Nach dem ersten Deploy die URL des Dienstes als `BETTER_AUTH_URL` eintragen und neu deployen.
-4. `SEED_DEMO_EMAIL` in der Umgebung der App setzen, dann einmalig von einem Rechner aus mit der Produktions-`DATABASE_URL`: `pnpm seed:demo`. Ohne dieses Beispiel antwortet „Beispiel ausprobieren“ mit einer Fehlermeldung.
+- **Hetzner Cloud** (Docker Compose, Caddy). Dateien in [deploy/](deploy/): [docker-compose.prod.yml](deploy/docker-compose.prod.yml) (Caddy mit automatischem HTTPS, App, Postgres mit pgvector, SeaweedFS für die Titelbilder), [Caddyfile](deploy/Caddyfile), [bootstrap.sh](deploy/bootstrap.sh), [backup.sh](deploy/backup.sh). Der Workflow [deploy.yml](.github/workflows/deploy.yml) baut das Image, schickt es per SSH an den Server und startet den Stack, sobald CI auf `main` grün ist.
 
 ## Wo es zuerst brechen würde
 
-- **Kontingent des Anbieters.** Im kostenlosen Tarif sind die Tageslimits knapp. Gegenmittel im Code: Inhalts-Hash statt doppelter Verarbeitung, Ratenbegrenzer mit Token-Gewichten, Kontingent pro Nutzer, vorbefülltes Beispiel-Notizbuch.
+- **Kontingent des Anbieters.** Im kostenlosen Tarif sind die Tageslimits knapp. Gegenmittel im Code: Inhalts-Hash statt doppelter Verarbeitung, Ratenbegrenzer mit Token-Gewichten, Kontingent pro Nutzer, vorbefülltes Beispiel-Notebook.
 - **Suche bei Fragen in anderer Sprache als die Quelle.** Die Textseite der Hybridsuche liefert dort nur Rauschen, das Gewicht 0,5 ist nicht durch Messung begründet (siehe Nachtrag in den Spike-Ergebnissen). Mit mehr Golden Questions neu bewerten.
 - **PDF-Parsing per Sprachmodell** ist nicht deterministisch und kann Bildunterschriften auslassen. Ein Abgleich mit einem lokalen Parser wäre der nächste Schritt.
 - **Mehrere Instanzen.** Die Ratenbegrenzer liegen im Speicher eines Prozesses. Bei mehr als einer Instanz müssten sie in die Datenbank.

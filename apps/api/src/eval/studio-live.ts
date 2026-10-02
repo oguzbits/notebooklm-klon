@@ -39,6 +39,7 @@ const REQUESTS: CreateStudioBody[] = [
   { kind: STUDIO_KIND.FLASHCARDS, size: STUDIO_SIZE.DEFAULT, difficulty: STUDIO_DIFFICULTY.MEDIUM },
   { kind: STUDIO_KIND.QUIZ, size: STUDIO_SIZE.DEFAULT, difficulty: STUDIO_DIFFICULTY.MEDIUM },
   { kind: STUDIO_KIND.MINDMAP },
+  { kind: STUDIO_KIND.DATA_TABLE },
 ];
 
 const env = parseEnv(process.env);

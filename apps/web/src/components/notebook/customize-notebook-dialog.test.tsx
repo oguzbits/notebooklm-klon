@@ -42,7 +42,7 @@ describe('CustomizeNotebookDialog', () => {
     renderDialog();
 
     expect(screen.getByRole('heading', { name: '„Forschung“ anpassen' })).toBeTruthy();
-    expect((screen.getByLabelText('Titel des Notizbuchs') as HTMLInputElement).value).toBe(
+    expect((screen.getByLabelText('Titel des Notebooks') as HTMLInputElement).value).toBe(
       'Forschung'
     );
     expect(screen.getByRole('switch').getAttribute('aria-checked')).toBe('false');
@@ -65,7 +65,7 @@ describe('CustomizeNotebookDialog', () => {
     const onOpenChange = renderDialog();
     const user = userEvent.setup();
 
-    const field = screen.getByLabelText('Titel des Notizbuchs');
+    const field = screen.getByLabelText('Titel des Notebooks');
     await user.clear(field);
     await user.type(field, ' Neu ');
     await user.click(screen.getByRole('button', { name: 'Fertig' }));
@@ -107,7 +107,7 @@ describe('CustomizeNotebookDialog', () => {
     renderDialog();
     const user = userEvent.setup();
 
-    await user.clear(screen.getByLabelText('Titel des Notizbuchs'));
+    await user.clear(screen.getByLabelText('Titel des Notebooks'));
 
     expect((screen.getByRole('button', { name: 'Fertig' }) as HTMLButtonElement).disabled).toBe(
       true

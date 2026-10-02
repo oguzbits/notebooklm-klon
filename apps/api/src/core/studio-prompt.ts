@@ -2,15 +2,13 @@ import {
   CHAT_LANGUAGE,
   type ChatLanguage,
   type CreateStudioBody,
-  type Flashcards,
+  DataTableSchema,
   FlashcardsReplySchema,
-  type Mindmap,
   MindmapSchema,
   type NewStudioOutput,
-  type Quiz,
   QuizReplySchema,
-  type Report,
   REPORT_FORMAT,
+  type ReportFormat,
   ReportSchema,
   STUDIO_DIFFICULTY,
   STUDIO_KIND,
@@ -21,6 +19,13 @@ import {
 import { z } from 'zod';
 
 import { buildChatContext, type ChatContext, type ContextChunk } from './chat-context';
+import {
+  checkDataTable,
+  checkFlashcards,
+  checkMindmap,
+  checkQuiz,
+  checkReport,
+} from './studio-check';
 
 /** The reply had content, but none of it was supported by a passage the model was shown. */
 export class EmptyStudioOutputError extends Error {
@@ -98,6 +103,15 @@ function kindInstruction(body: CreateStudioBody): string {
         'four children, and children may have up to three children. Labels are short noun ' +
         'phrases of at most six words.'
       );
+    case STUDIO_KIND.DATA_TABLE:
+      return (
+        'Make a data table: a title (at most five words), two to eight short column names and ' +
+        'then one row for each thing the passages describe (a person, product, event, option). ' +
+        'Every row has exactly one cell per column, in the order of the columns. The first cell ' +
+        'names the row. Every cell is a short value (a word, a number with its unit, a short ' +
+        'phrase) and cites the passages that state it in chunkIds. If the passages do not say ' +
+        'what belongs in a cell, leave its text empty and its chunkIds empty; never guess.'
+      );
   }
 }
 
@@ -111,6 +125,7 @@ const SCHEMA = {
   [STUDIO_KIND.FLASHCARDS]: toJsonSchema(FlashcardsReplySchema),
   [STUDIO_KIND.QUIZ]: toJsonSchema(QuizReplySchema),
   [STUDIO_KIND.MINDMAP]: toJsonSchema(MindmapSchema),
+  [STUDIO_KIND.DATA_TABLE]: toJsonSchema(DataTableSchema),
 } as const;
 
 function systemPrompt(body: CreateStudioBody, language: ChatLanguage): string {
@@ -160,6 +175,17 @@ const REPORT_PROMPT = {
     'Schreibe einen leicht verständlichen Blogpost, der die Kernpunkte der Quellen zusammenfasst.',
 } as const;
 
+function reportPrompt(format: ReportFormat, focus: string): string {
+  if (format === REPORT_FORMAT.CUSTOM) return focus;
+  return `${REPORT_PROMPT[format]}${focus === '' ? '' : ` Schwerpunkt: ${focus}`}`;
+}
+
+const SHAPE_PROMPT = {
+  [STUDIO_KIND.MINDMAP]: 'Erstelle eine Mindmap, die die Quellen übersichtlich gliedert.',
+  [STUDIO_KIND.DATA_TABLE]:
+    'Erstelle eine Tabelle, die die wichtigsten Angaben der Quellen vergleichbar nebeneinanderstellt.',
+} as const;
+
 /**
  * The request in words, the way the reader could have written it. It is kept with the output and
  * shown behind "Prompt und Quellen ansehen"; the model gets the English instructions above.
@@ -169,9 +195,7 @@ export function studioPrompt(body: CreateStudioBody): string {
   const topic = focus === '' ? '' : ` Thema: ${focus}`;
   switch (body.kind) {
     case STUDIO_KIND.REPORT:
-      return body.format === REPORT_FORMAT.CUSTOM
-        ? focus
-        : `${REPORT_PROMPT[body.format]}${focus === '' ? '' : ` Schwerpunkt: ${focus}`}`;
+      return reportPrompt(body.format, focus);
     case STUDIO_KIND.FLASHCARDS:
       return (
         'Erstelle Karteikarten zu den Quellen. ' +
@@ -183,7 +207,8 @@ export function studioPrompt(body: CreateStudioBody): string {
         `Umfang: ${SIZE_LABEL[body.size]}, Schwierigkeit: ${DIFFICULTY_LABEL[body.difficulty]}.${topic}`
       );
     case STUDIO_KIND.MINDMAP:
-      return `Erstelle eine Mindmap, die die Quellen übersichtlich gliedert.${topic}`;
+    case STUDIO_KIND.DATA_TABLE:
+      return `${SHAPE_PROMPT[body.kind]}${topic}`;
   }
 }
 
@@ -200,65 +225,6 @@ export function studioRequest(
     schema: SCHEMA[body.kind],
     context,
   };
-}
-
-/** Labels the model cited, as real chunk IDs. Labels that were never shown are left out. */
-const resolve = (labels: readonly string[], context: ChatContext): string[] => [
-  ...new Set(labels.flatMap((label) => context.idByLabel.get(label) ?? [])),
-];
-
-/**
- * Keeps what has a valid citation and counts the rest. This is the citation contract of the chat,
- * applied to every part of a generated output.
- */
-function checked<T extends { chunkIds: string[] }>(
-  items: readonly T[],
-  context: ChatContext
-): { kept: T[]; dropped: number } {
-  const kept = items.flatMap((item) => {
-    const chunkIds = resolve(item.chunkIds, context);
-    return chunkIds.length > 0 ? [{ ...item, chunkIds }] : [];
-  });
-  return { kept, dropped: items.length - kept.length };
-}
-
-function checkReport(report: Report, context: ChatContext) {
-  let dropped = 0;
-  const sections = report.sections.flatMap((section) => {
-    const result = checked(section.statements, context);
-    dropped += result.dropped;
-    return result.kept.length > 0 ? [{ heading: section.heading, statements: result.kept }] : [];
-  });
-  return { content: { title: report.title, sections }, dropped, size: sections.length };
-}
-
-function checkFlashcards(flashcards: Flashcards, context: ChatContext) {
-  const { kept, dropped } = checked(flashcards.cards, context);
-  return { content: { cards: kept }, dropped, size: kept.length };
-}
-
-function checkQuiz(quiz: Quiz, context: ChatContext) {
-  const { kept, dropped } = checked(quiz.questions, context);
-  return { content: { questions: kept }, dropped, size: kept.length };
-}
-
-function checkMindmap(mindmap: Mindmap, context: ChatContext) {
-  let dropped = 0;
-  const branches = checked(mindmap.branches, context);
-  dropped += branches.dropped;
-  const kept = branches.kept.map((branch) => {
-    const twigs = checked(branch.children, context);
-    dropped += twigs.dropped;
-    return {
-      ...branch,
-      children: twigs.kept.map((twig) => {
-        const leaves = checked(twig.children, context);
-        dropped += leaves.dropped;
-        return { ...twig, children: leaves.kept };
-      }),
-    };
-  });
-  return { content: { title: mindmap.title, branches: kept }, dropped, size: kept.length };
 }
 
 /**
@@ -307,6 +273,15 @@ export function readStudioReply(
     }
     case STUDIO_KIND.MINDMAP: {
       const { content, dropped, size } = checkMindmap(MindmapSchema.parse(raw), context);
+      result = {
+        output: { kind: body.kind, title: content.title, request, content },
+        dropped,
+        size,
+      };
+      break;
+    }
+    case STUDIO_KIND.DATA_TABLE: {
+      const { content, dropped, size } = checkDataTable(DataTableSchema.parse(raw), context);
       result = {
         output: { kind: body.kind, title: content.title, request, content },
         dropped,

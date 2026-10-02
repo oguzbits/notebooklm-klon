@@ -2,6 +2,7 @@ import { type NotebookOverview, NotebookOverviewSchema, SOURCE_STATUS } from '@n
 import { and, asc, eq, isNotNull } from 'drizzle-orm';
 
 import type { Database } from './client';
+import { ownedNotebook, ownedNotebookSource } from './ownership';
 import { notebooks, notebookSources, sources } from './schema';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -41,7 +42,7 @@ export async function findNotebookForOverview(
       customSummary: notebooks.customSummary,
     })
     .from(notebooks)
-    .where(and(eq(notebooks.id, notebookId), eq(notebooks.userId, userId)));
+    .where(ownedNotebook(notebookId, userId));
   if (!notebook) return null;
 
   const rows = await db
@@ -51,9 +52,7 @@ export async function findNotebookForOverview(
     .innerJoin(sources, eq(sources.id, notebookSources.sourceId))
     .where(
       and(
-        eq(notebookSources.notebookId, notebookId),
-        eq(notebooks.userId, userId),
-        eq(sources.userId, userId),
+        ownedNotebookSource(notebookId, userId),
         eq(sources.status, SOURCE_STATUS.READY),
         isNotNull(sources.canonicalText)
       )
@@ -84,5 +83,5 @@ export async function saveNotebookOverview(
   await db
     .update(notebooks)
     .set({ overview, overviewKey: key })
-    .where(and(eq(notebooks.id, notebookId), eq(notebooks.userId, userId)));
+    .where(ownedNotebook(notebookId, userId));
 }

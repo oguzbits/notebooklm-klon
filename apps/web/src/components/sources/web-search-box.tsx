@@ -89,7 +89,7 @@ function SearchField({ query, pending, canSearch, onChange, onRun }: SearchField
         disabled={pending}
         onChange={(event) => onChange(event.target.value)}
         onKeyDown={submitOnEnter}
-        className="min-h-0 flex-1 resize-none rounded-none border-0 bg-transparent px-0 py-1.5 text-[0.875rem] leading-5 shadow-none focus-visible:border-0 focus-visible:outline-0"
+        className="min-h-0 flex-1 resize-none rounded-none border-0 bg-transparent px-0 py-1.5 text-ui shadow-none focus-visible:border-0 focus-visible:outline-0"
       />
       <Button
         type="submit"

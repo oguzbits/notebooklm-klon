@@ -181,8 +181,8 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   und Screenshots liegen lokal in `spikes/reference/`, sie sind nicht im Repo). Wichtigste Folgen:
   die Palette ist neutral grau statt blau (Seite #faf9f9 / #0f0f0f, Flächen #fff / #1f1f1f, innen #f2f0f0 /
   #171717), Blau nur als Akzent für Fokus und Links (#4259ff / #a1c9ff); Panels haben 32 px Radius, Dialoge 28,
-  Menüs 20, die Sprechblase 40; UI-Text ist 15/20 mit Schriftbreite 92 %, Lesetext 16/24 (`font-stretch`,
-  Gewichte 370 und 470); Hover ist eine 8-%-Schicht der Textfarbe (`veil`), der Fokus ein 3-px-Ring.
+  Menüs 20, die Sprechblase 40; UI-Text ist 15/20 mit Schriftbreite 92 % des Originals (bei uns 99 %, siehe unten), Lesetext 16/24
+  (`font-stretch`, Gewichte 370 und 470); Hover ist eine 8-%-Schicht der Textfarbe (`veil`), der Fokus ein 3-px-Ring.
   Spalten sind 24,58 % / Rest / 24,58 % der Fensterbreite, ab 1056 px (`wide`) dreispaltig, darunter ein
   Segment-Schalter oben (nicht mehr unten). Öffnet man eine Studio-Ausgabe, wächst das Studio auf 37,5 % und
   die Quellen schrumpfen auf 20,6 %. Der Chat hat keine Karte mehr.
@@ -197,7 +197,7 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   „Quellen | Chat | Studio“; das Original hat dort englische Reste. (8) Die Farben der Mindmap-Knoten im
   Dunkelmodus sind geschätzt (die Mindmap läuft im Original in einem Iframe und ließ sich nicht messen).
 - **Startseite des Originals:** Auf Wunsch des Nutzers zusätzlich gemessen. Die Liste folgt ihr: Karten
-  272x185 mit Radius 40 und 32 px Innenabstand, Abschnittstitel 24/32, die blaue Pille „Neues Notizbuch“
+  272x185 mit Radius 40 und 32 px Innenabstand, Abschnittstitel 24/32, die blaue Pille „Neues Notebook“
   (hell #9dd2ff, dunkel #1f3b9b) öffnet einen Dialog für den Titel, statt ein Formular auf der Seite zu zeigen.
   Löschen sitzt im ⋮-Menü der Karte. Die „Empfohlenen Notebooks“ sind Googles eigene Inhalte und fehlen.
 - **Abgleich mit dem Original, Runde 2 (2026-09-30):** Plan und Checkliste stehen in
@@ -225,7 +225,7 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   Farben im Dunkelmodus sind eigene Werte: das Original nutzt dort eine grelle Lichtkante (#d4d7db), die auf
   dunklem Grund störte. `QueryBoundary` verlangt jetzt eine `loading`-Angabe, damit keine Stelle einen
   unpassenden Standard-Platzhalter bekommt.
-- **Kopfzeile wie im Original (2026-10-01):** Rechts „+ Notizbuch erstellen“ (legt ein Notizbuch an und öffnet es),
+- **Kopfzeile wie im Original (2026-10-01):** Rechts „+ Notebook erstellen“ (legt ein Notizbuch an und öffnet es),
   ⋮ (Chat konfigurieren, Chatverlauf löschen mit Hinweis, Notizbuch löschen, die beiden Löschungen mit
   Rückfrage) und ⚙ (Darstellung: Gerätestandard / Hell / Dunkel; die Wahl steht in einem Cookie, weil
   `localStorage` bei gesperrtem Speicher wirft und die Regeln stilles Fangen ausschließen). Der Titel ist wie im
@@ -473,7 +473,7 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
 ## 2026-10-01 (Deployment: Entscheidung und Stand)
 
 - **Stand:** Vorbereitet und beschrieben ist Render (kostenloser Docker-Dienst) mit Neon, siehe [render.yaml](../render.yaml)
-  und die README. Ausgeführt wurde es noch nicht. Das Deployment ist bewusst zurückgestellt; es gibt keine Live-URL.
+  und [DEPLOYMENT.md](DEPLOYMENT.md). Ausgeführt wurde es noch nicht. Das Deployment ist bewusst zurückgestellt; es gibt keine Live-URL.
 - **Geplant: ein Hetzner-Server statt Render und Neon.** Grund sind die Kaltstarts: Render schläft nach 15 Minuten, Neon schaltet
   im kostenlosen Tarif nach 5 Minuten ab (nicht abschaltbar), ein Prüfer würde zweimal warten. Ein Server hält App und Datenbank
   dauerhaft wach, hat 40 GB statt 500 MB und liegt in Deutschland. Vorgesehenes Setup: Hetzner Cloud CX23 (x86, laut Drittquellen
@@ -487,7 +487,20 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   Engpass, und Google darf Eingaben zur Modellverbesserung nutzen; die README warnt davor, sensible Dokumente hochzuladen.
   Gäste kosten dabei kein Kontingent (Kopie ohne Modellaufruf).
 - **Plan B** bleibt Render + Neon (oder Render bezahlt, damit der Dienst nicht einschläft; Preise nicht geprüft).
-- **Offen:** Deploy-Dateien (Compose, Caddyfile, Workflow, Anleitung) sind nicht geschrieben.
+- **Geschrieben (ungetestet auf einem echten Server):** [deploy/](../deploy/) und [deploy.yml](../.github/workflows/deploy.yml),
+  Anleitung in [DEPLOYMENT.md](DEPLOYMENT.md). Kleine Entscheidungen dazu:
+  - Das Image wird in GitHub Actions gebaut und per `docker save | ssh docker load` übertragen: keine Registry, kein
+    Repository-Zugriff auf dem Server, keine zusätzlichen Geheimnisse.
+  - Docker und Compose kommen aus den Ubuntu-Paketen (`docker.io`, `docker-compose-v2`) statt aus einem Install-Skript aus dem
+    Netz: weniger Angriffsfläche, ältere Version genügt.
+  - Postgres hört nur auf `127.0.0.1` des Servers; das Beispiel-Notizbuch wird über einen SSH-Tunnel angelegt, weil `seed:demo`
+    nicht im Produktions-Image liegt.
+  - Caddy ohne `encode` und mit `flush_interval -1`, damit die gestreamte Antwort nicht gepuffert wird.
+  - SeaweedFS bekommt seine Zugangsdaten über eine vom Bootstrap erzeugte `s3.json` (nicht im Repository), weil die
+    Umgebungsvariablen-Variante nicht geprüft ist. Das Volume ist nicht im Backup; nur die Datenbank wird gesichert.
+  - Das Deploy läuft nach grünem CI (`workflow_run`) oder von Hand; `concurrency` verhindert zwei gleichzeitige Deployments.
+  - Zu prüfen beim ersten Lauf: `caddy:2` und die Hostname-Zertifikate bei sslip.io (Let's-Encrypt-Limits, Caddy weicht auf
+    ZeroSSL aus), Speicherbedarf mit `docker stats`.
 
 ## 2026-10-01 (Abgleich, Runde 4: fehlende Kleinigkeiten)
 
@@ -529,8 +542,7 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   selbst, die Aufrufer schließen bei Erfolg.
 - **Bewusst nicht gebaut:** Handy-Eingabeleiste mit Dokument-Symbol (gibt es schon), Ausgabesprache als Konto-Einstellung (die Sprache
   der Antworten lässt sich je Notizbuch unter „Chat konfigurieren“ wählen), „Alle Notizen als Quelle festlegen“.
-- **Offen:** Die Deploy-Dateien für Hetzner brauchen den S3-Dienst im Compose (siehe `docker-compose.yml`, Dienst `s3`) und ein
-  Volume statt `tmpfs`.
+- **Erledigt später:** Der S3-Dienst mit Volume statt `tmpfs` steht in [deploy/docker-compose.prod.yml](../deploy/docker-compose.prod.yml).
 
 ### Review von Runde 4 (2026-10-01)
 
@@ -634,3 +646,230 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
   Quellen in einer SQL-Anweisung (vorher eine Anfrage pro Quelle, bei Abbruch halb geändert).
 - Erledigt: `ViewerFrame` nimmt acht Props statt 17 (Titel, Prompt, Bewertung und Löschen als Gruppen).
 - Geprüft, bleibt: Die rohen `fetch`-Aufrufe sind begründet. Better Auth (`auth.ts`) steht nicht im `AppType`, der Chat-Stream wird als Stream gelesen, und die beiden Uploads (Cover, Datei) sind Multipart, das der typisierte Client nicht beschreibt.
+
+## 2026-10-01 (Titelblock im Chat: Hover wie im Original)
+
+- Gemessen im Original (hell und dunkel, 0,2 s Übergang): Der Titelblock ragt 24 px über den Text hinaus. Ohne Titelbild wird
+  die Fläche `surface-dim` (bei uns `--muted`) und eine 192 px große Landschaft (Sonne und Berg) blendet unten rechts ein
+  (Deckkraft 12 % dunkel, 8 % hell, ohne Zeigerereignisse, vom Block abgeschnitten). Mit Titelbild liegt ein weißer Schleier
+  mit 8 % Deckkraft darüber.
+- Umsetzung in `notebook-overview.tsx`: `group` auf dem Kopf, Fläche per `hover:bg-muted`, Symbol `Mountain` aus lucide
+  (gefüllt, `text-foreground/10`) statt des Material-Symbols, Schleier per `group-hover`. Der Block ist jetzt auch mit Bild
+  `-mx-6 px-6`, der Titel steht damit bündig mit dem Fließtext (vorher 24 px eingerückt). Nur Tokens, keine Palettenfarben.
+- Bewusst nicht übernommen: die genaue Form des Material-Symbols (die Sonne fehlt). Der Zweck ist eine ruhige Andeutung.
+- Geprüft im Browser: hell, dunkel, 390 px (kein horizontaler Überlauf). Der Test prüft die Klassen, nicht den Hover selbst
+  (jsdom kennt kein `:hover`).
+
+## 2026-10-01 (Notebook sofort anlegen, ohne Dialog)
+
+- Das Original legt mit einem Klick sofort „Unbenanntes Notebook“ an und öffnet es. Der Titel wird danach in der Kopfzeile
+  geändert. Bei uns genauso: `CreateNotebookButton` (Kopfzeile „Notebook erstellen“, Startseite „Neues Notebook“) ersetzt den
+  Titel-Dialog. Der Standardtitel `UNTITLED_NOTEBOOK` steht in `apps/web`, nicht in `packages/shared` (nur Anzeigetext, kein Vertrag).
+- Zustände: während der Anfrage ist der Knopf gesperrt (kein doppeltes Anlegen); bei einem Fehler nennt ein Dialog den Grund
+  und bietet „Erneut versuchen“ (es gibt keine Toasts im Projekt).
+- Die übrige Oberfläche sagt weiter „Notizbuch“; nur diese beiden Beschriftungen folgen dem Wunsch „Notebook“.
+- Keine Daumen (gute/schlechte Antwort): Es gibt keinen Speicher für Rückmeldungen und keinen Nutzen, also nicht gebaut.
+
+## 2026-10-01 (Schriftbreite und Abstände an das Original angeglichen)
+
+- Messung statt Annahme: Derselbe Text („Notiz hinzufügen“, UI 15 px) ist im Original 113,5 px breit, bei uns mit
+  `font-stretch: 92 %` nur 108,5 px. Der Fontsource-Build von Google Sans Flex liegt bei gleichem Wert der Breitenachse etwa
+  4,5 % unter der Schrift des Originals. Der Wert 92 war aus dem Original übernommen, nicht an der Breite geprüft.
+  Jetzt: UI 99 % (Knopfbreiten 169/170, „Quellen“ 52, „Studio“ 43/44 wie im Original), Lesetext (`.text-read`) 102,5 % (derselbe
+  Satz 551 px in beiden). Das Gewicht der Knöpfe bleibt 370 (so misst es das Original); eine kurze Umstellung auf 400 war falsch.
+- Fett im Lesetext: Zusammenfassung 600, Chat-Antwort 540 (Original), vorher der Browser-Standard 700.
+- Knöpfe mit Symbol: Innenabstand 8 links und 12 rechts (Standard), 12/16 bei `xl` und beim Knopf „Notebook erstellen“ in der Kopfzeile.
+  Das Suchfeld für das Web hat 15/20 wie im Original.
+- Noch nicht gemessen: der Dokumenttext in der Quellenansicht (`.source-text`, im Original „Google Sans Text“), Symbolstärke
+  (lucide 2 px gegen dünnere Symbole im Original).
+
+## 2026-10-01 (Spaltenbreite einstellbar wie im Original)
+
+- Gemessen im Original: zwei unsichtbare Trenner von 8 px mit `cursor: col-resize`; beim Ziehen ändern sich nur die zwei
+  angrenzenden Spalten (die Breite steht als `flex: 0 1 X%` im Stil), keine Spalte wird schmaler als etwa 285 px, kein
+  Doppelklick, keine Speicherung, keine Tastenbedienung.
+- Bei uns: Quellen und Studio bekommen eine Breite in Prozent der Spaltenfläche (Standard 25 %), der Chat nimmt, was bleibt
+  (`useColumnWidths`, `column-widths.ts` als reine Rechnung mit Tests). Die Breite gilt nur, solange das Notizbuch offen ist
+  (Zustand in React, wie im Original), und wird nicht gespeichert.
+- Untergrenze 285 px für jede Spalte. Zeigt das Studio gerade ein Ergebnis, gilt für das Studio die größere Mindestbreite
+  (`max(285 px, 37,5 %` des Fensters), damit das Ergebnis lesbar bleibt.
+- Ist eine Seite eingeklappt (Leiste), ist ihr Trenner unwirksam (`aria-hidden`); sie behält ihre Breite und hat sie nach dem
+  Aufklappen wieder. Beim Ziehen entfällt die Übergangsanimation (`wide:transition-none`), sonst läuft die Spalte dem Zeiger nach.
+- Über das Original hinaus: Tastatur (Pfeiltasten verschieben die Kante um 16 px) und ein ARIA-Trenner mit Beschriftung
+  („Breite der Quellen ändern“, „Breite des Studios ändern“). Unter 66 rem (schmale Ansicht) gibt es keine Trenner.
+- Geprüft im Browser bei 1720 px: Ziehen, Anschlag am 285-px-Chat, Tastatur, Einklappen und Wiederherstellen.
+
+## 2026-10-01 (Datentabelle im Studio)
+
+- Gebaut, weil das Original sie hat und der Zitat-Vertrag sich gut auf Zellen übertragen lässt. Eine Anfrage hat nur
+  Quellen und Fokus, keine Größe und keine Schwierigkeit: Das Modell wählt die Spalten selbst (2 bis 8), der Nutzer sagt im
+  Fokus, was verglichen werden soll.
+- Vertrag (`DataTableSchema` in `packages/shared`): `title`, `columns` und `rows`, jede Zeile hat so viele `cells` wie Spalten,
+  jede Zelle `text` und `chunkIds`. Die Prüfung steht in `core/studio-check.ts` (dorthin ausgelagert, damit die Datei unter
+  300 Zeilen bleibt).
+- Zitate pro Zelle: Eine Zelle ohne gültiges Zitat wird geleert (`{ text: '', chunkIds: [] }`) statt die ganze Zeile zu
+  verwerfen; sonst gingen bei einer Tabelle mit vielen Spalten fast alle Zeilen verloren. Eine Zeile bleibt nur, wenn die
+  erste Zelle und mindestens eine weitere gefüllt sind. Zeilen mit falscher Zellenzahl fallen weg. `dropped` zählt verworfene
+  Zeilen und geleerte Zellen in behaltenen Zeilen. Bleibt nichts übrig, gibt es `EmptyStudioOutputError` wie bei den anderen
+  Formaten. Leere Zellen zeigt die Ansicht als „–“.
+- Ansicht: Brotkrumen, Titel, Kopf „N Quellen ansehen“, scrollbare Tabelle mit fixierter Kopfzeile, Zitat-Chips in jeder
+  Zelle, „Guter/Schlechter Inhalt“ über das vorhandene `feedback`. Die Tabelle ist nur lesbar (kein Export nach Google
+  Tabellen: bräuchte Google-Anmeldung).
+- `studioPrompt` hatte die Komplexitätsgrenze 10 erreicht: Die Anweisung für Mindmap und Datentabelle steht in `SHAPE_PROMPT`,
+  der Bericht in `reportPrompt`.
+- Der Offline-Server (`e2e/server.ts`) kannte die Schlüssel der Antwortformen als Liste; `rows` fehlte, die Datentabelle bekam
+  dort eine Chat-Antwort. Der Smoke-Test (Playwright) prüft jetzt auch die Tabelle und deckt so diese Liste ab.
+
+## 2026-10-01 (E2E-Tests als Nutzerreisen)
+
+- Mehrere kleine, voneinander unabhängige Specs statt einer langen Reise: `account`, `notebooks`, `sources`, `isolation`
+  neben dem bestehenden `smoke` (alles inklusive Studio) und `guest`. Jede Spec legt ihr eigenes Konto mit eindeutiger
+  E-Mail-Adresse an (`uniqueEmail`), weil die Datenbank `nlm_e2e` über die Specs eines Laufs bestehen bleibt. Gemeinsame
+  Schritte (Registrieren, Abmelden, Notizbuch anlegen und benennen, Datei hinzufügen) stehen in `apps/web/e2e/helpers.ts`.
+- Alles läuft gegen den Offline-Server mit den Fälschungen aus `apps/api/src/e2e/fakes.ts`: keine echten Modell- oder
+  Suchaufrufe, keine Token. Einmal pro Lauf entsteht ein Build der Web-App.
+- Abgedeckt: Anmelden mit falschem und richtigem Passwort, Sitzung nach Neuladen, doppelte Registrierung, Schutz der
+  Notizbuchseite ohne Anmeldung; Notizbücher suchen, umbenennen, anpinnen, löschen (mit Abbrechen) und unbekannte Seite;
+  Quellenauswahl bestimmt die Antwort samt Zitat in der Quellenansicht, Umbenennen, Entfernen, gleicher Inhalt nur einmal,
+  private Adresse wird abgelehnt (SSRF); ein Konto sieht und öffnet nie das Notizbuch eines anderen.
+- Studio in `studio.e2e.ts`: Quiz (Tipp, falsche Antwort mit richtiger Lösung, Zitat öffnet die Quelle, Ergebnis, noch
+  einmal), Mindmap (alle Knoten auf- und zuklappen, einzelner Zweig, Zoom, Zitat, Speichern als PNG) und Bericht aus einer
+  Vorlage (Abschnitte, Zitat, Schließen). Notizen, Lernkarten und Datentabelle deckt `smoke` ab.
+- Nicht abgedeckt: echtes Modell und echte Websuche (nur `pnpm eval:live`), PDF-Verarbeitung (der Offline-Server kann sie
+  nicht), Fehlerzustände der einzelnen Studio-Ansichten.
+- Die Quellenkästchen ändern sich erst nach der Antwort des Servers: Die Tests klicken und prüfen den Zustand, statt
+  `uncheck()` zu nutzen, das auf einen sofortigen Wechsel wartet.
+
+## 2026-10-01 (Darstellungsmenü auf dem Smartphone)
+
+- Das Untermenü „Gerätestandard / Hell / Dunkel“ ragte bei 390 px Breite links aus dem Fenster (gemessen: x = -78), weil
+  das Menü (240 px) und das Untermenü (176 px) nebeneinander nicht in ein Telefon passen und Radix das Untermenü nach links
+  klappt. Jetzt stehen die drei Wahlmöglichkeiten unter der Überschrift „Darstellung“ direkt im Menü, auf jeder Breite.
+  Bewusste Abweichung vom Original, das hier ein Untermenü nutzt: ein Codepfad, nichts kann seitlich überstehen.
+- `theme.e2e.ts` prüft das bei 360 px Breite (Menü innerhalb des Fensters, Dunkel wählen, Wahl bleibt nach Neuladen).
+
+## 2026-10-02 (Tooltip blinkt beim Antippen von „Nach unten springen“)
+
+- Auf dem Smartphone erschien beim Antippen des Knopfes kurz der Tooltip (gemessen mit Touch-Emulation: eingefügt und
+  nach rund 35 ms wieder entfernt). Ursache: Radix öffnet den Tooltip bei Touch über den Fokus, und der Knopf verschwindet
+  mit dem Klick, weil das Chat-Ende erreicht ist. Bei Knöpfen, die stehen bleiben („In Notiz speichern“, Kopieren,
+  „Einstellungen“), blieb der Tooltip beim Antippen aus. Das Blinken betrifft also nur diesen einen Knopf.
+- Der Knopf hat jetzt keinen Tooltip mehr; das `aria-label` bleibt. Das Pfeilsymbol erklärt sich selbst, und ein
+  Tooltip ist auf Touch ohnehin nutzlos. Eine globale Touch-Regel wäre mehr Code für einen einzigen Fall.
+
+## 2026-10-02 (Doku auf Hetzner umgestellt)
+
+- README-Architekturdiagramm, Hinweis zur Demo, [PLAN.md](PLAN.md) (Tabellenzeilen Datenbank und Hosting, Risiko Hosting) nennen
+  jetzt Hetzner als Zielbild; Render + Neon steht nur noch als Plan B. Die älteren Abschnitte dieses Protokolls bleiben
+  unverändert, sie halten den Stand des jeweiligen Tages fest. Die Doku beschreibt das Ziel, bevor der Server gebucht ist,
+  weil der Code dafür fertig ist; „noch nicht live“ steht deshalb überall dabei.
+- **Plan B (Render + Neon) ist gestrichen:** `render.yaml` und der Abschnitt in [DEPLOYMENT.md](DEPLOYMENT.md) sind
+  entfernt, README, [PLAN.md](PLAN.md) und [PRODUCT.md](../PRODUCT.md) nennen nur noch Hetzner. Die älteren Abschnitte
+  oben, die Render und Neon erwähnen, bleiben als Protokoll stehen. Es gibt keinen Pooler (PgBouncer) in der Architektur:
+  `pg-boss` und die Migrationen laufen über eine direkte Postgres-Verbindung.
+
+## 2026-10-02 (Fehlerabbildung an einer Stelle)
+
+- Alle fachlichen Fehler werden in `apps/api/src/error-mapping.ts` (`mapError`) auf Statuscode und `API_ERROR`-Code
+  abgebildet; `app.ts` ruft das nur im `onError` auf. Neu dort: `NoSourcesSelectedError` (409), `EmptyStudioOutputError`
+  (422), `WebSearchError` mit erschöpftem Kontingent (429) und `UnreadablePdfError` (415). Die try/catch-Blöcke in
+  `studio`, `chat`, `web-search` und `sources` sind weg; das Verhalten nach außen bleibt gleich.
+- `countPdfPages` fing vorher in der Route jeden `Error` und antwortete „nicht lesbar“, was echte Fehler tarnte. Jetzt
+  wirft der Parser selbst `UnreadablePdfError` (nur wenn pdf-lib die Datei nicht öffnet), alles andere ist ein 500.
+- Übrig bleibt `.catch(() => null)` beim Lesen des Request-Bodys (`chat`, `cover`): ungültiges JSON oder Formular ist
+  die Eingabe des Nutzers und wird zu 400, kein Ersatzwert. Der Chat-Stream meldet Fehler nach dem ersten Byte als
+  Ereignis, weil sich der Statuscode dann nicht mehr ändern lässt (siehe `error-mapping.ts`).
+- `ports` in `studio.ts` bleibt eine Fabrik (`studioPorts`). Der `Parameters<typeof …>`-Trick dort bleibt vorerst: ein
+  benannter Typ wäre ein zweiter, von Hand gepflegter Typ neben dem der Repository-Funktion.
+- Die Route-Tests für diese Fälle sind `*.db.test.ts` und liefen in dieser Sitzung nicht (kein Docker). Offline
+  abgesichert sind Statuscode und Code je Fehler in `error-mapping.test.ts`.
+
+## 2026-10-02 (Web: Query-Key, Cast, Studio-Mindestbreite)
+
+- `use-notebooks.ts` invalidiert die Übersichten über `queryKeys.notebookOverviews(notebookId)` statt über einen rohen
+  Key; `notebookOverview` beginnt mit demselben Präfix (Test in `query-keys.test.ts`).
+- `readThemePreference` prüft den Cookie-Wert über `Object.values(THEME_PREFERENCE).find(…)`: der Typ kommt aus dem
+  Dictionary, kein Cast. Kein Zod, weil der Wert nur lokal gelesen wird und kein Vertrag mit der API ist.
+- `0.375` heißt jetzt `STUDIO_VIEWING_SHARE`, die Rechnung steht als reine Funktion `studioMinPx` in
+  `lib/column-widths.ts` (getestet). `window.innerWidth` liest der Hook `useWindowWidth`; die Mindestbreite folgt damit
+  auch einem Fenster, das während der Ansicht skaliert wird (vorher erst beim nächsten Rendern). Die Tailwind-Klasse
+  `min-w-[37.5vw]` bleibt ein Literal und verweist im Kommentar auf die Konstante.
+- Nicht im Browser geprüft: Der Sandbox blockiert lokale Ports, der Dev-Server startet hier nicht. Das Verhalten der
+  Spalten ist nur durch Unit-Tests belegt.
+
+## 2026-10-02 (Deploy: Reste und Härtung)
+
+- `Dockerfile` bekommt `EXPOSE 3000` als Dokumentation des Ports. Kein `HEALTHCHECK` im Image: die Compose-Datei hat
+  schon einen, ein zweiter wäre ein Duplikat.
+- Caddy ist auf `caddy:2.11.4` festgelegt statt auf einen losen Tag. Das ist der neueste Tag des offiziellen Images auf
+  Docker Hub (die GitHub-Version 2.11.6 ist dort noch kein Tag).
+- `deploy.yml` übergibt `DEPLOY_SSH_KEY` und `DEPLOY_KNOWN_HOSTS` über `env:` und nicht mehr als `${{ secrets.… }}`
+  im Skripttext: so steht das Secret nie im Shell-Quelltext des Schritts.
+- Vor dem Laden des neuen Images wird das laufende als `nlm-app:previous` getaggt (nur wenn es existiert). Damit gibt es
+  einen Rollback in zwei Befehlen, beschrieben in `DEPLOYMENT.md`.
+- Die Titelbilder (Volume `s3data`) bleiben bewusst außerhalb des Backups: sie lassen sich neu hochladen, ein Verlust
+  kostet kein Dokument. Das ist ein bewusst getragenes Risiko, in `DEPLOYMENT.md` und `backup.sh` benannt.
+- Nicht geprüft: `docker build` und der Workflow (Docker ist in der Sandbox nicht erreichbar, der Workflow läuft erst in
+  GitHub Actions).
+
+## 2026-10-02 (Eigentümer-Prädikate an einer Stelle)
+
+- Neu: `apps/api/src/db/ownership.ts` mit `ownedNotebook(notebookId, userId)` (Notizbuch gehört dem Nutzer) und
+  `ownedNotebookSource(notebookId, userId)` (Verknüpfung liegt im Notizbuch, Notizbuch und Quelle gehören dem Nutzer).
+  Beide liefern strikt `SQL`: drizzle typt `and(…)` als `SQL | undefined`, und `.where(undefined)` würde den Scope
+  stillschweigend weglassen; `allOf` wirft stattdessen.
+- Umgestellt: zehn Stellen für das Notizbuch-Prädikat (`notebook-`, `chat-config-`, `studio-`, `reader-`,
+  `notebook-overview-`, `guest-repository`), sieben für den Quellen-Join (`notebook-source-`, `notebook-overview-`,
+  `reader-`, `overview-repository`). Die Prädikate waren inhaltlich gleich; die übrigen Terme (`selected`, `status`,
+  `sourceId`, `canonicalText`) bleiben an der Aufrufstelle.
+- Bewusst nicht umgestellt: `eq(notebooks.userId, userId)` ohne Notizbuch-ID (Liste der Notizbücher), Abfragen nur auf
+  `sources.userId` (Quote, Hash-Suche, Quelle ohne Notizbuch) und der Join im `guest-repository` über die Vorlage:
+  das sind andere Prädikate, keine Kopien. Die Raw-SQL-Abfragen (`retrieval.ts`) bleiben unberührt.
+- Beleg offline: `ownership.test.ts` vergleicht das erzeugte SQL der Helfer mit dem ausgeschriebenen Prädikat.
+- Nicht geprüft: `pnpm test:db` (Docker ist in der Sandbox nicht erreichbar). Ein eigener Isolationstest für
+  `notebook-source-repository` fehlt noch (es gibt keine `*.db.test.ts` dafür, nur indirekt die Route- und
+  Importtests); ihn ohne Lauf zu schreiben wäre ungeprüft. Offen für den Lauf mit Docker.
+
+## 2026-10-02 (Kleine Dubletten und lose Grenzwerte)
+
+- `errorName(error)` steht jetzt in `logger.ts` und ersetzt den gleichen Ausdruck an sechs Stellen (`index.ts`,
+  `e2e/server.ts`, `storage/remove-quietly.ts`). Es gibt nur den Klassennamen zurück, nie die Meldung: die kann
+  Dokumentinhalt zitieren (Regel 7). `eval/live.ts` bleibt, dort ist `''` für Nicht-Fehler gewollt.
+- Der Titelgrenzwert beim Kopieren eines Notizbuchs nutzt `NOTEBOOK_TITLE_MAX_CHARS` aus `packages/shared` statt einer
+  zweiten `200` im Repository.
+- Die Snippet-Länge der Websuche ist als `WEB_SEARCH_SNIPPET_MAX_CHARS` in `packages/shared` exportiert; das Schema und
+  der Tavily-Adapter schneiden an derselben Zahl, vorher standen dort zwei gleiche Literale.
+- `e2e/notebooks.e2e.ts` importiert `Page` als Typ statt über `import('…')` im Parameter.
+- Zu Regel 4 („Limits nur aus der Konfiguration“): gemeint sind Modell-IDs und Limits, die den Anbieter betreffen
+  (`PROVIDER_LIMITS`) oder Schutzgrenzen (`LIMITS`). Vertragsgrenzen, die Schema und Oberfläche teilen, gehören in
+  `packages/shared`; das ist die Quelle, auf die oben verwiesen wird.
+
+## 2026-10-02 (Modellaufrufe: Abbruch und Zeitgrenzen)
+
+- Verlässt der Leser den Chat, bricht die Route die Anfrage ans Modell ab (`stream.onAbort` → `AbortSignal` in
+  `ChatInput`). Vorher lief sie weiter und verbrauchte Kontingent. Eine abgebrochene Antwort meldet keinen Fehler mehr.
+- Jeder Versuch hat eine Zeitgrenze (`LIMITS.CHAT_TIMEOUT_MS` 120 s, `LIMITS.EMBED_TIMEOUT_MS` 60 s), im Signal mit dem
+  Signal des Aufrufers verbunden (`AbortSignal.any`). Sie gilt auch für das Lesen des Antwortkörpers.
+- Ein `retry-after` über `LIMITS.RETRY_MAX_WAIT_MS` (30 s) wird nicht abgewartet: der Aufruf scheitert sofort mit dem
+  Status. Vorher konnte ein Header von mehreren Minuten eine Anfrage blockieren. Die Wartezeit zwischen Versuchen endet
+  außerdem, sobald das Signal abbricht.
+- Nicht umgesetzt: den Körper einer wiederholten Antwort mit `body.cancel()` freigeben (hängt unter MSW; die
+  Fehlerkörper sind klein), und ein Test für einen Stream, der nach dem Start stehen bleibt (MSW reicht den Abbruch
+  nicht an den Körper weiter, nur gegen die echte API prüfbar).
+- Der Rate Limiter nimmt ein Signal: ein abgebrochener Aufruf wartet nicht mehr auf sein Fenster und verbraucht keine Quote (Chat reicht es durch; Embedder und PDF-Parser haben noch keins).
+- Durchsicht der sechs bisher ungelesenen Dateien (`html-text.ts`, `studio-prompt.ts`, `create-dialog.tsx`, `customize-notebook-dialog.tsx`, `chat-settings-dialog.tsx`, `notebook-overview.tsx`): keine Verstöße gegen Typen, Konstanten, Sprache oder UI-Zustände. `SettingsForm` (ca. 60 Zeilen) bleibt ungeteilt, weil es nur drei gleich gebaute `ChoiceGroup`s ohne Verschachtelung enthält; ein Auslöser für ein Refactoring fehlt. Dem `Dockerfile` fehlt bewusst ein `HEALTHCHECK`: das Compose prüft die App bereits, ein zweiter Check wäre eine Kopie.
+- **„Notebook“ statt „Notizbuch“ in der Oberfläche (2026-10-02):** Menüs, Dialoge, Leerzustände und Screenreader-Namen sagen überall „Notebook“ (wie das Original), im Plural „Notebooks“. Die URL `/notizbuecher/…` bleibt, damit gespeicherte Links halten. README, Loom-Skript und Designabgleich folgen; ältere Einträge dieses Logs behalten ihren damaligen Wortlaut.
+- **Server-Einrichtung als ein Befehl (2026-10-02):** [provision.sh](../deploy/provision.sh) läuft auf dem eigenen Rechner und ersetzt die
+  Handarbeit (Schlüssel erzeugen, Skript kopieren, `server.env` im Editor füllen, drei Secrets im Browser setzen), damit ein neuer
+  Server ein Befehl ist. Grund: Die Schritte verteilten sich auf Terminal, Server und GitHub-Oberfläche. Die Werte kommen aus der
+  lokalen Env-Datei und gehen nur über SSH-stdin auf den Server. Das Skript löst den Deploy nicht aus, weil `deploy.yml` erst
+  nach dem Merge auf `main` startbar ist. Die Merge-Logik für `server.env` wurde lokal mit Testwerten geprüft, das ganze Skript
+  noch nicht gegen einen echten Server. `hcloud` (Server buchen) bleibt bewusst draußen: braucht einen API-Token und kostet Geld.
+- **Client-IP hinter Caddy: keine Codeänderung nötig (2026-10-02).** Verdacht war, dass Better Auth die IP hinter dem Proxy nicht
+  erkennt und alle Besucher einen gemeinsamen Rate-Limit-Zähler pro Pfad teilen. Geprüft: Better Auth 1.7.6 liest
+  `X-Forwarded-For` und vertraut ohne `trustedProxies` nur einem Header mit einem einzigen Wert. Caddy 2.11.4 (`reverse_proxy`,
+  keine `trusted_proxies`) ersetzt den Header durch genau die Client-IP; ein vom Client mitgeschickter Wert, auch eine Kette, kommt
+  nicht durch (lokal mit dem Image aus `docker-compose.prod.yml` nachgestellt). Die App ist nur über Caddy erreichbar (nur 80 und
+  443 sind veröffentlicht). `trustedProxies` wäre hier unnötig und würde bei falschem Subnetz mehr kaputt machen. **Neu prüfen,
+  wenn ein weiterer Proxy davorgeschaltet wird** (zum Beispiel Cloudflare): dann kommt eine Kette an, und Caddy braucht
+  `trusted_proxies`.

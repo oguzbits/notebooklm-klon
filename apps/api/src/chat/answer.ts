@@ -13,8 +13,7 @@ import { buildChatContext, type ChatContext, resolveCitations } from '../core/ch
 import { ANSWER_JSON_SCHEMA, buildUserMessage, chatSystemPrompt } from '../core/chat-prompt';
 import { cleanFollowUps } from '../core/follow-ups';
 import { StatementStream } from '../core/statement-stream';
-
-const QUOTA_STATUS = 429;
+import { HTTP_STATUS } from '../http-status';
 
 /** The user has no ready, selected source in this notebook, so there is nothing to answer from. */
 export class NoSourcesSelectedError extends Error {
@@ -111,13 +110,15 @@ class AnswerTally {
 async function* streamStatements(
   prepared: PreparedAnswer,
   ports: ChatPorts,
-  tally: AnswerTally
+  tally: AnswerTally,
+  signal: AbortSignal | undefined
 ): AsyncGenerator<ChatEvent, string[]> {
   const parser = new StatementStream();
   const input: ChatInput = {
     system: chatSystemPrompt(prepared.config),
     user: buildUserMessage(prepared.context, prepared.question),
     schema: ANSWER_JSON_SCHEMA,
+    signal,
   };
   for await (const piece of ports.stream(input)) {
     yield* tally.events(parser.push(piece));
@@ -131,7 +132,7 @@ async function* streamStatements(
 const errorEvent = (error: unknown): ChatEvent => ({
   type: CHAT_EVENT.ERROR,
   code:
-    error instanceof GeminiError && error.status === QUOTA_STATUS
+    error instanceof GeminiError && error.status === HTTP_STATUS.TOO_MANY_REQUESTS
       ? API_ERROR.CHAT_LIMIT_REACHED
       : API_ERROR.INTERNAL,
 });
@@ -139,19 +140,23 @@ const errorEvent = (error: unknown): ChatEvent => ({
 /**
  * Streams the answer as events. A statement is checked against the context and sent as soon as the
  * model has finished it; one without a valid citation is left out. A failure ends the stream with
- * an ERROR event after the statements that already arrived.
+ * an ERROR event after the statements that already arrived. When `signal` aborts, the model request
+ * ends and the stream stops without an event.
  */
 export async function* answerQuestion(
   prepared: PreparedAnswer,
-  ports: ChatPorts
+  ports: ChatPorts,
+  signal?: AbortSignal
 ): AsyncGenerator<ChatEvent> {
   const tally = new AnswerTally(prepared.context);
   let suggested: string[] = [];
 
   if (prepared.context.labels.length > 0) {
     try {
-      suggested = yield* streamStatements(prepared, ports, tally);
+      suggested = yield* streamStatements(prepared, ports, tally, signal);
     } catch (error) {
+      // The reader left: nobody is waiting for the end, and it is no failure of ours.
+      if (signal?.aborted) return;
       ports.onError(error);
       yield errorEvent(error);
       return;

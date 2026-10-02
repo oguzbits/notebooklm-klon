@@ -9,15 +9,11 @@ import type { AppDeps } from '../app-deps';
 import type { AuthVariables } from '../auth/session';
 import { detectImageType } from '../core/image-type';
 import { findNotebook, setCoverVersion } from '../db/notebook-repository';
+import { HTTP_STATUS } from '../http-status';
 import { coverKey } from '../storage/cover-key';
 import { removeObjectQuietly } from '../storage/remove-quietly';
 import { json, notebookParams, notFound, unauthenticated } from './openapi';
 
-const OK = 200;
-const NO_CONTENT = 204;
-const BAD_REQUEST = 400;
-const NOT_FOUND = 404;
-const UNAVAILABLE = 503;
 const ONE_YEAR_SECONDS = 31_536_000;
 const MULTIPART_OVERHEAD_BYTES = 64 * 1024;
 
@@ -28,11 +24,14 @@ const putRoute = createRoute({
   path: '/{notebookId}/cover',
   request: { params: notebookParams },
   responses: {
-    [OK]: json(NotebookSchema, 'The notebook with its new cover image'),
-    [BAD_REQUEST]: json(ApiErrorSchema, 'No image, not a PNG, JPEG or WebP, or too large'),
+    [HTTP_STATUS.OK]: json(NotebookSchema, 'The notebook with its new cover image'),
+    [HTTP_STATUS.BAD_REQUEST]: json(
+      ApiErrorSchema,
+      'No image, not a PNG, JPEG or WebP, or too large'
+    ),
     401: unauthenticated,
-    [NOT_FOUND]: notFound,
-    [UNAVAILABLE]: unavailable,
+    [HTTP_STATUS.NOT_FOUND]: notFound,
+    [HTTP_STATUS.SERVICE_UNAVAILABLE]: unavailable,
   },
 });
 
@@ -41,10 +40,10 @@ const deleteRoute = createRoute({
   path: '/{notebookId}/cover',
   request: { params: notebookParams },
   responses: {
-    [NO_CONTENT]: { description: 'The notebook has no cover image any more' },
+    [HTTP_STATUS.NO_CONTENT]: { description: 'The notebook has no cover image any more' },
     401: unauthenticated,
-    [NOT_FOUND]: notFound,
-    [UNAVAILABLE]: unavailable,
+    [HTTP_STATUS.NOT_FOUND]: notFound,
+    [HTTP_STATUS.SERVICE_UNAVAILABLE]: unavailable,
   },
 });
 
@@ -65,15 +64,17 @@ async function readCoverImage(request: Request) {
 const serveCover =
   (deps: AppDeps) => async (c: Context<{ Variables: AuthVariables }, '/:notebookId/cover'>) => {
     const { objectStore } = deps;
-    if (!objectStore) return c.json({ code: API_ERROR.COVER_UNAVAILABLE }, UNAVAILABLE);
+    if (!objectStore)
+      return c.json({ code: API_ERROR.COVER_UNAVAILABLE }, HTTP_STATUS.SERVICE_UNAVAILABLE);
     const { userId } = c.var;
     const notebookId = c.req.param('notebookId');
     const notebook = await findNotebook(deps.db, userId, notebookId);
-    if (!notebook?.coverVersion) return c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
+    if (!notebook?.coverVersion)
+      return c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);
 
     const stored = await objectStore.get(coverKey(userId, notebookId, notebook.coverVersion));
-    if (!stored) return c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
-    return c.body(stored.bytes.slice(), OK, {
+    if (!stored) return c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);
+    return c.body(stored.bytes.slice(), HTTP_STATUS.OK, {
       'content-type': stored.contentType,
       // The address carries the version, so a cached copy is never stale. Not shared between users.
       'cache-control': `private, max-age=${ONE_YEAR_SECONDS}, immutable`,
@@ -94,7 +95,7 @@ export function coverRoutes(deps: AppDeps) {
     '/:notebookId/cover',
     bodyLimit({
       maxSize: COVER_IMAGE.MAX_BYTES + MULTIPART_OVERHEAD_BYTES,
-      onError: (c) => c.json({ code: API_ERROR.COVER_INVALID }, BAD_REQUEST),
+      onError: (c) => c.json({ code: API_ERROR.COVER_INVALID }, HTTP_STATUS.BAD_REQUEST),
     })
   );
 
@@ -102,15 +103,16 @@ export function coverRoutes(deps: AppDeps) {
     app
       .openapi(putRoute, async (c) => {
         const { objectStore } = deps;
-        if (!objectStore) return c.json({ code: API_ERROR.COVER_UNAVAILABLE }, UNAVAILABLE);
+        if (!objectStore)
+          return c.json({ code: API_ERROR.COVER_UNAVAILABLE }, HTTP_STATUS.SERVICE_UNAVAILABLE);
         const { userId } = c.var;
         const { notebookId } = c.req.valid('param');
         if (!(await findNotebook(deps.db, userId, notebookId))) {
-          return c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
+          return c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);
         }
 
         const image = await readCoverImage(c.req.raw);
-        if (!image) return c.json({ code: API_ERROR.COVER_INVALID }, BAD_REQUEST);
+        if (!image) return c.json({ code: API_ERROR.COVER_INVALID }, HTTP_STATUS.BAD_REQUEST);
 
         const { bytes, contentType } = image;
         const version = randomUUID();
@@ -118,22 +120,23 @@ export function coverRoutes(deps: AppDeps) {
         const changed = await setCoverVersion(deps.db, userId, notebookId, version);
         if (!changed) {
           await removeObjectQuietly(objectStore, coverKey(userId, notebookId, version));
-          return c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
+          return c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);
         }
         if (changed.previous)
           await removeObjectQuietly(objectStore, coverKey(userId, notebookId, changed.previous));
-        return c.json(changed.notebook, OK);
+        return c.json(changed.notebook, HTTP_STATUS.OK);
       })
       .openapi(deleteRoute, async (c) => {
         const { objectStore } = deps;
-        if (!objectStore) return c.json({ code: API_ERROR.COVER_UNAVAILABLE }, UNAVAILABLE);
+        if (!objectStore)
+          return c.json({ code: API_ERROR.COVER_UNAVAILABLE }, HTTP_STATUS.SERVICE_UNAVAILABLE);
         const { userId } = c.var;
         const { notebookId } = c.req.valid('param');
         const changed = await setCoverVersion(deps.db, userId, notebookId, null);
-        if (!changed) return c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
+        if (!changed) return c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);
         if (changed.previous)
           await removeObjectQuietly(objectStore, coverKey(userId, notebookId, changed.previous));
-        return c.body(null, NO_CONTENT);
+        return c.body(null, HTTP_STATUS.NO_CONTENT);
       })
       // Not described for OpenAPI: it answers with the bytes of an image, not with JSON.
       .get('/:notebookId/cover', serveCover(deps))

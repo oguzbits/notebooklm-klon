@@ -17,7 +17,7 @@ export function NotebookTitle({ notebook }: { notebook: Notebook }) {
       <h1 className="sr-only">{notebook.title}</h1>
       <EditableTitle
         value={notebook.title}
-        label="Titel des Notizbuchs"
+        label="Titel des Notebooks"
         saving={rename.isPending}
         error={rename.isError ? describeError(rename.error) : null}
         onSave={(title, revert) => rename.mutate({ title }, { onError: revert })}

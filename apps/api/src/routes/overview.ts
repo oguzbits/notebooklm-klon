@@ -5,19 +5,20 @@ import type { AppDeps } from '../app-deps';
 import type { AuthVariables } from '../auth/session';
 import { getOrCreateOverview } from '../chat/overview';
 import { createOverviewPorts } from '../chat/overview-ports';
+import { HTTP_STATUS } from '../http-status';
 import { json, notFound, sourceParams, unauthenticated } from './openapi';
-
-const OK = 200;
-const NOT_FOUND = 404;
 
 const overviewRoute = createRoute({
   method: 'get',
   path: '/{notebookId}/sources/{sourceId}/overview',
   request: { params: sourceParams },
   responses: {
-    [OK]: json(SourceOverviewSchema, 'Summary, key topics and suggested questions of a source'),
+    [HTTP_STATUS.OK]: json(
+      SourceOverviewSchema,
+      'Summary, key topics and suggested questions of a source'
+    ),
     401: unauthenticated,
-    [NOT_FOUND]: notFound,
+    [HTTP_STATUS.NOT_FOUND]: notFound,
   },
 });
 
@@ -32,6 +33,8 @@ export function overviewRoutes(deps: AppDeps) {
       { userId: c.var.userId, notebookId, sourceId },
       ports
     );
-    return overview ? c.json(overview, OK) : c.json({ code: API_ERROR.NOT_FOUND }, NOT_FOUND);
+    return overview
+      ? c.json(overview, HTTP_STATUS.OK)
+      : c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);
   });
 }
