@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 
 import { server } from '../../../../vitest.setup';
@@ -10,12 +10,16 @@ const MODEL = 'test-chat-model';
 const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:streamGenerateContent`;
 const KEY = 'test-key-not-real';
 
-const chat = (onUsage?: (usage: { promptTokens: number; outputTokens: number }) => void) =>
+const chat = (
+  onUsage?: (usage: { promptTokens: number; outputTokens: number }) => void,
+  overrides: { sleep?: (ms: number) => Promise<void>; timeoutMs?: number } = {}
+) =>
   createGeminiChat({
     apiKey: KEY,
     model: MODEL,
     limiter: new RateLimiter({ requestsPerMinute: 1000, tokensPerMinute: 1_000_000 }),
-    sleep: async () => undefined,
+    sleep: overrides.sleep ?? (async () => undefined),
+    timeoutMs: overrides.timeoutMs,
     onUsage,
   });
 
@@ -169,5 +173,52 @@ describe('createGeminiChat', () => {
       'ok'
     );
     expect(calls).toBe(2);
+  });
+
+  it('gives up when the model does not answer within the timeout', async () => {
+    server.use(http.post(ENDPOINT, async () => delay('infinite')));
+    const stalled = chat(undefined, { timeoutMs: 50 });
+
+    await expect(collect(stalled.stream({ system: 's', user: 'u', schema: {} }))).rejects.toThrow();
+  });
+
+  it('does not wait for a retry-after beyond the cap but reports the status', async () => {
+    const sleeps: number[] = [];
+    server.use(
+      http.post(ENDPOINT, () =>
+        HttpResponse.json(
+          { error: { message: 'quota' } },
+          { status: 429, headers: { 'retry-after': '3600' } }
+        )
+      )
+    );
+    const waiting = chat(undefined, {
+      sleep: async (ms) => {
+        sleeps.push(ms);
+      },
+    });
+
+    const error = await collect(waiting.stream({ system: 's', user: 'u', schema: {} })).catch(
+      (caught: unknown) => caught
+    );
+
+    expect(error).toBeInstanceOf(GeminiError);
+    expect((error as GeminiError).status).toBe(429);
+    expect(sleeps).toEqual([]);
+  });
+
+  it('stops waiting for a retry when the reader leaves', async () => {
+    server.use(
+      http.post(ENDPOINT, () => HttpResponse.json({ error: { message: 'quota' } }, { status: 429 }))
+    );
+    const reader = new AbortController();
+    const waiting = chat(undefined, { sleep: () => new Promise(() => undefined) });
+    const pending = collect(
+      waiting.stream({ system: 's', user: 'u', schema: {}, signal: reader.signal })
+    );
+
+    setTimeout(() => reader.abort(), 50);
+
+    await expect(pending).rejects.toThrow();
   });
 });

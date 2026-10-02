@@ -34,6 +34,8 @@ export interface GeminiChatConfig {
   model: string;
   limiter: RateLimiter;
   sleep: (ms: number) => Promise<void>;
+  /** Longest wait for one attempt, answer body included. */
+  timeoutMs?: number | undefined;
   /** Receives the token counts of a finished answer, for the logs. */
   onUsage?: (usage: { promptTokens: number; outputTokens: number }) => void;
 }

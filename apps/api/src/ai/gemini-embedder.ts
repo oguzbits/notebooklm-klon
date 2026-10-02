@@ -19,6 +19,8 @@ export interface GeminiEmbedderConfig {
   model: string;
   limiter: RateLimiter;
   sleep: (ms: number) => Promise<void>;
+  /** Longest wait for one attempt, answer body included. */
+  timeoutMs?: number | undefined;
 }
 
 function normalize(vector: number[]): number[] {

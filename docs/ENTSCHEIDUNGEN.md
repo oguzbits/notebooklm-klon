@@ -843,3 +843,17 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
 - Zu Regel 4 („Limits nur aus der Konfiguration“): gemeint sind Modell-IDs und Limits, die den Anbieter betreffen
   (`PROVIDER_LIMITS`) oder Schutzgrenzen (`LIMITS`). Vertragsgrenzen, die Schema und Oberfläche teilen, gehören in
   `packages/shared`; das ist die Quelle, auf die oben verwiesen wird.
+
+## 2026-10-02 (Modellaufrufe: Abbruch und Zeitgrenzen)
+
+- Verlässt der Leser den Chat, bricht die Route die Anfrage ans Modell ab (`stream.onAbort` → `AbortSignal` in
+  `ChatInput`). Vorher lief sie weiter und verbrauchte Kontingent. Eine abgebrochene Antwort meldet keinen Fehler mehr.
+- Jeder Versuch hat eine Zeitgrenze (`LIMITS.CHAT_TIMEOUT_MS` 120 s, `LIMITS.EMBED_TIMEOUT_MS` 60 s), im Signal mit dem
+  Signal des Aufrufers verbunden (`AbortSignal.any`). Sie gilt auch für das Lesen des Antwortkörpers.
+- Ein `retry-after` über `LIMITS.RETRY_MAX_WAIT_MS` (30 s) wird nicht abgewartet: der Aufruf scheitert sofort mit dem
+  Status. Vorher konnte ein Header von mehreren Minuten eine Anfrage blockieren. Die Wartezeit zwischen Versuchen endet
+  außerdem, sobald das Signal abbricht.
+- Nicht umgesetzt: den Körper einer wiederholten Antwort mit `body.cancel()` freigeben (hängt unter MSW; die
+  Fehlerkörper sind klein), und ein Test für einen Stream, der nach dem Start stehen bleibt (MSW reicht den Abbruch
+  nicht an den Körper weiter, nur gegen die echte API prüfbar).
+- Offen: der Rate Limiter kennt kein Signal; ein abgebrochener Aufruf wartet seine Warteschlange noch ab.
