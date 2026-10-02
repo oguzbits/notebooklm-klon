@@ -1050,3 +1050,18 @@ haben ihre eigenen Formate und bekommen keinen Markdown-Knopf.
 
 Tests: der dritte Test mit abgefangenem Download führte zum Hilfsmittel `apps/web/src/test/capture-downloads.ts` (Rule of Three);
 der Karteikarten-Test und der Test der Bibliothek nutzen es auch. Der Smoke-E2E lädt eine Notiz und den Chat im echten Browser herunter.
+
+## 2026-10-02 (Konto löschen)
+
+Better Auth bringt die Route mit (`user.deleteUser`, `POST /api/auth/delete-user`); wir schreiben keine eigene. Der Nutzer bestätigt
+mit dem Passwort, ein falsches wird abgelehnt und löscht nichts (Test mit 400). Alle Tabellen hängen per `onDelete: 'cascade'` am
+`user`, die Zeilen verschwinden also in einem Schritt. Die Dateien (Titelbilder unter `covers/<userId>/`) entfernt `afterDelete`
+danach über `removePrefixQuietly`: Best Effort und protokolliert, wie es AGENTS.md für den Objektspeicher vorsieht. Dafür nimmt
+`createAuth` ein optionales `objectStore`; `index.ts` und `e2e/server.ts` bauen den Speicher dazu früher auf, das Seed-Skript braucht
+ihn nicht.
+
+Oberfläche: "Konto löschen" im Kontomenü, nur für registrierte Nutzer (ein Gast wird nach `GUEST_LIMITS.LIFETIME_DAYS` Tagen ohnehin
+gelöscht). Der Dialog nennt, was verschwindet, fragt das Passwort ab und bleibt bei einem Fehler offen. Danach wird der Cache geleert
+und die Sitzung auf "nicht angemeldet" gesetzt, die Seite leitet zur Anmeldung. Kein Bestätigen per E-Mail (YAGNI, es gibt keinen
+Mailversand). Nicht gelöst: eine Löschung entfernt keine Sicherungen (der Dump vor dem Deploy enthält die Daten weiter) und keine
+Datenschutzerklärung.

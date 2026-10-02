@@ -1,8 +1,9 @@
 import { GUEST_LIMITS } from '@nlm/shared';
-import { LogOut } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { LogOut, Trash2 } from 'lucide-react';
+import { type ReactNode, useState } from 'react';
 import { Link } from 'react-router';
 
+import { DeleteAccountDialog } from '@/components/auth/delete-account-dialog';
 import { Logo } from '@/components/brand/logo';
 import { SettingsMenu } from '@/components/layout/settings-menu';
 import {
@@ -20,6 +21,7 @@ import { ROUTES } from '@/lib/routes';
 export function AppHeader({ title, actions }: { title?: ReactNode; actions?: ReactNode }) {
   const session = useSession();
   const signOut = useSignOut();
+  const [deleting, setDeleting] = useState(false);
   const isGuest = session.data?.isAnonymous === true;
   // A guest has no email address of their own, only a placeholder.
   const email = isGuest ? '' : (session.data?.email ?? '');
@@ -65,8 +67,15 @@ export function AppHeader({ title, actions }: { title?: ReactNode; actions?: Rea
               <LogOut aria-hidden />
               Abmelden
             </DropdownMenuItem>
+            {!isGuest && (
+              <DropdownMenuItem onSelect={() => setDeleting(true)}>
+                <Trash2 aria-hidden />
+                Konto löschen
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
+        <DeleteAccountDialog open={deleting} onOpenChange={setDeleting} />
       </div>
     </header>
   );

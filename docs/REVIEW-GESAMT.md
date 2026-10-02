@@ -53,7 +53,7 @@ Die Schwächen liegen an den Rändern: **Zuverlässigkeit im Betrieb** (hängend
 - **M6 Upload-Prüfung lückenhaft.** TXT und MD nur nach Endung; kein Schutz gegen Zip-Bomben in mammoth;
   jede ZIP-Datei als `.docx` besteht die Magic Bytes; `title: file.name` ohne Längenbegrenzung.
   Fix: auf `word/document.xml` prüfen, Titel kürzen.
-- **M7 Datenschutz.** Kein Konto-Löschen für registrierte Nutzer, keine Datenschutzerklärung, kein Impressum.
+- **M7 Datenschutz.** (Konto löschen ✅, siehe ENTSCHEIDUNGEN.) Kein Konto-Löschen für registrierte Nutzer, keine Datenschutzerklärung, kein Impressum.
   Der kostenlose Gemini-Tarif darf Eingaben zur Verbesserung nutzen, und die Oberfläche zeigt das nicht.
   Tavily bekommt die Suchanfragen. Fix: Konto löschen mit Kaskade und Objektspeicher, Hinweis im
   Upload-Dialog, für Echtbetrieb bezahlter Tarif. (gemeldet, rechtlich nicht geprüft)
@@ -141,7 +141,7 @@ vor einer Entscheidung über YouTube, Audio oder Bilder erst dort nachsehen.
 1. ✅ **Fehlgeschlagene Quelle neu einlesen.** Die Originaldatei bleibt bis die Quelle bereit ist; "Erneut lesen"
    in der Zeile ruft `POST …/sources/:sourceId/retry` auf.
 2. **Export** von Notizen, Chat und Berichten als Markdown ✅ (PDF bewusst nicht, siehe [ENTSCHEIDUNGEN](ENTSCHEIDUNGEN.md)).
-3. **Konto und Daten löschen** in der Oberfläche (siehe M7).
+3. **Konto und Daten löschen** in der Oberfläche ✅ (siehe M7).
 4. Stopp-Button beim Antworten, Rückgängig beim Löschen.
 5. Tastaturkürzel, Suche über Inhalte aller Notebooks, Ausgabesprache als Kontoeinstellung.
 
@@ -171,5 +171,5 @@ und Screenreader, `test:db`, `e2e`, Semgrep.
 2. ✅ **Zuverlässigkeit:** H1 (hängende Quellen und SIGTERM), H5 (Health mit DB), M1 (Transaktion).
 3. ✅ **Härtung, klein:** H3 (Deploy-Bedingung), M3 (Header in Caddy), H6 nach Browserprüfung.
 4. **Betrieb:** M8 und M9 erledigt; H4 teilweise (Dump vor jedem Deploy, Restore-Probe), **offen: Kopie auf externen Speicher, braucht Entscheidung des Nutzers** (Anbieter, Kosten, Zugangsdaten).
-5. **Funktionen:** PDF-Link ✅, Bilder ✅; „neu einlesen“ ✅; Markdown-Export ✅; offen: Konto löschen.
+5. **Funktionen:** PDF-Link ✅, Bilder ✅; „neu einlesen“ ✅; Markdown-Export ✅; Konto löschen ✅; offen: Hinweis zum Gemini-Tarif im Upload-Dialog.
 6. **Danach:** M2, M5, M11 bis M17, YouTube, Audio, PPTX.

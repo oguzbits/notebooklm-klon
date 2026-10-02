@@ -2,15 +2,20 @@ import { API_ERROR, ApiErrorSchema } from '@nlm/shared';
 import { Hono } from 'hono';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
+import { createNotebook } from '../db/notebook-repository';
 import { createTestDb } from '../db/testing/test-db';
+import { coverKey } from '../storage/cover-key';
+import { createMemoryObjectStore } from '../storage/memory-object-store';
 import { createAuth } from './auth';
 import { type AuthVariables, requireUser } from './session';
 
 const { db, pool } = createTestDb();
 const BASE_URL = 'http://localhost:3000';
+const objectStore = createMemoryObjectStore();
 const auth = createAuth(db, {
   secret: 'a-test-secret-with-at-least-32-characters',
   baseURL: BASE_URL,
+  objectStore,
 });
 
 const EMAIL = 'nutzer@example.test';
@@ -93,6 +98,45 @@ describe('email and password auth', () => {
 
     expect(rows.rows[0].password).not.toContain(PASSWORD);
     expect(String(rows.rows[0].password).length).toBeGreaterThan(40);
+  });
+});
+
+describe('deleting the account', () => {
+  const COVER = { bytes: new Uint8Array([1]), contentType: 'image/png' };
+  const VERSION = '11111111-1111-4111-8111-111111111111';
+
+  async function signUpWithNotebook() {
+    const signUp = await post('/sign-up/email', {
+      name: 'Nutzer',
+      email: EMAIL,
+      password: PASSWORD,
+    });
+    const [row] = (await pool.query('SELECT id FROM "user" WHERE email = $1', [EMAIL])).rows;
+    const notebook = await createNotebook(db, row.id, 'Forschung');
+    await objectStore.put(coverKey(row.id, notebook.id, VERSION), COVER);
+    return { cookie: cookieOf(signUp), userId: row.id as string };
+  }
+
+  it('removes the user with their notebooks and their files', async () => {
+    const { cookie } = await signUpWithNotebook();
+    await objectStore.put(coverKey('someone-else', 'n', VERSION), COVER);
+
+    const response = await post('/delete-user', { password: PASSWORD }, cookie);
+
+    expect(response.status).toBe(200);
+    expect((await pool.query('SELECT 1 FROM "user"')).rowCount).toBe(0);
+    expect((await pool.query('SELECT 1 FROM notebooks')).rowCount).toBe(0);
+    expect(objectStore.keys()).toEqual([coverKey('someone-else', 'n', VERSION)]);
+  });
+
+  it('keeps everything when the password is wrong', async () => {
+    const { cookie, userId } = await signUpWithNotebook();
+
+    const response = await post('/delete-user', { password: 'falsches-passwort' }, cookie);
+
+    expect(response.status).toBe(400);
+    expect((await pool.query('SELECT 1 FROM "user"')).rowCount).toBe(1);
+    expect(objectStore.keys().some((key) => key.includes(userId))).toBe(true);
   });
 });
 

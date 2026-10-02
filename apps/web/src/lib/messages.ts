@@ -55,6 +55,7 @@ export const AUTH_MESSAGE: Record<AuthFailure, string> = {
   [AUTH_FAILURE.INVALID_CREDENTIALS]: 'E-Mail-Adresse oder Passwort stimmen nicht.',
   [AUTH_FAILURE.EMAIL_TAKEN]: 'Mit dieser E-Mail-Adresse gibt es schon ein Konto.',
   [AUTH_FAILURE.WEAK_PASSWORD]: 'Das Passwort muss mindestens 8 Zeichen lang sein.',
+  [AUTH_FAILURE.WRONG_PASSWORD]: 'Das Passwort stimmt nicht.',
   [AUTH_FAILURE.GUEST_UNAVAILABLE]:
     'Die Demo ist gerade nicht verfügbar. Bitte melde dich an oder versuche es später noch einmal.',
   [AUTH_FAILURE.UNKNOWN]: 'Das hat nicht geklappt. Bitte versuche es noch einmal.',

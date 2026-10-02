@@ -40,7 +40,11 @@ interface HarnessOptions {
  */
 export function createHarness(options: HarnessOptions = {}) {
   const { db, pool } = createTestDb();
-  const auth = createAuth(db, { secret: SECRET, baseURL: BASE_URL });
+  const auth = createAuth(db, {
+    secret: SECRET,
+    baseURL: BASE_URL,
+    objectStore: options.objectStore,
+  });
   const enqueued: string[] = [];
   const modelInputs: ChatInput[] = [];
   const errors: unknown[] = [];

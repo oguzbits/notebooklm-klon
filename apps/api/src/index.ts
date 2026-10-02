@@ -38,7 +38,17 @@ try {
 await runMigrations(env.DATABASE_URL);
 
 const { db } = createDb(env.DATABASE_URL);
-const auth = createAuth(db, { secret: env.BETTER_AUTH_SECRET, baseURL: env.BETTER_AUTH_URL });
+// Cover images need an S3-compatible store; without one they are not offered.
+const s3Config = s3ConfigFromEnv(env);
+const s3 = s3Config ? createS3ObjectStore(s3Config) : null;
+await s3?.ensureBucket();
+const objectStore: ObjectStore | null = s3;
+
+const auth = createAuth(db, {
+  secret: env.BETTER_AUTH_SECRET,
+  baseURL: env.BETTER_AUTH_URL,
+  objectStore,
+});
 
 const queue = await createJobQueue(env.DATABASE_URL, {
   onError: (error) => log({ level: 'error', msg: 'queue error', name: error.name }),
@@ -72,12 +82,6 @@ await queue.work(async (payload) => {
   }
   log({ level: 'info', msg: 'ingestion job done', durationMs: Date.now() - started });
 });
-
-// Cover images need an S3-compatible store; without one they are not offered.
-const s3Config = s3ConfigFromEnv(env);
-const s3 = s3Config ? createS3ObjectStore(s3Config) : null;
-await s3?.ensureBucket();
-const objectStore: ObjectStore | null = s3;
 
 const app = createApp({
   auth,

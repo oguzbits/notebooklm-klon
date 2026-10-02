@@ -62,7 +62,17 @@ const env = parseOfflineServerEnv(process.env);
 await runMigrations(env.DATABASE_URL);
 
 const { db } = createDb(env.DATABASE_URL);
-const auth = createAuth(db, { secret: env.BETTER_AUTH_SECRET, baseURL: env.BETTER_AUTH_URL });
+// Cover images only where an object store is given (the S3 container of `pnpm db:up`).
+const s3Config = s3ConfigFromEnv(env);
+const s3 = s3Config ? createS3ObjectStore(s3Config) : null;
+await s3?.ensureBucket();
+const objectStore = s3;
+
+const auth = createAuth(db, {
+  secret: env.BETTER_AUTH_SECRET,
+  baseURL: env.BETTER_AUTH_URL,
+  objectStore,
+});
 
 const ingest: SubmitPorts = {
   sources: createSourceStorage(db, { enforceQuota: true }),
@@ -122,12 +132,6 @@ await seedDemo(
     },
   }
 );
-
-// Cover images only where an object store is given (the S3 container of `pnpm db:up`).
-const s3Config = s3ConfigFromEnv(env);
-const s3 = s3Config ? createS3ObjectStore(s3Config) : null;
-await s3?.ensureBucket();
-const objectStore = s3;
 
 const app = createApp({
   auth,

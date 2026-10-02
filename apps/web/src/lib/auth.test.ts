@@ -3,7 +3,16 @@ import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 
 import { server } from '../../../../vitest.setup';
-import { AUTH_FAILURE, AuthError, getSession, signIn, signOut, signUp, startGuest } from './auth';
+import {
+  AUTH_FAILURE,
+  AuthError,
+  deleteAccount,
+  getSession,
+  signIn,
+  signOut,
+  signUp,
+  startGuest,
+} from './auth';
 
 const USER = { id: 'u1', name: 'Anna', email: 'anna@example.test' };
 
@@ -118,6 +127,34 @@ describe('signOut', () => {
     await signOut();
 
     expect(called).toBe(true);
+  });
+});
+
+describe('deleteAccount', () => {
+  it('sends the password with the request', async () => {
+    let body: unknown;
+    server.use(
+      http.post('*/api/auth/delete-user', async ({ request }) => {
+        body = await request.json();
+        return HttpResponse.json({ success: true });
+      })
+    );
+
+    await deleteAccount('geheim123');
+
+    expect(body).toEqual({ password: 'geheim123' });
+  });
+
+  it('reports a wrong password', async () => {
+    server.use(
+      http.post('*/api/auth/delete-user', () =>
+        HttpResponse.json({ code: 'INVALID_PASSWORD' }, { status: 400 })
+      )
+    );
+
+    await expect(deleteAccount('falsch')).rejects.toMatchObject({
+      failure: AUTH_FAILURE.WRONG_PASSWORD,
+    });
   });
 });
 

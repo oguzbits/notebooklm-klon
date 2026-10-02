@@ -6,6 +6,7 @@ export const AUTH_FAILURE = {
   INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
   EMAIL_TAKEN: 'EMAIL_TAKEN',
   WEAK_PASSWORD: 'WEAK_PASSWORD',
+  WRONG_PASSWORD: 'WRONG_PASSWORD',
   GUEST_UNAVAILABLE: 'NO_GUEST_AVAILABLE',
   UNKNOWN: 'UNKNOWN',
 } as const;
@@ -29,6 +30,7 @@ const FAILURE_BY_CODE: Record<string, AuthFailure> = {
   USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: AUTH_FAILURE.EMAIL_TAKEN,
   PASSWORD_TOO_SHORT: AUTH_FAILURE.WEAK_PASSWORD,
   PASSWORD_TOO_LONG: AUTH_FAILURE.WEAK_PASSWORD,
+  INVALID_PASSWORD: AUTH_FAILURE.WRONG_PASSWORD,
 };
 
 const GUEST_UNAVAILABLE_STATUS = 503;
@@ -90,3 +92,6 @@ export async function startGuest(): Promise<string> {
 }
 
 export const signOut = () => postJson('/api/auth/sign-out', {});
+
+/** Removes the account with everything in it. The server wants the password once more. */
+export const deleteAccount = (password: string) => postJson('/api/auth/delete-user', { password });

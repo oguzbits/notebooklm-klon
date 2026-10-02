@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { getSession, signIn, signOut, signUp, startGuest } from '@/lib/auth';
+import { deleteAccount, getSession, signIn, signOut, signUp, startGuest } from '@/lib/auth';
 import { queryKeys } from '@/lib/query-keys';
 
 /** The signed-in user; `data` is null when nobody is signed in. */
@@ -44,6 +44,18 @@ export function useSignOut() {
     mutationFn: signOut,
     // Everything cached belongs to the user who just left. The session query stays (the layout
     // listens to it) and now says that nobody is signed in.
+    onSuccess: () => {
+      client.removeQueries({ queryKey: queryKeys.notebooks });
+      client.setQueryData(queryKeys.session, null);
+    },
+  });
+}
+
+export function useDeleteAccount() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: deleteAccount,
+    // The account is gone with its notebooks; the layout sees "nobody is signed in" and leaves.
     onSuccess: () => {
       client.removeQueries({ queryKey: queryKeys.notebooks });
       client.setQueryData(queryKeys.session, null);

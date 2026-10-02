@@ -43,6 +43,76 @@ describe('AppHeader', () => {
     await vi.waitFor(() => expect(signedOut).toBe(true));
   });
 
+  describe('deleting the account', () => {
+    async function openDialog() {
+      server.use(http.get('*/api/auth/get-session', () => HttpResponse.json({ user: USER })));
+      renderHeader();
+      const user = userEvent.setup();
+      await user.click(await screen.findByRole('button', { name: 'Konto' }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Konto löschen' }));
+      return user;
+    }
+
+    it('asks for the password and sends it', async () => {
+      let body: unknown;
+      server.use(
+        http.post('*/api/auth/delete-user', async ({ request }) => {
+          body = await request.json();
+          return HttpResponse.json({ success: true });
+        })
+      );
+      const user = await openDialog();
+
+      await user.type(await screen.findByLabelText('Passwort'), 'geheim123');
+      await user.click(screen.getByRole('button', { name: 'Konto endgültig löschen' }));
+
+      await vi.waitFor(() => expect(body).toEqual({ password: 'geheim123' }));
+    });
+
+    it('does not send anything without a password', async () => {
+      const user = await openDialog();
+
+      await screen.findByLabelText('Passwort');
+      await user.click(screen.getByRole('button', { name: 'Konto endgültig löschen' }));
+
+      expect(screen.getByRole('button', { name: 'Konto endgültig löschen' })).toHaveProperty(
+        'disabled',
+        true
+      );
+    });
+
+    it('tells that the password was wrong and stays open for another try', async () => {
+      server.use(
+        http.post('*/api/auth/delete-user', () =>
+          HttpResponse.json({ code: 'INVALID_PASSWORD' }, { status: 400 })
+        )
+      );
+      const user = await openDialog();
+
+      await user.type(await screen.findByLabelText('Passwort'), 'falsch');
+      await user.click(screen.getByRole('button', { name: 'Konto endgültig löschen' }));
+
+      expect(await screen.findByText('Das Passwort stimmt nicht.')).toBeTruthy();
+      expect(screen.getByLabelText('Passwort')).toBeTruthy();
+    });
+
+    it('is not offered to a guest, whose data goes away by itself', async () => {
+      server.use(
+        http.get('*/api/auth/get-session', () =>
+          HttpResponse.json({
+            user: { id: 'g', name: 'Anonymous', email: 'x@y.invalid', isAnonymous: true },
+          })
+        )
+      );
+      renderHeader();
+
+      await userEvent.setup().click(await screen.findByRole('button', { name: 'Konto' }));
+
+      expect(await screen.findByText('Gast-Zugang')).toBeTruthy();
+      expect(screen.queryByRole('menuitem', { name: 'Konto löschen' })).toBeNull();
+    });
+  });
+
   it('calls a guest a guest and says that the data does not stay', async () => {
     server.use(
       http.get('*/api/auth/get-session', () =>

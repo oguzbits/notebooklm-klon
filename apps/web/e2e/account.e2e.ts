@@ -41,6 +41,29 @@ test.describe('account', () => {
     await expect(page).toHaveURL(/\/anmelden$/);
   });
 
+  test('a deleted account is gone: wrong password refused, right one signs out for good', async ({
+    page,
+  }) => {
+    const email = uniqueEmail('delete');
+    await signUp(page, email);
+
+    await page.getByRole('button', { name: 'Konto' }).click();
+    await page.getByRole('menuitem', { name: 'Konto löschen' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Konto löschen' });
+    await dialog.getByLabel('Passwort').fill(`${PASSWORD}-falsch`);
+    await dialog.getByRole('button', { name: 'Konto endgültig löschen' }).click();
+    await expect(dialog.getByText('Das Passwort stimmt nicht.')).toBeVisible();
+
+    await dialog.getByLabel('Passwort').fill(PASSWORD);
+    await dialog.getByRole('button', { name: 'Konto endgültig löschen' }).click();
+    await expect(page).toHaveURL(/\/anmelden$/);
+
+    await page.getByLabel('E-Mail-Adresse').fill(email);
+    await page.getByLabel('Passwort').fill(PASSWORD);
+    await page.getByRole('button', { name: 'Anmelden', exact: true }).click();
+    await expect(page.getByText('E-Mail-Adresse oder Passwort stimmen nicht.')).toBeVisible();
+  });
+
   test('a signed-out visitor cannot open a notebook page', async ({ page }) => {
     await page.goto('/notebook/00000000-0000-4000-8000-000000000000');
 
