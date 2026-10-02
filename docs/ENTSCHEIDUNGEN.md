@@ -1112,3 +1112,13 @@ endet, nimmt das Feld den Cursor zurück, aber nur, wenn der Fokus auf dem Dokum
 er auf dem Knopf, der an derselben Stelle zum Senden-Knopf wird). Hat die Person den Fokus währenddessen woanders hin gesetzt, bleibt er
 dort. Enter sendet nicht, solange eine Eingabemethode (Japanisch, Chinesisch, Koreanisch) eine Zusammensetzung offen hat:
 `isComposing` für Chrome und Firefox, `keyCode` 229 für Safari, das die Zusammensetzung vor dem Ereignis beendet.
+
+## 2026-10-02 (Frage von anderer Stelle, M14)
+
+`useIncomingQuestion` stellt eine Frage von anderer Stelle der Seite (zum Beispiel "Erklären" an einer Studio-Karte) nicht mehr sofort,
+sondern wartet, bis keine Antwort mehr geschrieben wird, und fragt dann genau einmal (`handled` merkt sich die ID). Vorher ging die Frage
+verloren, weil die Mutation während einer laufenden Antwort nichts tat. Ist keine fertig gelesene, gewählte Quelle da, wird die Frage
+verworfen und nicht später nachgeholt, wenn eine Quelle fertig wird: Die Person hat sie in einem anderen Zusammenhang gewollt. Statt still
+zu schlucken, sagt der Hinweis unter dem Feld dann "Die Frage wurde nicht gestellt." vor dem Quellen-Hinweis. Die verworfene ID steht im
+State und wird beim Rendern gesetzt (kein `setState` im Effekt, `react-hooks/set-state-in-effect`). Der Hinweis wandert mit `useChatSession`
+(`hint`), damit `ChatPanel` unter der Zeilengrenze bleibt.

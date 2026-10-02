@@ -1,9 +1,18 @@
-import { API_ERROR, CHAT_EVENT, type ChatEvent, NOTE_KIND, SOURCE_STATUS } from '@nlm/shared';
+import {
+  API_ERROR,
+  CHAT_EVENT,
+  type ChatEvent,
+  ChatRequestSchema,
+  NOTE_KIND,
+  SOURCE_STATUS,
+} from '@nlm/shared';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse, type JsonBodyType } from 'msw';
+import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { IncomingQuestion } from '@/hooks/use-incoming-question';
 import { formatWeekday } from '@/lib/day';
 import {
   answer,
@@ -35,6 +44,27 @@ function renderChat(onOpenCitation: (chunkId: string) => void = () => {}) {
   return renderWithProviders(
     <ChatPanel notebookId={NOTEBOOK_ID} onOpenCitation={onOpenCitation} onCustomize={() => {}} />
   );
+}
+
+const hangingStatement: ChatEvent = {
+  type: CHAT_EVENT.STATEMENT,
+  text: 'Dr. Brandt leitet es.',
+  chunkIds: [CHUNK_ID],
+};
+
+/** An answer that sends one statement and then waits for ever, like a slow model. */
+function hangingAnswer(onRequest: (question: string) => void = () => {}) {
+  const encoder = new TextEncoder();
+  return http.post(`${base}/chat`, async ({ request }) => {
+    const { question } = ChatRequestSchema.parse(await request.json());
+    onRequest(question);
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(encoder.encode(frame(hangingStatement)));
+      },
+    });
+    return new HttpResponse(body, { headers: { 'content-type': 'text/event-stream' } });
+  });
 }
 
 const overviewOf = (sourceId: string, body: JsonBodyType, status = 200) =>
@@ -273,25 +303,6 @@ describe('ChatPanel', () => {
   describe('while an answer is written', () => {
     afterEach(() => vi.restoreAllMocks());
 
-    const statement: ChatEvent = {
-      type: CHAT_EVENT.STATEMENT,
-      text: 'Dr. Brandt leitet es.',
-      chunkIds: [CHUNK_ID],
-    };
-
-    /** An answer that sends one statement and then waits for ever, like a slow model. */
-    function hangingAnswer() {
-      const encoder = new TextEncoder();
-      return http.post(`${base}/chat`, () => {
-        const body = new ReadableStream<Uint8Array>({
-          start(controller) {
-            controller.enqueue(encoder.encode(frame(statement)));
-          },
-        });
-        return new HttpResponse(body, { headers: { 'content-type': 'text/event-stream' } });
-      });
-    }
-
     /** The signals of the requests to the chat, as the browser got them. */
     function watchChatRequests() {
       const signals: AbortSignal[] = [];
@@ -409,7 +420,9 @@ describe('ChatPanel', () => {
         http.post(
           `${base}/chat`,
           () =>
-            new HttpResponse(frame(statement), { headers: { 'content-type': 'text/event-stream' } })
+            new HttpResponse(frame(hangingStatement), {
+              headers: { 'content-type': 'text/event-stream' },
+            })
         )
       );
       renderChat();
@@ -541,6 +554,94 @@ describe('ChatPanel', () => {
         expect(card).toHaveProperty('disabled', true);
       }
     });
+  });
+
+  describe('a question from elsewhere on the page', () => {
+    const EXPLAIN = 'Erkläre das genauer.';
+
+    /** The chat with a button that sends it a question, like "Erklären" on a card of the Studio. */
+    function ChatWithExplain() {
+      const [incoming, setIncoming] = useState<IncomingQuestion | null>(null);
+      return (
+        <>
+          <button
+            type="button"
+            onClick={() => setIncoming((c) => ({ id: (c?.id ?? 0) + 1, question: EXPLAIN }))}
+          >
+            Erklären
+          </button>
+          <ChatPanel
+            notebookId={NOTEBOOK_ID}
+            onOpenCitation={() => {}}
+            onCustomize={() => {}}
+            incoming={incoming}
+          />
+        </>
+      );
+    }
+
+    /** Answers every question of the chat with a stream that waits for ever, and lists the questions. */
+    function recordQuestions() {
+      const asked: string[] = [];
+      server.use(hangingAnswer((question) => asked.push(question)));
+      return asked;
+    }
+
+    it('waits for the answer that is being written and asks after it, instead of losing the question', async () => {
+      server.use(sources(), history([]));
+      const asked = recordQuestions();
+      renderWithProviders(<ChatWithExplain />);
+      const user = userEvent.setup();
+      await user.type(await screen.findByLabelText('Deine Frage'), 'Wer leitet es?');
+      await user.click(screen.getByRole('button', { name: 'Frage senden' }));
+      await screen.findByRole('button', { name: 'Antwort stoppen' });
+
+      await user.click(screen.getByRole('button', { name: 'Erklären' }));
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(asked).toEqual(['Wer leitet es?']);
+
+      await user.click(screen.getByRole('button', { name: 'Antwort stoppen' }));
+      await waitFor(() => expect(asked).toEqual(['Wer leitet es?', EXPLAIN]));
+
+      await user.click(await screen.findByRole('button', { name: 'Antwort stoppen' }));
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(asked).toEqual(['Wer leitet es?', EXPLAIN]);
+    });
+
+    it('says that it was not asked when no source can answer it', async () => {
+      server.use(sources([source({ status: SOURCE_STATUS.PROCESSING })]), history([]));
+      const asked = recordQuestions();
+      renderWithProviders(<ChatWithExplain />);
+      await screen.findByText(/mindestens eine fertig gelesene Quelle/);
+
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Erklären' }));
+
+      expect(await screen.findByText(/Die Frage wurde nicht gestellt/)).toBeTruthy();
+      expect(asked).toEqual([]);
+    });
+
+    it('does not ask a dropped question later, when a source becomes ready', async () => {
+      let list = [source({ status: SOURCE_STATUS.PROCESSING })];
+      server.use(
+        http.get(`${base}/sources`, () => HttpResponse.json(list)),
+        history([])
+      );
+      const asked = recordQuestions();
+      renderWithProviders(<ChatWithExplain />);
+      await screen.findByText(/mindestens eine fertig gelesene Quelle/);
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Erklären' }));
+      await screen.findByText(/Die Frage wurde nicht gestellt/);
+
+      // The list of sources is read again every two seconds while one is being processed.
+      list = [source()];
+      await waitFor(
+        () => expect(screen.queryByText(/mindestens eine fertig gelesene Quelle/)).toBeNull(),
+        { timeout: 4000 }
+      );
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(asked).toEqual([]);
+    }, 8000);
   });
 
   it('offers the suggested questions of the selected sources and asks one on click', async () => {

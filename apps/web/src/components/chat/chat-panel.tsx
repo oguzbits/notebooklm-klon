@@ -7,11 +7,8 @@ import { QuestionForm } from '@/components/chat/question-form';
 import { TopFade } from '@/components/chat/top-fade';
 import { useChatSession } from '@/hooks/use-chat-session';
 import { useFollowNewest } from '@/hooks/use-follow-newest';
-import { type IncomingQuestion, useIncomingQuestion } from '@/hooks/use-incoming-question';
+import type { IncomingQuestion } from '@/hooks/use-incoming-question';
 import { useScrollEnd } from '@/hooks/use-scroll-end';
-
-const NO_SOURCE_HINT =
-  'Wähle links mindestens eine fertig gelesene Quelle aus, um Fragen zu stellen.';
 
 /** The middle panel: the conversation, the field for a new question and the streamed answer. */
 export const ChatPanel = memo(function ChatPanel({
@@ -27,15 +24,13 @@ export const ChatPanel = memo(function ChatPanel({
   /** A question from elsewhere on the page, asked once when it is new (its ID counts up). */
   incoming?: IncomingQuestion | null;
 }) {
-  const { history, sources, ask, suggestions, usable, hasReady, canAsk } =
-    useChatSession(notebookId);
+  const { history, sources, ask, ...chat } = useChatSession(notebookId, incoming);
   const { scroller, atEnd, trackEnd, jumpToEnd } = useScrollEnd();
   const bottom = useFollowNewest({
     messages: history.data?.length,
     statements: ask.live?.statements.length ?? 0,
     pending: ask.isPending,
   });
-  useIncomingQuestion(incoming, canAsk, ask.mutate);
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
@@ -56,9 +51,9 @@ export const ChatPanel = memo(function ChatPanel({
             <Conversation
               history={history}
               ask={ask}
-              hasReady={hasReady}
-              suggestions={suggestions}
-              canAsk={canAsk}
+              hasReady={chat.hasReady}
+              suggestions={chat.suggestions}
+              canAsk={chat.canAsk}
               citations={{ notebookId, onOpenCitation }}
             />
             <div ref={bottom} />
@@ -67,10 +62,10 @@ export const ChatPanel = memo(function ChatPanel({
         {!atEnd && <JumpToEndButton onClick={jumpToEnd} />}
       </div>
       <QuestionForm
-        usable={usable}
-        canAsk={canAsk}
+        usable={chat.usable}
+        canAsk={chat.canAsk}
         pending={ask.isPending}
-        hint={sources.isSuccess && usable === 0 ? NO_SOURCE_HINT : null}
+        hint={chat.hint}
         onAsk={ask.mutate}
         onStop={ask.stop}
       />
