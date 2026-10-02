@@ -14,8 +14,10 @@ import {
 import { ErrorNotice, QueryBoundary } from '@/components/query-boundary';
 import { ChatSkeleton } from '@/components/skeletons';
 import type { LiveAnswer, useAskQuestion } from '@/hooks/use-chat';
+import { useNotebook } from '@/hooks/use-notebooks';
 import type { Suggestions } from '@/hooks/use-overview';
 import { isSameDay } from '@/lib/day';
+import { notebookEmoji } from '@/lib/notebook-emoji';
 
 /** Whether a message at this time opens a new day of the conversation. */
 const startsDay = (previous: { createdAt: string } | undefined, createdAt: string) =>
@@ -24,6 +26,14 @@ const startsDay = (previous: { createdAt: string } | undefined, createdAt: strin
 interface Citations {
   notebookId: string;
   onOpenCitation: (chunkId: string) => void;
+}
+
+/** The placeholder of the chat with the symbol and title of the notebook, as far as they are known. */
+function LoadingChat({ notebookId }: { notebookId: string }) {
+  const notebook = useNotebook(notebookId).data;
+  return (
+    <ChatSkeleton emoji={notebook?.emoji ?? notebookEmoji(notebookId)} title={notebook?.title} />
+  );
 }
 
 /** The question that is being answered right now, with the answer as far as it has come. */
@@ -121,7 +131,7 @@ export function Conversation({
       <QueryBoundary
         query={history}
         // The overview has placeholders of its own while it loads, a second set would double them.
-        loading={hasReady ? null : <ChatSkeleton />}
+        loading={hasReady ? null : <LoadingChat notebookId={citations.notebookId} />}
         isEmpty={(messages) => messages.length === 0 && !ask.live}
         empty={
           <EmptyChat

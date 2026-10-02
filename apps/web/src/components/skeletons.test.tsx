@@ -17,7 +17,7 @@ describe('the placeholders', () => {
   it('announce themselves as loading', () => {
     for (const ui of [
       <SourceRowsSkeleton key="1" />,
-      <ChatSkeleton key="2" />,
+      <ChatSkeleton key="2" emoji="📚" />,
       <OutputRowsSkeleton key="3" />,
       <NotebookCardsSkeleton key="4" />,
       <PageBlank key="5" />,
@@ -30,25 +30,40 @@ describe('the placeholders', () => {
   });
 
   it('have the number of parts the original shows', () => {
-    expect(boxes(render(<ChatSkeleton />).container)).toHaveLength(8);
+    expect(boxes(render(<ChatSkeleton emoji="📚" />).container)).toHaveLength(7);
     expect(boxes(render(<OutputRowsSkeleton />).container)).toHaveLength(5);
     expect(boxes(render(<NotebookCardsSkeleton />).container)).toHaveLength(6);
     expect(boxes(render(<SourceRowsSkeleton />).container)).toHaveLength(9);
   });
 
   // The class is the feature: the cover and its placeholder must be the same size, or the page jumps.
-  it('hold a place for the cover of the notebook before the summary, in the size of the cover', () => {
-    const { container } = render(<ChatSkeleton />);
+  it('hold the place of the cover in its size, as an empty area and not as a shimmering block', () => {
+    const { container } = render(<ChatSkeleton emoji="📚" />);
 
-    expect(boxes(container)[0]?.className).toContain(COVER_BOX);
+    const area = container.querySelector(`.${COVER_BOX.split(' ')[0]}`);
+    expect(area?.className).toContain(COVER_BOX);
+    expect(area?.querySelector('[data-slot="skeleton"]')).toBeNull();
+  });
+
+  it('show the symbol and a title in the place of the cover, like the original', () => {
+    render(<ChatSkeleton emoji="🔬" />);
+
+    expect(screen.getByText('🔬')).toBeTruthy();
+    expect(screen.getByText('Notebook wird geladen …')).toBeTruthy();
+  });
+
+  it('show the title of the notebook when it is known', () => {
+    render(<ChatSkeleton emoji="🔬" title="Quartalsbericht" />);
+
+    expect(screen.getByText('Quartalsbericht')).toBeTruthy();
   });
 
   it('show no spinner beside the bars', () => {
-    expect(render(<ChatSkeleton />).container.querySelector('.animate-spin')).toBeNull();
+    expect(render(<ChatSkeleton emoji="📚" />).container.querySelector('.animate-spin')).toBeNull();
   });
 
   it('shimmer instead of pulsing', () => {
-    const { container } = render(<ChatSkeleton />);
+    const { container } = render(<ChatSkeleton emoji="📚" />);
 
     const first = boxes(container)[0];
     expect(first?.className).toContain('shimmer');

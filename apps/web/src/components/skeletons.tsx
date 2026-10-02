@@ -43,13 +43,24 @@ const TextBars = () =>
 export const COVER_BOX = '-mx-6 min-h-[200px] rounded-panel sm:min-h-[265px]';
 
 /**
- * The chat while its history loads, laid out like the overview that follows: the place of the cover,
- * then seven bars of text. No spinner (the bars already say it loads).
+ * The chat while its history loads, laid out like the overview that follows. Like in the original the
+ * cover is no block: its place stays empty, with the symbol and the title in the spot where the real
+ * ones arrive, so a quick load does not flash a large area. Only the seven bars of text are skeletons.
  */
-export function ChatSkeleton() {
+export function ChatSkeleton({ emoji, title }: { emoji: string; title?: string }) {
   return (
     <div className="-mt-2 flex flex-col" {...STATUS}>
-      <Skeleton className={COVER_BOX} />
+      <div className={`relative flex flex-col justify-end px-6 pb-6 ${COVER_BOX}`}>
+        <span
+          aria-hidden
+          className="absolute top-6 left-6 flex size-10 items-center justify-center text-[40px] leading-10"
+        >
+          {emoji}
+        </span>
+        <h3 className="text-[2.25rem] leading-[2.75rem] font-[320] break-words">
+          {title ?? 'Notebook wird geladen …'}
+        </h3>
+      </div>
       <div className="mt-6 flex flex-col gap-2">
         <TextBars />
       </div>

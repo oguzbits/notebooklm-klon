@@ -979,6 +979,14 @@ Der Platzhalter der Chat-Spalte (`ChatSkeleton`) hält jetzt den Platz des Cover
 echte Cover, geteilt statt kopiert) und die sieben Balken im selben Abstand darunter wie die Zusammenfassung; vorher sprang
 die Spalte, sobald das Cover erschien.
 
+### Platzhalter der Mitte ohne Block
+
+Nachgemessen am Original (Antwort künstlich verzögert): Der Platz des Covers bleibt leer, nur das Emoji, ein Text „Loading
+Notebook…" und die sieben Balken stehen da. Unser 265 hoher Schimmerblock blinkte dagegen bei schnellem Laden. `ChatSkeleton`
+zeigt jetzt denselben leeren Bereich (`COVER_BOX`, damit nichts springt) mit dem Emoji und dem Titel des Notebooks, soweit
+bekannt, sonst „Notebook wird geladen …"; nur die sieben Balken schimmern. Der schwebende Spinner des Originals bleibt
+weg (der Nutzer wollte ihn nicht, die Balken sagen schon, dass geladen wird).
+
 ### PDF-Link im URL-Import
 
 Der Abruf nimmt jetzt `application/pdf` an. Die Route behandelt die Antwort wie einen Upload (`checkBytes`, geteilt mit dem
