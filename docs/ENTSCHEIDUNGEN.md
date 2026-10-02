@@ -1219,3 +1219,11 @@ IPv4-Adresse im IPv6-Präfix (`2002:7f00:1::1` steckt 127.0.0.1); ob ein Router 
 vom Netz ab, daher werden sie ganz gesperrt statt nur mit privatem Inhalt. Öffentliche Ziele gehen
 praktisch nie über diese Präfixe. Neuer Index `sources_user_created_at_idx` auf `(user_id, created_at)`
 für die Zählung der neuen Quellen je Zeitraum (Migration `0022`).
+
+## 2026-10-02 (Schulden: Isolationstest, @types/node)
+
+Neuer DB-Test `notebook-source-repository.db.test.ts`: ein Fremder sieht und ändert nichts im Notebook
+des Besitzers, und Quellen lassen sich nicht über Nutzergrenzen verknüpfen. Beim Mutationstest überlebte
+`s.user_id` in `setReadySourcesSelected`, weil kein Test eine fremde Quelle im Notebook hatte; der Test
+legt dafür den Link direkt an. `@types/node` im Web steht auf ^24 wie im Root. `hono` im Web bleibt eine
+Laufzeit-Abhängigkeit, weil `hc` im Browser läuft.

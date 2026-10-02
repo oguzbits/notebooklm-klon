@@ -102,9 +102,11 @@ Die Schwächen liegen an den Rändern: **Zuverlässigkeit im Betrieb** (hängend
   lokales NAT64 (`64:ff9b:1::/48`) sind gesperrt.
 - Hash über rohe HTML-Bytes: dynamische Seiten dedupen nie.
 - ~~Kein Index auf `(user_id, created_at)` für die Kontingentzählung.~~ ✅ `sources_user_created_at_idx`.
-- `@types/node` uneinheitlich (Root ^24, Web ^26). `hono` im Web könnte `devDependency` sein.
+- ~~`@types/node` uneinheitlich~~ ✅ Web auf ^24 wie Root (`engines` verlangt Node >=24). `hono` im Web bleibt
+  `dependency`: `hc` aus `hono/client` läuft im Browser, es war kein Fehler.
   `pdf-lib` hat seit November 2021 kein Release mehr, funktioniert aber. Nur Patch-Updates offen.
-- Fehlende DB-Isolationsprüfung für das Notebook-Quellen-Repository.
+- ~~Fehlende DB-Isolationsprüfung für das Notebook-Quellen-Repository.~~ ✅ `notebook-source-repository.db.test.ts`;
+  jede `user_id`-Bedingung der Statements ist per Mutation geprüft (alle getötet).
 
 ## Doku-Widersprüche
 
