@@ -6,7 +6,7 @@ Sep 29, 2026 · @Oguz Öztürk
 
 Ziel ist ein NotebookLM-Klon in production-ready Qualität, abgegeben mit drei Artefakten: GitHub-Repo, Live-Deployment und ein Loom-Video von höchstens 10 Minuten, in dem du Vorgehen und Umsetzung erklärst und den Klon live testest.
 
-- **Aufgabe:** Everlast AI, zweite Runde. Umsetzung, Umfang und Struktur sind frei, die Nutzung von AI-Tools ist ausdrücklich erwünscht.
+- **Aufgabe:** Umsetzung, Umfang und Struktur sind frei, die Nutzung von AI-Tools ist ausdrücklich erwünscht.
 - **Beweisziel:** Du beherrschst den Stack eines Full-Stack-Engineers (React, Node.js, PostgreSQL, API-Design, LLM-Integration).
 - **Schwerpunkt:** AI-Kern (RAG, verifizierbare Zitate, Evals) und ein sichtbarer agentischer Workflow im Repo. Breite nur so weit nötig.
 - **Zeit:** 4 bis 5 volle Arbeitstage, die Frist beträgt eine Woche. Ziel ist, früh fertig zu sein und den Rest als Puffer zu behalten.
@@ -52,7 +52,7 @@ Wenige Funktionen in hoher Qualität schlagen viele halbfertige. Der Kern ist de
 (Quellen | Chat | Studio), mit Google Sans Flex (OFL) und den am Original gemessenen Farben, Rundungen und
 Abständen (neutrales Grau, Blau nur als Akzent), hell und dunkel.
 Logo und Name sind ausdrücklich erlaubt (Entscheidung des Nutzers); im Live-Demo steht ein Hinweis, dass es
-ein Nachbau für eine Bewerbung ist. Dazu:
+ein Nachbau ist. Dazu:
 
 - **Studio-Spalte:** Bericht (Briefing, FAQ, Lernleitfaden), Karteikarten, Quiz, Mindmap, Datentabelle (später ergänzt). Alle Ausgaben
   sind strukturiert, stützen sich auf die ausgewählten Quellen und folgen dem Zitat-Vertrag: Jeder
@@ -95,7 +95,7 @@ React-Frontend und Node.js-Backend in einem Monorepo, ein Container, Postgres mi
 
 | Bereich          | Wahl                                                                                                                      | Begründung / Alternative                                                                                                   |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Runtime, Sprache | Node.js LTS, pnpm-Workspaces, TypeScript strict, Zod in `packages/shared`                                                 | Everlast-Anzeige nennt Node.js und JavaScript. Bun bewusst nicht                                                           |
+| Runtime, Sprache | Node.js LTS, pnpm-Workspaces, TypeScript strict, Zod in `packages/shared`                                                 | Die Anforderungen nennen Node.js und JavaScript. Bun bewusst nicht                                                           |
 | Frontend         | React 19, Vite, React Router, TanStack Query, Tailwind, shadcn/ui, react-markdown                                         | Anzeige nennt React. Ein getrenntes Frontend zeigt API-Design sichtbar                                                     |
 | Backend          | Hono mit `@hono/zod-openapi`, SSE-Streaming, liefert auch das Frontend aus                                                | Typisierter RPC-Client und OpenAPI aus Zod-Schemas. Fastify, Express oder NestJS wären gleichwertig, Hono ist austauschbar |
 | Auth             | Better Auth mit Drizzle-Adapter                                                                                           | Nutzer in der eigenen Postgres. Supabase Auth bringt bei direkter DB-Verbindung keinen RLS-Vorteil                         |
@@ -107,7 +107,7 @@ React-Frontend und Node.js-Backend in einem Monorepo, ein Container, Postgres mi
 | LLM-Schicht      | Eigener schlanker Gemini-Client statt Vercel AI SDK (siehe ENTSCHEIDUNGEN), Modell-IDs und Limits in der Config                                                                        | Chat: Gemini 3.5 Flash-Lite (Spike entschieden, GPT-6 Luna ungemessen). Studio: 3.x Flash, Fallback Flash-Lite  |
 | Zitate           | Strukturierte Ausgabe mit Chunk-Nummern, Server prüft, dass die zitierten Chunks im Kontext waren                         | Anthropic-Citations verworfen (Kosten, Anbieter-Bindung)                                                                   |
 | Tests, Qualität  | Vitest, Playwright-Nutzerreisen, Eval-Skript, ESLint, Prettier, GitHub Actions                                                   | Tests ohne echte API-Aufrufe                                                                                               |
-| Hosting          | Hetzner Cloud: Docker Compose mit Caddy, App, Postgres und SeaweedFS, Deployment per GitHub Actions ([DEPLOYMENT.md](DEPLOYMENT.md)); noch nicht live | Läuft dauerhaft, kein Kaltstart. Render und Vercel verworfen (siehe ENTSCHEIDUNGEN)                                  |
+| Hosting          | Hetzner Cloud: Docker Compose mit Caddy, App, Postgres und SeaweedFS, Deployment per GitHub Actions ([DEPLOYMENT.md](DEPLOYMENT.md)); live seit 2026-10-02 | Läuft dauerhaft, kein Kaltstart. Render und Vercel verworfen (siehe ENTSCHEIDUNGEN)                                  |
 
 **Abgrenzung zu notar-agent:** Übernommen werden Zod, Drizzle, pgvector und das Hybrid-Retrieval mit RRF. Neu bzw. geändert sind Auth, Queue (pg-boss statt Eigenbau), Parsing (Gemini statt liteparse plus mammoth für alles) und der Verzicht auf Supabase.
 

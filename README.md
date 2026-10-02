@@ -2,11 +2,11 @@
 
 Ein Notebook, das nur auf deinen eigenen Quellen antwortet und jede Aussage mit einer Nummer belegt. Ein Klick auf die Nummer öffnet den Quelltext an der zitierten Stelle.
 
-Bewerbungsaufgabe für Everlast AI (zweite Runde). Der Schwerpunkt liegt auf dem Weg von der Quelle zum nachprüfbaren Zitat: Aufnahme, Suche, Antwort mit geprüften Zitaten, Auswertung. Die Oberfläche ist deutsch, Quellen und Fragen dürfen englisch sein.
+Nachbau von NotebookLM. Der Schwerpunkt liegt auf dem Weg von der Quelle zum nachprüfbaren Zitat: Aufnahme, Suche, Antwort mit geprüften Zitaten, Auswertung. Die Oberfläche ist deutsch, Quellen und Fragen dürfen englisch sein.
 
 |             |                                                                                                                                                                  |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Live-Demo   | _wird nach dem Deployment eingetragen_                                                                                                                           |
+| Live-Demo   | https://128-140-11-37.sslip.io                                                                                                                                   |
 | Demo-Zugang | Auf der Anmeldeseite **„Demo ausprobieren“**: ein Gastkonto mit einer eigenen Kopie des Demo-Notebooks, ohne E-Mail und Passwort. Es wird nach 7 Tagen gelöscht. |
 | Video       | _Loom-Link folgt_                                                                                                                                                |
 
@@ -58,7 +58,7 @@ flowchart LR
   Worker -- "PDF lesen, einbetten" --> Gemini
 ```
 
-Das Diagramm zeigt die geplante Produktion (noch nicht live, siehe „Deployment“); lokal laufen Postgres und der Speicher aus `pnpm db:up`. Das Frontend wird vom selben Prozess ausgeliefert wie die API (`WEB_DIST_DIR`), im Entwicklungsbetrieb leitet Vite `/api` weiter. Es gibt deshalb nur eine Origin, kein CORS und keine zweite Liste vertrauter Adressen.
+Das Diagramm zeigt die Produktion (siehe „Deployment“); lokal laufen Postgres und der Speicher aus `pnpm db:up`. Das Frontend wird vom selben Prozess ausgeliefert wie die API (`WEB_DIST_DIR`), im Entwicklungsbetrieb leitet Vite `/api` weiter. Es gibt deshalb nur eine Origin, kein CORS und keine zweite Liste vertrauter Adressen.
 
 ### Schichten
 

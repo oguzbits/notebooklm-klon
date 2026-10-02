@@ -87,4 +87,4 @@ chmod 600 "$app_dir/s3.json"
 echo '15 3 * * * deploy /srv/nlm/backup.sh >> /srv/nlm/backup.log 2>&1' > /etc/cron.d/nlm-backup
 chmod 644 /etc/cron.d/nlm-backup
 
-echo "Done. Next: fill in the FILL_IN values in $app_dir/server.env, then push to main."
+echo "Done. Next: fill in the FILL_IN values in $app_dir/server.env (deploy/provision.sh does it), then run the Deploy workflow."
