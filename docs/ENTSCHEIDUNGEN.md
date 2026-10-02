@@ -865,3 +865,11 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
   lokalen Env-Datei und gehen nur über SSH-stdin auf den Server. Das Skript löst den Deploy nicht aus, weil `deploy.yml` erst
   nach dem Merge auf `main` startbar ist. Die Merge-Logik für `server.env` wurde lokal mit Testwerten geprüft, das ganze Skript
   noch nicht gegen einen echten Server. `hcloud` (Server buchen) bleibt bewusst draußen: braucht einen API-Token und kostet Geld.
+- **Client-IP hinter Caddy: keine Codeänderung nötig (2026-10-02).** Verdacht war, dass Better Auth die IP hinter dem Proxy nicht
+  erkennt und alle Besucher einen gemeinsamen Rate-Limit-Zähler pro Pfad teilen. Geprüft: Better Auth 1.7.6 liest
+  `X-Forwarded-For` und vertraut ohne `trustedProxies` nur einem Header mit einem einzigen Wert. Caddy 2.11.4 (`reverse_proxy`,
+  keine `trusted_proxies`) ersetzt den Header durch genau die Client-IP; ein vom Client mitgeschickter Wert, auch eine Kette, kommt
+  nicht durch (lokal mit dem Image aus `docker-compose.prod.yml` nachgestellt). Die App ist nur über Caddy erreichbar (nur 80 und
+  443 sind veröffentlicht). `trustedProxies` wäre hier unnötig und würde bei falschem Subnetz mehr kaputt machen. **Neu prüfen,
+  wenn ein weiterer Proxy davorgeschaltet wird** (zum Beispiel Cloudflare): dann kommt eine Kette an, und Caddy braucht
+  `trusted_proxies`.
