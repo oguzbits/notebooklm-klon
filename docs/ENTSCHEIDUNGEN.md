@@ -928,5 +928,7 @@ Repository ist. Ein Pull Request aus einem Fork kann so keinen Lauf auslösen, d
 `deploy/Caddyfile` setzt HSTS (ein Jahr, ohne `includeSubDomains`/`preload`, weil die Domain eine sslip.io-Adresse ist),
 `nosniff`, `Referrer-Policy`, `Permissions-Policy` und eine CSP: alles nur von der eigenen Herkunft, `object-src 'none'`,
 `frame-ancestors 'none'`. `style-src` braucht `'unsafe-inline'`, weil React `style`-Attribute setzt (Mindmap, Spalten);
-Skripte laufen nie inline. Schriften sind selbst gehostet (`@fontsource`). Geprüft mit `caddy validate` und nach dem Deploy
-im Browser (Konsole ohne CSP-Verstöße).
+Skripte laufen nie inline. Schriften sind selbst gehostet (`@fontsource`); Vite bettet die kleinste Teilmenge als `data:`-URL ein, darum steht
+`data:` in `font-src`. Die Browser-Prüfung nach dem Deploy zeigte nur diesen Verstoß und ein `eval` in Zods
+JIT-Erkennung (`Function('')` in try/catch, fällt ohne `eval` auf den normalen Pfad zurück): `unsafe-eval` bleibt
+deshalb verboten. Geprüft mit `caddy validate` und im Browser.
