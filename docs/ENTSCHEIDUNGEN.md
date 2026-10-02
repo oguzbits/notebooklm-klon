@@ -917,3 +917,8 @@ durch. Jetzt gibt es einen Port `sources.findOrCreate`: eine Transaktion mit `pg
 `createSourceStorage(db, { enforceQuota })`: Seed und Eval-Skripte laufen mit `false`, die API mit `true`. `db/quota.ts`
 entfällt. Der Sperr-Test öffnet vorher mehrere Verbindungen, sonst liefe er auf einer warmen Verbindung nacheinander und
 würde ohne Sperre trotzdem bestehen (per Handmutation geprüft).
+
+### H3: Deploy nur nach einem Push in dieses Repository
+
+Die Bedingung in `deploy.yml` verlangt zusätzlich `workflow_run.event == 'push'` und dass das Head-Repository dieses
+Repository ist. Ein Pull Request aus einem Fork kann so keinen Lauf auslösen, der auf den Server liefert.

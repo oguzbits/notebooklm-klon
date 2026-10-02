@@ -22,7 +22,13 @@ concurrency:
 jobs:
   deploy:
     name: Build, ship and start
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    # Only a CI run of a push to this repository deploys: a pull request from a fork also ends up as
+    # a workflow_run on main and must never reach the server.
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' || (
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository) }}
     runs-on: ubuntu-latest
     env:
       TARGET: deploy@${{ secrets.DEPLOY_HOST }}
