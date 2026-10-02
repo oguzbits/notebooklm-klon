@@ -108,28 +108,46 @@ test('a report from a template shows its sections, each statement cited', async 
   await expect(library(page).getByRole('button', { name: /Überblick/ })).toBeVisible();
 });
 
-for (const tile of ['Karteikarten', 'Quiz']) {
-  test(`every option of the ${tile} dialog is fully visible on a desktop screen`, async ({
-    page,
-  }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await page.getByRole('button', { name: tile, exact: true }).click();
-    const dialog = page.getByRole('dialog');
-    const groups = dialog.getByRole('radiogroup');
-    await expect(groups.first()).toBeVisible();
+// From a phone to a wide desktop: the bars are one column or two, but never cut off or on top of each other.
+const SCREEN_WIDTHS = [320, 390, 679, 768, 1024, 1440];
 
-    // The width of the text depends on the loaded font; scrollWidth is in layout pixels, so the zoom-in
-    // animation of the dialog does not distort it.
-    await page.evaluate(() => document.fonts.ready);
-    const bars = await groups.evaluateAll((elements) =>
-      elements.map((group) => ({ scrollWidth: group.scrollWidth, clientWidth: group.clientWidth }))
-    );
-    expect(bars.length).toBeGreaterThan(0);
-    // Nothing may be cut off: the options together are not wider than the bar that holds them.
-    for (const bar of bars) {
-      expect(bar.scrollWidth).toBeLessThanOrEqual(bar.clientWidth);
-    }
-  });
+for (const tile of ['Karteikarten', 'Quiz']) {
+  for (const width of SCREEN_WIDTHS) {
+    test(`every option of the ${tile} dialog is fully visible on a screen ${width}px wide`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 900 });
+      const studioTab = page.getByRole('tab', { name: 'Studio' });
+      if (await studioTab.isVisible()) await studioTab.click();
+      await page.getByRole('button', { name: tile, exact: true }).click();
+      const dialog = page.getByRole('dialog');
+      const groups = dialog.getByRole('radiogroup');
+      await expect(groups.first()).toBeVisible();
+
+      // The width of the text depends on the loaded font; scrollWidth is in layout pixels, so the zoom-in
+      // animation of the dialog does not distort it.
+      await page.evaluate(() => document.fonts.ready);
+      const bars = await groups.evaluateAll((elements) =>
+        elements.map((group) => ({
+          scrollWidth: group.scrollWidth,
+          clientWidth: group.clientWidth,
+          columnWidth: group.closest('[role="dialog"]')?.clientWidth ?? 0,
+        }))
+      );
+      expect(bars.length).toBeGreaterThan(0);
+      // Nothing may be cut off: the options together are not wider than the bar that holds them, and the
+      // bar not wider than the dialog.
+      for (const bar of bars) {
+        expect(bar.scrollWidth).toBeLessThanOrEqual(bar.clientWidth);
+        expect(bar.clientWidth).toBeLessThanOrEqual(bar.columnWidth);
+      }
+      const document_ = await page.evaluate(() => ({
+        scrollWidth: document.documentElement.scrollWidth,
+        clientWidth: document.documentElement.clientWidth,
+      }));
+      expect(document_.scrollWidth).toBeLessThanOrEqual(document_.clientWidth);
+    });
+  }
 }
 
 const DIALOG_TILES = ['Berichte', 'Karteikarten', 'Quiz', 'Mindmap', 'Datentabelle'];

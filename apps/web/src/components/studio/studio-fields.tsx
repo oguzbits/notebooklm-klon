@@ -53,12 +53,12 @@ export function SegmentedField<T extends string>({
               aria-checked={selected}
               onClick={() => onChange(option.value)}
               className={cn(
-                'veil flex h-10 items-center gap-2 px-3 text-ui font-label whitespace-nowrap first:rounded-l-full last:rounded-r-full',
+                'veil flex min-h-10 min-w-0 flex-auto items-center justify-center gap-2 px-2 py-1 text-center wrap-anywhere hyphens-auto sm:px-3 text-ui font-label first:rounded-l-full last:rounded-r-full',
                 index > 0 && 'border-l border-border',
                 selected && 'bg-accent'
               )}
             >
-              {selected && <Check className="size-5" aria-hidden />}
+              {selected && <Check className="size-5 shrink-0" aria-hidden />}
               {option.label}
             </button>
           );

@@ -172,7 +172,7 @@ function SizeFields({ kind, size, difficulty, onSize, onDifficulty }: SizeFields
     { value: STUDIO_SIZE.MORE, label: 'Mehr' },
   ];
   return (
-    <div className="grid gap-6 sm:grid-cols-2">
+    <div className="grid grid-cols-1 gap-6 @min-[52rem]:grid-cols-2">
       <SegmentedField
         label={COUNT_LABEL[kind]}
         options={sizeOptions}
@@ -209,7 +209,7 @@ function CreateForm({ kind, sources, onSubmit }: CreateFormProps) {
 
   return (
     <>
-      <div className="flex flex-col gap-7 px-7 pt-6 pb-8">
+      <div className="@container flex flex-col gap-7 px-5 pt-6 pb-8 sm:px-7">
         {kind === STUDIO_KIND.REPORT && <TemplateCards value={format} onChange={setFormat} />}
         {isCountable(kind) && (
           <SizeFields
@@ -266,6 +266,7 @@ export function CreateDialog({ kind, sources, onCreate, children }: CreateDialog
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
         ref={content}
+        card
         className="gap-0 p-0 sm:max-w-[894px]"
         closeClassName="top-7 right-7 size-12 bg-accent text-foreground"
         // The dialog itself takes the focus, so no choice shows a ring before anything was done.
@@ -274,7 +275,7 @@ export function CreateDialog({ kind, sources, onCreate, children }: CreateDialog
           content.current?.focus();
         }}
       >
-        <DialogHeader className="flex-row items-center gap-3 px-7 pt-7 pb-1">
+        <DialogHeader className="flex-row items-center gap-3 px-5 pt-7 pb-1 sm:px-7">
           <Icon className={cn('size-6', KIND_COLOR[kind])} aria-hidden />
           <DialogTitle className="text-[1.25rem] leading-6 font-title">
             {DIALOG_TITLE[kind]}
