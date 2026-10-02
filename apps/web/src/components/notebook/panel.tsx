@@ -55,9 +55,9 @@ function PanelHeader({ title, left, bare, header, action, onToggle }: PanelHeade
     <header
       className={cn(
         'flex h-9 shrink-0 items-center justify-between pr-0.5 pl-3',
-        // The switch above the columns names a panel below the wide layout, but a path back
-        // is not a name: it stays.
-        !header && 'max-wide:hidden',
+        // The switch above the columns names a panel below the wide layout, but a path back and
+        // a button the content brings (the reader's close button) are not a name: they stay.
+        !header && !action && 'max-wide:hidden',
         bare && 'sr-only'
       )}
     >

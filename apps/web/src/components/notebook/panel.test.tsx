@@ -41,6 +41,29 @@ describe('Panel', () => {
 
     expect(screen.getByText('Studio › Notiz')).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'Studio' })).toBeNull();
+    // The class is the feature: a path back must stay reachable below the wide layout.
+    expect(screen.getByRole('banner', { hidden: true }).className).not.toContain('max-wide:hidden');
+  });
+
+  // jsdom applies no CSS, so the class that hides the header below the wide layout is the feature here.
+  it('hides the plain header below the wide layout, where the switch above names the panel', () => {
+    renderWithProviders(
+      <Panel title="Quellen" side="left" onToggle={() => {}}>
+        Inhalt
+      </Panel>
+    );
+
+    expect(screen.getByRole('banner', { hidden: true }).className).toContain('max-wide:hidden');
+  });
+
+  it('keeps the header below the wide layout when the content brings a button, so the reader can be closed', () => {
+    renderWithProviders(
+      <Panel title="Quellen" side="left" onToggle={() => {}} action={<button>Schließen</button>}>
+        Inhalt
+      </Panel>
+    );
+
+    expect(screen.getByRole('banner', { hidden: true }).className).not.toContain('max-wide:hidden');
   });
 
   it('keeps its content when it folds, so nothing is lost and the move can be animated', () => {

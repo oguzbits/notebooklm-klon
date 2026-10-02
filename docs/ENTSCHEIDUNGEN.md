@@ -932,3 +932,11 @@ Skripte laufen nie inline. Schriften sind selbst gehostet (`@fontsource`); Vite 
 `data:` in `font-src`. Die Browser-Prüfung nach dem Deploy zeigte nur diesen Verstoß und ein `eval` in Zods
 JIT-Erkennung (`Function('')` in try/catch, fällt ohne `eval` auf den normalen Pfad zurück): `unsafe-eval` bleibt
 deshalb verboten. Geprüft mit `caddy validate` und im Browser.
+
+### H6: Reader auf schmalem Bildschirm schließen
+
+Im Browser bei 390 px bestätigt: Der Kopf eines Panels war unter der breiten Ansicht ausgeblendet, sobald kein `header`
+gesetzt war. Der Schließen-Button des Readers kommt als `action` und war damit weg; über die Reiter (Quellen, Chat,
+Studio) kam man nicht zurück zur Quellenliste. Der Kopf bleibt jetzt auch mit `action` sichtbar (`panel.tsx`). Die Tests
+prüfen die Klasse, weil jsdom kein CSS anwendet und die Klasse hier das Verhalten ist (Handmutation beider Teilbedingungen
+geprüft).
