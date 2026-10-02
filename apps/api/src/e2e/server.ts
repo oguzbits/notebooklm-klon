@@ -98,6 +98,9 @@ const ingest: SubmitPorts = {
     parseImage: async () => {
       throw new Error('Images need the provider and cannot be read offline.');
     },
+    parseAudio: async () => {
+      throw new Error('Recordings need the provider and cannot be read offline.');
+    },
   }),
   embed: async (texts) => texts.map((text) => hashEmbedding(text, EMBEDDING_DIMENSIONS)),
 };

@@ -15,4 +15,14 @@ describe('SourceKindIcon', () => {
 
     expect(container.querySelector('text')?.textContent).toBe(mark);
   });
+
+  it('draws a symbol without a mark for a recording, a web page and an image', () => {
+    for (const kind of [SOURCE_KIND.AUDIO, SOURCE_KIND.URL, SOURCE_KIND.IMAGE]) {
+      const { container, unmount } = render(<SourceKindIcon kind={kind} />);
+
+      expect(container.querySelector('svg')).not.toBeNull();
+      expect(container.querySelector('text')).toBeNull();
+      unmount();
+    }
+  });
 });

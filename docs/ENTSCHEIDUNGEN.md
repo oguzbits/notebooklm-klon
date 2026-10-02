@@ -1169,3 +1169,17 @@ been declared`): Die Node-Fassung von `fflate` importiert selbst `createRequire`
 gegriffen, die Seite blieb auf der alten Fassung. Behoben, indem das Banner den Import umbenennt (`bundleRequire`). Damit das nicht wieder
 erst im Deploy auffällt, baut `bundle.test.ts` das Bundle und startet es mit leerer Umgebung: Es muss bei der Prüfung der Konfiguration
 anhalten, nicht an einem Syntaxfehler (Test geprüft: mit dem alten Banner schlägt er fehl).
+
+## 2026-10-02 (Audio als Quelle)
+
+Neue Quellenart `AUDIO` (Vertrag in `packages/shared`, Migration `0020` ergänzt den Enum-Wert), erlaubt sind MP3 und WAV. **Gelesen wird mit
+Gemini**, derselben Anbindung wie bei PDF und Bildern: Die Aufnahme geht inline in die Anfrage, der Prompt verlangt die wörtliche
+Mitschrift der Sprache mit „Sprecher 1:“-Marken und, wo keine Sprache ist, eine kurze Beschreibung des Klangs. Eine Sprechertrennung
+ist damit nicht zugesichert. **Dateiart nach Inhalt** (`core/audio-type.ts`): ID3-Kopf oder Layer-3-Rahmen gibt MP3, `RIFF` mit `WAVE`
+gibt WAV; die Endung allein zählt nicht, wie bei den anderen Dateien. **Grenzen:** Das Upload-Limit von 10 MB bleibt, das sind rund
+10 Minuten MP3 oder rund eine Minute WAV. Gemini zählt Audio mit 32 Token je Sekunde; für die Ratenbegrenzung gilt 125 Byte je Token
+(MP3 mit 128 kbit/s hat 16 kB/s, also 4 Token je 125 Byte, grob geschätzt und für WAV zu niedrig, was der Begrenzer nur vorsichtiger
+macht). Das Zeitlimit ist 300 s (`AUDIO_PARSE_TIMEOUT_MS`), weil die Mitschrift länger dauert als bei einer Seite. Die Files-API für
+längere Aufnahmen ist nicht gebaut (YAGNI, zwei Wege hätten zwei Fehlerbilder). Symbol: `AudioLines`.
+Tests: `audio-type.test.ts`, `file-kind`, `gemini-pdf-parser` (Inline, Zeitlimit, Ratenbegrenzer), `parse-source`, Oberfläche
+(`add-source`, `kind-icon`). Mutationen an Token-Schätzung, Zeitlimit und Erkennung getötet.

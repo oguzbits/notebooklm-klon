@@ -37,7 +37,7 @@ Wenige Funktionen in hoher Qualität schlagen viele halbfertige. Der Kern ist de
 **Must**
 
 1. Anmeldung und Notebooks anlegen, auflisten, löschen.
-2. Quellen hinzufügen: PDF, DOCX, PPTX, TXT/MD und URL. Die Verarbeitung läuft asynchron mit Status und verständlichen Fehlermeldungen.
+2. Quellen hinzufügen: PDF, DOCX, PPTX, Bilder, Aufnahmen (MP3, WAV), TXT/MD und URL. Die Verarbeitung läuft asynchron mit Status und verständlichen Fehlermeldungen.
 3. Chat mit Streaming, der nur auf den gewählten Quellen antwortet, mit nummerierten Zitaten. Hover zeigt das Popup, Klick öffnet den Quelltext mit Chunk-Hervorhebung.
 4. Quellen an- und abwählen. Die Auswahl begrenzt auch das Retrieval.
 5. Quellenübersicht pro Quelle (Zusammenfassung und Schlüsselthemen).
@@ -66,14 +66,14 @@ ein Nachbau ist. Dazu:
 
 **Stretch**
 
-- PPTX als Quelle (gebaut, siehe [ENTSCHEIDUNGEN.md](ENTSCHEIDUNGEN.md)).
+- PPTX und Aufnahmen (MP3, WAV) als Quelle (gebaut, siehe [ENTSCHEIDUNGEN.md](ENTSCHEIDUNGEN.md)).
 - Agentische Suche im Chat, nur wenn Zeit bleibt.
 
 **Bewusst nicht**
 
 - Audio- und Video-Overview, Infografik, Präsentation, Deep Research.
 - Später ergänzt (Runde 4): eine schnelle Websuche mit Tavily (ohne Deep Research) und ein Titelbild im S3-Speicher; siehe [ENTSCHEIDUNGEN.md](ENTSCHEIDUNGEN.md).
-- Sharing und Kollaboration, YouTube- oder Audio-Transkription, Drive-Anbindung. Eine eigene Handy-App entfällt; die Seite selbst hat ein Handy-Layout (Tabs).
+- Sharing und Kollaboration, YouTube-Transkription, Drive-Anbindung. Eine eigene Handy-App entfällt; die Seite selbst hat ein Handy-Layout (Tabs).
 - Originaldateien speichern (nur extrahierter Text plus Metadaten).
 
 **Qualitätsanforderungen (production-ready)**
@@ -101,7 +101,7 @@ React-Frontend und Node.js-Backend in einem Monorepo, ein Container, Postgres mi
 | Auth             | Better Auth mit Drizzle-Adapter                                                                                           | Nutzer in der eigenen Postgres. Supabase Auth bringt bei direkter DB-Verbindung keinen RLS-Vorteil                         |
 | Datenbank        | PostgreSQL mit pgvector (HNSW), Postgres-Volltextsuche, Drizzle ORM; in Produktion ein Container auf dem Hetzner-Server | Eine Datenbank für alles; Neon und Render-Postgres verworfen (schlafen im Gratis-Tarif ein beziehungsweise laufen nach 30 Tagen ab)               |
 | Jobs             | pg-boss                                                                                                                   | Etablierte Postgres-Queue statt Eigenbau. Braucht eine direkte Verbindung, kein PgBouncer                                                    |
-| Parsing          | PDF: Gemini 3.1 Flash-Lite (Spike entschieden, [Ergebnisse](SPIKE-ERGEBNISSE.md)). DOCX: mammoth. PPTX: fflate + XML (Folientext, Tabellen, Notizen). TXT/MD direkt. URL: Readability. DOCX und URL werden als Markdown gespeichert (Links, Fett, Tabellen), TXT bleibt Klartext. Fallback: liteparse | ParseBench (Tabellen / Inhaltstreue): Gemini 3.1 Flash-Lite 85,5 / 89,5, Docling 66,4 / 66,9, LiteParse 42,4 / 70,0        |
+| Parsing          | PDF: Gemini 3.1 Flash-Lite (Spike entschieden, [Ergebnisse](SPIKE-ERGEBNISSE.md)). DOCX: mammoth. PPTX: fflate + XML (Folientext, Tabellen, Notizen). Audio: Gemini transkribiert wörtlich (inline, bis 10 MB). TXT/MD direkt. URL: Readability. DOCX und URL werden als Markdown gespeichert (Links, Fett, Tabellen), TXT bleibt Klartext. Fallback: liteparse | ParseBench (Tabellen / Inhaltstreue): Gemini 3.1 Flash-Lite 85,5 / 89,5, Docling 66,4 / 66,9, LiteParse 42,4 / 70,0        |
 | Embeddings       | Gemini Embedding 2 mit 768 Dimensionen, Fallback `gemini-embedding-001`                                                   | Limits bekannt (RPM 100, TPM 30K, RPD 1000), im Spike gleichauf mit 001 (17 gegen 16 von 18). Die Vektorräume beider Modelle sind inkompatibel                              |
 | Retrieval        | pgvector plus Volltextsuche, Fusion per RRF in SQL                                                                        | Hybrid fängt Eigennamen und Zahlen, die Vektorsuche verfehlt (im Spike ein Fehltreffer, der zu einer falschen Antwort führte)                                                               |
 | LLM-Schicht      | Eigener schlanker Gemini-Client statt Vercel AI SDK (siehe ENTSCHEIDUNGEN), Modell-IDs und Limits in der Config                                                                        | Chat: Gemini 3.5 Flash-Lite (Spike entschieden, GPT-6 Luna ungemessen). Studio: 3.x Flash, Fallback Flash-Lite  |

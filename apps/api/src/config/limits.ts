@@ -22,6 +22,8 @@ export const LIMITS = {
   CHAT_CONTEXT_CHUNKS: 8,
   /** Parsing: longest wait for one model to read a PDF. Without it a stalled call hangs for 5 min. */
   PARSE_TIMEOUT_MS: 120_000,
+  /** Parsing: longest wait for one model to transcribe a recording, which it takes in real time. */
+  AUDIO_PARSE_TIMEOUT_MS: 300_000,
   /** Chat: longest wait for one model answer, stream included. Without it a stalled stream hangs. */
   CHAT_TIMEOUT_MS: 120_000,
   /** Embedding: longest wait for one embedding request. */

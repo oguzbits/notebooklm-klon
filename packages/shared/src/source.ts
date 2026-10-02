@@ -8,6 +8,7 @@ export const SOURCE_KIND = {
   MD: 'MD',
   URL: 'URL',
   IMAGE: 'IMAGE',
+  AUDIO: 'AUDIO',
 } as const;
 
 export const SOURCE_STATUS = {

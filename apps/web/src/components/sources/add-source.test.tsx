@@ -44,6 +44,16 @@ describe('AddSource', () => {
     expect(screen.getByText(/Bild \(PNG, JPG, WEBP\)/)).toBeTruthy();
   });
 
+  it('lets the file chooser offer recordings, and says so', () => {
+    renderWithProviders(<AddSource notebookId={NOTEBOOK_ID} />);
+
+    const accepted = screen.getByLabelText('Datei auswählen').getAttribute('accept') ?? '';
+    for (const extension of ['.mp3', '.wav']) {
+      expect(accepted.split(',')).toContain(extension);
+    }
+    expect(screen.getByText(/Aufnahme \(MP3, WAV\)/)).toBeTruthy();
+  });
+
   it('sends the web address and clears the field when it was accepted', async () => {
     let body: unknown;
     server.use(

@@ -1,5 +1,6 @@
 import { SOURCE_KIND, type SourceKind } from '@nlm/shared';
 
+import { detectAudioType } from '../core/audio-type';
 import { detectImageType } from '../core/image-type';
 import type { IngestPorts, ParsedDocument } from '../ingestion/ingest';
 import { parseDocx } from './parse-docx';
@@ -7,10 +8,11 @@ import { parsePptx } from './parse-pptx';
 import { parseText } from './parse-text';
 import { parseWebPage } from './parse-web';
 
-/** Picks the parser for a source kind. Only PDFs and images need a provider call, so those readers are passed in. */
+/** Picks the parser for a source kind. Only PDFs, images and recordings need a provider call, so those readers are passed in. */
 export function createParseSource(provider: {
   parse: (bytes: Uint8Array) => Promise<ParsedDocument>;
   parseImage: (bytes: Uint8Array, mimeType: string) => Promise<ParsedDocument>;
+  parseAudio: (bytes: Uint8Array, mimeType: string) => Promise<ParsedDocument>;
 }): IngestPorts['parse'] {
   return (kind: SourceKind, bytes: Uint8Array) => {
     switch (kind) {
@@ -18,6 +20,8 @@ export function createParseSource(provider: {
         return provider.parse(bytes);
       case SOURCE_KIND.IMAGE:
         return readImage(provider, bytes);
+      case SOURCE_KIND.AUDIO:
+        return readAudio(provider, bytes);
       case SOURCE_KIND.DOCX:
         return parseDocx(bytes);
       case SOURCE_KIND.PPTX:
@@ -40,6 +44,15 @@ async function readImage(
   const mimeType = detectImageType(bytes);
   if (mimeType === null) throw new Error('The bytes of an image source are not an image.');
   return provider.parseImage(bytes, mimeType);
+}
+
+async function readAudio(
+  provider: { parseAudio: (bytes: Uint8Array, mimeType: string) => Promise<ParsedDocument> },
+  bytes: Uint8Array
+) {
+  const mimeType = detectAudioType(bytes);
+  if (mimeType === null) throw new Error('The bytes of an audio source are not audio.');
+  return provider.parseAudio(bytes, mimeType);
 }
 
 function assertNever(value: never): never {

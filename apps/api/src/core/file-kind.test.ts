@@ -10,6 +10,8 @@ const TEXT = new TextEncoder().encode('Hallo');
 const PNG = bytes(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a);
 const JPEG = bytes(0xff, 0xd8, 0xff, 0xe0);
 const WEBP = bytes(0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50);
+const MP3 = bytes(0x49, 0x44, 0x33, 4, 0);
+const WAV = bytes(0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x41, 0x56, 0x45);
 
 describe('detectSourceKind', () => {
   it('accepts a PDF only when the name and the content agree', () => {
@@ -38,6 +40,14 @@ describe('detectSourceKind', () => {
     expect(detectSourceKind('seite.png', new TextEncoder().encode('<html><script>'))).toBeNull();
     // The name says JPEG, the content is a PNG: still an image the model can read, but the kinds agree on "image".
     expect(detectSourceKind('foto.jpg', PNG)).toBe(SOURCE_KIND.IMAGE);
+  });
+
+  it('accepts an MP3 or WAV recording only when the name and the content agree', () => {
+    expect(detectSourceKind('gespraech.mp3', MP3)).toBe(SOURCE_KIND.AUDIO);
+    expect(detectSourceKind('Aufnahme.WAV', WAV)).toBe(SOURCE_KIND.AUDIO);
+    expect(detectSourceKind('gespraech.mp3', TEXT)).toBeNull();
+    // A WebP is a RIFF too, but not audio.
+    expect(detectSourceKind('bild.wav', WEBP)).toBeNull();
   });
 
   it('accepts text and Markdown by extension', () => {

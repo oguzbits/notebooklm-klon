@@ -2,6 +2,7 @@ import { SOURCE_KIND } from '@nlm/shared';
 import { strToU8, zipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
 
+import { AUDIO_MIME } from '../core/audio-type';
 import { createParseSource } from './parse-source';
 
 const encode = (text: string) => new TextEncoder().encode(text);
@@ -11,6 +12,7 @@ const NO_TEXT = { text: '', pageCount: null };
 const provider = (parts: Partial<Parameters<typeof createParseSource>[0]>) => ({
   parse: async () => NO_TEXT,
   parseImage: async () => NO_TEXT,
+  parseAudio: async () => NO_TEXT,
   ...parts,
 });
 
@@ -90,6 +92,31 @@ describe('createParseSource', () => {
     const parse = createParseSource(provider({}));
 
     await expect(parse(SOURCE_KIND.IMAGE, encode('<html>'))).rejects.toThrow(/not an image/);
+  });
+
+  it('hands a recording to the audio reader with the type its first bytes name', async () => {
+    let received: { bytes: Uint8Array; mimeType: string } | undefined;
+    const parse = createParseSource(
+      provider({
+        parseAudio: async (bytes, mimeType) => {
+          received = { bytes, mimeType };
+          return { text: 'Gesprochener Text', pageCount: null };
+        },
+      })
+    );
+    const mp3 = new Uint8Array([0x49, 0x44, 0x33, 4, 0]);
+
+    expect(await parse(SOURCE_KIND.AUDIO, mp3)).toEqual({
+      text: 'Gesprochener Text',
+      pageCount: null,
+    });
+    expect(received).toEqual({ bytes: mp3, mimeType: AUDIO_MIME.MP3 });
+  });
+
+  it('fails when the bytes of an audio source are not audio, instead of guessing a type', async () => {
+    const parse = createParseSource(provider({}));
+
+    await expect(parse(SOURCE_KIND.AUDIO, encode('<html>'))).rejects.toThrow(/not audio/);
   });
 
   it('never calls the PDF parser for other kinds', async () => {

@@ -11,7 +11,7 @@ export const ERROR_MESSAGE: Record<ApiErrorCode, string> = {
   [API_ERROR.INVALID_REQUEST]: 'Die Eingabe ist nicht gültig.',
   [API_ERROR.FILE_TOO_LARGE]: 'Die Datei ist zu groß. Erlaubt sind höchstens 10 MB.',
   [API_ERROR.UNSUPPORTED_FILE]:
-    'Dieses Dateiformat wird nicht unterstützt. Erlaubt sind PDF, DOCX, PPTX, TXT, MD und Bilder (PNG, JPG, WEBP).',
+    'Dieses Dateiformat wird nicht unterstützt. Erlaubt sind PDF, DOCX, PPTX, TXT, MD, Bilder (PNG, JPG, WEBP) und Aufnahmen (MP3, WAV).',
   [API_ERROR.TOO_MANY_PAGES]: 'Das PDF hat zu viele Seiten. Erlaubt sind höchstens 50 Seiten.',
   [API_ERROR.NO_SOURCES_SELECTED]:
     'Wähle mindestens eine Quelle aus, die schon fertig gelesen wurde.',

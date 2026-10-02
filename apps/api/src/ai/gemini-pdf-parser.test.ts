@@ -1,7 +1,8 @@
 import { delay, http, HttpResponse } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { server } from '../../../../vitest.setup';
+import { LIMITS } from '../config/limits';
 import { GeminiError } from './gemini-error';
 import { createGeminiPdfParser } from './gemini-pdf-parser';
 import { RateLimiter } from './rate-limiter';
@@ -73,6 +74,63 @@ describe('createGeminiPdfParser', () => {
     });
     expect(String(parts?.[1]?.text)).toMatch(/image/);
     expect(String(parts?.[1]?.text)).not.toMatch(/page/);
+  });
+
+  it('sends a recording inline with its own type and a prompt that transcribes the speech', async () => {
+    let seen: Record<string, unknown> | undefined;
+    server.use(
+      http.post(ENDPOINT, async ({ request }) => {
+        seen = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json(answer('Guten Tag, willkommen.'));
+      })
+    );
+    const recording = new Uint8Array([0x49, 0x44, 0x33, 4]);
+
+    const result = await parser().parseAudio(recording, 'audio/mpeg');
+
+    expect(result).toEqual({ text: 'Guten Tag, willkommen.', pageCount: null });
+    const parts = (seen as { contents: { parts: Record<string, unknown>[] }[] }).contents[0]?.parts;
+    expect(parts?.[0]).toEqual({
+      inlineData: { mimeType: 'audio/mpeg', data: Buffer.from(recording).toString('base64') },
+    });
+    expect(String(parts?.[1]?.text)).toMatch(/speech/);
+  });
+
+  it('gives a recording more time than a document, and a set limit still wins', async () => {
+    server.use(http.post(ENDPOINT, () => HttpResponse.json(answer('Text'))));
+    const timeout = vi.spyOn(AbortSignal, 'timeout');
+    const recording = new Uint8Array([0x49, 0x44, 0x33, 4]);
+
+    await parser().parseAudio(recording, 'audio/mpeg');
+    await parser().parse(PDF);
+    await parser([], undefined, 77).parseAudio(recording, 'audio/mpeg');
+
+    // A set limit is also the time of one attempt, so it is asked for twice.
+    expect([...new Set(timeout.mock.calls.map(([ms]) => ms))]).toEqual([
+      LIMITS.AUDIO_PARSE_TIMEOUT_MS,
+      LIMITS.PARSE_TIMEOUT_MS,
+      77,
+    ]);
+    timeout.mockRestore();
+  });
+
+  it('counts a recording at its own cost per byte for the rate limit', async () => {
+    server.use(http.post(ENDPOINT, () => HttpResponse.json(answer('Text'))));
+    const small = createGeminiPdfParser({
+      apiKey: KEY,
+      model: MODEL,
+      limiter: new RateLimiter({ requestsPerMinute: 1000, tokensPerMinute: 1000 }),
+      sleep: async () => {},
+    });
+    // 50 kB are 400 tokens of audio, so with the prompt they fit; as a PDF they would not.
+    const fits = new Uint8Array(50_000);
+    const tooLong = new Uint8Array(100_000);
+
+    await expect(small.parseAudio(fits, 'audio/mpeg')).resolves.toEqual({
+      text: 'Text',
+      pageCount: null,
+    });
+    await expect(small.parseAudio(tooLong, 'audio/mpeg')).rejects.toThrow(RangeError);
   });
 
   it('refuses an image answer that did not end normally, like a PDF', async () => {
