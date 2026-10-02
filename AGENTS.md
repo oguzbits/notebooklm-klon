@@ -77,6 +77,16 @@ Playwright) before they count as done.
 The logs are long: [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md) is about 60 KB, so search it
 (`rg`) and read only the section you need.
 
+**Tests**
+
+- Assert behavior, not markup: text, roles, calls and returned values. A CSS class is asserted only
+  where the class is the feature (for example "no spinner in the skeleton"), and the test name says so.
+- Auth and not-found tests stay in every route's own test file, because each route is its own
+  contract. Setup that repeats a third time moves to the package's `testing/` folder
+  (`apps/api/src/testing`).
+- A test must be able to fail. For logic with branches, break the code by hand (flip a condition,
+  change a limit) and check that a test dies; a surviving change is a missing test or dead code.
+
 **Commands**
 
 | Command                              | Purpose                                                           |
