@@ -37,7 +37,7 @@ Wenige Funktionen in hoher Qualität schlagen viele halbfertige. Der Kern ist de
 **Must**
 
 1. Anmeldung und Notebooks anlegen, auflisten, löschen.
-2. Quellen hinzufügen: PDF, DOCX, PPTX, Bilder, Aufnahmen (MP3, WAV), TXT/MD und URL. Die Verarbeitung läuft asynchron mit Status und verständlichen Fehlermeldungen.
+2. Quellen hinzufügen: PDF, DOCX, PPTX, Bilder, Aufnahmen (MP3, WAV), öffentliche YouTube-Videos, TXT/MD und URL. Die Verarbeitung läuft asynchron mit Status und verständlichen Fehlermeldungen.
 3. Chat mit Streaming, der nur auf den gewählten Quellen antwortet, mit nummerierten Zitaten. Hover zeigt das Popup, Klick öffnet den Quelltext mit Chunk-Hervorhebung.
 4. Quellen an- und abwählen. Die Auswahl begrenzt auch das Retrieval.
 5. Quellenübersicht pro Quelle (Zusammenfassung und Schlüsselthemen).
@@ -66,7 +66,7 @@ ein Nachbau ist. Dazu:
 
 **Stretch**
 
-- PPTX und Aufnahmen (MP3, WAV) als Quelle (gebaut, siehe [ENTSCHEIDUNGEN.md](ENTSCHEIDUNGEN.md)).
+- PPTX, Aufnahmen (MP3, WAV) und YouTube als Quelle (gebaut, siehe [ENTSCHEIDUNGEN.md](ENTSCHEIDUNGEN.md)).
 - Agentische Suche im Chat, nur wenn Zeit bleibt.
 
 **Bewusst nicht**

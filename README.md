@@ -21,7 +21,7 @@ Nachbau von NotebookLM. Der Schwerpunkt liegt auf dem Weg von der Quelle zum nac
 - **Studio:** Bericht (Briefing, FAQ, Lernleitfaden, Blogbeitrag, eigene Anweisung), Karteikarten, Quiz, Mindmap und Datentabelle, mit denselben geprüften Zitaten.
 - **Notebook anpassen:** Titel, Zusammenfassung, Titelbild, kopieren, anpinnen.
 
-Nicht gebaut: Audio, Präsentation, Video und Infografik im Studio, agentische Suche, Deep Research, Drive-Anbindung, Bewertung von Antworten. Gründe: [docs/PLAN.md](docs/PLAN.md) und [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md).
+Nicht gebaut: Audio- und Videoübersicht, Präsentation und Infografik im Studio (Audio und Video gibt es nur als Quelle), agentische Suche, Deep Research, Drive-Anbindung, Bewertung von Antworten. Gründe: [docs/PLAN.md](docs/PLAN.md) und [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md).
 
 ## Architektur
 
