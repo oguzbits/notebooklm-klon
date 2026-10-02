@@ -6,7 +6,7 @@ import {
   DialogSpinner,
   NotebookCardsSkeleton,
   OutputRowsSkeleton,
-  PageSpinner,
+  PageBlank,
   SourceRowsSkeleton,
 } from './skeletons';
 
@@ -19,7 +19,7 @@ describe('the placeholders', () => {
       <ChatSkeleton key="2" />,
       <OutputRowsSkeleton key="3" />,
       <NotebookCardsSkeleton key="4" />,
-      <PageSpinner key="5" />,
+      <PageBlank key="5" />,
       <DialogSpinner key="6" />,
     ]) {
       const { unmount } = render(ui);

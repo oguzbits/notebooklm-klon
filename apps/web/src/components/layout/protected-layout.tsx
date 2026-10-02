@@ -1,7 +1,7 @@
 import { Navigate, Outlet } from 'react-router';
 
 import { ErrorNotice } from '@/components/query-boundary';
-import { PageSpinner } from '@/components/skeletons';
+import { PageBlank } from '@/components/skeletons';
 import { useSession } from '@/hooks/use-session';
 import { ROUTES } from '@/lib/routes';
 
@@ -10,7 +10,7 @@ export function ProtectedLayout() {
   const session = useSession();
 
   if (session.isPending) {
-    return <PageSpinner />;
+    return <PageBlank />;
   }
   if (session.isError) {
     return (

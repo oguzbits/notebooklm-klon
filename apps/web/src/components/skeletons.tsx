@@ -86,13 +86,9 @@ export function NotebookCardsSkeleton({ cards = 6 }: { cards?: number }) {
   );
 }
 
-/** The whole page, while it cannot yet know what to show: nothing but a thin spinner. */
-export function PageSpinner() {
-  return (
-    <div className="flex h-dvh items-center justify-center" {...STATUS}>
-      <LoaderCircle className="size-8 animate-spin text-muted-foreground" aria-hidden />
-    </div>
-  );
+/** The whole page, while it cannot yet know what to show: an empty area, so no spinner sits before the skeletons. */
+export function PageBlank() {
+  return <div className="h-dvh" {...STATUS} />;
 }
 
 /** A dialog that waits for its content: the spinner and the words, like the original ("Wird geladen…"). */
