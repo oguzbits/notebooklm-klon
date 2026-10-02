@@ -23,7 +23,7 @@ export const ERROR_MESSAGE: Record<ApiErrorCode, string> = {
   [API_ERROR.STUDIO_EMPTY]:
     'Aus den ausgewählten Quellen ließ sich dazu nichts Belegbares erstellen. Wähle mehr oder andere Quellen.',
   [API_ERROR.GUEST_UNAVAILABLE]:
-    'Das Beispiel ist gerade nicht verfügbar. Bitte versuche es später noch einmal.',
+    'Die Demo ist gerade nicht verfügbar. Bitte versuche es später noch einmal.',
   [API_ERROR.WEB_SEARCH_UNAVAILABLE]: 'Die Suche im Web ist hier nicht eingerichtet.',
   [API_ERROR.WEB_SEARCH_LIMIT_REACHED]:
     'Für die Suche im Web ist das Limit erreicht. Bitte versuche es später noch einmal.',
@@ -53,7 +53,7 @@ export const AUTH_MESSAGE: Record<AuthFailure, string> = {
   [AUTH_FAILURE.EMAIL_TAKEN]: 'Mit dieser E-Mail-Adresse gibt es schon ein Konto.',
   [AUTH_FAILURE.WEAK_PASSWORD]: 'Das Passwort muss mindestens 8 Zeichen lang sein.',
   [AUTH_FAILURE.GUEST_UNAVAILABLE]:
-    'Das Beispiel ist gerade nicht verfügbar. Bitte melde dich an oder versuche es später noch einmal.',
+    'Die Demo ist gerade nicht verfügbar. Bitte melde dich an oder versuche es später noch einmal.',
   [AUTH_FAILURE.UNKNOWN]: 'Das hat nicht geklappt. Bitte versuche es noch einmal.',
 };
 

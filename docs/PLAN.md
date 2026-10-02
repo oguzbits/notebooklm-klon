@@ -41,7 +41,7 @@ Wenige Funktionen in hoher Qualität schlagen viele halbfertige. Der Kern ist de
 3. Chat mit Streaming, der nur auf den gewählten Quellen antwortet, mit nummerierten Zitaten. Hover zeigt das Popup, Klick öffnet den Quelltext mit Chunk-Hervorhebung.
 4. Quellen an- und abwählen. Die Auswahl begrenzt auch das Retrieval.
 5. Quellenübersicht pro Quelle (Zusammenfassung und Schlüsselthemen).
-6. Live-Deployment, README und ein Demo-Zugang mit vorbefülltem Beispiel-Notebook.
+6. Live-Deployment, README und ein Demo-Zugang mit vorbefülltem Demo-Notebook.
 
 **Should** (umgesetzt: Vorschlagsfragen, Notizen)
 
@@ -144,7 +144,7 @@ Die Limits gelten pro **Projekt**, nicht pro Key. Das Tageslimit wird um Mittern
 - **Zwei Google-Projekte:** eines für Bauen und Testen (Free Tier), eines für das Live-Demo. So verbraucht dein Testen nie das Kontingent der Reviewer.
 - **Rate-Limiter im Worker** (z. B. bottleneck), Limits aus der Config, Wiederholung mit Wartezeit bei 429.
 - **Inhalts-Hash pro Datei**, damit dasselbe Dokument nie zweimal geparst oder eingebettet wird. Embeddings im Batch.
-- **Demo-Limits:** z. B. 3 Uploads pro Nutzer und Tag, höchstens 50 Seiten pro Quelle, verständliche Meldung bei erschöpftem Kontingent. Ein vorbefülltes Beispiel-Notebook verbraucht kein Kontingent.
+- **Demo-Limits:** z. B. 3 Uploads pro Nutzer und Tag, höchstens 50 Seiten pro Quelle, verständliche Meldung bei erschöpftem Kontingent. Ein vorbefülltes Demo-Notebook verbraucht kein Kontingent.
 - **Kill-Switch** per Umgebungsvariable, der neue Uploads sperrt, falls das Guthaben knapp wird.
 - **Hinweis im Demo:** keine sensiblen Dokumente hochladen. Für das Free Tier können Google-Bedingungen zur Datennutzung gelten, bitte einmal lesen.
 
@@ -196,7 +196,7 @@ Fünf Arbeitstage bis zur Abgabe, danach zwei Tage Puffer. Feature-Freeze ist am
 | 2       | Ingestion            | Auth, Notebooks, Upload, Parsing, kanonischer Text mit Segmenten, Chunking mit Offsets, Embeddings, pg-boss-Jobs, Status in der UI                                      | PDF, DOCX und URL werden verarbeitet                |
 | 3       | Chat und Zitate      | Hybrid-Retrieval mit RRF, Quellenauswahl, Streaming, Zitat-Chips, Hover-Popup, Quellenpanel mit Chunk-Hervorhebung                                                      | Frage stellen und per Klick zur Textstelle springen |
 | 4       | Umfang komplettieren | Quellenübersicht, Vorschlagsfragen, Notizen, Chat-Konfiguration, Studio (Bericht, Karteikarten, Quiz), Fehler-, Lade- und Leerzustände                                  | Feature-Freeze am Abend                             |
-| 5       | Härtung und Abgabe   | Tests, Eval-Skript, Quoten, SSRF-Schutz, README, Deployment-Check mit frischem Account, Beispiel-Notebook, Loom aufnehmen, abgeben                                      | E-Mail mit Repo, Live-Link und Loom verschickt      |
+| 5       | Härtung und Abgabe   | Tests, Eval-Skript, Quoten, SSRF-Schutz, README, Deployment-Check mit frischem Account, Demo-Notebook, Loom aufnehmen, abgeben                                      | E-Mail mit Repo, Live-Link und Loom verschickt      |
 | 6 bis 7 | Puffer               | Nur Fehlerbehebung, keine neuen Funktionen                                                                                                                              | Nicht eingeplant                                    |
 
 Die Mindmap kommt nur dazu, wenn Tag 4 früher fertig ist.

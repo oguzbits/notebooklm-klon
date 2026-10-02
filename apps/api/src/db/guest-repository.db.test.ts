@@ -16,7 +16,7 @@ import { axisVector, createTestDb } from './testing/test-db';
 
 const { db, pool } = createTestDb();
 const OWNER_EMAIL = 'demo@example.test';
-const TITLE = 'Beispiel: Projekt Nordlicht';
+const TITLE = 'Demo: Projekt Nordlicht';
 const HOUR_MS = 3_600_000;
 const DAY_MS = 24 * HOUR_MS;
 

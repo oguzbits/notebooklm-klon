@@ -79,7 +79,7 @@ describe('AuthPage', () => {
       renderWithProviders(
         <Routes>
           <Route path="/" element={<AuthPage />} />
-          <Route path="/notizbuecher/:notebookId" element={<p>Das Beispiel-Notebook</p>} />
+          <Route path="/notizbuecher/:notebookId" element={<p>Das Demo-Notebook</p>} />
         </Routes>
       );
 
@@ -98,9 +98,9 @@ describe('AuthPage', () => {
 
       await userEvent
         .setup()
-        .click(await screen.findByRole('button', { name: 'Beispiel ausprobieren' }));
+        .click(await screen.findByRole('button', { name: 'Demo ausprobieren' }));
 
-      expect(await screen.findByText('Das Beispiel-Notebook')).toBeTruthy();
+      expect(await screen.findByText('Das Demo-Notebook')).toBeTruthy();
     });
 
     it('says why it did not work when no guest can be started, and the sign-in stays usable', async () => {
@@ -114,10 +114,10 @@ describe('AuthPage', () => {
 
       await userEvent
         .setup()
-        .click(await screen.findByRole('button', { name: 'Beispiel ausprobieren' }));
+        .click(await screen.findByRole('button', { name: 'Demo ausprobieren' }));
 
       expect((await screen.findByRole('alert')).textContent).toContain(
-        'Das Beispiel ist gerade nicht verfügbar'
+        'Die Demo ist gerade nicht verfügbar'
       );
       expect(screen.getByRole('button', { name: 'Anmelden' })).toHaveProperty('disabled', false);
     });
@@ -139,10 +139,10 @@ describe('AuthPage', () => {
       renderRoutes();
       const user = userEvent.setup();
 
-      await user.click(await screen.findByRole('button', { name: 'Beispiel ausprobieren' }));
+      await user.click(await screen.findByRole('button', { name: 'Demo ausprobieren' }));
 
       await waitFor(() =>
-        expect(screen.getByRole('button', { name: 'Beispiel wird vorbereitet …' })).toHaveProperty(
+        expect(screen.getByRole('button', { name: 'Demo wird vorbereitet …' })).toHaveProperty(
           'disabled',
           true
         )

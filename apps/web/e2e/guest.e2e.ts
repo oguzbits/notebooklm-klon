@@ -4,12 +4,12 @@ test('a guest tries the example notebook with one click, asks a question and lea
   page,
 }) => {
   await page.goto('/anmelden');
-  await page.getByRole('button', { name: 'Beispiel ausprobieren' }).click();
+  await page.getByRole('button', { name: 'Demo ausprobieren' }).click();
 
   // The guest lands in a copy of the example, which already has its overview.
   await expect(page).toHaveURL(/\/notizbuecher\/[0-9a-f-]{36}$/);
   await expect(
-    page.getByRole('heading', { name: 'Beispiel: Projekt Nordlicht', level: 3 })
+    page.getByRole('heading', { name: 'Demo: Projekt Nordlicht', level: 3 })
   ).toBeVisible();
   await expect(page.getByText(/^3 Quellen · \d{2}\.\d{2}\.\d{4}$/)).toBeVisible();
   await expect(

@@ -15,10 +15,10 @@ export function GuestStart({
   return (
     <div className="mt-2 flex flex-col gap-2 border-t pt-4">
       <Button type="button" variant="outline" disabled={pending} onClick={onStart}>
-        {starting ? 'Beispiel wird vorbereitet …' : 'Beispiel ausprobieren'}
+        {starting ? 'Demo wird vorbereitet …' : 'Demo ausprobieren'}
       </Button>
       <p className="text-center text-xs text-muted-foreground">
-        Ohne Anmeldung, mit einem fertigen Beispiel-Notebook zum Ausprobieren.
+        Ohne Anmeldung, mit einem fertigen Demo-Notebook zum Ausprobieren.
       </p>
     </div>
   );
