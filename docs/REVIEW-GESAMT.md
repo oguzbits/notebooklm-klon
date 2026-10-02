@@ -83,7 +83,7 @@ Die Schwächen liegen an den Rändern: **Zuverlässigkeit im Betrieb** (hängend
   Caddy hat kein `encode` (bestätigt), statische Dateien kommen daher unkomprimiert.
   Fix: `lazy()` für die Notebook-Seite, `encode` nur für statische Pfade (der Chat-Stream darf nicht
   gepuffert werden).
-- **M17 Tab-Leiste.** Rohe `<button>` mit 28 px Höhe (zu klein für Touch), keine Tab-Semantik. Der Umbruch
+- **M17 Tab-Leiste** ✅ (siehe ENTSCHEIDUNGEN). Rohe `<button>` mit 28 px Höhe (zu klein für Touch), keine Tab-Semantik. Der Umbruch
   bei 66 rem lässt Quer-Tablets und kleine Laptops mit einer Spalte.
 
 ## Niedrig
@@ -172,4 +172,4 @@ und Screenreader, `test:db`, `e2e`, Semgrep.
 3. ✅ **Härtung, klein:** H3 (Deploy-Bedingung), M3 (Header in Caddy), H6 nach Browserprüfung.
 4. **Betrieb:** M8 und M9 erledigt; H4 teilweise (Dump vor jedem Deploy, Restore-Probe), Kopie auf externen Speicher: vom Nutzer als nicht notwendig entschieden.
 5. **Funktionen:** PDF-Link ✅, Bilder ✅; „neu einlesen“ ✅; Markdown-Export ✅; Konto löschen ✅; Hinweis zum Gemini-Tarif im Upload-Dialog: zurückgestellt, solange die Seite eine Demo ist.
-6. **Danach:** M5 ✅, M2 ✅, M11 ✅, M12 ✅, M13 ✅, M14 ✅, M15 ✅, M16 ✅; M17, YouTube, Audio, PPTX.
+6. **Danach:** M5 ✅, M2 ✅, M11 ✅, M12 ✅, M13 ✅, M14 ✅, M15 ✅, M16 ✅, M17 ✅; YouTube, Audio, PPTX.

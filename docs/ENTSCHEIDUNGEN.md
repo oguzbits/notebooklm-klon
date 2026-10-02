@@ -1140,3 +1140,14 @@ eigenes Gerüst. Ein Test in `App.test.tsx` öffnet die Adresse eines Notebooks 
 Caddy komprimiert (`encode zstd gzip`) alles außer `/api/*`: Der Chat-Stream muss stückweise ankommen, ein komprimierender Encoder würde
 ihn zurückhalten. Der Dateiname der Weboberfläche liegt nie unter `/api/`, die Aufteilung nach Pfad reicht daher. Die Konfiguration wurde mit
 `caddy validate` geprüft. Keine Browserprüfung der Kompression vor dem Deploy; danach mit `curl -H 'Accept-Encoding: gzip' -I`.
+
+## 2026-10-02 (Tab-Leiste, M17)
+
+Die Leiste unter der Kopfzeile ist jetzt eine Tab-Liste (`role="tablist"` mit `role="tab"`, `aria-selected`) statt einer `nav` mit
+`aria-current`. Nur der gewählte Tab liegt in der Tab-Reihenfolge; Pfeiltasten (rundherum), Pos1 und Ende wählen und fokussieren den
+Nachbarn, weil ein Wechsel sofort geschieht (automatische Aktivierung). Die Knöpfe sind 44 px hoch (`min-h-11`, vorher 28 px). Die drei
+Bereiche bleiben beschriftete Abschnitte ohne `tabpanel`-Rolle und ohne `aria-controls`: Auf der breiten Ansicht gibt es keine Tabs, dort
+sind sie Bereiche nebeneinander, und die Rolle müsste mit der Breite wechseln. Das ist der einzige Bruch mit dem Tab-Muster.
+**Der Umbruch bei 66 rem bleibt.** Er ist am Original gemessen (`index.css`), und Querformat-Tablets ab 1056 px zeigen schon drei Spalten
+(1100 px im E2E-Test). Darunter bleibt eine Spalte, weil 25 % von 1000 px für die Quellen zu schmal wären. Tests: `column-tabs.test.tsx`
+(Mutationen am Umlauf, an Pos1/Ende, am Fokus und am Tab-Index getötet) und `e2e/column-tabs.e2e.ts` auf 360 px.
