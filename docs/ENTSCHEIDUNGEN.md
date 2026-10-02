@@ -1074,3 +1074,13 @@ die beiden Übersichts-Prompts bekommen einen eigenen Satz, weil sie keine numme
 Nachricht und nicht in `promptText`, damit das Etikettenformat `[cN]` und die Fake-Antwort der E2E-Tests stabil bleiben. Ein Dokument kann den
 Block nicht vorzeitig schließen: `<passages>` und `</passages>` im Chunk-Text werden zu `‹passages›` entschärft. Grenze: Das
 senkt das Risiko, beweist aber nichts; der Zitatvertrag bleibt die eigentliche Sperre gegen erfundene Belege.
+
+## 2026-10-02 (Limits pro Nutzer, M2)
+
+Chat und Studio bekommen je ein Gleitfenster pro Nutzer und Stunde (`createWindowLimit`, Werte `CHAT_QUESTIONS_PER_USER_PER_HOUR` = 30 und
+`STUDIO_OUTPUTS_PER_USER_PER_HOUR` = 20 in `config/limits.ts`). Die Prüfung läuft nach der Quellen-Prüfung und vor dem Modellaufruf; die
+Antwort ist 429 `CHAT_LIMIT_REACHED`. Der Zähler liegt im Arbeitsspeicher und gilt damit pro Prozess (ein API-Prozess, ein Neustart
+setzt ihn zurück). Ein Studio-Aufruf, der danach mit 409 endet, verbraucht trotzdem einen Platz. Die Meldung heißt jetzt "Im Moment sind
+keine Antworten mehr möglich", weil sie nicht mehr nur ein Tageslimit meint. Registrierung pro IP: Better Auth begrenzt in Produktion
+selbst (100 Anfragen pro 10 s, Anmelden und Registrieren 3 pro 10 s), dafür ist nichts zu bauen. `HOUR_MS` steht jetzt in
+`core/window-limit.ts`, weil drei Routen es brauchten.

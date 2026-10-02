@@ -36,6 +36,10 @@ export const LIMITS = {
   GUESTS_ALIVE: 200,
   /** Guests of the live demo: days until the account and its data are deleted. */
   GUEST_LIFETIME_DAYS: GUEST_LIMITS.LIFETIME_DAYS,
+  /** Chat: questions one user may ask per hour. The model quota is shared, so one user must not use it up. */
+  CHAT_QUESTIONS_PER_USER_PER_HOUR: 30,
+  /** Studio: outputs one user may make per hour (each reads up to STUDIO_MAX_CHARS). */
+  STUDIO_OUTPUTS_PER_USER_PER_HOUR: 20,
   /** Web search: searches one user may make per hour. */
   WEB_SEARCHES_PER_USER_PER_HOUR: 10,
   /** Web search: searches everybody together may make per day (the service gives 1000 credits a month). */

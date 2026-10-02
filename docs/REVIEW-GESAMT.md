@@ -36,10 +36,10 @@ Die Schwächen liegen an den Rändern: **Zuverlässigkeit im Betrieb** (hängend
   Transaktion. Zwei parallele gleiche Uploads können an der Unique-Bedingung mit 500 scheitern, das
   Kontingent (10 pro 24 h) ist nicht atomar. Fix: `INSERT … ON CONFLICT DO NOTHING RETURNING` und Kontingent
   in einer Transaktion. (gemeldet, `ingestion/submit.ts`, `ingest.ts`)
-- **M2 Keine Ratenbegrenzung pro Nutzer** für Chat und URL-Import; der Limiter ist eine globale
-  Promise-Kette für Modellaufrufe. Registrierung ist offen und ohne E-Mail-Bestätigung, damit ist das
-  Tageslimit von Gemini leicht auszuschöpfen. Fix: Limiter pro Nutzer und pro IP für Registrierung.
-  Ob Better Auth ein eigenes `rateLimit` standardmäßig aktiv hat, ist nicht geprüft.
+- **M2 Keine Ratenbegrenzung pro Nutzer** ✅ Chat (30 Fragen pro Stunde) und Studio (20 Ergebnisse pro Stunde)
+  haben jetzt ein Limit pro Nutzer. Better Auth hat `rateLimit` in Produktion standardmäßig aktiv (pro IP,
+  strenger für Anmelden und Registrieren), damit ist die Registrierung abgedeckt. Upload, Websuche und der
+  Gast-Start waren schon begrenzt.
 - **M3 Security-Header fehlen.** Der Caddyfile enthält nur `reverse_proxy` (bestätigt). Kein HSTS, CSP,
   `frame-ancestors`, Referrer-Policy. Fix: `header`-Block in Caddy, CSP danach schrittweise.
   CORS/CSRF-Schicht ist nicht geprüft.
@@ -172,4 +172,4 @@ und Screenreader, `test:db`, `e2e`, Semgrep.
 3. ✅ **Härtung, klein:** H3 (Deploy-Bedingung), M3 (Header in Caddy), H6 nach Browserprüfung.
 4. **Betrieb:** M8 und M9 erledigt; H4 teilweise (Dump vor jedem Deploy, Restore-Probe), Kopie auf externen Speicher: vom Nutzer als nicht notwendig entschieden.
 5. **Funktionen:** PDF-Link ✅, Bilder ✅; „neu einlesen“ ✅; Markdown-Export ✅; Konto löschen ✅; Hinweis zum Gemini-Tarif im Upload-Dialog: zurückgestellt, solange die Seite eine Demo ist.
-6. **Danach:** M5 ✅; M2, M11 bis M17, YouTube, Audio, PPTX.
+6. **Danach:** M5 ✅, M2 ✅; M11 bis M17, YouTube, Audio, PPTX.

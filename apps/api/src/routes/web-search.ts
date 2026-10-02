@@ -10,12 +10,11 @@ import {
 import type { AppDeps } from '../app-deps';
 import type { AuthVariables } from '../auth/session';
 import { LIMITS } from '../config/limits';
-import { createWindowLimit } from '../core/window-limit';
+import { createWindowLimit, HOUR_MS } from '../core/window-limit';
 import { HTTP_STATUS } from '../http-status';
 import { log } from '../logger';
 import { json, unauthenticated } from './openapi';
 
-const HOUR_MS = 3_600_000;
 const DAY_MS = 24 * HOUR_MS;
 
 const searchRoute = createRoute({

@@ -6,6 +6,8 @@ import type { AppDeps } from '../app-deps';
 import type { AuthVariables } from '../auth/session';
 import { answerQuestion, type ChatPorts, prepareAnswer } from '../chat/answer';
 import { AnswerRecorder } from '../chat/answer-recorder';
+import { LIMITS } from '../config/limits';
+import { createWindowLimit, HOUR_MS } from '../core/window-limit';
 import { getChatConfig } from '../db/chat-config-repository';
 import { findNotebook } from '../db/notebook-repository';
 import { selectedReadySourceIds } from '../db/notebook-source-repository';
@@ -18,6 +20,12 @@ const error = (code: (typeof API_ERROR)[keyof typeof API_ERROR]) => ({ code });
 /** Asking a question about the selected sources of a notebook, answered as a stream of events. */
 export function chatRoutes(deps: AppDeps) {
   const app = new Hono<{ Variables: AuthVariables }>();
+
+  const perUser = createWindowLimit({
+    max: LIMITS.CHAT_QUESTIONS_PER_USER_PER_HOUR,
+    windowMs: HOUR_MS,
+    now: Date.now,
+  });
 
   const ports: ChatPorts = {
     ...deps.chat,
@@ -41,6 +49,11 @@ export function chatRoutes(deps: AppDeps) {
       { userId, notebookId, question: parsed.data.question, config: config ?? undefined },
       ports
     );
+
+    // Counted only now: a question that is rejected above never reaches the model.
+    if (!perUser.take(userId)) {
+      return c.json(error(API_ERROR.CHAT_LIMIT_REACHED), HTTP_STATUS.TOO_MANY_REQUESTS);
+    }
 
     // Saved only now: a rejected question (no source ready, quota) leaves no trace in the history.
     await saveUserMessage(deps.db, userId, notebookId, parsed.data.question);

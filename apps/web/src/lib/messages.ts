@@ -16,7 +16,7 @@ export const ERROR_MESSAGE: Record<ApiErrorCode, string> = {
   [API_ERROR.NO_SOURCES_SELECTED]:
     'Wähle mindestens eine Quelle aus, die schon fertig gelesen wurde.',
   [API_ERROR.CHAT_LIMIT_REACHED]:
-    'Für heute sind keine Antworten mehr möglich. Bitte versuche es später noch einmal.',
+    'Im Moment sind keine Antworten mehr möglich. Bitte versuche es später noch einmal.',
   [API_ERROR.INVALID_URL]: 'Diese Adresse kann nicht geladen werden. Prüfe den Link.',
   [API_ERROR.UPLOAD_LIMIT_REACHED]:
     'Du hast in den letzten 24 Stunden schon die erlaubte Zahl neuer Quellen hinzugefügt.',

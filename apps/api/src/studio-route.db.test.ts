@@ -1,5 +1,6 @@
 import {
   API_ERROR,
+  ApiErrorSchema,
   CHAT_LENGTH,
   CHAT_STYLE,
   ChatConfigSchema,
@@ -18,6 +19,7 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import type { ChatInput } from './ai/gemini-chat';
 import { createApp } from './app';
+import { LIMITS } from './config/limits';
 import { BASE_URL, createHarness } from './testing/app-harness';
 
 const PASSWORD = 'ein-sicheres-passwort';
@@ -211,6 +213,27 @@ describe('studio routes', () => {
       title: 'Häufige Fragen',
     });
     expect(modelInputs[0]?.system).toMatch(/FAQ/);
+  });
+
+  it('gives each user a number of outputs an hour and refuses the next before the model', async () => {
+    const notebook = await createNotebook(alice, 'Dr. Brandt leitet das Projekt.');
+    const make = (cookie: string, nb: string) =>
+      app.request(
+        `/api/notebooks/${nb}/studio`,
+        send('POST', cookie, { kind: STUDIO_KIND.FLASHCARDS })
+      );
+
+    for (let i = 0; i < LIMITS.STUDIO_OUTPUTS_PER_USER_PER_HOUR; i += 1) {
+      expect((await make(alice, notebook)).status).toBe(201);
+    }
+    const calls = modelInputs.length;
+    const refused = await make(alice, notebook);
+
+    expect(refused.status).toBe(429);
+    expect(ApiErrorSchema.parse(await refused.json()).code).toBe(API_ERROR.CHAT_LIMIT_REACHED);
+    expect(modelInputs).toHaveLength(calls);
+    const bobs = await createNotebook(bob, 'Bobs Text.');
+    expect((await make(bob, bobs)).status).toBe(201);
   });
 
   it('answers 409 without calling the model when no source is ready and selected', async () => {

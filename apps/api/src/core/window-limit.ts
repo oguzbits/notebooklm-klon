@@ -1,3 +1,5 @@
+export const HOUR_MS = 3_600_000;
+
 /**
  * Allows a key (a user, or one fixed key for everybody) a number of uses within a sliding window.
  * The clock is passed in, so it is deterministic. It lives in memory: with more than one server

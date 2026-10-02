@@ -10,6 +10,8 @@ import {
 
 import type { AppDeps } from '../app-deps';
 import type { AuthVariables } from '../auth/session';
+import { LIMITS } from '../config/limits';
+import { createWindowLimit, HOUR_MS } from '../core/window-limit';
 import { getChatConfig } from '../db/chat-config-repository';
 import { findNotebook } from '../db/notebook-repository';
 import {
@@ -47,6 +49,7 @@ const createStudioRoute = createRoute({
     400: json(ApiErrorSchema, 'The request is invalid'),
     401: unauthenticated,
     [HTTP_STATUS.NOT_FOUND]: notFound,
+    [HTTP_STATUS.TOO_MANY_REQUESTS]: json(ApiErrorSchema, 'Too many outputs in the last hour'),
     [HTTP_STATUS.CONFLICT]: json(ApiErrorSchema, 'No source is selected and ready'),
     [HTTP_STATUS.UNPROCESSABLE_ENTITY]: json(
       ApiErrorSchema,
@@ -104,6 +107,11 @@ export function studioRoutes(deps: AppDeps) {
   const app = new OpenAPIHono<{ Variables: AuthVariables }>();
   const missing = { code: API_ERROR.NOT_FOUND };
   const ports = studioPorts(deps);
+  const perUser = createWindowLimit({
+    max: LIMITS.STUDIO_OUTPUTS_PER_USER_PER_HOUR,
+    windowMs: HOUR_MS,
+    now: Date.now,
+  });
 
   return app
     .openapi(listRoute, async (c) => {
@@ -115,6 +123,9 @@ export function studioRoutes(deps: AppDeps) {
     })
     .openapi(createStudioRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
+      if (!perUser.take(c.var.userId)) {
+        return c.json({ code: API_ERROR.CHAT_LIMIT_REACHED }, HTTP_STATUS.TOO_MANY_REQUESTS);
+      }
       const output = await generateStudioOutput(
         { userId: c.var.userId, notebookId, body: c.req.valid('json') },
         ports
