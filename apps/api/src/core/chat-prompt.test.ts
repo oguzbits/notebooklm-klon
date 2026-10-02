@@ -83,6 +83,38 @@ describe('chatSystemPrompt', () => {
     expect(prompt).toMatch(/English/);
   });
 
+  it.each([
+    [CHAT_LENGTH.SHORTER, /at most three statements/],
+    [CHAT_LENGTH.LONGER, /up to ten statements/],
+  ])('asks for the %s length with its own note after the plain prompt', (length, note) => {
+    const prompt = chatSystemPrompt({ ...DEFAULT_CHAT_CONFIG, length });
+
+    expect(prompt).toMatch(note);
+    expect(prompt.startsWith(`${CHAT_SYSTEM_PROMPT} `)).toBe(true);
+  });
+
+  it.each([
+    [CHAT_LANGUAGE.DE, /German/],
+    [CHAT_LANGUAGE.EN, /English/],
+  ])('asks for the %s language with its own note', (language, note) => {
+    const prompt = chatSystemPrompt({ ...DEFAULT_CHAT_CONFIG, language });
+
+    expect(prompt).toMatch(note);
+    expect(prompt.match(/Always answer in/g)).toHaveLength(1);
+  });
+
+  it('puts the style first, then the length, then the language', () => {
+    const prompt = chatSystemPrompt({
+      style: CHAT_STYLE.LEARNING_GUIDE,
+      customInstruction: '',
+      length: CHAT_LENGTH.LONGER,
+      language: CHAT_LANGUAGE.DE,
+    });
+
+    expect(prompt.indexOf('learning guide')).toBeLessThan(prompt.indexOf('up to ten'));
+    expect(prompt.indexOf('up to ten')).toBeLessThan(prompt.indexOf('German'));
+  });
+
   it('passes a custom instruction on, below the rules that keep the answers cited', () => {
     const prompt = chatSystemPrompt({
       ...DEFAULT_CHAT_CONFIG,
