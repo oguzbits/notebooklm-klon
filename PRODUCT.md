@@ -8,7 +8,7 @@ web
 
 ## Users
 
-Primary: the reviewers of a job application (Everlast AI, second round). They open the live demo
+Primary: reviewers and visitors. They open the live demo
 for a few minutes, try the example notebook, then read the repo and watch a short walkthrough video. They judge
 whether the author masters a full-stack engineer's stack (React, Node.js, PostgreSQL, API design, LLM
 integration) and cares about verifiable answers, not only about a demo that looks good.

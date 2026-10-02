@@ -188,7 +188,7 @@ Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
   die Quellen schrumpfen auf 20,6 %. Der Chat hat keine Karte mehr.
 - **Was bewusst vom Original abweicht:** (1) Der Name bleibt „NotebookLM (Nachbau)“, obwohl das Produkt heute
   „Gemini Notebook“ heißt; die Freigabe des Nutzers nannte NotebookLM, und ein Nachbau mit dem alten Namen
-  ist für die Bewerbung eindeutiger. (2) Die Spaltenbreite ist nicht ziehbar (kein Trenner), das wäre Aufwand
+  ist eindeutiger. (2) Die Spaltenbreite ist nicht ziehbar (kein Trenner), das wäre Aufwand
   für wenig Wirkung. (3) Kein Dialog für Karteikarten, Quiz und Mindmap: das Backend kennt dafür keine
   Parameter (Anzahl, Schwierigkeit, Thema); nur der Bericht fragt nach der Vorlage. (4) Notizen sind
   zuerst gespeicherte Antworten gewesen (ohne „Notiz hinzufügen“); seit 2026-10-01 gibt es auch freie Notizen
