@@ -11,6 +11,11 @@
 		Permissions-Policy "camera=(), microphone=(), geolocation=()"
 	}
 
+	# Files and pages are compressed. The API is not: the chat answer is a stream that must reach the
+	# browser piece by piece, and a compressing encoder would hold it back.
+	@compressible not path /api/*
+	encode @compressible zstd gzip
+
 	# No buffering, so the streamed chat answer reaches the browser piece by piece.
 	reverse_proxy app:3000 {
 		flush_interval -1

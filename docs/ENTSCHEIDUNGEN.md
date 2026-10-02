@@ -1130,3 +1130,13 @@ Eine Studio-Ausgabe wird wie eine Notiz erst nach einer Rückfrage gelöscht ("A
 Löschen-Knopf in der geöffneten Ansicht (`onDeleteOutput` übergibt jetzt die Ausgabe statt der ID und setzt `outputToDelete`). Der Dialog
 löscht, schließt sich und führt die Ansicht zurück zur Liste. Zwei fast gleiche Dialoge (Notiz, Ausgabe) bleiben getrennt (Regel der
 Drei); `ConfirmDialog` ist schon die gemeinsame Hülle.
+
+## 2026-10-02 (Bundle und Kompression, M16)
+
+Die Notebook-Seite (Chat, Leser, Studio) wird in `App.tsx` mit `lazy()` nachgeladen, die Anmeldung und die Liste brauchen sie nicht. Das
+Hauptbundle sinkt von 878 KB auf 556 KB, die Seite liegt in einem eigenen Stück von 319 KB (zusammen mit dem schon getrennten Editor
+`written-note`, 460 KB). Der Platzhalter während des Ladens ist `PageBlank` wie beim Prüfen der Anmeldung, die Seite zeichnet danach ihr
+eigenes Gerüst. Ein Test in `App.test.tsx` öffnet die Adresse eines Notebooks und wartet auf die geladene Seite.
+Caddy komprimiert (`encode zstd gzip`) alles außer `/api/*`: Der Chat-Stream muss stückweise ankommen, ein komprimierender Encoder würde
+ihn zurückhalten. Der Dateiname der Weboberfläche liegt nie unter `/api/`, die Aufteilung nach Pfad reicht daher. Die Konfiguration wurde mit
+`caddy validate` geprüft. Keine Browserprüfung der Kompression vor dem Deploy; danach mit `curl -H 'Accept-Encoding: gzip' -I`.
