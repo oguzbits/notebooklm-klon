@@ -55,11 +55,11 @@ Was nur du tun kannst, ist hier fett.
    [bootstrap.sh](../deploy/bootstrap.sh).
 
 4. **Erster Deploy:** Actions > Deploy > Run workflow. Danach läuft er nach jedem grünen CI-Lauf auf `main`.
-5. **Beispiel-Notizbuch anlegen** (einmalig, siehe unten).
+5. **Demo-Notebook anlegen** (einmalig, siehe unten).
 6. **Uptime-Check** auf `https://<Hostname>/health` einrichten (zum Beispiel UptimeRobot, kostenlos). Dann Live-Link,
    Demo-Zugang und Loom-Link in die [README](../README.md) eintragen.
 
-### Beispiel-Notizbuch anlegen
+### Demo-Notebook anlegen
 
 `pnpm seed:demo` liegt nicht im Produktions-Image und läuft deshalb auf deinem Rechner, im Repository, gegen die
 Datenbank des Servers durch einen SSH-Tunnel:
@@ -132,6 +132,6 @@ braucht einen neuen Deploy (`BETTER_AUTH_URL` wird aus `SITE_ADDRESS` gebildet).
 | Deploy bricht bei `ssh` ab                   | `DEPLOY_KNOWN_HOSTS` oder `DEPLOY_SSH_KEY` falsch; Firewall lässt Port 22 nicht zu                                 |
 | `up --wait` meldet `app` als unhealthy       | `dc logs app`: meist ein `FILL_IN` oder ein fehlender Wert in `server.env` (die App prüft die Umgebung beim Start) |
 | Browser meldet Zertifikatsfehler             | `dc logs caddy`: Ports 80 und 443 offen? Hostname zeigt auf die IP? Limits siehe oben                              |
-| „Beispiel ausprobieren“ antwortet mit Fehler | `SEED_DEMO_EMAIL` fehlt oder `pnpm seed:demo` wurde nicht ausgeführt                                               |
+| „Demo ausprobieren“ antwortet mit Fehler     | `SEED_DEMO_EMAIL` fehlt oder `pnpm seed:demo` wurde nicht ausgeführt                                               |
 | Titelbilder fehlen nach Neustart des Servers | Volume `s3data` gelöscht? Es ist nicht im Backup; Bilder neu hochladen                                             |
 | Server träge, Container beendet              | `docker stats`, `free -h`: Speicher knapp; größeren Server wählen oder Swap prüfen                                 |

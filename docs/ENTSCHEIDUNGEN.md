@@ -873,3 +873,8 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
   443 sind veröffentlicht). `trustedProxies` wäre hier unnötig und würde bei falschem Subnetz mehr kaputt machen. **Neu prüfen,
   wenn ein weiterer Proxy davorgeschaltet wird** (zum Beispiel Cloudflare): dann kommt eine Kette an, und Caddy braucht
   `trusted_proxies`.
+- **„Demo“ statt „Beispiel“ (2026-10-02).** Der Knopf heißt „Demo ausprobieren“, die Fehlermeldung „Die Demo ist gerade nicht
+  verfügbar“, das Notebook „Demo: Projekt Nordlicht“. Grund: „Beispiel“ sagte nicht, dass man damit die ganze App ohne Konto
+  ausprobiert. „Demo-Konto“ blieb draußen: Besucher sollen kein Konto vermuten (es ist ein Gastzugang). Der Titel des Notebooks
+  ist die Kennung der Vorlage: Ein bereits mit dem alten Titel angelegtes Notebook würde nicht mehr gefunden (auf dem Server gab es
+  noch keins).

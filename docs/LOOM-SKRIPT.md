@@ -20,9 +20,9 @@ Gliederung nach [PLAN.md](PLAN.md#tagesplan). Vorher einmal komplett üben, mit 
 
 ## 3. Live-Test (4 Minuten)
 
-Vorbereitung: Beispiel-Notebook ist da, ein zweites, leeres Notebook für den Upload, ein kleines PDF mit Tabelle bereithalten.
+Vorbereitung: Demo-Notebook ist da, ein zweites, leeres Notebook für den Upload, ein kleines PDF mit Tabelle bereithalten.
 
-1. Anmelden mit dem Demo-Zugang. Notebook-Liste, Beispiel-Notebook öffnen.
+1. Anmelden mit dem Demo-Zugang. Notebook-Liste, Demo-Notebook öffnen.
 2. **Quellenübersicht** aufklappen (Zusammenfassung, Schlüsselthemen). Vorschlagsfrage anklicken.
 3. Antwort **streamt**. Chip mit der Maus berühren: Popup mit Quelle und Textstelle. Klicken: Quelltext mit markierter Stelle.
 4. Eine **deutsche Frage auf die englische Quelle** stellen (RAG-Übersicht).
@@ -34,13 +34,13 @@ Vorbereitung: Beispiel-Notebook ist da, ein zweites, leeres Notebook für den Up
 
 ## 4. Trade-offs und Grenzen (1 Minute)
 
-- Wo bricht es zuerst? Kontingent im kostenlosen Tarif (Gegenmittel: Inhalts-Hash, Ratenbegrenzer, Kontingent pro Nutzer, Beispiel-Notebook). Danach Fragen in anderer Sprache als die Quelle (Textsuche nur Rauschen, Gewicht nicht durch Messung begründet).
+- Wo bricht es zuerst? Kontingent im kostenlosen Tarif (Gegenmittel: Inhalts-Hash, Ratenbegrenzer, Kontingent pro Nutzer, Demo-Notebook). Danach Fragen in anderer Sprache als die Quelle (Textsuche nur Rauschen, Gewicht nicht durch Messung begründet).
 - Was ich als Nächstes ändern würde: mehr Golden Questions, Abgleich der PDF-Ausgabe mit einem lokalen Parser, Ratenbegrenzer in die Datenbank, sobald es mehr als eine Instanz gibt.
 - Ehrlich sagen: Der Kaltstart des kostenlosen Hostings dauert etwa eine Minute.
 
 ## Vor der Aufnahme prüfen
 
-- [ ] Demo-Konto meldet sich an, Beispiel-Notebook ist vorbefüllt und die Übersichten sind da
+- [ ] Demo-Konto meldet sich an, Demo-Notebook ist vorbefüllt und die Übersichten sind da
 - [ ] Ein Durchlauf mit den Fragen aus Abschnitt 3 klappt, Kontingent des Demo-Projekts reicht
 - [ ] `pnpm eval:live` ist einmal gelaufen, die Zahlen liegen bereit (Datei in `reports/`)
 - [ ] README enthält Live-Link, Demo-Zugang und Video-Link

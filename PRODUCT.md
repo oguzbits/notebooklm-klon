@@ -33,7 +33,7 @@ verifiability, not about a new look.
 
 ## Operating Context
 
-- Deployment and walkthrough: a live demo with a guest account ("Beispiel ausprobieren") that holds a
+- Deployment and walkthrough: a live demo with a guest account ("Demo ausprobieren") that holds a
   copy of an example notebook, a GitHub repo, and a video of at most ten minutes.
 - Free-tier operation: Gemini free tier, a separate Google project for the demo, per-user quotas and
   rate limits, daily caps on web search (Tavily).
@@ -62,7 +62,7 @@ not connected to Google. Using the original's logo and name was explicitly allow
 ## Evidence on Hand
 
 - Spike results on retrieval, models and limits: [docs/SPIKE-ERGEBNISSE.md](docs/SPIKE-ERGEBNISSE.md).
-- An example notebook ("Beispiel: Projekt Nordlicht") seeded by `pnpm seed:demo`.
+- An example notebook ("Demo: Projekt Nordlicht") seeded by `pnpm seed:demo`.
 - No customers, testimonials or usage numbers exist. Do not invent any. The Loom link is not recorded yet.
 
 ## Product Principles

@@ -4,11 +4,11 @@ Ein Notebook, das nur auf deinen eigenen Quellen antwortet und jede Aussage mit 
 
 Bewerbungsaufgabe für Everlast AI (zweite Runde). Der Schwerpunkt liegt auf dem Weg von der Quelle zum nachprüfbaren Zitat: Aufnahme, Suche, Antwort mit geprüften Zitaten, Auswertung. Die Oberfläche ist deutsch, Quellen und Fragen dürfen englisch sein.
 
-|             |                                                                                                                                                                          |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Live-Demo   | _wird nach dem Deployment eingetragen_                                                                                                                                   |
-| Demo-Zugang | Auf der Anmeldeseite **„Beispiel ausprobieren“**: ein Gastkonto mit einer eigenen Kopie des Beispiel-Notebooks, ohne E-Mail und Passwort. Es wird nach 7 Tagen gelöscht. |
-| Video       | _Loom-Link folgt_                                                                                                                                                        |
+|             |                                                                                                                                                                  |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Live-Demo   | _wird nach dem Deployment eingetragen_                                                                                                                           |
+| Demo-Zugang | Auf der Anmeldeseite **„Demo ausprobieren“**: ein Gastkonto mit einer eigenen Kopie des Demo-Notebooks, ohne E-Mail und Passwort. Es wird nach 7 Tagen gelöscht. |
+| Video       | _Loom-Link folgt_                                                                                                                                                |
 
 > Hinweis für die Demo: Keine sensiblen Dokumente hochladen. Im kostenlosen Tarif von Google können Eingaben zur Verbesserung der Modelle genutzt werden. Die Demo soll auf einem Hetzner-Server laufen und schläft dort nicht ein (siehe Abschnitt „Deployment“).
 
@@ -168,7 +168,7 @@ Suche im Web (optional): `TAVILY_API_KEY` setzen (Tavily, kostenloser Tarif mit 
 
 Titelbilder (optional): Ein S3-kompatibler Speicher, dazu `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID` und `S3_SECRET_ACCESS_KEY` setzen (alle vier oder keins). Lokal startet `pnpm db:up` einen (SeaweedFS). Ohne Speicher zeigt der Dialog „Notebook anpassen“ keine Bildfläche. Die Bilder liegen im Speicher, nicht in der Datenbank: Der lokale Dienst aus `pnpm db:up` hält die Bilder nur im Arbeitsspeicher (`tmpfs`): nach `pnpm db:down` sind sie weg. Bei einem Docker-Volume (Deployment) sind sie dauerhaft, aber nicht gesichert.
 
-Beispiel-Notebook anlegen (braucht den Schlüssel, liest drei Beispieldokumente einmal ein): `SEED_DEMO_EMAIL` und `SEED_DEMO_PASSWORD` setzen, dann `pnpm seed:demo`. Der Befehl kann wiederholt werden. Gäste („Beispiel ausprobieren“) bekommen eine Kopie dieses Notebooks, dafür muss `SEED_DEMO_EMAIL` auch in der Umgebung der App stehen.
+Demo-Notebook anlegen (braucht den Schlüssel, liest drei Beispieldokumente einmal ein): `SEED_DEMO_EMAIL` und `SEED_DEMO_PASSWORD` setzen, dann `pnpm seed:demo`. Der Befehl kann wiederholt werden. Gäste („Demo ausprobieren“) bekommen eine Kopie dieses Notebooks, dafür muss `SEED_DEMO_EMAIL` auch in der Umgebung der App stehen.
 
 ## Deployment
 
@@ -180,7 +180,7 @@ Die vollständige Anleitung (Einrichtung, Betrieb, Backup, Fehlersuche) steht in
 
 ## Wo es zuerst brechen würde
 
-- **Kontingent des Anbieters.** Im kostenlosen Tarif sind die Tageslimits knapp. Gegenmittel im Code: Inhalts-Hash statt doppelter Verarbeitung, Ratenbegrenzer mit Token-Gewichten, Kontingent pro Nutzer, vorbefülltes Beispiel-Notebook.
+- **Kontingent des Anbieters.** Im kostenlosen Tarif sind die Tageslimits knapp. Gegenmittel im Code: Inhalts-Hash statt doppelter Verarbeitung, Ratenbegrenzer mit Token-Gewichten, Kontingent pro Nutzer, vorbefülltes Demo-Notebook.
 - **Suche bei Fragen in anderer Sprache als die Quelle.** Die Textseite der Hybridsuche liefert dort nur Rauschen, das Gewicht 0,5 ist nicht durch Messung begründet (siehe Nachtrag in den Spike-Ergebnissen). Mit mehr Golden Questions neu bewerten.
 - **PDF-Parsing per Sprachmodell** ist nicht deterministisch und kann Bildunterschriften auslassen. Ein Abgleich mit einem lokalen Parser wäre der nächste Schritt.
 - **Mehrere Instanzen.** Die Ratenbegrenzer liegen im Speicher eines Prozesses. Bei mehr als einer Instanz müssten sie in die Datenbank.

@@ -115,7 +115,7 @@ await seedDemo(
       if (existing) return existing.id;
       // Nobody signs in as the owner: the password is thrown away.
       const created = await auth.api.signUpEmail({
-        body: { name: 'Beispiel', email: DEMO_OWNER_EMAIL, password: randomUUID() },
+        body: { name: 'Demo', email: DEMO_OWNER_EMAIL, password: randomUUID() },
       });
       return created.user.id;
     },
