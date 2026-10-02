@@ -168,9 +168,9 @@ und Screenreader, `test:db`, `e2e`, Semgrep.
 
 ## Empfohlene Reihenfolge
 
-1. **Fehler mit Test zuerst:** H2 (`key={notebookId}`), H7 (CSV), Tippfehler und „Prompt“.
-2. **Zuverlässigkeit:** H1 (hängende Quellen und SIGTERM), H5 (Health mit DB), M1 (Transaktion).
-3. **Härtung, klein:** H3 (Deploy-Bedingung), M3 (Header in Caddy), H6 nach Browserprüfung.
-4. **Betrieb:** H4 (externes Backup und Restore-Probe), M8 (Rollback), M9 (Limits und feste Images).
+1. ✅ **Fehler mit Test zuerst:** H2 (`key={notebookId}`), H7 (CSV), Tippfehler und „Prompt“.
+2. ✅ **Zuverlässigkeit:** H1 (hängende Quellen und SIGTERM), H5 (Health mit DB), M1 (Transaktion).
+3. ✅ **Härtung, klein:** H3 (Deploy-Bedingung), M3 (Header in Caddy), H6 nach Browserprüfung.
+4. **Betrieb:** M8 und M9 erledigt; H4 teilweise (Dump vor jedem Deploy, Restore-Probe), **offen: Kopie auf externen Speicher, braucht Entscheidung des Nutzers** (Anbieter, Kosten, Zugangsdaten).
 5. **Funktionen:** Bilder und PDF-Link, „neu einlesen“, Markdown-Export, Konto löschen.
 6. **Danach:** M2, M5, M11 bis M17, YouTube, Audio, PPTX.
