@@ -55,6 +55,11 @@ jobs:
           # The running image stays as "previous" for a rollback (docs/DEPLOYMENT.md); the first deploy has none.
           ssh "$TARGET" 'if docker image inspect nlm-app:current >/dev/null 2>&1; then docker tag nlm-app:current nlm-app:previous; fi'
           docker save nlm-app:current | gzip | ssh "$TARGET" 'gunzip | docker load'
+      - name: Dump the database
+        # The app migrates forward when it starts, so a dump of the old state is the way back. The
+        # first deploy has no database yet; any later failure stops the deploy.
+        run: |
+          ssh "$TARGET" 'cd /srv/nlm && if docker compose -f docker-compose.prod.yml --env-file server.env ps --status running --quiet db | grep -q .; then bash backup.sh; fi'
       - name: Start
         run: |
           # Compose does not restart Caddy when only the mounted Caddyfile changed, so it is reloaded.

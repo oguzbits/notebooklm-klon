@@ -15,7 +15,7 @@ Internet ──443/80──> Caddy ──> app (Hono + gebautes Web, Port 3000) 
 | Stack       | [docker-compose.prod.yml](../deploy/docker-compose.prod.yml) | Vier Container; nur Caddy ist aus dem Internet erreichbar         |
 | Proxy       | [Caddyfile](../deploy/Caddyfile)                             | HTTPS-Zertifikat holen und erneuern, ohne Pufferung weiterreichen |
 | Einrichtung | [provision.sh](../deploy/provision.sh)                       | Ein Befehl vom eigenen Rechner: Server, `server.env`, Secrets     |
-| Backup      | [backup.sh](../deploy/backup.sh)                             | Täglich 03:15 ein `pg_dump`, die letzten 7 bleiben                |
+| Backup      | [backup.sh](../deploy/backup.sh)                             | Täglich 03:15 und vor jedem Deploy ein `pg_dump`, 7 Tage          |
 | Deploy      | [deploy.yml](../.github/workflows/deploy.yml)                | Baut das Image, schickt es per SSH, startet den Stack             |
 
 - Das Image entsteht in GitHub Actions (`docker build`) und wird mit `docker save | ssh docker load` übertragen. Der Server
@@ -96,6 +96,12 @@ Regel 7 in [AGENTS.md](../AGENTS.md) nur IDs, Längen, Dauer und Token-Zahlen, k
   die Datenbank. **Die Titelbilder (Volume `s3data`) und `server.env` sind nicht im Backup**; eine Kopie der `server.env`
   gehört in deinen Passwortmanager. Die Dumps liegen auf demselben Server: gegen einen Verlust des Servers helfen sie nur,
   wenn du sie gelegentlich herunterlädst (`scp deploy@<Hostname>:/srv/nlm/backups/<Datei> .`).
+- Vor jedem Deploy zieht der Workflow einen frischen Dump (derselbe Dateiname wie der nächtliche, er ersetzt den des Tages).
+  Schlägt der Dump fehl, wird nicht deployt.
+- Ob ein Dump sich wiederherstellen lässt, prüft [restore-check.sh](../deploy/restore-check.sh) in einer
+  Wegwerf-Datenbank (Docker nötig, ändert nichts an der echten): `deploy/restore-check.sh nlm-<Datum>.sql.gz` listet die
+  Tabellen mit Zeilenzahlen und endet mit „Restore OK“. Ein defekter Dump bricht mit einem Fehler ab. Einmal im Monat mit
+  einem heruntergeladenen Dump laufen lassen.
 - Wiederherstellen in eine leere Datenbank:
 
   ```bash

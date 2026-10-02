@@ -940,3 +940,13 @@ gesetzt war. Der Schließen-Button des Readers kommt als `action` und war damit 
 Studio) kam man nicht zurück zur Quellenliste. Der Kopf bleibt jetzt auch mit `action` sichtbar (`panel.tsx`). Die Tests
 prüfen die Klasse, weil jsdom kein CSS anwendet und die Klasse hier das Verhalten ist (Handmutation beider Teilbedingungen
 geprüft).
+
+### H4: Dump vor jedem Deploy und Wiederherstellungsprobe
+
+Die App migriert beim Start vorwärts; der Dump vom Vorabend reicht nicht, um nach einem schlechten Deploy den Stand davor
+wiederherzustellen. Der Workflow ruft deshalb vor `up -d` `backup.sh` auf (nur wenn der `db`-Container läuft, beim
+allerersten Deploy gibt es noch keine Datenbank). Ein fehlgeschlagener Dump bricht den Deploy ab. `deploy/restore-check.sh`
+lädt einen Dump in eine Wegwerf-Datenbank desselben Images (`pgvector/pgvector:pg18`) und zählt die Zeilen je Tabelle; ein
+defekter Dump endet mit Fehlercode und ohne übrig gebliebenen Container (lokal mit gutem und kaputtem Dump geprüft).
+**Offen, Entscheidung des Nutzers:** Die Dumps liegen weiter nur auf dem Server. Eine Kopie auf externen Speicher (Anbieter,
+Kosten, Zugangsdaten) ist ein externer Seiteneffekt und wird nicht ohne Rückfrage eingerichtet.
