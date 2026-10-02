@@ -128,7 +128,8 @@ export function SourcesField({
 
 /**
  * The free text of a dialog: the topic, or the instruction of a report. While it is empty it shows
- * ideas, like the original ("Vorschläge" and a list); the ideas are no value and no label.
+ * ideas, like the original ("Vorschläge" and a list); the ideas are no value and no label. Ideas and
+ * field share one grid cell, so a long list makes the field taller instead of running out of it.
  */
 export function FocusField({
   label,
@@ -154,19 +155,19 @@ export function FocusField({
       <label id={labelId} htmlFor={`${labelId}-field`} className={FIELD_LABEL}>
         {label}
       </label>
-      <div className="relative">
+      <div className="grid">
         <Textarea
           id={`${labelId}-field`}
           aria-label={hint}
           value={value}
           maxLength={maxLength}
           onChange={(event) => onChange(event.target.value)}
-          className="min-h-[120px] resize-none rounded-sm px-4 py-4 text-[1.0625rem] leading-6"
+          className="col-start-1 row-start-1 min-h-[120px] resize-none rounded-sm px-4 py-4 text-[1.0625rem] leading-6"
         />
         {value === '' && (
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 px-4 py-4 text-[1.0625rem] leading-6 text-muted-foreground"
+            className="pointer-events-none col-start-1 row-start-1 px-4 py-4 text-[1.0625rem] leading-6 text-muted-foreground"
           >
             <p>Vorschläge</p>
             <ul className="pl-9">

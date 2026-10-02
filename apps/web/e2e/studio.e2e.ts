@@ -107,3 +107,27 @@ test('a report from a template shows its sections, each statement cited', async 
   await page.getByRole('button', { name: 'Berichtsansicht schließen' }).click();
   await expect(library(page).getByRole('button', { name: /Überblick/ })).toBeVisible();
 });
+
+const DIALOG_TILES = ['Berichte', 'Karteikarten', 'Quiz', 'Mindmap', 'Datentabelle'];
+const NARROW = { width: 390, height: 800 };
+
+for (const tile of DIALOG_TILES) {
+  test(`the ideas in the ${tile} dialog stay inside the field, also on a narrow screen`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(NARROW);
+    await page.getByRole('tab', { name: 'Studio' }).click();
+    await page.getByRole('button', { name: tile, exact: true }).click();
+    const dialog = page.getByRole('dialog');
+    const field = dialog.getByRole('textbox');
+    const ideas = dialog.locator('li').last();
+    await expect(ideas).toBeVisible();
+
+    const fieldBox = await field.boundingBox();
+    const ideasBox = await ideas.boundingBox();
+    expect(fieldBox).not.toBeNull();
+    expect(ideasBox).not.toBeNull();
+    // The list is longer than the minimum height of the field: the field grows to fit it.
+    expect(ideasBox!.y + ideasBox!.height).toBeLessThanOrEqual(fieldBox!.y + fieldBox!.height + 1);
+  });
+}
