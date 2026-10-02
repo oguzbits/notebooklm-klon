@@ -83,7 +83,7 @@ function OverviewCover({
       {/* Like the original: the whole cover is one invisible control that opens "Notebook anpassen". */}
       <button
         type="button"
-        aria-label="Notizbuch anpassen"
+        aria-label="Notebook anpassen"
         onClick={onCustomize}
         className="absolute inset-0 cursor-pointer rounded-panel"
       />

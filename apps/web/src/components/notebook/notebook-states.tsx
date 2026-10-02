@@ -31,12 +31,12 @@ export function NotebookNotFound() {
     <>
       <AppHeader />
       <div className="mx-auto flex w-full max-w-xl flex-col items-start gap-3 p-6">
-        <h1 className="text-xl font-medium">Notizbuch nicht gefunden</h1>
+        <h1 className="text-xl font-medium">Notebook nicht gefunden</h1>
         <p className="text-muted-foreground">
-          Dieses Notizbuch gibt es nicht (mehr) in deinem Konto.
+          Dieses Notebook gibt es nicht (mehr) in deinem Konto.
         </p>
         <Button asChild variant="outline">
-          <Link to={ROUTES.HOME}>Zu deinen Notizbüchern</Link>
+          <Link to={ROUTES.HOME}>Zu deinen Notebooksn</Link>
         </Button>
       </div>
     </>

@@ -125,7 +125,7 @@ describe('NotebookOverview', () => {
     renderOverview();
     const user = userEvent.setup();
 
-    await user.click(await screen.findByRole('button', { name: 'Notizbuch anpassen' }));
+    await user.click(await screen.findByRole('button', { name: 'Notebook anpassen' }));
 
     expect(onCustomize).toHaveBeenCalledTimes(1);
   });

@@ -79,7 +79,7 @@ describe('AuthPage', () => {
       renderWithProviders(
         <Routes>
           <Route path="/" element={<AuthPage />} />
-          <Route path="/notizbuecher/:notebookId" element={<p>Das Beispiel-Notizbuch</p>} />
+          <Route path="/notizbuecher/:notebookId" element={<p>Das Beispiel-Notebook</p>} />
         </Routes>
       );
 
@@ -100,7 +100,7 @@ describe('AuthPage', () => {
         .setup()
         .click(await screen.findByRole('button', { name: 'Beispiel ausprobieren' }));
 
-      expect(await screen.findByText('Das Beispiel-Notizbuch')).toBeTruthy();
+      expect(await screen.findByText('Das Beispiel-Notebook')).toBeTruthy();
     });
 
     it('says why it did not work when no guest can be started, and the sign-in stays usable', async () => {

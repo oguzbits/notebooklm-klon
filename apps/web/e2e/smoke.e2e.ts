@@ -17,12 +17,12 @@ test('from sign-up to a cited passage, a note and back out', async ({ page }) =>
   await page.getByLabel('E-Mail-Adresse').fill(email);
   await page.getByLabel('Passwort').fill(PASSWORD);
   await page.getByRole('button', { name: 'Konto erstellen' }).click();
-  await expect(page.getByRole('heading', { name: 'Deine Notizbücher' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Deine Notebooks' })).toBeVisible();
 
   // Empty state, then a notebook.
-  await expect(page.getByText('Noch kein Notizbuch')).toBeVisible();
+  await expect(page.getByText('Noch kein Notebook')).toBeVisible();
   await page.getByRole('button', { name: 'Neues Notebook' }).click();
-  await expect(page.getByLabel('Titel des Notizbuchs')).toHaveValue('Unbenanntes Notebook');
+  await expect(page.getByLabel('Titel des Notebooks')).toHaveValue('Unbenanntes Notebook');
 
   // A refused file explains itself; a text file is read.
   await page.getByRole('button', { name: 'Quellen hinzufügen' }).click();

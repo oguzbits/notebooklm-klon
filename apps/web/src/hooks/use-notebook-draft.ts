@@ -2,7 +2,7 @@ import { type Notebook, type UpdateNotebookBody } from '@nlm/shared';
 import { useState } from 'react';
 
 /**
- * What the reader is changing in "Notizbuch anpassen": the title and the own summary, as typed.
+ * What the reader is changing in "Notebook anpassen": the title and the own summary, as typed.
  * `changes` is only what really differs from the notebook (or null when nothing does) and is what
  * gets sent; `valid` says whether the draft may be sent at all.
  */

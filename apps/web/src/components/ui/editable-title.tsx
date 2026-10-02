@@ -18,7 +18,7 @@ export function EditableTitle({
   maxLength = 200,
 }: {
   value: string;
-  /** Names the field for screen readers ("Titel des Notizbuchs"). */
+  /** Names the field for screen readers ("Titel des Notebooks"). */
   label: string;
   saving: boolean;
   error?: string | null;

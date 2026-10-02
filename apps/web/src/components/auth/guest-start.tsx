@@ -18,7 +18,7 @@ export function GuestStart({
         {starting ? 'Beispiel wird vorbereitet …' : 'Beispiel ausprobieren'}
       </Button>
       <p className="text-center text-xs text-muted-foreground">
-        Ohne Anmeldung, mit einem fertigen Beispiel-Notizbuch zum Ausprobieren.
+        Ohne Anmeldung, mit einem fertigen Beispiel-Notebook zum Ausprobieren.
       </p>
     </div>
   );

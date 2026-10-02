@@ -29,7 +29,7 @@ export function AppHeader({ title, actions }: { title?: ReactNode; actions?: Rea
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <Link
           to={ROUTES.HOME}
-          aria-label="Zu deinen Notizbüchern"
+          aria-label="Zu deinen Notebooksn"
           className="flex shrink-0 items-center gap-2 rounded-full"
         >
           <Logo />

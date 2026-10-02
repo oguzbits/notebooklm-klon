@@ -33,7 +33,7 @@ function PassagePreview({
       )}
       {chunk.isError && (
         <p className="p-4 text-[0.875rem] leading-6 text-muted-foreground">
-          Diese Quelle ist nicht mehr in deinem Notizbuch.
+          Diese Quelle ist nicht mehr in deinem Notebook.
         </p>
       )}
       {chunk.data && (

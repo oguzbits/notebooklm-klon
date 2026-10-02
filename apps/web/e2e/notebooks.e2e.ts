@@ -2,8 +2,7 @@ import { expect, type Page, test } from '@playwright/test';
 
 import { createNotebook, renameOpenNotebook, signUp, uniqueEmail } from './helpers';
 
-const backToList = (page: Page) =>
-  page.getByRole('link', { name: 'Zu deinen Notizbüchern' }).click();
+const backToList = (page: Page) => page.getByRole('link', { name: 'Zu deinen Notebooksn' }).click();
 
 test('notebooks are made, found, renamed, pinned and deleted from the list', async ({ page }) => {
   await signUp(page, uniqueEmail('list'));
@@ -19,33 +18,33 @@ test('notebooks are made, found, renamed, pinned and deleted from the list', asy
   await expect(cards).toHaveCount(2);
 
   // Search narrows the list; a miss says so; clearing brings everything back.
-  const search = page.getByLabel('Notizbücher durchsuchen');
+  const search = page.getByLabel('Notebooks durchsuchen');
   await search.fill('alpha');
   await expect(cards).toHaveCount(1);
   await expect(cards.first()).toContainText('Alpha Recherche');
   await search.fill('gibt-es-nicht');
-  await expect(page.getByText('Kein Notizbuch gefunden')).toBeVisible();
+  await expect(page.getByText('Kein Notebook gefunden')).toBeVisible();
   await search.fill('');
   await expect(cards).toHaveCount(2);
 
   // Rename from the card menu.
-  await page.getByRole('button', { name: 'Weitere Aktionen für Notizbuch „Beta Planung“' }).click();
+  await page.getByRole('button', { name: 'Weitere Aktionen für Notebook „Beta Planung“' }).click();
   await page.getByRole('menuitem', { name: 'Titel bearbeiten' }).click();
-  await page.getByLabel('Titel des Notizbuchs').fill('Gamma Ergebnis');
-  await page.getByLabel('Titel des Notizbuchs').press('Enter');
+  await page.getByLabel('Titel des Notebooks').fill('Gamma Ergebnis');
+  await page.getByLabel('Titel des Notebooks').press('Enter');
   await expect(cards.filter({ hasText: 'Gamma Ergebnis' })).toHaveCount(1);
   await expect(cards.filter({ hasText: 'Beta Planung' })).toHaveCount(0);
 
   // Pinned notebooks move to the top.
   await page
-    .getByRole('button', { name: 'Weitere Aktionen für Notizbuch „Gamma Ergebnis“' })
+    .getByRole('button', { name: 'Weitere Aktionen für Notebook „Gamma Ergebnis“' })
     .click();
   await page.getByRole('menuitem', { name: 'Oben anpinnen' }).click();
   await expect(cards.first()).toContainText('Gamma Ergebnis');
 
   // Deleting asks first; cancelling keeps it, confirming removes it for good.
   await page
-    .getByRole('button', { name: 'Weitere Aktionen für Notizbuch „Alpha Recherche“' })
+    .getByRole('button', { name: 'Weitere Aktionen für Notebook „Alpha Recherche“' })
     .click();
   await page.getByRole('menuitem', { name: 'Löschen' }).click();
   await expect(page.getByText(/„Alpha Recherche“ wird mit allen Quellen/)).toBeVisible();
@@ -53,7 +52,7 @@ test('notebooks are made, found, renamed, pinned and deleted from the list', asy
   await expect(cards).toHaveCount(2);
 
   await page
-    .getByRole('button', { name: 'Weitere Aktionen für Notizbuch „Alpha Recherche“' })
+    .getByRole('button', { name: 'Weitere Aktionen für Notebook „Alpha Recherche“' })
     .click();
   await page.getByRole('menuitem', { name: 'Löschen' }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Löschen' }).click();
@@ -70,5 +69,5 @@ test('an unknown notebook page says so instead of showing something', async ({ p
 
   await page.goto('/notizbuecher/00000000-0000-4000-8000-000000000000');
 
-  await expect(page.getByRole('heading', { name: 'Notizbuch nicht gefunden' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Notebook nicht gefunden' })).toBeVisible();
 });

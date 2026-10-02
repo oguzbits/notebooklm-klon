@@ -11,7 +11,7 @@ import { server } from '../../../../../vitest.setup';
 import { NotebookTitle } from './notebook-title';
 
 const url = `*/api/notebooks/${NOTEBOOK_ID}`;
-const field = () => screen.getByRole('textbox', { name: 'Titel des Notizbuchs' });
+const field = () => screen.getByRole('textbox', { name: 'Titel des Notebooks' });
 
 function renderTitle() {
   return renderWithProviders(
@@ -36,7 +36,7 @@ describe('NotebookTitle', () => {
     await user.type(field(), '  Neu  ');
     await user.tab();
 
-    await screen.findByRole('textbox', { name: 'Titel des Notizbuchs' });
+    await screen.findByRole('textbox', { name: 'Titel des Notebooks' });
     await vi.waitFor(() => expect(sent).toEqual({ title: 'Neu' }));
     expect(screen.getByRole('heading', { level: 1 })).toBeTruthy();
   });

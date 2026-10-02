@@ -29,7 +29,7 @@ describe('NotebookListPage', () => {
     server.use(list([]));
     renderWithProviders(<NotebookListPage />);
 
-    expect(await screen.findByText('Noch kein Notizbuch')).toBeTruthy();
+    expect(await screen.findByText('Noch kein Notebook')).toBeTruthy();
   });
 
   it('shows a German error with a retry that loads the list again', async () => {
@@ -60,7 +60,7 @@ describe('NotebookListPage', () => {
       })
     );
     renderWithProviders(<NotebookListPage />);
-    await screen.findByText('Noch kein Notizbuch');
+    await screen.findByText('Noch kein Notebook');
 
     await userEvent.setup().click(screen.getByRole('button', { name: 'Neues Notebook' }));
 
@@ -80,7 +80,7 @@ describe('NotebookListPage', () => {
       })
     );
     renderWithProviders(<NotebookListPage />);
-    await screen.findByText('Noch kein Notizbuch');
+    await screen.findByText('Noch kein Notebook');
     const user = userEvent.setup();
 
     await user.click(screen.getByRole('button', { name: 'Neues Notebook' }));
@@ -105,14 +105,14 @@ describe('NotebookListPage', () => {
     const user = userEvent.setup();
 
     await user.click(
-      await screen.findByRole('button', { name: /Weitere Aktionen für Notizbuch „Weg damit“/ })
+      await screen.findByRole('button', { name: /Weitere Aktionen für Notebook „Weg damit“/ })
     );
     await user.click(await screen.findByRole('menuitem', { name: 'Löschen' }));
     expect(deleted).toBe(false);
     const dialog = await screen.findByRole('alertdialog');
     await user.click(within(dialog).getByRole('button', { name: 'Löschen' }));
 
-    expect(await screen.findByText('Noch kein Notizbuch')).toBeTruthy();
+    expect(await screen.findByText('Noch kein Notebook')).toBeTruthy();
   });
 
   it('changes the title from the menu of a card', async () => {
@@ -128,10 +128,10 @@ describe('NotebookListPage', () => {
     const user = userEvent.setup();
 
     await user.click(
-      await screen.findByRole('button', { name: /Weitere Aktionen für Notizbuch „Alt“/ })
+      await screen.findByRole('button', { name: /Weitere Aktionen für Notebook „Alt“/ })
     );
     await user.click(await screen.findByRole('menuitem', { name: 'Titel bearbeiten' }));
-    const field = await screen.findByLabelText('Titel des Notizbuchs');
+    const field = await screen.findByLabelText('Titel des Notebooks');
     await user.clear(field);
     await user.type(field, 'Neu');
     await user.click(screen.getByRole('button', { name: 'Speichern' }));
@@ -155,7 +155,7 @@ describe('NotebookListPage', () => {
     renderWithProviders(<NotebookListPage />);
     const user = userEvent.setup();
     const open = async () =>
-      user.click(await screen.findByRole('button', { name: /Weitere Aktionen für Notizbuch/ }));
+      user.click(await screen.findByRole('button', { name: /Weitere Aktionen für Notebook/ }));
 
     await open();
     await user.click(await screen.findByRole('menuitem', { name: 'Oben anpinnen' }));
@@ -213,11 +213,11 @@ describe('NotebookListPage', () => {
     const user = userEvent.setup();
     await screen.findByText('Steuerrecht');
 
-    await user.type(screen.getByRole('searchbox', { name: 'Notizbücher durchsuchen' }), 'forsch');
+    await user.type(screen.getByRole('searchbox', { name: 'Notebooks durchsuchen' }), 'forsch');
     expect(screen.queryByText('Steuerrecht')).toBeNull();
     expect(screen.getByText('Forschung')).toBeTruthy();
 
     await user.type(screen.getByRole('searchbox'), 'xyz');
-    expect(await screen.findByText('Kein Notizbuch gefunden')).toBeTruthy();
+    expect(await screen.findByText('Kein Notebook gefunden')).toBeTruthy();
   });
 });

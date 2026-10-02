@@ -39,7 +39,7 @@ function NotebookMenu({
           variant="ghost"
           size="icon-sm"
           className="size-9"
-          aria-label="Notizbuch-Konfiguration"
+          aria-label="Notebook-Konfiguration"
           tooltip="Weitere Optionen"
         >
           <EllipsisVertical />
@@ -52,11 +52,11 @@ function NotebookMenu({
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={onCustomize}>
           <Paintbrush aria-hidden />
-          Notizbuch anpassen
+          Notebook anpassen
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => onPick(DIALOG.COPY)}>
           <Copy aria-hidden />
-          Notizbuch kopieren
+          Notebook kopieren
         </DropdownMenuItem>
         <DropdownMenuItem className="h-auto py-2" onSelect={() => onPick(DIALOG.CLEAR)}>
           <Trash2 aria-hidden />
@@ -69,7 +69,7 @@ function NotebookMenu({
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => onPick(DIALOG.DELETE)}>
           <Trash2 aria-hidden />
-          Notizbuch löschen
+          Notebook löschen
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

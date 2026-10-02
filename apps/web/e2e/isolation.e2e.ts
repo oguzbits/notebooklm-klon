@@ -20,10 +20,10 @@ test('one user never sees or opens the notebook of another', async ({ page }) =>
 
   // Ben's list is empty, and Anna's address leads him nowhere.
   await signUp(page, uniqueEmail('ben'));
-  await expect(page.getByText('Noch kein Notizbuch')).toBeVisible();
+  await expect(page.getByText('Noch kein Notebook')).toBeVisible();
   await expect(page.getByText('Annas Geheimnis')).toHaveCount(0);
 
   await page.goto(annasPage);
-  await expect(page.getByRole('heading', { name: 'Notizbuch nicht gefunden' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Notebook nicht gefunden' })).toBeVisible();
   await expect(page.getByText('nordlicht.txt')).toHaveCount(0);
 });

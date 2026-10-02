@@ -64,7 +64,7 @@ describe('ReaderPanel', () => {
     );
     renderWithProviders(<ReaderPanel notebookId={NOTEBOOK_ID} target={{ chunkId: CHUNK_ID }} />);
 
-    expect(await screen.findByText(/nicht mehr in deinem Notizbuch/)).toBeTruthy();
+    expect(await screen.findByText(/nicht mehr in deinem Notebook/)).toBeTruthy();
   });
 
   it('shows the summary of the source on a card that folds away', async () => {

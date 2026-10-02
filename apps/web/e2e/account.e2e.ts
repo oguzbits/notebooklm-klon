@@ -18,11 +18,11 @@ test.describe('account', () => {
     // The right one leads back to the list.
     await page.getByLabel('Passwort').fill(PASSWORD);
     await page.getByRole('button', { name: 'Anmelden', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Deine Notizbücher' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Deine Notebooks' })).toBeVisible();
 
     // The session survives a reload.
     await page.reload();
-    await expect(page.getByRole('heading', { name: 'Deine Notizbücher' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Deine Notebooks' })).toBeVisible();
   });
 
   test('an address that has an account cannot sign up twice', async ({ page }) => {

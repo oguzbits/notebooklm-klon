@@ -20,7 +20,7 @@ export async function signUp(page: Page, email: string): Promise<void> {
   await page.getByLabel('E-Mail-Adresse').fill(email);
   await page.getByLabel('Passwort').fill(PASSWORD);
   await page.getByRole('button', { name: 'Konto erstellen' }).click();
-  await expect(page.getByRole('heading', { name: 'Deine Notizbücher' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Deine Notebooks' })).toBeVisible();
 }
 
 export async function signOut(page: Page): Promise<void> {
@@ -33,12 +33,12 @@ export async function signOut(page: Page): Promise<void> {
 export async function createNotebook(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Neues Notebook' }).click();
   await expect(page).toHaveURL(/\/notizbuecher\/[0-9a-f-]{36}$/);
-  await expect(page.getByLabel('Titel des Notizbuchs')).toBeVisible();
+  await expect(page.getByLabel('Titel des Notebooks')).toBeVisible();
 }
 
 /** Names the open notebook through the title in its header. */
 export async function renameOpenNotebook(page: Page, title: string): Promise<void> {
-  const field = page.getByLabel('Titel des Notizbuchs');
+  const field = page.getByLabel('Titel des Notebooks');
   await field.fill(title);
   await field.press('Enter');
   await expect(field).toHaveValue(title);

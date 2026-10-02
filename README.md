@@ -1,31 +1,31 @@
 # NotebookLM-Klon
 
-Ein Notizbuch, das nur auf deinen eigenen Quellen antwortet und jede Aussage mit einer Nummer belegt. Ein Klick auf die Nummer öffnet den Quelltext an der zitierten Stelle.
+Ein Notebook, das nur auf deinen eigenen Quellen antwortet und jede Aussage mit einer Nummer belegt. Ein Klick auf die Nummer öffnet den Quelltext an der zitierten Stelle.
 
 Bewerbungsaufgabe für Everlast AI (zweite Runde). Der Schwerpunkt liegt auf dem Weg von der Quelle zum nachprüfbaren Zitat: Aufnahme, Suche, Antwort mit geprüften Zitaten, Auswertung. Die Oberfläche ist deutsch, Quellen und Fragen dürfen englisch sein.
 
-|             |                                                                                                                                                                           |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Live-Demo   | _wird nach dem Deployment eingetragen_                                                                                                                                    |
-| Demo-Zugang | Auf der Anmeldeseite **„Beispiel ausprobieren“**: ein Gastkonto mit einer eigenen Kopie des Beispiel-Notizbuchs, ohne E-Mail und Passwort. Es wird nach 7 Tagen gelöscht. |
-| Video       | _Loom-Link folgt_                                                                                                                                                         |
+|             |                                                                                                                                                                          |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Live-Demo   | _wird nach dem Deployment eingetragen_                                                                                                                                   |
+| Demo-Zugang | Auf der Anmeldeseite **„Beispiel ausprobieren“**: ein Gastkonto mit einer eigenen Kopie des Beispiel-Notebooks, ohne E-Mail und Passwort. Es wird nach 7 Tagen gelöscht. |
+| Video       | _Loom-Link folgt_                                                                                                                                                        |
 
 > Hinweis für die Demo: Keine sensiblen Dokumente hochladen. Im kostenlosen Tarif von Google können Eingaben zur Verbesserung der Modelle genutzt werden. Die Demo soll auf einem Hetzner-Server laufen und schläft dort nicht ein (siehe Abschnitt „Deployment“).
 
 ## Was es kann
 
-- **Anmelden und Notizbücher** anlegen, öffnen, löschen (E-Mail und Passwort, Sitzung in der eigenen Datenbank).
+- **Anmelden und Notebooks** anlegen, öffnen, löschen (E-Mail und Passwort, Sitzung in der eigenen Datenbank).
 - **Quellen** hinzufügen: PDF, DOCX, TXT, MD und Webseiten per Link. Die Verarbeitung läuft im Hintergrund mit sichtbarem Status und verständlichen Fehlermeldungen. Quellen lassen sich an- und abwählen, die Auswahl begrenzt auch die Suche.
 - **Chat** mit Streaming. Jede aussagekräftige Antwort besteht aus Aussagen mit nummerierten Chips. Hover zeigt die Textstelle mit Quellenname, Klick öffnet den Quelltext mit hervorgehobenem Abschnitt.
 - **Übersicht pro Quelle**: Zusammenfassung, Schlüsselthemen und Vorschlagsfragen, die das Gespräch starten.
-- **Übersicht des Notizbuchs** am Anfang des Chats: ein Emoji, der Titel, die Zahl der Quellen und eine Zusammenfassung aller fertigen Quellen mit fetten Schlüsselbegriffen. Sie entsteht einmal, wenn sich die Quellen ändern, und lässt sich als Notiz speichern oder kopieren.
+- **Übersicht des Notebooks** am Anfang des Chats: ein Emoji, der Titel, die Zahl der Quellen und eine Zusammenfassung aller fertigen Quellen mit fetten Schlüsselbegriffen. Sie entsteht einmal, wenn sich die Quellen ändern, und lässt sich als Notiz speichern oder kopieren.
 - **Notizen** aus Antworten, mit erhaltenen Zitaten, und eigene Notizen mit Editor (Format-Leiste, wird beim Tippen gespeichert, auf Wunsch als Quelle).
 - **Studio**: Bericht (Briefing, FAQ, Lernleitfaden, Blogbeitrag oder eigene Anweisung), Karteikarten, Quiz, Mindmap und Datentabelle aus den gewählten Quellen. Vor dem Erzeugen lassen sich Umfang und Schwierigkeit wählen; die Ausgaben tragen dieselben geprüften Zitate wie der Chat.
 - **Suche im Web** unter „Quellen hinzufügen“: Treffer ansehen und als Quelle übernehmen (Tavily, optional, mit Grenzen pro Nutzer und Tag).
-- **Notizbuch anpassen**: Titel, eigene Zusammenfassung und Titelbild (liegt in einem S3-kompatiblen Speicher, optional). Notizbücher lassen sich kopieren, auf der Startseite anpinnen und umbenennen.
+- **Notebook anpassen**: Titel, eigene Zusammenfassung und Titelbild (liegt in einem S3-kompatiblen Speicher, optional). Notebooks lassen sich kopieren, auf der Startseite anpinnen und umbenennen.
 - **Quellen und Ausgaben** sortieren und umbenennen; der Chat hat „Nach unten springen“ und zeigt je Antwort das **Vorgehen** (wie viele Quellen und Stellen geprüft wurden).
-- **Chat-Konfiguration** pro Notizbuch und Vorschlagsfragen unter der letzten Antwort.
-- **Verlauf** bleibt pro Notizbuch erhalten, gegliedert nach Tagen.
+- **Chat-Konfiguration** pro Notebook und Vorschlagsfragen unter der letzten Antwort.
+- **Verlauf** bleibt pro Notebook erhalten, gegliedert nach Tagen.
 
 Nicht gebaut (siehe [docs/PLAN.md](docs/PLAN.md), Kategorien Should und Stretch): Audio, Präsentation, Video und Infografik im Studio, PPTX als Quelle, agentische Suche im Chat, Deep Research, Drive-Anbindung, Bewertung von Chat-Antworten (Daumen). Der Umfang wurde bewusst auf die Kernstrecke begrenzt, die Gründe stehen in [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md).
 
@@ -105,7 +105,7 @@ sequenceDiagram
   participant G as Gemini
   U->>A: Frage
   A->>G: Frage einbetten
-  A->>D: Hybridsuche (Vektor + Volltext, RRF) nach Nutzer, Notizbuch, gewählten Quellen
+  A->>D: Hybridsuche (Vektor + Volltext, RRF) nach Nutzer, Notebook, gewählten Quellen
   D-->>A: 8 Abschnitte
   A->>G: Abschnitte als c1 bis c8 und Frage, strukturierte Ausgabe
   loop je Aussage, sobald sie fertig ist
@@ -133,8 +133,8 @@ Kurz: PDFs liest ein Gemini-Modell (Tabellen und Scans bleiben erhalten), die Su
 
 - `pnpm check`: TypeScript strict, ESLint, Architekturregeln, tote Abhängigkeiten, Duplikate (unter 2 %), Magic-String-Audit.
 - `pnpm test`: Vitest ohne Netzwerk. MSW lehnt jede nicht abgefangene Anfrage ab, kein Test kann Kontingent verbrauchen.
-- `pnpm test:db`: Tests gegen Postgres mit pgvector (`pnpm db:up`), darunter alle Zugriffsregeln: jede Abfrage filtert nach Nutzer, Notizbuch und gewählten Quellen.
-- `pnpm e2e`: Playwright-Nutzerreisen gegen den Offline-Server (Konto, Notizbücher, Quellen, Trennung der Konten, Studio mit Quiz, Mindmap und Bericht, Darstellung auf dem Telefon; echte Datenbank, echte App, gefälschte Modelle, keine Token).
+- `pnpm test:db`: Tests gegen Postgres mit pgvector (`pnpm db:up`), darunter alle Zugriffsregeln: jede Abfrage filtert nach Nutzer, Notebook und gewählten Quellen.
+- `pnpm e2e`: Playwright-Nutzerreisen gegen den Offline-Server (Konto, Notebooks, Quellen, Trennung der Konten, Studio mit Quiz, Mindmap und Bericht, Darstellung auf dem Telefon; echte Datenbank, echte App, gefälschte Modelle, keine Token).
 - `pnpm eval:live`: die 18 Golden Questions gegen die echten Modelle, mit Trefferquote der Suche, Fakten in der Antwort und im zitierten Abschnitt und der Zahl der vom Server verworfenen Aussagen. Kostet Kontingent, läuft nicht in CI.
 - CI (GitHub Actions): Qualität, Unit-Tests, Datenbank-Tests, Browser-Test, Build, Semgrep.
 
@@ -166,9 +166,9 @@ pnpm --filter @nlm/api dev:offline   # dazu in einem zweiten Terminal: pnpm --fi
 
 Suche im Web (optional): `TAVILY_API_KEY` setzen (Tavily, kostenloser Tarif mit 1000 Suchen im Monat; an Tavily gehen nur die Suchbegriffe). Ohne Schlüssel zeigt die Oberfläche das Suchfeld nicht. Pro Nutzer sind 10 Suchen pro Stunde und für alle zusammen 30 pro Tag erlaubt.
 
-Titelbilder (optional): Ein S3-kompatibler Speicher, dazu `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID` und `S3_SECRET_ACCESS_KEY` setzen (alle vier oder keins). Lokal startet `pnpm db:up` einen (SeaweedFS). Ohne Speicher zeigt der Dialog „Notizbuch anpassen“ keine Bildfläche. Die Bilder liegen im Speicher, nicht in der Datenbank: Der lokale Dienst aus `pnpm db:up` hält die Bilder nur im Arbeitsspeicher (`tmpfs`): nach `pnpm db:down` sind sie weg. Bei einem Docker-Volume (Deployment) sind sie dauerhaft, aber nicht gesichert.
+Titelbilder (optional): Ein S3-kompatibler Speicher, dazu `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID` und `S3_SECRET_ACCESS_KEY` setzen (alle vier oder keins). Lokal startet `pnpm db:up` einen (SeaweedFS). Ohne Speicher zeigt der Dialog „Notebook anpassen“ keine Bildfläche. Die Bilder liegen im Speicher, nicht in der Datenbank: Der lokale Dienst aus `pnpm db:up` hält die Bilder nur im Arbeitsspeicher (`tmpfs`): nach `pnpm db:down` sind sie weg. Bei einem Docker-Volume (Deployment) sind sie dauerhaft, aber nicht gesichert.
 
-Beispiel-Notizbuch anlegen (braucht den Schlüssel, liest drei Beispieldokumente einmal ein): `SEED_DEMO_EMAIL` und `SEED_DEMO_PASSWORD` setzen, dann `pnpm seed:demo`. Der Befehl kann wiederholt werden. Gäste („Beispiel ausprobieren“) bekommen eine Kopie dieses Notizbuchs, dafür muss `SEED_DEMO_EMAIL` auch in der Umgebung der App stehen.
+Beispiel-Notebook anlegen (braucht den Schlüssel, liest drei Beispieldokumente einmal ein): `SEED_DEMO_EMAIL` und `SEED_DEMO_PASSWORD` setzen, dann `pnpm seed:demo`. Der Befehl kann wiederholt werden. Gäste („Beispiel ausprobieren“) bekommen eine Kopie dieses Notebooks, dafür muss `SEED_DEMO_EMAIL` auch in der Umgebung der App stehen.
 
 ## Deployment
 
@@ -180,7 +180,7 @@ Die vollständige Anleitung (Einrichtung, Betrieb, Backup, Fehlersuche) steht in
 
 ## Wo es zuerst brechen würde
 
-- **Kontingent des Anbieters.** Im kostenlosen Tarif sind die Tageslimits knapp. Gegenmittel im Code: Inhalts-Hash statt doppelter Verarbeitung, Ratenbegrenzer mit Token-Gewichten, Kontingent pro Nutzer, vorbefülltes Beispiel-Notizbuch.
+- **Kontingent des Anbieters.** Im kostenlosen Tarif sind die Tageslimits knapp. Gegenmittel im Code: Inhalts-Hash statt doppelter Verarbeitung, Ratenbegrenzer mit Token-Gewichten, Kontingent pro Nutzer, vorbefülltes Beispiel-Notebook.
 - **Suche bei Fragen in anderer Sprache als die Quelle.** Die Textseite der Hybridsuche liefert dort nur Rauschen, das Gewicht 0,5 ist nicht durch Messung begründet (siehe Nachtrag in den Spike-Ergebnissen). Mit mehr Golden Questions neu bewerten.
 - **PDF-Parsing per Sprachmodell** ist nicht deterministisch und kann Bildunterschriften auslassen. Ein Abgleich mit einem lokalen Parser wäre der nächste Schritt.
 - **Mehrere Instanzen.** Die Ratenbegrenzer liegen im Speicher eines Prozesses. Bei mehr als einer Instanz müssten sie in die Datenbank.

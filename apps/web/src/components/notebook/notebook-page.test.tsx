@@ -68,7 +68,7 @@ describe('NotebookPage', () => {
     );
     renderPage();
 
-    expect(await screen.findByRole('textbox', { name: 'Titel des Notizbuchs' })).toHaveProperty(
+    expect(await screen.findByRole('textbox', { name: 'Titel des Notebooks' })).toHaveProperty(
       'value',
       'Forschung'
     );
