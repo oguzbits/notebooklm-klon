@@ -1,5 +1,5 @@
 import { SOURCE_KIND } from '@nlm/shared';
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { Route, Routes } from 'react-router';
@@ -72,6 +72,25 @@ describe('NotebookPage', () => {
       'value',
       'Forschung'
     );
+  });
+
+  it('shows the title of the notebook in the browser tab and restores the old one on leaving', async () => {
+    server.use(
+      http.get('*/api/notebooks', () =>
+        HttpResponse.json([notebook({ id: NOTEBOOK_ID, title: 'Forschung' })])
+      ),
+      http.get('*/api/auth/get-session', pending),
+      http.get(`${base}/sources`, pending),
+      http.get(`${base}/messages`, pending),
+      http.get(`${base}/studio`, pending),
+      http.get(`${base}/notes`, pending)
+    );
+    document.title = 'Start';
+    const { unmount } = renderPage();
+
+    await waitFor(() => expect(document.title).toBe('Forschung'));
+    unmount();
+    expect(document.title).toBe('Start');
   });
 
   describe('folding a column', () => {
