@@ -372,6 +372,18 @@ describe('file upload', () => {
     expect(ApiErrorSchema.parse(await response.json()).code).toBe(API_ERROR.FILE_TOO_LARGE);
   });
 
+  it('tells a damaged PDF from a wrong file type', async () => {
+    const notebook = await createNotebook(alice);
+
+    const response = await app.request(
+      `/api/notebooks/${notebook}/sources/file`,
+      upload(alice, 'kaputt.pdf', '%PDF-1.4 beschädigt')
+    );
+
+    expect(response.status).toBe(415);
+    expect(ApiErrorSchema.parse(await response.json()).code).toBe(API_ERROR.UNREADABLE_FILE);
+  });
+
   it('rejects an unsupported file type and a renamed file', async () => {
     const notebook = await createNotebook(alice);
 

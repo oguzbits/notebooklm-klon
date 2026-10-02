@@ -30,7 +30,7 @@ describe('mapError', () => {
       [
         new UnreadablePdfError(new Error('broken')),
         HTTP_STATUS.UNSUPPORTED_MEDIA_TYPE,
-        API_ERROR.UNSUPPORTED_FILE,
+        API_ERROR.UNREADABLE_FILE,
       ],
     ] as const;
 

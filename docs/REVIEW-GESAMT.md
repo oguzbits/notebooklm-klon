@@ -127,9 +127,9 @@ Websuche-Treffer. Grenzen: 10 MB, 50 PDF-Seiten, 5 MB je URL, 10 Quellen pro 24 
 | Nie         | EPUB                               | –       | Kaum Nachfrage.                                                |
 | Nie         | Google Docs und Slides             | L       | Bewusst offen, siehe [DESIGN-ABGLEICH.md](DESIGN-ABGLEICH.md). |
 
-Fehlerfälle, die heute schlecht erklärt sind: verschlüsseltes oder defektes PDF wird zu „Dateityp nicht
-unterstützt“; ein Scan ohne Text wird `EMPTY_TEXT`; eine beliebige ZIP als `.docx` scheitert mit der
-allgemeinen Meldung „Die Quelle konnte nicht gelesen werden.“
+✅ Fehlerfälle besser erklärt: ein defektes oder geschütztes PDF bekommt eine eigene Meldung (`UNREADABLE_FILE`,
+415); bei einer fehlgeschlagenen Quelle (zum Beispiel eine ZIP als `.docx`) nennt der Text die mögliche Ursache.
+Ein Scan ohne Text bleibt `EMPTY_TEXT`.
 
 Was NotebookLM selbst an Quellentypen unterstützt, ist hier nicht gegen die aktuelle Doku geprüft (Regel 12);
 vor einer Entscheidung über YouTube, Audio oder Bilder erst dort nachsehen.

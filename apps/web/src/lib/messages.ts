@@ -12,6 +12,8 @@ export const ERROR_MESSAGE: Record<ApiErrorCode, string> = {
   [API_ERROR.FILE_TOO_LARGE]: 'Die Datei ist zu groß. Erlaubt sind höchstens 10 MB.',
   [API_ERROR.UNSUPPORTED_FILE]:
     'Dieses Dateiformat wird nicht unterstützt. Erlaubt sind PDF, DOCX, PPTX, TXT, MD, Bilder (PNG, JPG, WEBP) und Aufnahmen (MP3, WAV).',
+  [API_ERROR.UNREADABLE_FILE]:
+    'Diese Datei lässt sich nicht öffnen. Vielleicht ist sie beschädigt oder mit einem Passwort geschützt.',
   [API_ERROR.TOO_MANY_PAGES]: 'Das PDF hat zu viele Seiten. Erlaubt sind höchstens 50 Seiten.',
   [API_ERROR.NO_SOURCES_SELECTED]:
     'Wähle mindestens eine Quelle aus, die schon fertig gelesen wurde.',
@@ -38,7 +40,8 @@ export const ERROR_MESSAGE: Record<ApiErrorCode, string> = {
 /** Why a source could not be read. Shown under a failed source. */
 export const FAILURE_MESSAGE: Record<SourceFailure, string> = {
   [SOURCE_FAILURE.EMPTY_TEXT]: 'In dieser Quelle wurde kein Text gefunden.',
-  [SOURCE_FAILURE.PARSE_FAILED]: 'Die Quelle konnte nicht gelesen werden.',
+  [SOURCE_FAILURE.PARSE_FAILED]:
+    'Die Quelle konnte nicht gelesen werden. Vielleicht ist die Datei beschädigt oder mit einem Passwort geschützt; sonst versuche es später noch einmal.',
   [SOURCE_FAILURE.EMBED_FAILED]: 'Die Quelle konnte nicht für die Suche vorbereitet werden.',
   [SOURCE_FAILURE.ENQUEUE_FAILED]: 'Das Lesen der Quelle konnte nicht gestartet werden.',
   [SOURCE_FAILURE.INTERRUPTED]: 'Das Lesen der Quelle wurde unterbrochen.',

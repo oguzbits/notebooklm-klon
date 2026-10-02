@@ -1202,3 +1202,11 @@ oder `MAX_TOKENS` stoßen. Zeitlimit wie beim Audio (300 s). Symbol: `SquarePlay
 Tests: `youtube-url` (26), `gemini-pdf-parser` (Anfrageform, Zeitlimit, Schätzung, 403), `parse-source`, Route in `app.db.test.ts`
 (kein Abruf, dasselbe Video in anderer Linkform wird wiederverwendet, Lookalike, fremdes Notizbuch), Oberfläche. Mutationen getötet,
 bis auf eine äquivalente in `youtube-url.ts`.
+
+## 2026-10-02 (Fehlermeldungen für defekte Dateien)
+
+Ein PDF mit richtiger Signatur, das sich nicht öffnen lässt (beschädigt, verschlüsselt), antwortet nicht mehr mit „Dateiformat nicht
+unterstützt“, sondern mit dem neuen Code `UNREADABLE_FILE` (415, Vertrag in `packages/shared`). Eine falsche Signatur bleibt
+`UNSUPPORTED_FILE`. Bei `PARSE_FAILED` (zum Beispiel eine ZIP als `.docx`, die mammoth ablehnt) nennt der Text die mögliche Ursache
+und rät sonst zu einem späteren Versuch, weil derselbe Code auch Fehler des Anbieters deckt. Ein eigener Quellen-Fehlercode für defekte
+Office-Dateien wäre nur durch Raten an der Fehlermeldung von mammoth zu trennen und ist nicht gebaut.

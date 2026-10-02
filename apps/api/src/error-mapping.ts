@@ -48,7 +48,7 @@ export function mapError(error: Error): Mapped | null {
   if (error instanceof UnreadablePdfError) {
     return {
       status: HTTP_STATUS.UNSUPPORTED_MEDIA_TYPE,
-      body: errorBody(API_ERROR.UNSUPPORTED_FILE),
+      body: errorBody(API_ERROR.UNREADABLE_FILE),
     };
   }
   return null;
