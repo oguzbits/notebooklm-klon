@@ -165,7 +165,7 @@ Hetzner Cloud mit Docker Compose und Caddy (automatisches HTTPS). [deploy.yml](.
 
 - **Kontingent des Anbieters.** Im kostenlosen Tarif sind die Tageslimits knapp. Gegenmittel im Code: Inhalts-Hash statt doppelter Verarbeitung, Ratenbegrenzer mit Token-Gewichten, Kontingent pro Nutzer, vorbefülltes Demo-Notebook.
 - **Suche bei Fragen in anderer Sprache als die Quelle.** Die Textseite der Hybridsuche liefert dort nur Rauschen, das Gewicht 0,5 ist nicht durch Messung begründet (siehe Nachtrag in den Spike-Ergebnissen). Mit mehr Golden Questions neu bewerten.
-- **PDF-Parsing per Sprachmodell** ist nicht deterministisch und kann Bildunterschriften auslassen. Ein Abgleich mit einem lokalen Parser wäre der nächste Schritt.
+- **PDF-Parsing per Sprachmodell** ist nicht deterministisch und kann Bildunterschriften auslassen. Manche PDFs (gemessen: das NIST-Dokument im Lasttest) lehnt das Modell als Wiedergabe geschützten Textes ab (`RECITATION`), auch das größere Fallback-Modell nicht immer; die Quelle meldet dann einen Fehler. Ein Abgleich mit einem lokalen Parser wäre der nächste Schritt.
 - **Mehrere Instanzen.** Die Ratenbegrenzer liegen im Speicher eines Prozesses. Bei mehr als einer Instanz müssten sie in die Datenbank.
 
 ## Agentischer Workflow
