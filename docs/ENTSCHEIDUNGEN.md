@@ -878,3 +878,10 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
   ausprobiert. „Demo-Konto“ blieb draußen: Besucher sollen kein Konto vermuten (es ist ein Gastzugang). Der Titel des Notebooks
   ist die Kennung der Vorlage: Ein bereits mit dem alten Titel angelegtes Notebook würde nicht mehr gefunden (auf dem Server gab es
   noch keins).
+- **Testqualität und Regeln (2026-10-02).** Handgemachte Mutanten (Stryker 10 läuft nicht mit Vitest 5) gegen `core` und `web/lib`:
+  von 276 Tests töten nur 2 keinen Mutanten, beide sind sinnvolle Determinismus-Tests. Lücken in SSRF-Zugangsdaten,
+  Statement-Stream, Chunking, `studio-check`, Längen- und Sprachhinweis des Chat-Prompts und im Karteikarten-Export sind mit
+  neuen Tests geschlossen; `snapToWordStart` verlor tote Zweige. Nicht gemessen: Routen, DB- und E2E-Tests. Regeln: Invariante 8
+  nennt die Einstiegspunkte (statt „nirgends sonst“), Test-first bindet nur Fehlerbehebungen, neuer Abschnitt „Tests“ (Verhalten
+  statt Markup, Auth-Tests je Route bleiben, Handmutation). Verworfen: DoD-Quittung abschaffen und AGENTS.md aufteilen (nicht
+  belegt); eine ESLint-Regel für `process.env` (neun Einstiegspunkte brauchten Ausnahmen, Nutzen klein).
