@@ -1084,3 +1084,14 @@ setzt ihn zurück). Ein Studio-Aufruf, der danach mit 409 endet, verbraucht trot
 keine Antworten mehr möglich", weil sie nicht mehr nur ein Tageslimit meint. Registrierung pro IP: Better Auth begrenzt in Produktion
 selbst (100 Anfragen pro 10 s, Anmelden und Registrieren 3 pro 10 s), dafür ist nichts zu bauen. `HOUR_MS` steht jetzt in
 `core/window-limit.ts`, weil drei Routen es brauchten.
+
+## 2026-10-02 (Antwort-Stream, M11)
+
+Während eine Antwort geschrieben wird, ersetzt ein Stopp-Knopf ("Antwort stoppen") den Senden-Knopf an derselben Stelle, damit es pro
+Absicht einen Auslöser gibt. `streamChat` bekommt ein `AbortSignal`, gibt den Reader in `finally` immer frei (auch wenn der Aufrufer die
+Schleife früh verlässt) und bricht den Reader beim Abbruch selbst ab, weil ein laufender Body vom Abbruch der Anfrage nicht in jedem
+Browser endet. Ein Abbruch durch den Nutzer (Stopp, Verlassen des Notebooks, Unmount) ist kein Fehler: Der Server speichert die
+bisherige Antwort im `finally` und die Oberfläche lädt den Verlauf neu. Weil der Server erst kurz nach dem Trennen speichert, gibt es
+nach `SAVE_AFTER_STOP_MS` = 1 s ein zweites Neuladen; das ist eine Heuristik und kein Vertrag. Ein Stream, der ohne `DONE` oder
+`ERROR` endet, gilt als abgebrochene Verbindung und zeigt den Fehler mit Wiederholen (`INTERNAL`), nicht mehr als Erfolg. Das Lesen
+der Blöcke steht in `eventsOf`, damit `streamChat` unter den Grenzen von ESLint bleibt.

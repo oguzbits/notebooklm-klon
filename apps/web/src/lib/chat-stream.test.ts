@@ -1,6 +1,7 @@
 import { API_ERROR, CHAT_EVENT, type ChatEvent } from '@nlm/shared';
+import { waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { server } from '../../../../vitest.setup';
 import { ApiRequestError } from './api';
@@ -40,6 +41,8 @@ async function collect(question = 'Frage?') {
 }
 
 describe('streamChat', () => {
+  afterEach(() => vi.restoreAllMocks());
+
   it('sends the question and yields the events in order', async () => {
     let body: unknown;
     server.use(
@@ -89,5 +92,77 @@ describe('streamChat', () => {
     );
 
     await expect(collect()).rejects.toThrow();
+  });
+
+  it('throws when the stream ends without the closing event, so a cut answer is no success', async () => {
+    server.use(
+      http.post(
+        `*/api/notebooks/${NOTEBOOK}/chat`,
+        () =>
+          new HttpResponse(frame(STATEMENT), { headers: { 'content-type': 'text/event-stream' } })
+      )
+    );
+
+    await expect(collect()).rejects.toMatchObject({ code: API_ERROR.INTERNAL });
+  });
+
+  it('accepts a stream that ends with the error event the server sends itself', async () => {
+    const failure: ChatEvent = { type: CHAT_EVENT.ERROR, code: API_ERROR.INTERNAL };
+    server.use(
+      http.post(
+        `*/api/notebooks/${NOTEBOOK}/chat`,
+        () => new HttpResponse(frame(failure), { headers: { 'content-type': 'text/event-stream' } })
+      )
+    );
+
+    expect(await collect()).toEqual([failure]);
+  });
+
+  it('stops reading and lets the connection go when the reader of the events stops early', async () => {
+    let cancelled = false;
+    const encoder = new TextEncoder();
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(encoder.encode(frame(STATEMENT)));
+      },
+      cancel() {
+        cancelled = true;
+      },
+    });
+    // MSW wraps the body of a mocked response, so the cancel is only seen on a response made here.
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response(body));
+
+    for await (const event of streamChat(NOTEBOOK, 'Frage?')) {
+      expect(event).toEqual(STATEMENT);
+      break;
+    }
+
+    await waitFor(() => expect(cancelled).toBe(true));
+  });
+
+  it('ends with an abort error when the signal fires while the answer is coming', async () => {
+    const encoder = new TextEncoder();
+    server.use(
+      http.post(`*/api/notebooks/${NOTEBOOK}/chat`, () => {
+        const body = new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(encoder.encode(frame(STATEMENT)));
+          },
+        });
+        return new HttpResponse(body, { headers: { 'content-type': 'text/event-stream' } });
+      })
+    );
+    const stop = new AbortController();
+    const seen: ChatEvent[] = [];
+
+    const reading = (async () => {
+      for await (const event of streamChat(NOTEBOOK, 'Frage?', stop.signal)) {
+        seen.push(event);
+        stop.abort();
+      }
+    })();
+
+    await expect(reading).rejects.toMatchObject({ name: 'AbortError' });
+    expect(seen).toEqual([STATEMENT]);
   });
 });

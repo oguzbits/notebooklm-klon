@@ -2,7 +2,7 @@ import { API_ERROR, CHAT_EVENT, type ChatEvent, NOTE_KIND, SOURCE_STATUS } from 
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse, type JsonBodyType } from 'msw';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { formatWeekday } from '@/lib/day';
 import {
@@ -254,7 +254,9 @@ describe('ChatPanel', () => {
     expect(screen.getByText('Antwort wird geschrieben …')).toBeTruthy();
     // The question that is being answered opens the day as well, in an empty conversation.
     expect(screen.getByText(formatWeekday(new Date().toISOString()))).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Frage senden' })).toHaveProperty('disabled', true);
+    // One button per intent: while the answer is written it stops it, it does not send a second question.
+    expect(screen.queryByRole('button', { name: 'Frage senden' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Antwort stoppen' })).toBeTruthy();
     expect(screen.getByLabelText('Deine Frage')).toHaveProperty('disabled', true);
 
     release();
@@ -262,6 +264,120 @@ describe('ChatPanel', () => {
     await waitFor(() => expect(screen.queryByText('Antwort wird geschrieben …')).toBeNull());
     expect(screen.getByText('Wer leitet es?')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Quelle 1 anzeigen' })).toBeTruthy();
+  });
+
+  describe('stopping the answer', () => {
+    afterEach(() => vi.restoreAllMocks());
+
+    const statement: ChatEvent = {
+      type: CHAT_EVENT.STATEMENT,
+      text: 'Dr. Brandt leitet es.',
+      chunkIds: [CHUNK_ID],
+    };
+
+    /** An answer that sends one statement and then waits for ever, like a slow model. */
+    function hangingAnswer() {
+      const encoder = new TextEncoder();
+      return http.post(`${base}/chat`, () => {
+        const body = new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(encoder.encode(frame(statement)));
+          },
+        });
+        return new HttpResponse(body, { headers: { 'content-type': 'text/event-stream' } });
+      });
+    }
+
+    /** The signals of the requests to the chat, as the browser got them. */
+    function watchChatRequests() {
+      const signals: AbortSignal[] = [];
+      const real = globalThis.fetch;
+      vi.spyOn(globalThis, 'fetch').mockImplementation((input, init) => {
+        if (String(input).endsWith('/chat') && init?.signal) signals.push(init.signal);
+        return real(input, init);
+      });
+      return signals;
+    }
+
+    async function askAndWaitForText() {
+      renderChat();
+      const user = userEvent.setup();
+      await screen.findByLabelText('Deine Frage');
+      await user.type(screen.getByLabelText('Deine Frage'), 'Wer leitet es?');
+      await user.click(screen.getByRole('button', { name: 'Frage senden' }));
+      await screen.findByText(/Dr\. Brandt leitet es\./);
+      return user;
+    }
+
+    it('ends the request, shows no error and loads what the server kept when the stop button is used', async () => {
+      const signals = watchChatRequests();
+      let loads = 0;
+      server.use(
+        sources(),
+        http.get(`${base}/messages`, () => {
+          loads += 1;
+          // The server saves the cut answer a moment after the connection closed.
+          return HttpResponse.json(
+            loads < 3
+              ? []
+              : [
+                  question('Wer leitet es?'),
+                  answer([{ text: 'Dr. Brandt leitet es.', chunkIds: [CHUNK_ID] }]),
+                ]
+          );
+        }),
+        hangingAnswer()
+      );
+      const user = await askAndWaitForText();
+
+      await user.click(screen.getByRole('button', { name: 'Antwort stoppen' }));
+
+      await waitFor(() => expect(screen.queryByText('Antwort wird geschrieben …')).toBeNull());
+      expect(signals.at(-1)?.aborted).toBe(true);
+      expect(screen.queryByRole('button', { name: /Erneut versuchen/ })).toBeNull();
+      expect(screen.getByRole('button', { name: 'Frage senden' })).toBeTruthy();
+      expect(screen.getByLabelText('Deine Frage')).toHaveProperty('disabled', false);
+      expect(
+        await screen.findByRole('button', { name: 'Quelle 1 anzeigen' }, { timeout: 3000 })
+      ).toBeTruthy();
+    });
+
+    it('ends the request when the chat leaves the page', async () => {
+      const signals = watchChatRequests();
+      server.use(sources(), history([]), hangingAnswer());
+      const { unmount } = await (async () => {
+        const rendered = renderChat();
+        const user = userEvent.setup();
+        await screen.findByLabelText('Deine Frage');
+        await user.type(screen.getByLabelText('Deine Frage'), 'Wer leitet es?');
+        await user.click(screen.getByRole('button', { name: 'Frage senden' }));
+        await screen.findByText(/Dr\. Brandt leitet es\./);
+        return rendered;
+      })();
+
+      unmount();
+
+      expect(signals.at(-1)?.aborted).toBe(true);
+    });
+
+    it('shows an answer that was cut off without its end as a failure with a retry', async () => {
+      server.use(
+        sources(),
+        history([]),
+        http.post(
+          `${base}/chat`,
+          () =>
+            new HttpResponse(frame(statement), { headers: { 'content-type': 'text/event-stream' } })
+        )
+      );
+      renderChat();
+      const user = userEvent.setup();
+      await screen.findByLabelText('Deine Frage');
+      await user.type(screen.getByLabelText('Deine Frage'), 'Wer leitet es?');
+      await user.click(screen.getByRole('button', { name: 'Frage senden' }));
+
+      expect(await screen.findByRole('button', { name: /Erneut versuchen/ })).toBeTruthy();
+    });
   });
 
   it('shows a German message and a retry when the answer cannot start', async () => {

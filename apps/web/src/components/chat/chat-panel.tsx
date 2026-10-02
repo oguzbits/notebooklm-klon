@@ -72,6 +72,7 @@ export const ChatPanel = memo(function ChatPanel({
         pending={ask.isPending}
         hint={sources.isSuccess && usable === 0 ? NO_SOURCE_HINT : null}
         onAsk={ask.mutate}
+        onStop={ask.stop}
       />
     </div>
   );

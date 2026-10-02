@@ -1,5 +1,5 @@
 import { MAX_QUESTION_CHARS } from '@nlm/shared';
-import { ArrowUp, FileText } from 'lucide-react';
+import { ArrowUp, FileText, Square } from 'lucide-react';
 import { type FormEvent, type KeyboardEvent, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,36 @@ function SourceCount({ count }: { count: number }) {
   );
 }
 
+/** Sends the question, and while its answer is written the same place stops the answer. */
+function SendOrStop({
+  pending,
+  canSend,
+  onStop,
+}: {
+  pending: boolean;
+  canSend: boolean;
+  onStop: () => void;
+}) {
+  if (pending) {
+    return (
+      <Button type="button" size="icon" aria-label="Antwort stoppen" onClick={onStop}>
+        <Square />
+      </Button>
+    );
+  }
+  return (
+    <Button
+      type="submit"
+      size="icon"
+      variant={canSend ? 'default' : 'secondary'}
+      aria-label="Frage senden"
+      disabled={!canSend}
+    >
+      <ArrowUp />
+    </Button>
+  );
+}
+
 /** The field for a new question with the number of sources, the send button and the note below. */
 export function QuestionForm({
   usable,
@@ -37,6 +67,7 @@ export function QuestionForm({
   pending,
   hint,
   onAsk,
+  onStop,
 }: {
   usable: number;
   canAsk: boolean;
@@ -44,6 +75,8 @@ export function QuestionForm({
   /** Why nothing can be asked yet, or null. */
   hint: string | null;
   onAsk: (question: string) => void;
+  /** Ends the answer that is being written. */
+  onStop: () => void;
 }) {
   const [question, setQuestion] = useState('');
   const canSend = canAsk && question.trim() !== '';
@@ -72,15 +105,7 @@ export function QuestionForm({
             className="text-read max-h-40 min-h-0 flex-1 resize-none self-center rounded-none border-0 bg-transparent px-0 py-0.5 shadow-none focus-visible:border-0 focus-visible:outline-0"
           />
           <SourceCount count={usable} />
-          <Button
-            type="submit"
-            size="icon"
-            variant={canSend ? 'default' : 'secondary'}
-            aria-label="Frage senden"
-            disabled={!canSend}
-          >
-            <ArrowUp />
-          </Button>
+          <SendOrStop pending={pending} canSend={canSend} onStop={onStop} />
         </div>
         <p className="py-3 text-center text-small text-muted-foreground">
           {hint ? `${hint} ` : ''}
