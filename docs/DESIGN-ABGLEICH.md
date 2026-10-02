@@ -104,3 +104,4 @@ Ausgabesprache als Kontoeinstellung, „Alle Notizen als Quelle festlegen“.
 - **Gedankenschritte „Thoughts“:** nicht die Gedanken des Modells (englisch, teuer, siehe [SPIKE-ERGEBNISSE.md](SPIKE-ERGEBNISSE.md), Abschnitt 5), sondern „Vorgehen“ mit den echten Schritten des Servers.
 - **Gute/schlechte Antwort** (Daumen): kein Feedback-Speicher, kein Bedarf.
 - **Name:** „NotebookLM (Nachbau)“ statt „Gemini Notebook“ (siehe ENTSCHEIDUNGEN.md).
+- **Studio-Dialoge, Feinheiten:** Zeile „Fragetypen“ mit „Neu!“ und Chips, Sprachauswahl, Nutzungsanzeige und „Später generieren“ fehlen. Auf dem Handy brechen unsere Leisten um, das Original schneidet sie bei höchstens 390 px ab (Begründung in [ENTSCHEIDUNGEN.md](ENTSCHEIDUNGEN.md), Abschnitt „Studio auf dem Handy“).

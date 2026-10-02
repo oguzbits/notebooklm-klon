@@ -1257,3 +1257,24 @@ und `gap-6` im Raster; `overflow-hidden` ist weg, damit ein Überlauf nie wieder
 sitzt dafür am ersten und letzten Segment. Der Playwright-Test `every option of the … dialog is fully visible`
 prüft `scrollWidth <= clientWidth` je Leiste (jsdom hat kein Layout) und wartet auf die geladene Schrift, weil
 die Textbreite davon abhängt.
+
+## 2026-10-03 (Studio auf dem Handy: Dialoge, Berührung, Tippflächen)
+
+Durchgang durch die ganze App bei 320, 390, 768 und 1024 px, hell und dunkel, mit berechneten Maßen statt
+Screenshots (`scrollWidth`/`clientWidth`, Position jedes sichtbaren Elements, Größe jedes bedienbaren Elements). Ergebnis:
+kein Überlauf der Seite und nichts außerhalb des Bildschirms in Anmeldung, Liste, Notebook (Quellen/Chat/Studio),
+Menüs, Dialogen und allen fünf Ansichten (Quiz, Karteikarten, Tabelle, Mindmap, Bericht).
+
+- **Studio-Dialoge** sind auf dem Handy eine zentrierte Karte mit 16 px Rand, "Quellen hinzufügen" ein Bottom-Sheet
+  (beides wie im Original gemessen, Emulation 390x844, Touch). Der Wechsel auf zwei Spalten hängt an der
+  Breite des Dialogs (Container-Query), nicht an der des Fensters: bei 679 px Fenster ist der Dialog schmal.
+- **Bewusster Unterschied:** Das Original schneidet die Leisten bei höchstens 390 px ab, unsere brechen um
+  (`wrap-anywhere hyphens-auto`). Lange deutsche Wörter dürfen bei 320 px nicht abgeschnitten werden.
+- **Menü ungelesener Ausgaben:** Der blaue Punkt ersetzt das Menü, bis der Zeiger kommt. Ein Touch-Gerät hat keinen
+  Zeiger, das Menü war nicht erreichbar. Das Original zeigt "Mehr" (32x32) auf dem Handy immer. Jetzt
+  `pointer-coarse:inline-flex`; Punkt und Menü stehen dort nebeneinander.
+- **Tippflächen:** Gemessen im Original auf dem Handy: Symbol-Knöpfe 36x36, Textknöpfe 36 hoch, Zitat-Chips 22x22,
+  Vorschläge 28 hoch, Knöpfe in geöffneten Notizen 40x40. Unser Schließen-Knopf der Ansicht war 32x32 und der Pfad
+  "Studio" 43x20; auf Touch-Geräten jetzt mindestens 40 (`pointer-coarse:`), am Desktop unverändert.
+- **Offen (Abgleich mit dem Original):** Zeile "Fragetypen" mit "Neu!" und Chips, Sprachauswahl, Nutzungsanzeige,
+  "Später generieren". Siehe [DESIGN-ABGLEICH.md](DESIGN-ABGLEICH.md), Abschnitt 3.
