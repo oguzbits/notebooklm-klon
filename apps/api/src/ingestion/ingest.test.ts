@@ -35,17 +35,17 @@ function fakePorts(overrides: Partial<IngestPorts> = {}) {
   };
   const ports: IngestPorts = {
     sources: {
-      findByHash: async (userId, hash) =>
-        rows.find((r) => r.userId === userId && r.hash === hash) ?? null,
-      create: async (input) => {
+      findOrCreate: async (data) => {
+        const existing = rows.find((r) => r.userId === data.userId && r.hash === data.contentHash);
+        if (existing) return { id: existing.id, status: existing.status, created: false };
         const row = {
           id: `s${rows.length + 1}`,
-          userId: input.userId,
-          hash: input.contentHash,
+          userId: data.userId,
+          hash: data.contentHash,
           status: SOURCE_STATUS.PENDING,
         };
         rows.push(row);
-        return { id: row.id };
+        return { id: row.id, status: row.status, created: true };
       },
       markProcessing: async (id) => {
         const row = rows.find((r) => r.id === id);
@@ -62,7 +62,6 @@ function fakePorts(overrides: Partial<IngestPorts> = {}) {
         calls.failed.push(failure);
       },
     },
-    assertCanCreate: async () => undefined,
     parse: async () => {
       calls.parse += 1;
       return { text: 'Erster Satz.\n\nZweiter Satz.', pageCount: 2 };
@@ -132,42 +131,15 @@ describe('registerSource', () => {
 });
 
 describe('registerSource quota', () => {
-  it('creates nothing when the quota for new sources is used up', async () => {
-    const { ports, rows } = fakePorts({
-      assertCanCreate: async () => {
-        throw new QuotaExceededError();
-      },
-    });
+  it('lets the quota error of the storage through and creates nothing', async () => {
+    const { ports, rows } = fakePorts();
+    ports.sources.findOrCreate = async () => {
+      throw new QuotaExceededError();
+    };
 
     await expect(registerSource(input, ports)).rejects.toBeInstanceOf(QuotaExceededError);
 
     expect(rows).toHaveLength(0);
-  });
-
-  it('does not count content the user already has against the quota', async () => {
-    const { ports } = fakePorts();
-    await registerSource(input, ports);
-    ports.assertCanCreate = async () => {
-      throw new QuotaExceededError();
-    };
-
-    const again = await registerSource(input, ports);
-
-    expect(again.action).toBe(SUBMIT_ACTION.REUSED);
-  });
-
-  it('does not count a retry of a failed source against the quota', async () => {
-    const { ports, rows } = fakePorts();
-    await registerSource(input, ports);
-    const [row] = rows;
-    if (row) row.status = SOURCE_STATUS.FAILED;
-    ports.assertCanCreate = async () => {
-      throw new QuotaExceededError();
-    };
-
-    const again = await registerSource(input, ports);
-
-    expect(again.action).toBe(SUBMIT_ACTION.RETRY);
   });
 });
 

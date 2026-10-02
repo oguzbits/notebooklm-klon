@@ -7,7 +7,6 @@ import { LIMITS } from './config/limits';
 import { createDb } from './db/client';
 import { deleteExpiredGuests } from './db/guest-repository';
 import { runMigrations } from './db/migrate';
-import { createQuota } from './db/quota';
 import {
   createSourceStorage,
   createUploadStorage,
@@ -49,10 +48,9 @@ const queue = await createJobQueue(env.DATABASE_URL, {
 const providers = createProviders(env);
 
 const ingest: SubmitPorts = {
-  sources: createSourceStorage(db),
+  sources: createSourceStorage(db, { enforceQuota: true }),
   uploads: createUploadStorage(db),
   queue,
-  assertCanCreate: createQuota(db),
   parse: providers.parse,
   embed: providers.embedDocuments,
 };

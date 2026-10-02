@@ -8,12 +8,14 @@ import {
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
+import { LIMITS } from '../config/limits';
+import { QuotaExceededError } from '../ingestion/ingest';
 import { chunks, sources } from './schema';
 import { createSourceStorage, createUploadStorage, failInterruptedSources } from './source-storage';
 import { axisVector, createTestDb, ensureUsers } from './testing/test-db';
 
 const { db, pool } = createTestDb();
-const storage = createSourceStorage(db);
+const storage = createSourceStorage(db, { enforceQuota: false });
 const uploads = createUploadStorage(db);
 const USER = 'user-a';
 
@@ -56,27 +58,45 @@ afterAll(async () => {
 });
 
 describe('source storage', () => {
-  it('finds a source by user and content hash', async () => {
-    const { id } = await storage.create(newSource());
+  it('creates a PENDING source and says it is new', async () => {
+    const created = await storage.findOrCreate(newSource());
 
-    expect(await storage.findByHash(USER, 'hash-1')).toEqual({ id, status: SOURCE_STATUS.PENDING });
+    expect(created).toEqual({
+      id: expect.any(String),
+      status: SOURCE_STATUS.PENDING,
+      created: true,
+    });
   });
 
-  it('does not find a source of another user or another hash', async () => {
-    await storage.create(newSource());
+  it('returns the existing source for the same user and content instead of failing', async () => {
+    const first = await storage.findOrCreate(newSource());
+    await storage.markFailed(first.id, SOURCE_FAILURE.PARSE_FAILED);
 
-    expect(await storage.findByHash('user-b', 'hash-1')).toBeNull();
-    expect(await storage.findByHash(USER, 'hash-2')).toBeNull();
+    const again = await storage.findOrCreate(newSource());
+
+    expect(again).toEqual({ id: first.id, status: SOURCE_STATUS.FAILED, created: false });
   });
 
-  it('refuses a second source with the same content for the same user', async () => {
-    await storage.create(newSource());
+  it('keeps the same content of two users apart', async () => {
+    const first = await storage.findOrCreate(newSource('hash-1', USER));
+    const other = await storage.findOrCreate(newSource('hash-1', 'user-b'));
 
-    await expect(storage.create(newSource())).rejects.toThrow();
+    expect(other.created).toBe(true);
+    expect(other.id).not.toBe(first.id);
+  });
+
+  it('makes one source when the same content arrives twice at once', async () => {
+    const results = await Promise.all([
+      storage.findOrCreate(newSource()),
+      storage.findOrCreate(newSource()),
+    ]);
+
+    expect(results.map((result) => result.created).sort()).toEqual([false, true]);
+    expect(results[0].id).toBe(results[1].id);
   });
 
   it('marks a source as PROCESSING and clears an earlier failure', async () => {
-    const { id } = await storage.create(newSource());
+    const { id } = await storage.findOrCreate(newSource());
     await storage.markFailed(id, SOURCE_FAILURE.PARSE_FAILED);
 
     await storage.markProcessing(id);
@@ -86,7 +106,7 @@ describe('source storage', () => {
   });
 
   it('marks a source as FAILED with the failure code', async () => {
-    const { id } = await storage.create(newSource());
+    const { id } = await storage.findOrCreate(newSource());
 
     await storage.markFailed(id, SOURCE_FAILURE.EMPTY_TEXT);
 
@@ -98,7 +118,7 @@ describe('source storage', () => {
   });
 
   it('stores text, page count and chunks with offsets and vectors when READY', async () => {
-    const { id } = await storage.create(newSource());
+    const { id } = await storage.findOrCreate(newSource());
 
     await storage.markReady(id, readyResult());
 
@@ -122,7 +142,7 @@ describe('source storage', () => {
   });
 
   it('replaces the chunks of an earlier attempt instead of adding to them', async () => {
-    const { id } = await storage.create(newSource());
+    const { id } = await storage.findOrCreate(newSource());
     await storage.markReady(id, readyResult());
 
     await storage.markReady(id, { ...readyResult(), chunks: readyResult().chunks.slice(0, 1) });
@@ -131,7 +151,7 @@ describe('source storage', () => {
   });
 
   it('keeps the source unchanged when storing the chunks fails', async () => {
-    const { id } = await storage.create(newSource());
+    const { id } = await storage.findOrCreate(newSource());
     const broken = {
       ...readyResult(),
       chunks: [{ ...readyResult().chunks[0]!, embedding: [1, 2, 3] }],
@@ -145,13 +165,67 @@ describe('source storage', () => {
   });
 });
 
+describe('source quota', () => {
+  const limited = createSourceStorage(db, { enforceQuota: true });
+  const LIMIT = LIMITS.SOURCES_PER_USER_PER_WINDOW;
+  const fill = async (userId: string, count: number) => {
+    for (let index = 0; index < count; index += 1) {
+      await limited.findOrCreate(newSource(`${userId}-${index}`, userId));
+    }
+  };
+
+  it('lets a user add sources until the limit is reached', async () => {
+    await fill(USER, LIMIT - 1);
+
+    await expect(limited.findOrCreate(newSource('last'))).resolves.toMatchObject({ created: true });
+  });
+
+  it('refuses the next new source once the limit is reached and stores nothing', async () => {
+    await fill(USER, LIMIT);
+
+    await expect(limited.findOrCreate(newSource('one-too-many'))).rejects.toBeInstanceOf(
+      QuotaExceededError
+    );
+    expect(await pool.query('SELECT 1 FROM sources WHERE user_id = $1', [USER])).toHaveProperty(
+      'rowCount',
+      LIMIT
+    );
+  });
+
+  it('still returns known content when the limit is reached', async () => {
+    await fill(USER, LIMIT);
+
+    await expect(limited.findOrCreate(newSource(`${USER}-0`))).resolves.toMatchObject({
+      created: false,
+    });
+  });
+
+  it("does not count another user's sources", async () => {
+    await fill('user-b', LIMIT);
+
+    await expect(limited.findOrCreate(newSource())).resolves.toMatchObject({ created: true });
+  });
+
+  it('lets only as many through as fit when requests arrive at once', async () => {
+    await fill(USER, LIMIT - 1);
+    // Open several connections first: on one warm connection the requests would run one by one.
+    await Promise.all([1, 2, 3, 4, 5].map(() => pool.query('SELECT pg_sleep(0.05)')));
+
+    const results = await Promise.allSettled(
+      [1, 2, 3, 4, 5].map((index) => limited.findOrCreate(newSource(`race-${index}`)))
+    );
+
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+  });
+});
+
 describe('failing sources an interrupted job left behind', () => {
   const HOUR_MS = 60 * 60 * 1000;
   const cutoff = () => new Date(Date.now() - HOUR_MS);
 
   /** A source with an upload of the given age and the given status, as a job leaves it when the process dies. */
   async function leftBehind(hash: string, status: SourceStatus, ageMs: number) {
-    const { id } = await storage.create(newSource(hash));
+    const { id } = await storage.findOrCreate(newSource(hash));
     await db.update(sources).set({ status }).where(eq(sources.id, id));
     await uploads.put(id, new Uint8Array([1]));
     await pool.query(`UPDATE source_uploads SET created_at = $1 WHERE source_id = $2`, [
@@ -201,7 +275,7 @@ describe('failing sources an interrupted job left behind', () => {
 
 describe('upload storage', () => {
   it('keeps the bytes and kind of a source until they are removed', async () => {
-    const { id } = await storage.create(newSource());
+    const { id } = await storage.findOrCreate(newSource());
     const bytes = new Uint8Array([0, 1, 2, 250, 255]);
 
     await uploads.put(id, bytes);
@@ -212,7 +286,7 @@ describe('upload storage', () => {
   });
 
   it('replaces the bytes when a failed source is uploaded again', async () => {
-    const { id } = await storage.create(newSource());
+    const { id } = await storage.findOrCreate(newSource());
     await uploads.put(id, new Uint8Array([1]));
 
     await uploads.put(id, new Uint8Array([2, 2]));
@@ -221,13 +295,13 @@ describe('upload storage', () => {
   });
 
   it('returns null for a source without an upload', async () => {
-    const { id } = await storage.create(newSource());
+    const { id } = await storage.findOrCreate(newSource());
 
     expect(await uploads.load(id)).toBeNull();
   });
 
   it('is removed together with its source', async () => {
-    const { id } = await storage.create(newSource());
+    const { id } = await storage.findOrCreate(newSource());
     await uploads.put(id, new Uint8Array([1]));
 
     await db.delete(sources).where(eq(sources.id, id));

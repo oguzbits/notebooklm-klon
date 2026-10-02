@@ -25,7 +25,6 @@ import { OVERVIEW_SYSTEM_PROMPT } from '../core/overview-prompt';
 import { user } from '../db/auth-schema';
 import { createDb } from '../db/client';
 import { runMigrations } from '../db/migrate';
-import { createQuota } from '../db/quota';
 import { createSourceStorage, createUploadStorage } from '../db/source-storage';
 import { toLocalFile } from '../eval/corpus';
 import { systemDeps } from '../import/system-deps';
@@ -66,7 +65,7 @@ const { db } = createDb(env.DATABASE_URL);
 const auth = createAuth(db, { secret: env.BETTER_AUTH_SECRET, baseURL: env.BETTER_AUTH_URL });
 
 const ingest: SubmitPorts = {
-  sources: createSourceStorage(db),
+  sources: createSourceStorage(db, { enforceQuota: true }),
   uploads: createUploadStorage(db),
   // No job queue: the job runs right after the request, in this process.
   queue: {
@@ -82,7 +81,6 @@ const ingest: SubmitPorts = {
       }, 0);
     },
   },
-  assertCanCreate: createQuota(db),
   parse: createParseSource({
     parse: async () => {
       throw new Error('PDFs need the provider and cannot be read offline.');

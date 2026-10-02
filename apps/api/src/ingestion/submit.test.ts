@@ -22,7 +22,6 @@ const input = {
 
 function fakePorts(overrides: Partial<SubmitPorts> = {}) {
   const log = {
-    created: 0,
     uploads: new Map<string, { kind: SourceKind; bytes: Uint8Array }>(),
     enqueued: [] as string[],
     failed: [] as string[],
@@ -31,10 +30,9 @@ function fakePorts(overrides: Partial<SubmitPorts> = {}) {
   const rows: { id: string; status: string; hash: string; userId: string }[] = [];
   const ports: SubmitPorts = {
     sources: {
-      findByHash: async (userId, hash) =>
-        rows.find((r) => r.userId === userId && r.hash === hash) ?? null,
-      create: async (data) => {
-        log.created += 1;
+      findOrCreate: async (data) => {
+        const existing = rows.find((r) => r.userId === data.userId && r.hash === data.contentHash);
+        if (existing) return { id: existing.id, status: existing.status, created: false };
         const row = {
           id: `s${rows.length + 1}`,
           status: SOURCE_STATUS.PENDING,
@@ -42,7 +40,7 @@ function fakePorts(overrides: Partial<SubmitPorts> = {}) {
           userId: data.userId,
         };
         rows.push(row);
-        return { id: row.id };
+        return { id: row.id, status: row.status, created: true };
       },
       markProcessing: async () => undefined,
       markReady: async () => undefined,
@@ -52,7 +50,6 @@ function fakePorts(overrides: Partial<SubmitPorts> = {}) {
         if (row) row.status = SOURCE_STATUS.FAILED;
       },
     },
-    assertCanCreate: async () => undefined,
     parse: async () => ({ text: 'Text', pageCount: null }),
     embed: async (texts) => texts.map(() => new Array<number>(EMBEDDING_DIMENSIONS).fill(0.1)),
     uploads: {

@@ -184,7 +184,7 @@ export async function unlinkSource(
 
 /** Sources the user created within the last `hours`, for the upload quota. */
 export async function countSourcesSince(
-  db: Database,
+  db: Pick<Database, 'select'>,
   userId: string,
   hours: number
 ): Promise<number> {

@@ -12,7 +12,7 @@ export interface LocalFile {
 }
 
 export interface LocalImportDeps {
-  ports: Omit<SubmitPorts, 'queue' | 'assertCanCreate'>;
+  ports: Omit<SubmitPorts, 'queue'>;
   /** Puts a source into a notebook of the user. False when either is not theirs. */
   link: (userId: string, notebookId: string, sourceId: string) => Promise<boolean>;
 }
@@ -29,7 +29,6 @@ export async function importLocalFiles(
   const queued: string[] = [];
   const ports: SubmitPorts = {
     ...deps.ports,
-    assertCanCreate: async () => undefined,
     queue: {
       enqueue: async (sourceId) => {
         queued.push(sourceId);

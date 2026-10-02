@@ -906,3 +906,14 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
 macht daraus eine 500 (fail fast, kein Fallback). Der Docker-Healthcheck der App meldet dann „unhealthy“.
 Bewusst nicht geprüft: Objektspeicher und Anbieter (Gemini, Tavily). Ihr Ausfall soll die App nicht als
 tot markieren, solange Lesen und Notizen noch gehen.
+
+### M1: Hash-Suche, Anlegen und Kontingent sind ein Schritt
+
+Vorher prüften `findByHash`, `assertCanCreate` und `create` getrennt: Zwei gleichzeitige Uploads desselben Inhalts liefen
+in den Unique-Index (500 statt „schon vorhanden“), und mehrere gleichzeitige neue Quellen kamen alle unter dem Kontingent
+durch. Jetzt gibt es einen Port `sources.findOrCreate`: eine Transaktion mit `pg_advisory_xact_lock(hashtext(userId))`,
+`insert … on conflict do nothing`, danach Zählung im Zeitfenster (inklusive der neuen Zeile). Über dem Limit wirft sie
+`QuotaExceededError` und die Transaktion rollt das Einfügen zurück. Bekannter Inhalt zählt nie gegen das Kontingent.
+`createSourceStorage(db, { enforceQuota })`: Seed und Eval-Skripte laufen mit `false`, die API mit `true`. `db/quota.ts`
+entfällt. Der Sperr-Test öffnet vorher mehrere Verbindungen, sonst liefe er auf einer warmen Verbindung nacheinander und
+würde ohne Sperre trotzdem bestehen (per Handmutation geprüft).

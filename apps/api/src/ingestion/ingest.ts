@@ -53,17 +53,17 @@ export interface StoredChunk extends TextChunk {
 /** Everything the pipeline needs from the outside: storage, parsing and embedding. */
 export interface IngestPorts {
   sources: {
-    findByHash: (
-      userId: string,
-      contentHash: string
-    ) => Promise<{ id: string; status: string } | null>;
-    create: (input: {
+    /**
+     * Makes the source for this content, or returns the one the user already has (created: false).
+     * Throws QuotaExceededError when a new source would go over the quota.
+     */
+    findOrCreate: (input: {
       userId: string;
       contentHash: string;
       kind: SourceKind;
       title: string;
       sourceUrl: string | null;
-    }) => Promise<{ id: string }>;
+    }) => Promise<{ id: string; status: string; created: boolean }>;
     markProcessing: (sourceId: string) => Promise<void>;
     markReady: (
       sourceId: string,
@@ -71,8 +71,6 @@ export interface IngestPorts {
     ) => Promise<void>;
     markFailed: (sourceId: string, failure: SourceFailure) => Promise<void>;
   };
-  /** Throws QuotaExceededError when the user may not add another new source. */
-  assertCanCreate: (userId: string) => Promise<void>;
   parse: (kind: SourceKind, bytes: Uint8Array) => Promise<ParsedDocument>;
   embed: (texts: string[]) => Promise<number[][]>;
 }
@@ -93,22 +91,17 @@ export async function registerSource(
   input: RegisterInput,
   ports: IngestPorts
 ): Promise<{ sourceId: string; action: SubmitAction }> {
-  const contentHash = hashContent(input.bytes);
-  const existing = await ports.sources.findByHash(input.userId, contentHash);
-  if (existing) {
-    const action =
-      existing.status === SOURCE_STATUS.FAILED ? SUBMIT_ACTION.RETRY : SUBMIT_ACTION.REUSED;
-    return { sourceId: existing.id, action };
-  }
-  await ports.assertCanCreate(input.userId);
-  const created = await ports.sources.create({
+  const source = await ports.sources.findOrCreate({
     userId: input.userId,
-    contentHash,
+    contentHash: hashContent(input.bytes),
     kind: input.kind,
     title: input.title,
     sourceUrl: input.sourceUrl,
   });
-  return { sourceId: created.id, action: SUBMIT_ACTION.CREATED };
+  if (source.created) return { sourceId: source.id, action: SUBMIT_ACTION.CREATED };
+  const action =
+    source.status === SOURCE_STATUS.FAILED ? SUBMIT_ACTION.RETRY : SUBMIT_ACTION.REUSED;
+  return { sourceId: source.id, action };
 }
 
 /** Why a source could not be made ready: what the UI shows, the code that is thrown, the cause. */

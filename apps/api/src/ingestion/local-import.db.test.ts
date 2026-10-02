@@ -14,7 +14,7 @@ const encode = (text: string) => new TextEncoder().encode(text);
 let embedded = 0;
 const deps = {
   ports: {
-    sources: createSourceStorage(db),
+    sources: createSourceStorage(db, { enforceQuota: false }),
     uploads: createUploadStorage(db),
     parse: async (_kind: unknown, bytes: Uint8Array) => ({
       text: new TextDecoder().decode(bytes),

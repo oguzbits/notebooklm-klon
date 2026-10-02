@@ -3,7 +3,6 @@ import { EMBEDDING_DIMENSIONS } from '@nlm/shared';
 import type { ChatInput } from '../ai/gemini-chat';
 import type { AppDeps } from '../app-deps';
 import { createAuth } from '../auth/auth';
-import { createQuota } from '../db/quota';
 import { createSourceStorage, createUploadStorage } from '../db/source-storage';
 import { axisVector, createTestDb } from '../db/testing/test-db';
 import type { FetchDeps } from '../import/fetch-url';
@@ -50,14 +49,13 @@ export function createHarness(options: HarnessOptions = {}) {
     auth,
     db,
     ingest: {
-      sources: createSourceStorage(db),
+      sources: createSourceStorage(db, { enforceQuota: true }),
       uploads: createUploadStorage(db),
       queue: {
         enqueue: async (sourceId) => {
           enqueued.push(sourceId);
         },
       },
-      assertCanCreate: createQuota(db),
       // Text files only: the job decodes the bytes. Every chunk gets the same test vector.
       parse: async (_kind, bytes) => ({ text: new TextDecoder().decode(bytes), pageCount: null }),
       embed: async (texts) => texts.map(() => axisVector(0, EMBEDDING_DIMENSIONS)),
