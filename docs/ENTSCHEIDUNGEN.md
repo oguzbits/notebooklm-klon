@@ -1030,3 +1030,23 @@ knapp, kommt er neben `sweepInterruptedSources`.
 Oberfläche: eine fehlgeschlagene Zeile zeigt den Grund und "Erneut lesen" (gesperrt während der Anfrage, Fehler darunter).
 E2E: eine gültige, leere PDF (`offline-unreadable.pdf`) besteht die Prüfung beim Hochladen; der Offline-Server kann keine PDFs
 lesen, also schlägt sie fehl, und der Neuversuch läuft auf der behaltenen Datei.
+
+## 2026-10-02 (Markdown-Export von Notizen, Chat und Berichten)
+
+Der Export läuft nur im Browser: keine neue Route, kein neues Schema in `packages/shared`. Die Daten liegen schon in der
+Oberfläche, und `download()` (wie beim CSV der Karteikarten) reicht. PDF bleibt draußen (YAGNI; Markdown lässt sich überall
+weiterverarbeiten und der Bericht lässt sich schon mit Formatierung kopieren).
+
+Inhalt: `apps/web/src/lib/markdown-export.ts`. Ein Bericht wird `# Titel` mit `## Überschrift` je Abschnitt, eine gespeicherte
+Antwort `# Titel` mit dem Text, eine eigene Notiz bleibt wie der Editor sie liefert (`markdownOf`), der Chat wird zu `# Notebook`
+mit `### Frage` und `### Antwort` in der Reihenfolge des Verlaufs. Belege (Chunk-IDs, Nummern) fehlen mit Absicht: außerhalb des
+Notebooks führen sie nirgendwohin. Fett (`**…**`) bleibt, es ist gültiges Markdown. Dateiname ist der Titel mit `/` und `\` als `-`.
+Folgefragen und Ablaufspur der Antworten werden nicht exportiert.
+
+Oberfläche: "Als Markdown herunterladen" (Icon-Knopf) im Titelstreifen jeder Notiz neben dem Papierkorb und in der Kopfzeile eines
+Berichts neben "Kopieren"; "Chatverlauf herunterladen" im Notebook-Menü (gesperrt, solange der Verlauf leer ist). Der Text wird erst
+beim Klick gelesen, eine Notiz im Editor wird also so gespeichert, wie sie gerade ist. Karteikarten, Quiz, Mindmap und Datentabelle
+haben ihre eigenen Formate und bekommen keinen Markdown-Knopf.
+
+Tests: der dritte Test mit abgefangenem Download führte zum Hilfsmittel `apps/web/src/test/capture-downloads.ts` (Rule of Three);
+der Karteikarten-Test und der Test der Bibliothek nutzen es auch. Der Smoke-E2E lädt eine Notiz und den Chat im echten Browser herunter.

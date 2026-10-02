@@ -1,5 +1,12 @@
 import type { Notebook } from '@nlm/shared';
-import { Copy, EllipsisVertical, Paintbrush, SlidersHorizontal, Trash2 } from 'lucide-react';
+import {
+  Copy,
+  Download,
+  EllipsisVertical,
+  Paintbrush,
+  SlidersHorizontal,
+  Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
@@ -14,6 +21,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useChatHistory } from '@/hooks/use-chat';
+import { chatToMarkdown, downloadMarkdown } from '@/lib/markdown-export';
 import { ROUTES } from '@/lib/routes';
 
 const DIALOG = {
@@ -24,11 +33,27 @@ const DIALOG = {
 } as const;
 type Dialog = (typeof DIALOG)[keyof typeof DIALOG];
 
+/** Saves the conversation as a Markdown file; there is nothing to save while it is empty. */
+function DownloadChatItem({ notebook }: { notebook: Notebook }) {
+  const messages = useChatHistory(notebook.id).data ?? [];
+  return (
+    <DropdownMenuItem
+      disabled={messages.length === 0}
+      onSelect={() => downloadMarkdown(notebook.title, chatToMarkdown(notebook.title, messages))}
+    >
+      <Download aria-hidden />
+      Chatverlauf herunterladen
+    </DropdownMenuItem>
+  );
+}
+
 /** The menu behind the three dots: settings, customizing, copying, and the two ways to delete. */
 function NotebookMenu({
+  notebook,
   onPick,
   onCustomize,
 }: {
+  notebook: Notebook;
   onPick: (dialog: Dialog) => void;
   onCustomize: () => void;
 }) {
@@ -58,6 +83,7 @@ function NotebookMenu({
           <Copy aria-hidden />
           Notebook kopieren
         </DropdownMenuItem>
+        <DownloadChatItem notebook={notebook} />
         <DropdownMenuItem className="h-auto py-2" onSelect={() => onPick(DIALOG.CLEAR)}>
           <Trash2 aria-hidden />
           <span className="flex flex-col">
@@ -121,7 +147,7 @@ export function NotebookActions({ notebook, onCustomize }: NotebookActionsProps)
         variant="ghost"
         className="has-[>svg]:pr-4 has-[>svg]:pl-3"
       />
-      <NotebookMenu onPick={setDialog} onCustomize={onCustomize} />
+      <NotebookMenu notebook={notebook} onPick={setDialog} onCustomize={onCustomize} />
       <NotebookDialogs notebook={notebook} dialog={dialog} onClose={() => setDialog(null)} />
     </>
   );

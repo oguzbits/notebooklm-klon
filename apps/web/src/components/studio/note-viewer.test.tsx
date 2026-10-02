@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { NEW_NOTE_TITLE } from '@/components/studio/studio-labels';
+import { captureDownloads } from '@/test/capture-downloads';
 import { CHUNK_ID, note, NOTE_ID, NOTEBOOK_ID, writtenNote } from '@/test/fixtures';
 import { renderWithProviders } from '@/test/render';
 
@@ -218,6 +219,22 @@ describe('NoteViewer, a note of the reader', () => {
     ).toBe(true);
   });
 
+  it('downloads the text as it is now as a Markdown file named like the note', async () => {
+    const downloads = captureDownloads();
+    await openNote(writtenNote({ title: 'Meine Idee', body: '# Idee\n\nEin **Absatz**.' }));
+
+    try {
+      await userEvent
+        .setup()
+        .click(screen.getByRole('button', { name: 'Als Markdown herunterladen' }));
+
+      expect(downloads.files[0]?.name).toBe('Meine Idee.md');
+      expect(await downloads.files[0]?.blob.text()).toBe('# Idee\n\nEin **Absatz**.');
+    } finally {
+      downloads.restore();
+    }
+  });
+
   it('asks to delete through the trash can', async () => {
     const onDelete = vi.fn();
     await openNote(writtenNote(), { onDelete });
@@ -229,6 +246,22 @@ describe('NoteViewer, a note of the reader', () => {
 });
 
 describe('NoteViewer, a saved answer', () => {
+  it('downloads the answer as a Markdown file with its title, without its citations', async () => {
+    const downloads = captureDownloads();
+    renderNote(note({ title: 'Leitung' }));
+
+    try {
+      await userEvent
+        .setup()
+        .click(screen.getByRole('button', { name: 'Als Markdown herunterladen' }));
+
+      expect(downloads.files[0]?.name).toBe('Leitung.md');
+      expect(await downloads.files[0]?.blob.text()).toBe('# Leitung\n\nDr. Brandt leitet es.\n');
+    } finally {
+      downloads.restore();
+    }
+  });
+
   it('has no tools and no editor, because its chips vouch for its text', () => {
     renderNote(note());
 

@@ -86,6 +86,7 @@ export function WrittenNoteView({
       onDelete={onDelete}
       toolbar={<NoteToolbar editor={editor} />}
       getSourceText={() => markdownOf(editor)}
+      getMarkdown={() => markdownOf(editor)}
       sourceType={MARKDOWN}
       sourceDisabled={empty}
       problem={<SaveProblem event={autosave.event} onRetry={() => void autosave.flush()} />}

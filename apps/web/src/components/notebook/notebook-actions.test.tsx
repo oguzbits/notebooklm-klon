@@ -6,7 +6,8 @@ import { Route, Routes, useParams } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ROUTES } from '@/lib/routes';
-import { notebook, NOTEBOOK_ID } from '@/test/fixtures';
+import { captureDownloads } from '@/test/capture-downloads';
+import { answer, notebook, NOTEBOOK_ID, question } from '@/test/fixtures';
 import { renderWithProviders } from '@/test/render';
 
 import { server } from '../../../../../vitest.setup';
@@ -44,6 +45,45 @@ const openMenu = async (user: ReturnType<typeof userEvent.setup>) =>
   user.click(screen.getByRole('button', { name: 'Notebook-Konfiguration' }));
 
 describe('NotebookActions', () => {
+  it('downloads the conversation as a Markdown file named like the notebook', async () => {
+    server.use(
+      http.get(`${base}/messages`, () =>
+        HttpResponse.json([
+          question('Wer leitet es?'),
+          answer([{ text: 'Dr. Brandt.', chunkIds: [] }]),
+        ])
+      )
+    );
+    const downloads = captureDownloads();
+    renderActions();
+    const user = userEvent.setup();
+
+    try {
+      await openMenu(user);
+      const item = await screen.findByRole('menuitem', { name: 'Chatverlauf herunterladen' });
+      await vi.waitFor(() => expect(item.getAttribute('aria-disabled')).toBeNull());
+      await user.click(item);
+
+      expect(downloads.files[0]?.name).toBe('Forschung.md');
+      expect(await downloads.files[0]?.blob.text()).toBe(
+        '# Forschung\n\n### Frage\n\nWer leitet es?\n\n### Antwort\n\nDr. Brandt.\n'
+      );
+    } finally {
+      downloads.restore();
+    }
+  });
+
+  it('offers no download while the conversation is empty', async () => {
+    server.use(http.get(`${base}/messages`, () => HttpResponse.json([])));
+    renderActions();
+    const user = userEvent.setup();
+
+    await openMenu(user);
+
+    const item = await screen.findByRole('menuitem', { name: 'Chatverlauf herunterladen' });
+    expect(item.getAttribute('aria-disabled')).toBe('true');
+  });
+
   it('copies the notebook after asking and opens the copy', async () => {
     server.use(
       http.post(`${base}/copy`, () =>

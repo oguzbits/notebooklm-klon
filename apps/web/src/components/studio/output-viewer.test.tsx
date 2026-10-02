@@ -10,6 +10,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { captureDownloads } from '@/test/capture-downloads';
 import {
   CHUNK_ID,
   dataTableOutput,
@@ -146,6 +147,28 @@ describe('OutputViewer', () => {
     expect(html).toContain('<h2>Lage</h2>');
     expect(html).toContain('<strong>es</strong>');
     expect(text).toContain('Dr. Brandt leitet es.');
+  });
+
+  it('downloads a report as a Markdown file named like the output, without its citations', async () => {
+    const downloads = captureDownloads();
+    const { user } = renderViewer(reportOutput());
+
+    try {
+      await user.click(screen.getByRole('button', { name: 'Als Markdown herunterladen' }));
+
+      expect(downloads.files[0]?.name).toBe('Überblick.md');
+      expect(await downloads.files[0]?.blob.text()).toBe(
+        '# Überblick\n\n## Lage\n\nDr. Brandt leitet **es**.\n'
+      );
+    } finally {
+      downloads.restore();
+    }
+  });
+
+  it('offers no Markdown download for the other kinds, which are no text', () => {
+    renderViewer(flashcardsOutput());
+
+    expect(screen.queryByRole('button', { name: 'Als Markdown herunterladen' })).toBeNull();
   });
 
   it('enlarges cards, quiz and mind map in a dialog, but not a report', async () => {

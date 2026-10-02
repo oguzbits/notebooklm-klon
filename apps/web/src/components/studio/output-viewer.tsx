@@ -2,6 +2,7 @@ import { type Report, STUDIO_KIND, type StudioOutput } from '@nlm/shared';
 import { type ReactNode, useState } from 'react';
 
 import { DataTableView } from '@/components/studio/data-table-view';
+import { DownloadMarkdownButton } from '@/components/studio/download-markdown-button';
 import { FlashcardsView } from '@/components/studio/flashcards-view';
 import { MindmapView } from '@/components/studio/mindmap-view';
 import { QuizView } from '@/components/studio/quiz-view';
@@ -17,6 +18,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useUpdateStudioOutput } from '@/hooks/use-studio';
+import { reportToMarkdown } from '@/lib/markdown-export';
 import { describeError } from '@/lib/messages';
 import { reportToText } from '@/lib/report-export';
 
@@ -98,6 +100,16 @@ function CopyReportButton({ report }: { report: Report }) {
   );
 }
 
+/** What a report can be taken away with: copied for another program, or saved as a file. */
+function ReportActions({ title, report }: { title: string; report: Report }) {
+  return (
+    <>
+      <CopyReportButton report={report} />
+      <DownloadMarkdownButton title={title} getMarkdown={() => reportToMarkdown(report)} />
+    </>
+  );
+}
+
 /** The output in a dialog of its own, as large as the window allows. */
 function EnlargedOutput({
   title,
@@ -172,7 +184,9 @@ export function OutputViewer({
           noun: report ? 'Bericht' : 'Inhalt',
           onChange: (feedback) => update.mutate({ outputId: output.id, changes: { feedback } }),
         }}
-        actions={report ? <CopyReportButton report={output.content} /> : undefined}
+        actions={
+          report ? <ReportActions title={output.title} report={output.content} /> : undefined
+        }
         onMaximize={report ? undefined : () => setEnlarged(true)}
         deletion={{ pending: deleting, onDelete }}
       >

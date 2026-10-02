@@ -4,6 +4,8 @@ import { lazy, Suspense } from 'react';
 import { AnswerView } from '@/components/chat/message-view';
 import { NoteEditorSkeleton } from '@/components/skeletons';
 import { NoteFrame } from '@/components/studio/note-frame';
+import { noteTitle } from '@/components/studio/studio-labels';
+import { answerToMarkdown } from '@/lib/markdown-export';
 import { withoutMarkers } from '@/lib/plain-text';
 
 const PLAIN_TEXT = 'text/plain';
@@ -37,6 +39,7 @@ function AnswerNoteView({
       note={note}
       deleting={deleting}
       onDelete={onDelete}
+      getMarkdown={() => answerToMarkdown(noteTitle(note), note.statements)}
       sourceType={PLAIN_TEXT}
       getSourceText={() =>
         note.statements.map((statement) => withoutMarkers(statement.text)).join(' ')

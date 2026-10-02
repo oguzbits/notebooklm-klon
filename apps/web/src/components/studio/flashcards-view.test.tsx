@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { captureDownloads } from '@/test/capture-downloads';
 import { CHUNK_ID, chunkDetail, NOTEBOOK_ID } from '@/test/fixtures';
 import { renderWithProviders } from '@/test/render';
 
@@ -140,27 +141,18 @@ describe('FlashcardsView', () => {
   });
 
   it('downloads the set as a CSV file named like the output', async () => {
-    const blobs: Blob[] = [];
-    // jsdom has no object URLs: the test puts its own in place and restores them after.
-    const { createObjectURL, revokeObjectURL } = URL;
-    URL.createObjectURL = (blob) => {
-      blobs.push(blob as Blob);
-      return 'blob:test';
-    };
-    URL.revokeObjectURL = () => {};
-    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    const downloads = captureDownloads();
     const { user } = renderCards();
 
     try {
       await user.click(screen.getByRole('button', { name: 'Weitere Optionen' }));
       await user.click(await screen.findByRole('menuitem', { name: 'Set herunterladen' }));
 
-      expect(click).toHaveBeenCalledOnce();
-      expect(await blobs[0]?.text()).toContain('Wer leitet das Projekt?,Dr. Brandt');
-      expect(blobs[0]?.type).toBe('text/csv;charset=utf-8');
+      expect(downloads.files).toHaveLength(1);
+      expect(await downloads.files[0]?.blob.text()).toContain('Wer leitet das Projekt?,Dr. Brandt');
+      expect(downloads.files[0]?.blob.type).toBe('text/csv;charset=utf-8');
     } finally {
-      URL.createObjectURL = createObjectURL;
-      URL.revokeObjectURL = revokeObjectURL;
+      downloads.restore();
     }
   });
 

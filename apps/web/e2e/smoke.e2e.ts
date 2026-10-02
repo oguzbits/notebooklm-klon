@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { expect, test } from '@playwright/test';
@@ -104,7 +105,24 @@ test('from sign-up to a cited passage, a note and back out', async ({ page }) =>
   await library.getByRole('button', { name: /^Neue Notiz/ }).click();
   await expect(page.getByRole('heading', { name: 'Eigene Idee', level: 1 })).toBeVisible();
   await expect(editor.locator('strong')).toHaveText('fetter');
+
+  // The note can be taken away as a Markdown file, as it is written.
+  const noteDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Als Markdown herunterladen' }).click();
+  const noteFile = await noteDownload;
+  expect(noteFile.suggestedFilename()).toMatch(/\.md$/);
+  expect(await readFile(await noteFile.path(), 'utf8')).toContain('Ein **fetter** Gedanke.');
   await page.getByRole('button', { name: 'Notizansicht schließen' }).click();
+
+  // So can the conversation, from the menu of the notebook.
+  await page.getByRole('button', { name: 'Notebook-Konfiguration' }).click();
+  const chatDownload = page.waitForEvent('download');
+  await page.getByRole('menuitem', { name: 'Chatverlauf herunterladen' }).click();
+  const chatFile = await chatDownload;
+  expect(chatFile.suggestedFilename()).toBe('Unbenanntes Notebook.md');
+  expect(await readFile(await chatFile.path(), 'utf8')).toContain(
+    'Wer leitet das Projekt Nordlicht?'
+  );
 
   // Sign out.
   await page.getByRole('button', { name: 'Konto' }).click();

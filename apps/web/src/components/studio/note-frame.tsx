@@ -2,6 +2,7 @@ import { type Note, NOTE_LIMITS } from '@nlm/shared';
 import { Check, FilePlus2, Trash2 } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 
+import { DownloadMarkdownButton } from '@/components/studio/download-markdown-button';
 import { noteFileName, noteTitle } from '@/components/studio/studio-labels';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -63,6 +64,8 @@ interface NoteFrameProps {
   onDelete: () => void;
   toolbar?: ReactNode;
   getSourceText: () => string;
+  /** The note as a Markdown file, as it is now. */
+  getMarkdown: () => string;
   sourceType: string;
   /** True while there is nothing to make a source of. */
   sourceDisabled?: boolean;
@@ -85,6 +88,7 @@ export function NoteFrame({
   onDelete,
   toolbar,
   getSourceText,
+  getMarkdown,
   sourceType,
   sourceDisabled = false,
   problem,
@@ -107,6 +111,7 @@ export function NoteFrame({
           }
           className="h-10 px-2 text-[1.375rem] leading-9"
         />
+        <DownloadMarkdownButton title={noteTitle(note)} getMarkdown={getMarkdown} size="icon-lg" />
         <Button
           variant="ghost"
           size="icon-lg"
