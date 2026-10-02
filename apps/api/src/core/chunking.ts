@@ -42,12 +42,12 @@ function findBreak(text: string, start: number, hardEnd: number): number {
   return hardEnd;
 }
 
-/** Moves a start forward to the beginning of the next word so a chunk never starts mid-word. */
+/** Moves a start forward past the word it falls in so a chunk never starts mid-word; the caller skips the spaces. */
 function snapToWordStart(text: string, from: number, limit: number): number {
-  if (from >= limit || isSpace(text, from - 1)) return from;
+  if (isSpace(text, from - 1)) return from;
   let index = from;
   while (index < limit && !isSpace(text, index)) index += 1;
-  return index >= limit ? limit : skipSpaces(text, index);
+  return index;
 }
 
 /**
