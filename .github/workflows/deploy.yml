@@ -57,4 +57,6 @@ jobs:
           docker save nlm-app:current | gzip | ssh "$TARGET" 'gunzip | docker load'
       - name: Start
         run: |
-          ssh "$TARGET" 'cd /srv/nlm && chmod +x backup.sh && docker compose -f docker-compose.prod.yml --env-file server.env up -d --wait --remove-orphans && docker image prune -f'
+          # Compose does not restart Caddy when only the mounted Caddyfile changed, so it is reloaded.
+          ssh "$TARGET" 'cd /srv/nlm && chmod +x backup.sh && docker compose -f docker-compose.prod.yml --env-file server.env up -d --wait --remove-orphans && docker image prune -f
+          docker compose -f docker-compose.prod.yml --env-file server.env exec -T caddy caddy reload --config /etc/caddy/Caddyfile'
