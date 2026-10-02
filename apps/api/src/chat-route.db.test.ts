@@ -149,7 +149,10 @@ describe('POST /api/notebooks/:id/chat', () => {
       app.request(`/api/notebooks/${nb}/chat`, post(cookie, { question: 'Wer leitet es?' }));
 
     for (let i = 0; i < LIMITS.CHAT_QUESTIONS_PER_USER_PER_HOUR; i += 1) {
-      expect((await ask(alice, notebook)).status).toBe(200);
+      const answered = await ask(alice, notebook);
+      expect(answered.status).toBe(200);
+      // Read to the end: an answer nobody reads is still saved in the background, which would run into the next test.
+      await answered.text();
     }
     const calls = harness.modelInputs.length;
     const refused = await ask(alice, notebook);
