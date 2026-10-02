@@ -950,3 +950,12 @@ lädt einen Dump in eine Wegwerf-Datenbank desselben Images (`pgvector/pgvector:
 defekter Dump endet mit Fehlercode und ohne übrig gebliebenen Container (lokal mit gutem und kaputtem Dump geprüft).
 **Offen, Entscheidung des Nutzers:** Die Dumps liegen weiter nur auf dem Server. Eine Kopie auf externen Speicher (Anbieter,
 Kosten, Zugangsdaten) ist ein externer Seiteneffekt und wird nicht ohne Rückfrage eingerichtet.
+
+### M8: Prüfung von außen und automatisches Zurückrollen
+
+Nach `up -d --wait` ruft der Workflow `/health` über die öffentliche Adresse auf (zehn Versuche, `--retry-all-errors`, damit
+ein noch nicht erneuertes Zertifikat oder ein Neustart von Caddy nicht sofort scheitert). Schlägt „Start“ oder die Prüfung
+fehl, setzt „Roll back“ das Image `previous` als `current` und startet die App neu; der Lauf bleibt rot. Der Schritt läuft
+nur bei diesen beiden Fehlern, nicht, wenn schon Bau oder Übertragung scheitern (dann läuft noch die alte Version).
+Grenze: Migrationen werden nicht zurückgenommen; ein Rollback über eine inkompatible Schemaänderung braucht den Dump vom
+Deploy (H4). Der Workflow ließ sich nur durch Lesen und YAML-Prüfung testen, nicht lokal ausführen.

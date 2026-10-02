@@ -61,7 +61,20 @@ jobs:
         run: |
           ssh "$TARGET" 'cd /srv/nlm && if docker compose -f docker-compose.prod.yml --env-file server.env ps --status running --quiet db | grep -q .; then bash backup.sh; fi'
       - name: Start
+        id: start
         run: |
           # Compose does not restart Caddy when only the mounted Caddyfile changed, so it is reloaded.
           ssh "$TARGET" 'cd /srv/nlm && chmod +x backup.sh && docker compose -f docker-compose.prod.yml --env-file server.env up -d --wait --remove-orphans && docker image prune -f
           docker compose -f docker-compose.prod.yml --env-file server.env exec -T caddy caddy reload --config /etc/caddy/Caddyfile'
+      - name: Check from outside
+        id: check
+        # The same way a visitor arrives: DNS, certificate, Caddy and the app.
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: curl --fail --silent --show-error --retry 10 --retry-delay 3 --retry-all-errors "https://$DEPLOY_HOST/health"
+      - name: Roll back
+        # Only when the new version did not start or does not answer. Database migrations stay applied
+        # (docs/DEPLOYMENT.md); the job stays red so the failure is seen.
+        if: ${{ failure() && (steps.start.outcome == 'failure' || steps.check.outcome == 'failure') }}
+        run: |
+          ssh "$TARGET" 'cd /srv/nlm && docker image inspect nlm-app:previous >/dev/null && docker tag nlm-app:previous nlm-app:current && docker compose -f docker-compose.prod.yml --env-file server.env up -d --wait app'

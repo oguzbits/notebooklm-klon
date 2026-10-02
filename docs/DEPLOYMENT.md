@@ -113,7 +113,9 @@ Regel 7 in [AGENTS.md](../AGENTS.md) nur IDs, Längen, Dauer und Token-Zahlen, k
 
 ### Zurück auf die vorige Version
 
-Jeder Deploy behält das bisherige Image als `nlm-app:previous`. Ist die neue Version fehlerhaft, auf dem Server:
+Jeder Deploy behält das bisherige Image als `nlm-app:previous`. Nach dem Start ruft der Workflow `https://<Hostname>/health` von außen auf (DNS, Zertifikat, Caddy, App). Startet die neue
+Version nicht oder antwortet nicht, setzt der Schritt „Roll back“ `previous` automatisch wieder auf `current`; der Lauf bleibt
+rot. Von Hand, auf dem Server:
 
 ```bash
 docker tag nlm-app:previous nlm-app:current
