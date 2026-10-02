@@ -6,7 +6,7 @@
 const FNV_OFFSET = 2166136261;
 const FNV_PRIME = 16777619;
 const MIN_WORD_CHARS = 3;
-const PASSAGE = /\[(c\d+)\]\n([\s\S]*?)(?=\n\n\[c\d+\]\n|\n\nQuestion:|$)/g;
+const PASSAGE = /\[(c\d+)\]\n([\s\S]*?)(?=\n\n\[c\d+\]\n|\n<\/passages>|\n\nQuestion:|$)/g;
 // A sentence ends at ".", "!" or "?" followed by a space, but not after an abbreviation like "Dr.".
 const SENTENCE_END = /(?<!\b\p{L}{1,2}\.)(?<=[.!?])\s+/u;
 const NO_ANSWER = 'In den ausgewählten Quellen steht dazu nichts.';

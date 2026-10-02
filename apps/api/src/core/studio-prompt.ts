@@ -18,7 +18,13 @@ import {
 } from '@nlm/shared';
 import { z } from 'zod';
 
-import { buildChatContext, type ChatContext, type ContextChunk } from './chat-context';
+import {
+  buildChatContext,
+  type ChatContext,
+  type ContextChunk,
+  PASSAGES_RULE,
+  passagesBlock,
+} from './chat-context';
 import {
   checkDataTable,
   checkFlashcards,
@@ -143,6 +149,7 @@ function systemPrompt(body: CreateStudioBody, language: ChatLanguage): string {
     'or more passage IDs (for example "c2") in chunkIds and must be supported by the cited ' +
     'passages. Never cite an ID that is not in the context. State a number, date or name only if ' +
     'a cited passage says it literally. Do not add facts from elsewhere. ' +
+    `${PASSAGES_RULE} ` +
     kindInstruction(body) +
     request
   );
@@ -221,7 +228,7 @@ export function studioRequest(
   const context = buildChatContext(chunks);
   return {
     system: systemPrompt(body, language),
-    user: `${context.promptText}\n\nMake the requested output now.`,
+    user: `${passagesBlock(context)}\n\nMake the requested output now.`,
     schema: SCHEMA[body.kind],
     context,
   };

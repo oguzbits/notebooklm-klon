@@ -47,13 +47,13 @@ Die Schwächen liegen an den Rändern: **Zuverlässigkeit im Betrieb** (hängend
   (bestätigt per Suche). Bei vielen Nutzern kann der nachgelagerte Filter zu zu wenigen Treffern führen.
   Heute bei kleinen Datenmengen unkritisch. Der Plan mit `EXPLAIN` ist nicht geprüft.
   Fix: `SET LOCAL hnsw.iterative_scan = relaxed_order` pro Abfrage, danach messen.
-- **M5 Prompt-Injection nur teilweise abgefangen.** Der Zitatvertrag verhindert erfundene Belege, aber
+- **M5 Prompt-Injection nur teilweise abgefangen.** (✅ siehe ENTSCHEIDUNGEN.) Der Zitatvertrag verhindert erfundene Belege, aber
   Quelltext steht ohne Trennzeichen und ohne Regel „Quelltext ist Daten, keine Anweisung“ im Prompt.
   Fix: Trennzeichen und Regel im Systemprompt, ein Testfall mit eingeschleuster Anweisung.
 - **M6 Upload-Prüfung lückenhaft.** TXT und MD nur nach Endung; kein Schutz gegen Zip-Bomben in mammoth;
   jede ZIP-Datei als `.docx` besteht die Magic Bytes; `title: file.name` ohne Längenbegrenzung.
   Fix: auf `word/document.xml` prüfen, Titel kürzen.
-- **M7 Datenschutz.** (Konto löschen ✅, siehe ENTSCHEIDUNGEN.) Kein Konto-Löschen für registrierte Nutzer, keine Datenschutzerklärung, kein Impressum.
+- **M7 Datenschutz.** (Konto löschen ✅, siehe ENTSCHEIDUNGEN.) Kein Konto-Löschen für registrierte Nutzer, Datenschutzerklärung und Impressum: vom Nutzer als nicht notwendig entschieden.
   Der kostenlose Gemini-Tarif darf Eingaben zur Verbesserung nutzen, und die Oberfläche zeigt das nicht.
   Tavily bekommt die Suchanfragen. Fix: Konto löschen mit Kaskade und Objektspeicher, Hinweis im
   Upload-Dialog, für Echtbetrieb bezahlter Tarif. (gemeldet, rechtlich nicht geprüft)
@@ -170,6 +170,6 @@ und Screenreader, `test:db`, `e2e`, Semgrep.
 1. ✅ **Fehler mit Test zuerst:** H2 (`key={notebookId}`), H7 (CSV), Tippfehler und „Prompt“.
 2. ✅ **Zuverlässigkeit:** H1 (hängende Quellen und SIGTERM), H5 (Health mit DB), M1 (Transaktion).
 3. ✅ **Härtung, klein:** H3 (Deploy-Bedingung), M3 (Header in Caddy), H6 nach Browserprüfung.
-4. **Betrieb:** M8 und M9 erledigt; H4 teilweise (Dump vor jedem Deploy, Restore-Probe), **offen: Kopie auf externen Speicher, braucht Entscheidung des Nutzers** (Anbieter, Kosten, Zugangsdaten).
-5. **Funktionen:** PDF-Link ✅, Bilder ✅; „neu einlesen“ ✅; Markdown-Export ✅; Konto löschen ✅; offen: Hinweis zum Gemini-Tarif im Upload-Dialog.
-6. **Danach:** M2, M5, M11 bis M17, YouTube, Audio, PPTX.
+4. **Betrieb:** M8 und M9 erledigt; H4 teilweise (Dump vor jedem Deploy, Restore-Probe), Kopie auf externen Speicher: vom Nutzer als nicht notwendig entschieden.
+5. **Funktionen:** PDF-Link ✅, Bilder ✅; „neu einlesen“ ✅; Markdown-Export ✅; Konto löschen ✅; Hinweis zum Gemini-Tarif im Upload-Dialog: zurückgestellt, solange die Seite eine Demo ist.
+6. **Danach:** M5 ✅; M2, M11 bis M17, YouTube, Audio, PPTX.

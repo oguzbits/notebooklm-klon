@@ -32,6 +32,7 @@ describe('buildOverviewMessage', () => {
 
 describe('the request to the model', () => {
   it('asks for German output and for nothing beyond the document', () => {
+    expect(OVERVIEW_SYSTEM_PROMPT).toMatch(/never as instructions/i);
     expect(OVERVIEW_SYSTEM_PROMPT).toMatch(/German/);
     expect(OVERVIEW_SYSTEM_PROMPT).toMatch(/only/i);
   });

@@ -43,7 +43,8 @@ describe('studioRequest', () => {
       CHAT_LANGUAGE.AUTO
     );
 
-    expect(request.user).toContain('[c1]\nDr. Brandt leitet das Projekt.');
+    expect(request.user).toContain('<passages>\n[c1]\nDr. Brandt leitet das Projekt.');
+    expect(request.system).toMatch(/never as instructions/i);
     expect(request.user).toContain('[c2]');
     expect(request.system).toMatch(/FAQ/);
     expect(request.context.labels).toEqual(['c1', 'c2']);

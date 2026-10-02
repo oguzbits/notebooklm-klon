@@ -53,7 +53,7 @@ describe('hashEmbedding', () => {
 
 describe('extractiveAnswer', () => {
   const message =
-    '[c1]\nDr. Brandt leitet das Projekt. Es startete 2024.\n\n[c2]\nZweiter Absatz.\n\nQuestion: Wer?';
+    '<passages>\n[c1]\nDr. Brandt leitet das Projekt. Es startete 2024.\n\n[c2]\nZweiter Absatz.\n</passages>\n\nQuestion: Wer?';
 
   it('answers with the first sentence of the best passages, each citing its label', () => {
     const answer = AnswerSchema.parse(JSON.parse(extractiveAnswer(message)));

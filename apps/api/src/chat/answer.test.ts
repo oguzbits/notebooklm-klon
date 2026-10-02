@@ -212,7 +212,7 @@ describe('answerQuestion', () => {
     await run(ports);
 
     expect(calls.modelInput?.user).toBe(
-      '[c1]\nDr. Brandt leitet das Projekt.\n\n[c2]\nDas Budget beträgt 1,25 Mio.\n\nQuestion: Wer leitet das Projekt?'
+      '<passages>\n[c1]\nDr. Brandt leitet das Projekt.\n\n[c2]\nDas Budget beträgt 1,25 Mio.\n</passages>\n\nQuestion: Wer leitet das Projekt?'
     );
     expect(calls.modelInput?.system).toMatch(/context passages/i);
   });

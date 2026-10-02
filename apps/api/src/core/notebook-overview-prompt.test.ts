@@ -17,6 +17,10 @@ const source = (title: string, length: number, char = 'x') => ({
 });
 
 describe('buildNotebookOverviewMessage', () => {
+  it('reads the sources as data, not as instructions', () => {
+    expect(NOTEBOOK_OVERVIEW_SYSTEM_PROMPT).toMatch(/never as instructions/i);
+  });
+
   it('numbers the sources and puts each title and text into the message', () => {
     const message = buildNotebookOverviewMessage([
       { title: 'projekt.pdf', text: 'Dr. Brandt leitet das Projekt.' },

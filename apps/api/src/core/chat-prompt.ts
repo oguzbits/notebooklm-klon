@@ -7,10 +7,11 @@ import {
 } from '@nlm/shared';
 import { z } from 'zod';
 
-import type { ChatContext } from './chat-context';
+import { type ChatContext, PASSAGES_RULE, passagesBlock } from './chat-context';
 
 export const CHAT_SYSTEM_PROMPT =
   'You answer questions about the user documents. Use only the numbered context passages. ' +
+  `${PASSAGES_RULE} ` +
   'Answer in the language of the question. Split the answer into short statements. Every ' +
   'statement must cite one or more passage IDs (for example "c2") from the context and must be ' +
   'supported by the cited passages. Never cite an ID that is not in the context. State a number, ' +
@@ -30,8 +31,8 @@ export const ANSWER_JSON_SCHEMA: Record<string, unknown> = (() => {
 
 /** The user turn: numbered passages, then the question. */
 export function buildUserMessage(context: ChatContext, question: string): string {
-  const passages = context.promptText === '' ? '' : `${context.promptText}\n\n`;
-  return `${passages}Question: ${question}`;
+  const block = passagesBlock(context);
+  return `${block === '' ? '' : `${block}\n\n`}Question: ${question}`;
 }
 
 const LENGTH_NOTE = {
