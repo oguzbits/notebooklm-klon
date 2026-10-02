@@ -1103,3 +1103,12 @@ Aussage vor, sobald sie dazukommt, nach dem, was er gerade spricht. Die Aussagen
 deshalb ist `polite` ohne `aria-atomic` richtig. Der Satz "Antwort wird geschrieben …" liegt im selben Bereich und hat kein eigenes
 `role="status"` mehr, damit nicht zwei verschachtelte Bereiche dasselbe ansagen. Die gespeicherte Antwort nach dem Ende ist keine Live-Region
 mehr: Sie wird nicht ein zweites Mal vorgelesen.
+
+## 2026-10-02 (Fokus und Eingabemethoden, M13)
+
+Das Frage-Feld ist während der Antwort `readOnly` statt `disabled` (`chat/question-form.tsx`): Es bleibt im Tab-Weg und wird vom
+Screenreader gelesen, der Fokus geht nicht verloren. Gesendet wird aus dem Feld dann nicht (`submit` prüft `pending`). Wenn die Antwort
+endet, nimmt das Feld den Cursor zurück, aber nur, wenn der Fokus auf dem Dokument oder im Formular liegt (nach dem Klick auf "Stoppen" ist
+er auf dem Knopf, der an derselben Stelle zum Senden-Knopf wird). Hat die Person den Fokus währenddessen woanders hin gesetzt, bleibt er
+dort. Enter sendet nicht, solange eine Eingabemethode (Japanisch, Chinesisch, Koreanisch) eine Zusammensetzung offen hat:
+`isComposing` für Chrome und Firefox, `keyCode` 229 für Safari, das die Zusammensetzung vor dem Ereignis beendet.

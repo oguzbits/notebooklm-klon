@@ -74,7 +74,7 @@ Die Schwächen liegen an den Rändern: **Zuverlässigkeit im Betrieb** (hängend
   `DONE` als Erfolgsbedingung.
 - **M12 Screenreader** ✅ (siehe ENTSCHEIDUNGEN). Der gestreamte Antworttext steht in keiner `aria-live`-Region, nur „Antwort wird
   geschrieben …“ ist `role="status"`.
-- **M13 Fokus.** Das Textfeld ist während der Antwort `disabled`, der Fokus geht verloren. Enter sendet
+- **M13 Fokus** ✅ (siehe ENTSCHEIDUNGEN). Das Textfeld ist während der Antwort `disabled`, der Fokus geht verloren. Enter sendet
   ohne `isComposing`-Prüfung (Japanisch und Chinesisch). Fix: `readOnly`, Fokus zurücksetzen.
 - **M14 „Erklären“ geht still verloren**, wenn gerade eine Antwort läuft oder keine Quelle bereit ist
   (`use-incoming-question.ts`).
@@ -172,4 +172,4 @@ und Screenreader, `test:db`, `e2e`, Semgrep.
 3. ✅ **Härtung, klein:** H3 (Deploy-Bedingung), M3 (Header in Caddy), H6 nach Browserprüfung.
 4. **Betrieb:** M8 und M9 erledigt; H4 teilweise (Dump vor jedem Deploy, Restore-Probe), Kopie auf externen Speicher: vom Nutzer als nicht notwendig entschieden.
 5. **Funktionen:** PDF-Link ✅, Bilder ✅; „neu einlesen“ ✅; Markdown-Export ✅; Konto löschen ✅; Hinweis zum Gemini-Tarif im Upload-Dialog: zurückgestellt, solange die Seite eine Demo ist.
-6. **Danach:** M5 ✅, M2 ✅, M11 ✅, M12 ✅; M13 bis M17, YouTube, Audio, PPTX.
+6. **Danach:** M5 ✅, M2 ✅, M11 ✅, M12 ✅, M13 ✅; M14 bis M17, YouTube, Audio, PPTX.

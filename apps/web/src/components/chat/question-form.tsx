@@ -1,17 +1,38 @@
 import { MAX_QUESTION_CHARS } from '@nlm/shared';
 import { ArrowUp, FileText, Square } from 'lucide-react';
-import { type FormEvent, type KeyboardEvent, useState } from 'react';
+import { type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
-/** Enter sends, Shift+Enter makes a new line. */
+/** Safari reports a key that belongs to a composition with this code, after the composition has ended. */
+const IME_KEY_CODE = 229;
+
+/** Enter sends, Shift+Enter makes a new line. Enter that confirms a composition (IME) is not a send. */
 const submitOnEnter = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+  if (event.nativeEvent.isComposing || event.keyCode === IME_KEY_CODE) return;
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault();
     event.currentTarget.form?.requestSubmit();
   }
 };
+
+/**
+ * The ref of the field. When an answer ends the field takes the cursor back, unless the user has
+ * put the focus on something outside of the form meanwhile. The stop button, where the focus is
+ * after a click, turns into the send button in the same place, so the form counts as free.
+ */
+function useRefocusAfterAnswer(pending: boolean) {
+  const field = useRef<HTMLTextAreaElement>(null);
+  const wasPending = useRef(pending);
+  useEffect(() => {
+    const focus = document.activeElement;
+    const free = focus === null || focus === document.body || field.current?.form?.contains(focus);
+    if (wasPending.current && !pending && free) field.current?.focus();
+    wasPending.current = pending;
+  }, [pending]);
+  return field;
+}
 
 /** How many sources the answer will draw on: in words on a wide screen, as a number on a narrow one. */
 function SourceCount({ count }: { count: number }) {
@@ -80,10 +101,11 @@ export function QuestionForm({
 }) {
   const [question, setQuestion] = useState('');
   const canSend = canAsk && question.trim() !== '';
+  const field = useRefocusAfterAnswer(pending);
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!canSend) return;
+    if (!canSend || pending) return;
     onAsk(question.trim());
     setQuestion('');
   };
@@ -100,7 +122,8 @@ export function QuestionForm({
             maxLength={MAX_QUESTION_CHARS}
             value={question}
             onChange={(event) => setQuestion(event.target.value)}
-            disabled={pending}
+            ref={field}
+            readOnly={pending}
             onKeyDown={submitOnEnter}
             className="text-read max-h-40 min-h-0 flex-1 resize-none self-center rounded-none border-0 bg-transparent px-0 py-0.5 shadow-none focus-visible:border-0 focus-visible:outline-0"
           />

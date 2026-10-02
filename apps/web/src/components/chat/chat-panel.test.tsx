@@ -261,7 +261,7 @@ describe('ChatPanel', () => {
     // One button per intent: while the answer is written it stops it, it does not send a second question.
     expect(screen.queryByRole('button', { name: 'Frage senden' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Antwort stoppen' })).toBeTruthy();
-    expect(screen.getByLabelText('Deine Frage')).toHaveProperty('disabled', true);
+    expect(screen.getByLabelText('Deine Frage')).toHaveProperty('readOnly', true);
 
     release();
 
@@ -270,7 +270,7 @@ describe('ChatPanel', () => {
     expect(screen.getByRole('button', { name: 'Quelle 1 anzeigen' })).toBeTruthy();
   });
 
-  describe('stopping the answer', () => {
+  describe('while an answer is written', () => {
     afterEach(() => vi.restoreAllMocks());
 
     const statement: ChatEvent = {
@@ -346,6 +346,44 @@ describe('ChatPanel', () => {
       ).toBeTruthy();
     });
 
+    it('keeps the field in the tab order and does not send from it while the answer is written', async () => {
+      const signals = watchChatRequests();
+      server.use(sources(), history([]), hangingAnswer());
+      await askAndWaitForText();
+      const field = screen.getByLabelText('Deine Frage');
+
+      fireEvent.keyDown(field, { key: 'Enter' });
+
+      // Read-only keeps the focus and the reading of the field, disabled would drop both.
+      expect(field).toHaveProperty('readOnly', true);
+      expect(field).toHaveProperty('disabled', false);
+      expect(signals).toHaveLength(1);
+    });
+
+    it('puts the cursor back in the field when the answer ends', async () => {
+      server.use(sources(), history([]), hangingAnswer());
+      const user = await askAndWaitForText();
+
+      await user.click(screen.getByRole('button', { name: 'Antwort stoppen' }));
+
+      await waitFor(() =>
+        expect(document.activeElement).toBe(screen.getByLabelText('Deine Frage'))
+      );
+    });
+
+    it('leaves the focus where the user put it meanwhile', async () => {
+      server.use(sources(), history([]), hangingAnswer());
+      await askAndWaitForText();
+      const elsewhere = document.body.appendChild(document.createElement('input'));
+      elsewhere.focus();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Antwort stoppen' }));
+
+      await waitFor(() => expect(screen.queryByText('Antwort wird geschrieben …')).toBeNull());
+      expect(document.activeElement).toBe(elsewhere);
+      elsewhere.remove();
+    });
+
     it('ends the request when the chat leaves the page', async () => {
       const signals = watchChatRequests();
       server.use(sources(), history([]), hangingAnswer());
@@ -382,6 +420,33 @@ describe('ChatPanel', () => {
 
       expect(await screen.findByRole('button', { name: /Erneut versuchen/ })).toBeTruthy();
     });
+  });
+
+  it('does not send while a composition is open, because Enter then confirms the characters', async () => {
+    const signals: Request[] = [];
+    server.use(
+      sources(),
+      history([]),
+      http.post(`${base}/chat`, ({ request }) => {
+        signals.push(request);
+        return new HttpResponse('', { headers: { 'content-type': 'text/event-stream' } });
+      })
+    );
+    renderChat();
+    const user = userEvent.setup();
+    const field = await screen.findByLabelText('Deine Frage');
+    await user.type(field, 'にほん');
+
+    // Chrome marks it with isComposing, Safari ends the composition first and reports keyCode 229.
+    // A send empties the field at once, the request itself follows later, so the text shows it.
+    fireEvent.keyDown(field, { key: 'Enter', isComposing: true });
+    expect(field).toHaveProperty('value', 'にほん');
+    fireEvent.keyDown(field, { key: 'Enter', keyCode: 229 });
+    expect(field).toHaveProperty('value', 'にほん');
+    expect(signals).toHaveLength(0);
+
+    await user.keyboard('{Enter}');
+    await waitFor(() => expect(signals).toHaveLength(1));
   });
 
   it('shows a German message and a retry when the answer cannot start', async () => {
