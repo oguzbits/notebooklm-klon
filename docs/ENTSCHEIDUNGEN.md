@@ -1227,3 +1227,12 @@ des Besitzers, und Quellen lassen sich nicht über Nutzergrenzen verknüpfen. Be
 `s.user_id` in `setReadySourcesSelected`, weil kein Test eine fremde Quelle im Notebook hatte; der Test
 legt dafür den Link direkt an. `@types/node` im Web steht auf ^24 wie im Root. `hono` im Web bleibt eine
 Laufzeit-Abhängigkeit, weil `hc` im Browser läuft.
+
+## 2026-10-02 (Rückgängig beim Löschen: bewusst nicht)
+
+Der Stopp-Button beim Antworten ist seit M11 da. Ein Rückgängig beim Löschen bauen wir nicht. Jedes
+Löschen (Notebook, Quelle, Notiz, Ergebnis, Chat, Konto) fragt vorher in einem Dialog, der benennt, was
+verloren geht. Ein Rückgängig bräuchte Soft-Delete: eine Migration, einen Filter `deleted_at` in jeder
+Abfrage (Rule 3 gilt dann doppelt) und gelöschte Inhalte, die noch Tage liegen. Das widerspricht
+"Konto und Daten löschen" und bringt Datenschutz-Aufwand für wenig Nutzen. Wer es später will, fängt bei
+Notizen an (kleinster Umfang).

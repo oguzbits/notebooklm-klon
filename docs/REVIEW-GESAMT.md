@@ -143,7 +143,7 @@ vor einer Entscheidung über YouTube, Audio oder Bilder erst dort nachsehen.
    in der Zeile ruft `POST …/sources/:sourceId/retry` auf.
 2. **Export** von Notizen, Chat und Berichten als Markdown ✅ (PDF bewusst nicht, siehe [ENTSCHEIDUNGEN](ENTSCHEIDUNGEN.md)).
 3. **Konto und Daten löschen** in der Oberfläche ✅ (siehe M7).
-4. Stopp-Button beim Antworten, Rückgängig beim Löschen.
+4. Stopp-Button beim Antworten ✅ (M11). Rückgängig beim Löschen bewusst nicht, siehe [ENTSCHEIDUNGEN](ENTSCHEIDUNGEN.md): jedes Löschen fragt vorher.
 5. Tastaturkürzel, Suche über Inhalte aller Notebooks, Ausgabesprache als Kontoeinstellung.
 
 Bewusst weggelassen: Teilen, Audio- und Videoübersicht, Deep Research, Drive, Daumen-Bewertung.
