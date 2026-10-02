@@ -978,3 +978,13 @@ Anker), damit gespeicherte Links halten; sie liegt außerhalb des geschützten L
 Der Platzhalter der Chat-Spalte (`ChatSkeleton`) hält jetzt den Platz des Covers frei (`COVER_BOX`, dieselbe Größe wie das
 echte Cover, geteilt statt kopiert) und die sieben Balken im selben Abstand darunter wie die Zusammenfassung; vorher sprang
 die Spalte, sobald das Cover erschien.
+
+### PDF-Link im URL-Import
+
+Der Abruf nimmt jetzt `application/pdf` an. Die Route behandelt die Antwort wie einen Upload (`checkBytes`, geteilt mit dem
+Datei-Upload): Die PDF-Signatur und die Seitenzahl (50) werden geprüft, weil der Server dem `Content-Type` nicht traut; ein
+Fehler gibt dieselben Codes wie beim Upload (415 `UNSUPPORTED_FILE`, 422 `TOO_MANY_PAGES`). Ein PDF darf so groß sein wie ein
+Upload (10 MB), eine Webseite bleibt bei 5 MB; die Grenze wird nach dem Typ der Antwort gewählt, vor dem Lesen des Körpers.
+Der Titel ist der Dateiname aus dem Pfad der Adresse (decodiert, bei kaputter Escape-Folge unverändert), sonst der Host. Die
+Quelle ist vom Typ `PDF` mit `sourceUrl`; die SSRF-Prüfungen und Grenzen für Weiterleitungen und Zeit gelten unverändert. Der
+Hilfetext im Formular nennt jetzt Webseite oder PDF.

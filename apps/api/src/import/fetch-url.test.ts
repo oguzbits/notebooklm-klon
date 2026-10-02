@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { LIMITS } from '../config/limits';
-import { fetchPublicUrl, IMPORT_ERROR, ImportError } from './fetch-url';
+import { fetchPublicUrl, IMPORT_ERROR, ImportError, PDF_CONTENT_TYPE } from './fetch-url';
 
 const PUBLIC = '93.184.216.34';
 
@@ -153,13 +153,54 @@ describe('fetchPublicUrl', () => {
     );
   });
 
-  it('rejects a content type that is not text', async () => {
+  it('rejects a content type that is neither text nor a PDF', async () => {
     const { deps } = fakeDeps([
-      new Response('%PDF', { status: 200, headers: { 'content-type': 'application/pdf' } }),
+      new Response('PNG', { status: 200, headers: { 'content-type': 'image/png' } }),
     ]);
 
-    expect(await codeOf(fetchPublicUrl('https://example.com/a.pdf', deps))).toBe(
+    expect(await codeOf(fetchPublicUrl('https://example.com/a.png', deps))).toBe(
       IMPORT_ERROR.UNSUPPORTED_CONTENT_TYPE
+    );
+  });
+
+  it('accepts a PDF and returns its bytes', async () => {
+    const { deps } = fakeDeps([
+      new Response('%PDF-1.7', {
+        status: 200,
+        headers: { 'content-type': `${PDF_CONTENT_TYPE}; qs=0.9` },
+      }),
+    ]);
+
+    const page = await fetchPublicUrl('https://example.com/a.pdf', deps);
+
+    expect(page.contentType).toBe(PDF_CONTENT_TYPE);
+    expect(new TextDecoder().decode(page.body)).toBe('%PDF-1.7');
+  });
+
+  it('lets a PDF be as large as an upload, a web page only as large as the page limit', async () => {
+    const size = LIMITS.URL_IMPORT_MAX_BYTES + 1;
+    const declared = (type: string, length: number) => ({
+      'content-type': type,
+      'content-length': String(length),
+    });
+    const pdfWithinUpload = fakeDeps([
+      new Response(new Uint8Array(size), {
+        status: 200,
+        headers: declared(PDF_CONTENT_TYPE, size),
+      }),
+    ]);
+    const pdfBeyondUpload = fakeDeps([
+      new Response('x', {
+        status: 200,
+        headers: declared(PDF_CONTENT_TYPE, LIMITS.UPLOAD_MAX_BYTES + 1),
+      }),
+    ]);
+
+    const page = await fetchPublicUrl('https://example.com/a.pdf', pdfWithinUpload.deps);
+
+    expect(page.body.byteLength).toBe(size);
+    expect(await codeOf(fetchPublicUrl('https://example.com/b.pdf', pdfBeyondUpload.deps))).toBe(
+      IMPORT_ERROR.TOO_LARGE
     );
   });
 

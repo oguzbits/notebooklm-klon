@@ -15,7 +15,7 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { createApp } from './app';
 import { LIMITS } from './config/limits';
-import type { FetchDeps } from './import/fetch-url';
+import { type FetchDeps, PDF_CONTENT_TYPE } from './import/fetch-url';
 import { BASE_URL, createHarness } from './testing/app-harness';
 
 const PASSWORD = 'ein-sicheres-passwort';
@@ -452,6 +452,94 @@ describe('URL import', () => {
       expect(harness.enqueued).toEqual([]);
     }
   );
+
+  describe('a link to a PDF', () => {
+    const answering = (body: Uint8Array | string, type = PDF_CONTENT_TYPE) =>
+      createApp({
+        ...harness.deps,
+        fetch: {
+          lookup: async () => [PUBLIC_ADDRESS],
+          request: async () =>
+            new Response(body, { status: 200, headers: { 'content-type': type } }),
+        },
+      });
+
+    it('is read like an uploaded PDF and named after the file in the address', async () => {
+      const notebook = await createNotebook(alice);
+
+      const response = await answering(await pdf(2)).request(
+        `/api/notebooks/${notebook}/sources/url`,
+        json(alice, { url: 'https://example.com/berichte/jahresbericht%202025.pdf?download=1' })
+      );
+
+      expect(response.status).toBe(202);
+      const list = SourceListSchema.parse(
+        await (
+          await app.request(`/api/notebooks/${notebook}/sources`, { headers: { cookie: alice } })
+        ).json()
+      );
+      expect(list[0]).toMatchObject({ title: 'jahresbericht 2025.pdf', kind: SOURCE_KIND.PDF });
+      expect(harness.enqueued).toHaveLength(1);
+    });
+
+    it('keeps the file name as written when the address has a broken escape', async () => {
+      const notebook = await createNotebook(alice);
+
+      await answering(await pdf(1)).request(
+        `/api/notebooks/${notebook}/sources/url`,
+        json(alice, { url: 'https://example.com/kaputt%E0%A4%A.pdf' })
+      );
+
+      const list = SourceListSchema.parse(
+        await (
+          await app.request(`/api/notebooks/${notebook}/sources`, { headers: { cookie: alice } })
+        ).json()
+      );
+      expect(list[0]).toMatchObject({ title: 'kaputt%E0%A4%A.pdf', kind: SOURCE_KIND.PDF });
+    });
+
+    it('is named after the host when the address names no file', async () => {
+      const notebook = await createNotebook(alice);
+
+      await answering(await pdf(1)).request(
+        `/api/notebooks/${notebook}/sources/url`,
+        json(alice, { url: 'https://example.com/download?id=7' })
+      );
+
+      const list = SourceListSchema.parse(
+        await (
+          await app.request(`/api/notebooks/${notebook}/sources`, { headers: { cookie: alice } })
+        ).json()
+      );
+      expect(list[0]).toMatchObject({ title: 'example.com', kind: SOURCE_KIND.PDF });
+    });
+
+    it('is refused when it has too many pages, like an upload', async () => {
+      const notebook = await createNotebook(alice);
+
+      const response = await answering(await pdf(LIMITS.UPLOAD_MAX_PDF_PAGES + 1)).request(
+        `/api/notebooks/${notebook}/sources/url`,
+        json(alice, { url: 'https://example.com/lang.pdf' })
+      );
+
+      expect(response.status).toBe(422);
+      expect(ApiErrorSchema.parse(await response.json()).code).toBe(API_ERROR.TOO_MANY_PAGES);
+      expect(harness.enqueued).toEqual([]);
+    });
+
+    it('is refused when the answer only claims to be a PDF', async () => {
+      const notebook = await createNotebook(alice);
+
+      const response = await answering('<html>kein PDF</html>').request(
+        `/api/notebooks/${notebook}/sources/url`,
+        json(alice, { url: 'https://example.com/falsch.pdf' })
+      );
+
+      expect(response.status).toBe(415);
+      expect(ApiErrorSchema.parse(await response.json()).code).toBe(API_ERROR.UNSUPPORTED_FILE);
+      expect(harness.enqueued).toEqual([]);
+    });
+  });
 
   it('refuses a host that resolves to a private address with the shared URL error', async () => {
     const notebook = await createNotebook(alice);

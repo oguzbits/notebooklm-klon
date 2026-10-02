@@ -45,7 +45,13 @@ export interface FetchDeps {
   request: (url: URL, address: string, signal: AbortSignal) => Promise<Response>;
 }
 
-const ACCEPTED_TYPES = new Set(['text/html', 'application/xhtml+xml', 'text/plain']);
+export const PDF_CONTENT_TYPE = 'application/pdf';
+const ACCEPTED_TYPES = new Set([
+  'text/html',
+  'application/xhtml+xml',
+  'text/plain',
+  PDF_CONTENT_TYPE,
+]);
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 const HTTP_OK_MIN = 200;
 const HTTP_OK_MAX = 299;
@@ -78,9 +84,9 @@ async function publicAddress(url: URL, deps: FetchDeps): Promise<string> {
   return first;
 }
 
-async function readBody(response: Response): Promise<Uint8Array> {
+async function readBody(response: Response, maxBytes: number): Promise<Uint8Array> {
   const declared = Number(response.headers.get('content-length'));
-  if (declared > LIMITS.URL_IMPORT_MAX_BYTES) {
+  if (declared > maxBytes) {
     await response.body?.cancel();
     throw new ImportError(IMPORT_ERROR.TOO_LARGE, 'The page is too large.');
   }
@@ -93,7 +99,7 @@ async function readBody(response: Response): Promise<Uint8Array> {
     const { done, value } = await reader.read();
     if (done) break;
     total += value.byteLength;
-    if (total > LIMITS.URL_IMPORT_MAX_BYTES) {
+    if (total > maxBytes) {
       await reader.cancel();
       throw new ImportError(IMPORT_ERROR.TOO_LARGE, 'The page is too large.');
     }
@@ -145,7 +151,10 @@ async function acceptedContentType(response: Response): Promise<string> {
   const contentType = (response.headers.get('content-type') ?? '').split(';')[0]?.trim() ?? '';
   if (!ACCEPTED_TYPES.has(contentType.toLowerCase())) {
     await response.body?.cancel();
-    throw new ImportError(IMPORT_ERROR.UNSUPPORTED_CONTENT_TYPE, 'The page is not text.');
+    throw new ImportError(
+      IMPORT_ERROR.UNSUPPORTED_CONTENT_TYPE,
+      'The page is neither text nor a PDF.'
+    );
   }
   return contentType.toLowerCase();
 }
@@ -170,7 +179,10 @@ export async function fetchPublicUrl(input: string, deps: FetchDeps): Promise<Fe
       continue;
     }
     const contentType = await acceptedContentType(response);
-    return { finalUrl: parsed.url.href, contentType, body: await readBody(response) };
+    // A PDF is what a user could upload, so it may be as large as an upload; a page stays smaller.
+    const maxBytes =
+      contentType === PDF_CONTENT_TYPE ? LIMITS.UPLOAD_MAX_BYTES : LIMITS.URL_IMPORT_MAX_BYTES;
+    return { finalUrl: parsed.url.href, contentType, body: await readBody(response, maxBytes) };
   }
   throw new ImportError(IMPORT_ERROR.TOO_MANY_REDIRECTS, 'Too many redirects.');
 }

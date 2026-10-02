@@ -16,7 +16,7 @@ import { detectSourceKind } from '../core/file-kind';
 import { findNotebook } from '../db/notebook-repository';
 import { linkSource } from '../db/notebook-source-repository';
 import { HTTP_STATUS } from '../http-status';
-import { fetchPublicUrl } from '../import/fetch-url';
+import { fetchPublicUrl, PDF_CONTENT_TYPE } from '../import/fetch-url';
 import { submitSource } from '../ingestion/submit';
 import { pageTitle } from '../parsing/parse-web';
 import { countPdfPages } from '../parsing/pdf-pages';
@@ -37,6 +37,8 @@ const urlRoute = createRoute({
   responses: {
     [HTTP_STATUS.ACCEPTED]: json(SubmitSourceResultSchema, 'The page is being processed'),
     [HTTP_STATUS.BAD_REQUEST]: json(ApiErrorSchema, 'The URL is not allowed or could not be read'),
+    [HTTP_STATUS.UNSUPPORTED_MEDIA_TYPE]: json(ApiErrorSchema, 'The PDF cannot be read'),
+    [HTTP_STATUS.UNPROCESSABLE_ENTITY]: json(ApiErrorSchema, 'The PDF has too many pages'),
     401: json(ApiErrorSchema, 'Not signed in'),
     [HTTP_STATUS.NOT_FOUND]: json(ApiErrorSchema, 'Notebook not found'),
     429: json(ApiErrorSchema, 'The quota for new sources is used up'),
@@ -71,43 +73,61 @@ async function addToNotebook(
   return result;
 }
 
-type Refusal = {
+type Refusal<Status> = {
   ok: false;
-  status:
-    | typeof HTTP_STATUS.PAYLOAD_TOO_LARGE
-    | typeof HTTP_STATUS.UNSUPPORTED_MEDIA_TYPE
-    | typeof HTTP_STATUS.UNPROCESSABLE_ENTITY;
+  status: Status;
   code: (typeof API_ERROR)[keyof typeof API_ERROR];
 };
-type Upload = { ok: true; kind: SourceKind; bytes: Uint8Array } | Refusal;
+type Parsed = { ok: true; kind: SourceKind; bytes: Uint8Array };
+/** What the bytes alone can be refused for; the size of a file is checked before. */
+type Checked =
+  | Parsed
+  | Refusal<typeof HTTP_STATUS.UNSUPPORTED_MEDIA_TYPE | typeof HTTP_STATUS.UNPROCESSABLE_ENTITY>;
+type Upload = Checked | Refusal<typeof HTTP_STATUS.PAYLOAD_TOO_LARGE>;
 
-const UNREADABLE: Refusal = {
+const UNREADABLE: Checked = {
   ok: false,
   status: HTTP_STATUS.UNSUPPORTED_MEDIA_TYPE,
   code: API_ERROR.UNSUPPORTED_FILE,
 };
-const TOO_MANY: Refusal = {
+const TOO_MANY: Checked = {
   ok: false,
   status: HTTP_STATUS.UNPROCESSABLE_ENTITY,
   code: API_ERROR.TOO_MANY_PAGES,
 };
 
 /** Why a PDF is refused: too many pages. An unreadable one throws UnreadablePdfError (415). */
-async function pdfRefusal(bytes: Uint8Array): Promise<Refusal | null> {
+async function pdfRefusal(bytes: Uint8Array): Promise<Checked | null> {
   const pages = await countPdfPages(bytes);
   return pages > LIMITS.UPLOAD_MAX_PDF_PAGES ? TOO_MANY : null;
 }
 
-/** Looks at an uploaded file before anything is stored: size, kind, and for a PDF its pages. */
+/** Looks at a file before anything is stored: kind, and for a PDF its pages. */
+async function checkBytes(filename: string, bytes: Uint8Array): Promise<Checked> {
+  const kind = detectSourceKind(filename, bytes);
+  if (kind === null) return UNREADABLE;
+  const refusal = kind === SOURCE_KIND.PDF ? await pdfRefusal(bytes) : null;
+  return refusal ?? { ok: true, kind, bytes };
+}
+
 async function checkUpload(file: File): Promise<Upload> {
   if (file.size > LIMITS.UPLOAD_MAX_BYTES) {
     return { ok: false, status: HTTP_STATUS.PAYLOAD_TOO_LARGE, code: API_ERROR.FILE_TOO_LARGE };
   }
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  const kind = detectSourceKind(file.name, bytes);
-  if (kind === null) return UNREADABLE;
-  const refusal = kind === SOURCE_KIND.PDF ? await pdfRefusal(bytes) : null;
-  return refusal ?? { ok: true, kind, bytes };
+  return checkBytes(file.name, new Uint8Array(await file.arrayBuffer()));
+}
+
+/** The last part of an address path, decoded when it can be, if it names a PDF file. */
+function pdfFileName(address: string): string | null {
+  const last = new URL(address).pathname.split('/').pop() ?? '';
+  let name = last;
+  try {
+    name = decodeURIComponent(last);
+  } catch (error) {
+    // A broken escape in the address is the sender's mistake: the name is shown as it is.
+    if (!(error instanceof URIError)) throw error;
+  }
+  return /\.pdf$/i.test(name) ? name : null;
 }
 
 /** Adding sources: a file upload and a URL import. Both end in the same ingestion job. */
@@ -158,14 +178,23 @@ export function sourceRoutes(deps: AppDeps) {
 
     // An ImportError from here is turned into a 400 by the app-wide error handler.
     const page = await fetchPublicUrl(url, deps.fetch);
-    const title = pageTitle(page.body) ?? new URL(page.finalUrl).hostname;
+    const host = new URL(page.finalUrl).hostname;
+    const isPdf = page.contentType === PDF_CONTENT_TYPE;
+    const title = isPdf ? (pdfFileName(page.finalUrl) ?? host) : (pageTitle(page.body) ?? host);
+
+    // A PDF behind a link is checked like an upload: the answer may claim any type.
+    const checked = isPdf
+      ? await checkBytes(`${title}.pdf`, page.body)
+      : { ok: true as const, kind: SOURCE_KIND.URL, bytes: page.body };
+    if (!checked.ok) return c.json(error(checked.code), checked.status);
+
     const result = await addToNotebook(deps, {
       userId,
       notebookId,
-      kind: SOURCE_KIND.URL,
+      kind: checked.kind,
       title,
       sourceUrl: page.finalUrl,
-      bytes: page.body,
+      bytes: checked.bytes,
     });
     return c.json(result, HTTP_STATUS.ACCEPTED);
   });

@@ -117,17 +117,17 @@ Die Schwächen liegen an den Rändern: **Zuverlässigkeit im Betrieb** (hängend
 Heute unterstützt: PDF (auch Scans, Gemini liest sie visuell), DOCX, TXT, MD, Webseite, eingefügter Text,
 Websuche-Treffer. Grenzen: 10 MB, 50 PDF-Seiten, 5 MB je URL, 10 Quellen pro 24 h.
 
-| Priorität | Typ                                | Aufwand | Anmerkung                                                      |
-| --------- | ---------------------------------- | ------- | -------------------------------------------------------------- |
-| Jetzt     | Bilder und Scans (PNG, JPEG, WEBP) | S bis M | Gemini nimmt Bilder direkt, gleicher Weg wie PDF.              |
-| Jetzt     | PDF-Link im URL-Import             | S       | `ACCEPTED_TYPES` erlaubt nur HTML und Text.                    |
-| Später    | YouTube (Transkript)               | M       | NotebookLM kann es, hoher Nutzwert.                            |
-| Später    | Audio (MP3, WAV)                   | M       | Gemini nimmt Audio, Größen- und Kostenfrage.                   |
-| Später    | PPTX                               | M       | Häufig in der Praxis.                                          |
-| Später    | XLSX und CSV                       | M       | Problem mit `STUDIO_MAX_CHARS` (120k) bei großen Tabellen.     |
-| Später    | HTML-Datei                         | S       | Geringer Nutzen.                                               |
-| Nie       | EPUB                               | –       | Kaum Nachfrage.                                                |
-| Nie       | Google Docs und Slides             | L       | Bewusst offen, siehe [DESIGN-ABGLEICH.md](DESIGN-ABGLEICH.md). |
+| Priorität   | Typ                                | Aufwand | Anmerkung                                                      |
+| ----------- | ---------------------------------- | ------- | -------------------------------------------------------------- |
+| Jetzt       | Bilder und Scans (PNG, JPEG, WEBP) | S bis M | Gemini nimmt Bilder direkt, gleicher Weg wie PDF.              |
+| ✅ Erledigt | PDF-Link im URL-Import             | S       | Wird wie ein Upload geprüft (Signatur, Seiten, 10 MB).         |
+| Später      | YouTube (Transkript)               | M       | NotebookLM kann es, hoher Nutzwert.                            |
+| Später      | Audio (MP3, WAV)                   | M       | Gemini nimmt Audio, Größen- und Kostenfrage.                   |
+| Später      | PPTX                               | M       | Häufig in der Praxis.                                          |
+| Später      | XLSX und CSV                       | M       | Problem mit `STUDIO_MAX_CHARS` (120k) bei großen Tabellen.     |
+| Später      | HTML-Datei                         | S       | Geringer Nutzen.                                               |
+| Nie         | EPUB                               | –       | Kaum Nachfrage.                                                |
+| Nie         | Google Docs und Slides             | L       | Bewusst offen, siehe [DESIGN-ABGLEICH.md](DESIGN-ABGLEICH.md). |
 
 Fehlerfälle, die heute schlecht erklärt sind: verschlüsseltes oder defektes PDF wird zu „Dateityp nicht
 unterstützt“; ein Scan ohne Text wird `EMPTY_TEXT`; eine beliebige ZIP als `.docx` scheitert mit der
@@ -172,5 +172,5 @@ und Screenreader, `test:db`, `e2e`, Semgrep.
 2. ✅ **Zuverlässigkeit:** H1 (hängende Quellen und SIGTERM), H5 (Health mit DB), M1 (Transaktion).
 3. ✅ **Härtung, klein:** H3 (Deploy-Bedingung), M3 (Header in Caddy), H6 nach Browserprüfung.
 4. **Betrieb:** M8 und M9 erledigt; H4 teilweise (Dump vor jedem Deploy, Restore-Probe), **offen: Kopie auf externen Speicher, braucht Entscheidung des Nutzers** (Anbieter, Kosten, Zugangsdaten).
-5. **Funktionen:** Bilder und PDF-Link, „neu einlesen“, Markdown-Export, Konto löschen.
+5. **Funktionen:** PDF-Link ✅; offen: Bilder, „neu einlesen“, Markdown-Export, Konto löschen.
 6. **Danach:** M2, M5, M11 bis M17, YouTube, Audio, PPTX.
