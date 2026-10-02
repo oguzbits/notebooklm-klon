@@ -170,4 +170,4 @@ Hetzner Cloud mit Docker Compose und Caddy (automatisches HTTPS). [deploy.yml](.
 
 ## Agentischer Workflow
 
-[AGENTS.md](AGENTS.md) (Regeln, Schichten, Invarianten, Definition of Done), Hooks unter `.claude/` (blockierte Befehle, Geheimnisschutz, Gate vor dem Beenden), Husky-Hooks und ein Thema pro Commit. Tests entstehen vor dem Code, Entscheidungen stehen in [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md).
+[AGENTS.md](AGENTS.md) (Regeln, Schichten, Invarianten, Definition of Done), Hooks unter `.claude/` (blockierte Befehle, Geheimnisschutz, Gate vor dem Beenden), Husky-Hooks und ein Thema pro Commit. Tests gehören zur Änderung und entstehen dort, wo der Vertrag klar ist, zuerst (Konvention, kein Gate); Entscheidungen stehen in [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md).

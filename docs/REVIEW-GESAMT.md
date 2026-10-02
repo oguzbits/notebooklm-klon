@@ -107,10 +107,8 @@ Die Schwächen liegen an den Rändern: **Zuverlässigkeit im Betrieb** (hängend
 
 ## Doku-Widersprüche
 
-- `docs/PLAN.md` sagt „live seit 2026-10-02“ und an anderer Stelle „auf einem echten Server ungetestet“.
-- `docs/PLAN.md` nennt `liteparse` und `bottleneck`; beides gibt es im Code nicht (eigener `RateLimiter`,
-  Fallback über `PARSE_FALLBACK_MODEL`). Der Kill-Switch aus dem Plan ist im Code nicht auffindbar.
-- `README.md` („Tests entstehen vor dem Code“) widerspricht `AGENTS.md` („the history does not prove the order“).
+✅ Alle drei behoben: PLAN.md nennt den Betrieb als erprobt, den eigenen Limiter, das Fallback-Modell und den
+nicht gebauten Kill-Switch; das README beschreibt die Testreihenfolge als Konvention wie AGENTS.md.
 
 ## Dateitypen
 

@@ -101,7 +101,7 @@ React-Frontend und Node.js-Backend in einem Monorepo, ein Container, Postgres mi
 | Auth             | Better Auth mit Drizzle-Adapter                                                                                           | Nutzer in der eigenen Postgres. Supabase Auth bringt bei direkter DB-Verbindung keinen RLS-Vorteil                         |
 | Datenbank        | PostgreSQL mit pgvector (HNSW), Postgres-Volltextsuche, Drizzle ORM; in Produktion ein Container auf dem Hetzner-Server | Eine Datenbank für alles; Neon und Render-Postgres verworfen (schlafen im Gratis-Tarif ein beziehungsweise laufen nach 30 Tagen ab)               |
 | Jobs             | pg-boss                                                                                                                   | Etablierte Postgres-Queue statt Eigenbau. Braucht eine direkte Verbindung, kein PgBouncer                                                    |
-| Parsing          | PDF: Gemini 3.1 Flash-Lite (Spike entschieden, [Ergebnisse](SPIKE-ERGEBNISSE.md)). DOCX: mammoth. PPTX: fflate + XML (Folientext, Tabellen, Notizen). Audio: Gemini transkribiert wörtlich (inline, bis 10 MB). TXT/MD direkt. URL: Readability. DOCX und URL werden als Markdown gespeichert (Links, Fett, Tabellen), TXT bleibt Klartext. Fallback: liteparse | ParseBench (Tabellen / Inhaltstreue): Gemini 3.1 Flash-Lite 85,5 / 89,5, Docling 66,4 / 66,9, LiteParse 42,4 / 70,0        |
+| Parsing          | PDF: Gemini 3.1 Flash-Lite (Spike entschieden, [Ergebnisse](SPIKE-ERGEBNISSE.md)). DOCX: mammoth. PPTX: fflate + XML (Folientext, Tabellen, Notizen). Audio: Gemini transkribiert wörtlich (inline, bis 10 MB). TXT/MD direkt. URL: Readability. DOCX und URL werden als Markdown gespeichert (Links, Fett, Tabellen), TXT bleibt Klartext. Fallback bei Recitation-Sperre: ein zweites Gemini-Modell (`PARSE_FALLBACK_MODEL`), kein liteparse | ParseBench (Tabellen / Inhaltstreue): Gemini 3.1 Flash-Lite 85,5 / 89,5, Docling 66,4 / 66,9, LiteParse 42,4 / 70,0        |
 | Embeddings       | Gemini Embedding 2 mit 768 Dimensionen, Fallback `gemini-embedding-001`                                                   | Limits bekannt (RPM 100, TPM 30K, RPD 1000), im Spike gleichauf mit 001 (17 gegen 16 von 18). Die Vektorräume beider Modelle sind inkompatibel                              |
 | Retrieval        | pgvector plus Volltextsuche, Fusion per RRF in SQL                                                                        | Hybrid fängt Eigennamen und Zahlen, die Vektorsuche verfehlt (im Spike ein Fehltreffer, der zu einer falschen Antwort führte)                                                               |
 | LLM-Schicht      | Eigener schlanker Gemini-Client statt Vercel AI SDK (siehe ENTSCHEIDUNGEN), Modell-IDs und Limits in der Config                                                                        | Chat: Gemini 3.5 Flash-Lite (Spike entschieden, GPT-6 Luna ungemessen). Studio: 3.x Flash, Fallback Flash-Lite  |
@@ -142,10 +142,10 @@ Die Limits gelten pro **Projekt**, nicht pro Key. Das Tageslimit wird um Mittern
 **Maßnahmen**
 
 - **Zwei Google-Projekte:** eines für Bauen und Testen (Free Tier), eines für das Live-Demo. So verbraucht dein Testen nie das Kontingent der Reviewer.
-- **Rate-Limiter im Worker** (z. B. bottleneck), Limits aus der Config, Wiederholung mit Wartezeit bei 429.
+- **Rate-Limiter im Worker** (eigener Sliding-Window-Limiter statt bottleneck, siehe ENTSCHEIDUNGEN), Limits aus der Config, Wiederholung mit Wartezeit bei 429.
 - **Inhalts-Hash pro Datei**, damit dasselbe Dokument nie zweimal geparst oder eingebettet wird. Embeddings im Batch.
 - **Demo-Limits:** z. B. 3 Uploads pro Nutzer und Tag, höchstens 50 Seiten pro Quelle, verständliche Meldung bei erschöpftem Kontingent. Ein vorbefülltes Demo-Notebook verbraucht kein Kontingent.
-- **Kill-Switch** per Umgebungsvariable, der neue Uploads sperrt, falls das Guthaben knapp wird.
+- **Kill-Switch** per Umgebungsvariable: nicht gebaut. Es gilt das Kontingent neuer Quellen pro Nutzer und 24 Stunden; wer alles sperren will, stoppt den Container.
 - **Hinweis im Demo:** keine sensiblen Dokumente hochladen. Für das Free Tier können Google-Bedingungen zur Datennutzung gelten, bitte einmal lesen.
 
 **Paid-Wechsel:** 5 Dollar Guthaben als Reserve, Wechsel nur per Umgebungsvariable und neuer Limit-Tabelle. Offen ist, ob du nach dem Verknüpfen von Billing die Free-Kontingente behältst (rechne nicht damit), ob das Guthaben hart begrenzt ist und ob es eine automatische Aufladung gibt, die du ausschalten solltest.
@@ -159,10 +159,10 @@ Das größte Risiko ist das Free-Tier-Kontingent im Live-Demo. Danach folgen Par
 - **Kontingent:** Laut AI-Studio-Dashboard (Free Tier, im Spike geprüft) haben Gemini 3.5 bis 3.8 Flash 5 Anfragen pro Minute und 20 pro Tag, die Flash-Lite-Modelle 15 pro Minute und 500 pro Tag (beide 250K Tokens pro Minute). Das macht Studio auf den großen Modellen knapp. Fallback ist Flash-Lite.
 - **Embeddings:** Gemini Embedding 2 hat 100 Anfragen pro Minute, 30K Tokens pro Minute und 1000 pro Tag (Dashboard). 30K Tokens pro Minute sind eng, Ingestion braucht Drosselung nach Tokens. Wie ein Batch gezählt wird und welche Limits `gemini-embedding-001` hat, ist nicht geprüft.
 - **Latenz:** GPT-6 Luna (im Spike nicht gemessen) hatte laut Artificial Analysis bei Max-Reasoning eine Zeit bis zum ersten Token von etwa 139 Sekunden (Gemini 3.5 Flash-Lite etwa 8,8 Sekunden). Bei niedriger Stufe nicht gemessen.
-- **Parsing per LLM** ist nicht deterministisch und kann auslassen. Gegenmittel: Stichprobentests und liteparse als Fallback.
+- **Parsing per LLM** ist nicht deterministisch und kann auslassen. Gegenmittel: Stichprobentests; ein liteparse-Fallback wurde nicht gebaut (siehe ENTSCHEIDUNGEN).
 - **ParseBench** stammt von LlamaIndex, deckt Enterprise-PDFs ab und enthält kein DOCX. Deshalb der eigene Spike.
 - **Datennutzung im Free Tier:** Bedingungen lesen, Hinweis im Demo.
-- **Hosting:** Der Hetzner-Weg ist geschrieben, aber auf einem echten Server ungetestet.
+- **Hosting:** Läuft seit 2026-10-02 auf einem Hetzner-Server; Deploy mit Dump, Health-Prüfung und Rollback ist im Betrieb erprobt.
 - **Billing:** Unklar, ob Free-Kontingente nach dem Verknüpfen bleiben und ob das Guthaben hart begrenzt ist.
 - **Preise und Benchmarks** aus Drittquellen vor dem Bau auf den offiziellen Seiten prüfen.
 - **Take-home-Repos** sind nur Ideengeber: keinen Code kopieren.
