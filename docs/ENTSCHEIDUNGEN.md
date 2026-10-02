@@ -5,6 +5,17 @@ Kleine Entscheidungen, die der Agent selbst getroffen hat, mit Begründung. Gro�
 
 Format: Datum, Entscheidung, Begründung, was sie später ändern würde.
 
+## Themenregister
+
+Die Abschnitte sind nach Datum geordnet. Zum Suchen: `rg -n "Stichwort" docs/ENTSCHEIDUNGEN.md`.
+
+- **Modelle, Suche und Zitate:** Auswertung, Seed, Deployment (2026-09-30); Modellaufrufe: Abbruch und Zeitgrenzen; Prompt-Injection (M5); Limits pro Nutzer (M2).
+- **Quellen und Dateitypen:** PPTX, Audio und YouTube als Quelle; Fehlermeldungen für defekte Dateien; Fehlgeschlagene Quelle neu einlesen; SSRF-Sperrliste und Index fürs Kontingent.
+- **Studio und Notizen:** Notizen, Notizen mit Editor, Datentabelle im Studio, Ausgabe löschen mit Rückfrage (M15), Markdown-Export, Rückgängig beim Löschen: bewusst nicht.
+- **Oberfläche und Zugänglichkeit:** Frontend, Leseansicht und Chat-Verlauf, Abgleich Runde 3 und 4, Schriftbreite und Spaltenbreite, Screenreader (M12), Fokus (M13), Tab-Leiste (M17), Antwort-Stream (M11), Darstellungsmenü auf dem Smartphone.
+- **Betrieb und Deployment:** Deployment: Entscheidung und Stand, Doku auf Hetzner umgestellt, Deploy: Reste und Härtung, Demo-Zugang als Gast, Konto löschen, Bundle und Kompression (M16).
+- **Code-Qualität und Tests:** Clean-Code-Grenzen, Fehlerabbildung an einer Stelle, Eigentümer-Prädikate an einer Stelle, Kleine Dubletten und lose Grenzwerte, E2E-Tests als Nutzerreisen, Review-Fehlerbehebungen H1, H2, H7, Schulden: Isolationstest, @types/node.
+
 ## 2026-09-30
 
 - **Regeln gelockert (auf Wunsch des Nutzers):** Commits und Pushes sind erlaubt, Force-Push und
