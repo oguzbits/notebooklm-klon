@@ -1,4 +1,4 @@
-import { log } from '../logger';
+import { errorName, log } from '../logger';
 import type { ObjectStore } from './object-store';
 
 /**
@@ -21,8 +21,4 @@ export async function removePrefixQuietly(store: ObjectStore, prefix: string): P
   } catch (error) {
     log({ level: 'warn', msg: 'objects not removed', prefix, name: errorName(error) });
   }
-}
-
-function errorName(error: unknown): string {
-  return error instanceof Error ? error.name : 'unknown';
 }

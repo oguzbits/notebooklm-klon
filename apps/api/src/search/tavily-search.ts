@@ -1,9 +1,13 @@
-import { MAX_WEB_RESULTS, type WebSearchResult, WebSearchResultSchema } from '@nlm/shared';
+import {
+  MAX_WEB_RESULTS,
+  WEB_SEARCH_SNIPPET_MAX_CHARS,
+  type WebSearchResult,
+  WebSearchResultSchema,
+} from '@nlm/shared';
 import { z } from 'zod';
 
 const ENDPOINT = 'https://api.tavily.com/search';
 const SEARCH_DEPTH = 'basic';
-const MAX_SNIPPET_CHARS = 500;
 /** Rate limit, key limit and pay-as-you-go limit of Tavily: the quota is used up. */
 const QUOTA_STATUSES = new Set([429, 432, 433]);
 
@@ -50,7 +54,7 @@ export function createTavilySearch(config: { apiKey: string }): WebSearch {
         const parsed = WebSearchResultSchema.safeParse({
           title: result.title,
           url: result.url,
-          snippet: result.content.trim().slice(0, MAX_SNIPPET_CHARS),
+          snippet: result.content.trim().slice(0, WEB_SEARCH_SNIPPET_MAX_CHARS),
         });
         return parsed.success ? [parsed.data] : [];
       });

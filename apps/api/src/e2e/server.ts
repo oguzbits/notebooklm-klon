@@ -31,7 +31,7 @@ import { toLocalFile } from '../eval/corpus';
 import { systemDeps } from '../import/system-deps';
 import { createLocalImportDeps } from '../ingestion/local-import-deps';
 import { runIngestJob, type SubmitPorts } from '../ingestion/submit';
-import { log } from '../logger';
+import { errorName, log } from '../logger';
 import { createParseSource } from '../parsing/parse-source';
 import { seedDemo } from '../seed/demo';
 import { s3ConfigFromEnv } from '../storage/s3-config';
@@ -76,7 +76,7 @@ const ingest: SubmitPorts = {
           log({
             level: 'error',
             msg: 'offline ingestion failed',
-            name: error instanceof Error ? error.name : 'unknown',
+            name: errorName(error),
           });
         });
       }, 0);
@@ -144,7 +144,7 @@ const app = createApp({
       log({
         level: 'error',
         msg: 'chat failed',
-        name: error instanceof Error ? error.name : 'unknown',
+        name: errorName(error),
       }),
   },
 });

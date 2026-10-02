@@ -3,7 +3,8 @@ import { z } from 'zod';
 /** What a search query may be: the field and the schema use the same numbers. */
 export const WEB_SEARCH_QUERY = { MIN_CHARS: 2, MAX_CHARS: 200 } as const;
 const MAX_TITLE_CHARS = 300;
-const MAX_SNIPPET_CHARS = 500;
+/** The longest snippet a suggestion carries; the search adapter cuts to it. */
+export const WEB_SEARCH_SNIPPET_MAX_CHARS = 500;
 const MAX_URL_CHARS = 2048;
 /** How many suggestions one search returns at most. */
 export const MAX_WEB_RESULTS = 5;
@@ -18,7 +19,7 @@ export const WebSearchResultSchema = z.object({
   title: z.string().trim().min(1).max(MAX_TITLE_CHARS),
   url: z.string().max(MAX_URL_CHARS).regex(HTTP_URL).pipe(z.url()),
   /** A few sentences of what the page is about, from the search service. */
-  snippet: z.string().trim().max(MAX_SNIPPET_CHARS),
+  snippet: z.string().trim().max(WEB_SEARCH_SNIPPET_MAX_CHARS),
 });
 
 export const WebSearchResponseSchema = z.object({

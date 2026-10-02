@@ -142,6 +142,7 @@ export {
   CapabilitiesSchema,
   MAX_WEB_RESULTS,
   WEB_SEARCH_QUERY,
+  WEB_SEARCH_SNIPPET_MAX_CHARS,
   WebSearchBodySchema,
   WebSearchResponseSchema,
   type WebSearchResult,

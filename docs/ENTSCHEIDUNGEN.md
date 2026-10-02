@@ -829,3 +829,17 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
 - Nicht geprüft: `pnpm test:db` (Docker ist in der Sandbox nicht erreichbar). Ein eigener Isolationstest für
   `notebook-source-repository` fehlt noch (es gibt keine `*.db.test.ts` dafür, nur indirekt die Route- und
   Importtests); ihn ohne Lauf zu schreiben wäre ungeprüft. Offen für den Lauf mit Docker.
+
+## 2026-10-02 (Kleine Dubletten und lose Grenzwerte)
+
+- `errorName(error)` steht jetzt in `logger.ts` und ersetzt den gleichen Ausdruck an sechs Stellen (`index.ts`,
+  `e2e/server.ts`, `storage/remove-quietly.ts`). Es gibt nur den Klassennamen zurück, nie die Meldung: die kann
+  Dokumentinhalt zitieren (Regel 7). `eval/live.ts` bleibt, dort ist `''` für Nicht-Fehler gewollt.
+- Der Titelgrenzwert beim Kopieren eines Notizbuchs nutzt `NOTEBOOK_TITLE_MAX_CHARS` aus `packages/shared` statt einer
+  zweiten `200` im Repository.
+- Die Snippet-Länge der Websuche ist als `WEB_SEARCH_SNIPPET_MAX_CHARS` in `packages/shared` exportiert; das Schema und
+  der Tavily-Adapter schneiden an derselben Zahl, vorher standen dort zwei gleiche Literale.
+- `e2e/notebooks.e2e.ts` importiert `Page` als Typ statt über `import('…')` im Parameter.
+- Zu Regel 4 („Limits nur aus der Konfiguration“): gemeint sind Modell-IDs und Limits, die den Anbieter betreffen
+  (`PROVIDER_LIMITS`) oder Schutzgrenzen (`LIMITS`). Vertragsgrenzen, die Schema und Oberfläche teilen, gehören in
+  `packages/shared`; das ist die Quelle, auf die oben verwiesen wird.

@@ -1,8 +1,8 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 import { createNotebook, renameOpenNotebook, signUp, uniqueEmail } from './helpers';
 
-const backToList = (page: import('@playwright/test').Page) =>
+const backToList = (page: Page) =>
   page.getByRole('link', { name: 'Zu deinen Notizbüchern' }).click();
 
 test('notebooks are made, found, renamed, pinned and deleted from the list', async ({ page }) => {
