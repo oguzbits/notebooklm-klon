@@ -13,7 +13,6 @@ import { LIMITS } from '../config/limits';
 import { createWindowLimit } from '../core/window-limit';
 import { HTTP_STATUS } from '../http-status';
 import { log } from '../logger';
-import { WebSearchError } from '../search/tavily-search';
 import { json, unauthenticated } from './openapi';
 
 const HOUR_MS = 3_600_000;
@@ -72,26 +71,19 @@ export function webSearchRoutes(deps: AppDeps) {
 
     const { query } = c.req.valid('json');
     const started = Date.now();
-    try {
-      const results = await webSearch.search(
-        query,
-        AbortSignal.timeout(LIMITS.WEB_SEARCH_TIMEOUT_MS)
-      );
-      // Only lengths and counts: the query is the reader's text.
-      log({
-        level: 'info',
-        msg: 'web search',
-        queryChars: query.length,
-        results: results.length,
-        durationMs: Date.now() - started,
-      });
-      return c.json({ results }, HTTP_STATUS.OK);
-    } catch (error) {
-      if (error instanceof WebSearchError && error.quotaExhausted) {
-        return c.json(limited, HTTP_STATUS.TOO_MANY_REQUESTS);
-      }
-      throw error;
-    }
+    const results = await webSearch.search(
+      query,
+      AbortSignal.timeout(LIMITS.WEB_SEARCH_TIMEOUT_MS)
+    );
+    // Only lengths and counts: the query is the reader's text.
+    log({
+      level: 'info',
+      msg: 'web search',
+      queryChars: query.length,
+      results: results.length,
+      durationMs: Date.now() - started,
+    });
+    return c.json({ results }, HTTP_STATUS.OK);
   });
 }
 

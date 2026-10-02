@@ -10,8 +10,6 @@ import {
 
 import type { AppDeps } from '../app-deps';
 import type { AuthVariables } from '../auth/session';
-import { NoSourcesSelectedError } from '../chat/answer';
-import { EmptyStudioOutputError } from '../core/studio-prompt';
 import { getChatConfig } from '../db/chat-config-repository';
 import { findNotebook } from '../db/notebook-repository';
 import {
@@ -117,23 +115,11 @@ export function studioRoutes(deps: AppDeps) {
     })
     .openapi(createStudioRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
-      try {
-        const output = await generateStudioOutput(
-          { userId: c.var.userId, notebookId, body: c.req.valid('json') },
-          ports
-        );
-        return output
-          ? c.json(output, HTTP_STATUS.CREATED)
-          : c.json(missing, HTTP_STATUS.NOT_FOUND);
-      } catch (error) {
-        if (error instanceof NoSourcesSelectedError) {
-          return c.json({ code: API_ERROR.NO_SOURCES_SELECTED }, HTTP_STATUS.CONFLICT);
-        }
-        if (error instanceof EmptyStudioOutputError) {
-          return c.json({ code: API_ERROR.STUDIO_EMPTY }, HTTP_STATUS.UNPROCESSABLE_ENTITY);
-        }
-        throw error;
-      }
+      const output = await generateStudioOutput(
+        { userId: c.var.userId, notebookId, body: c.req.valid('json') },
+        ports
+      );
+      return output ? c.json(output, HTTP_STATUS.CREATED) : c.json(missing, HTTP_STATUS.NOT_FOUND);
     })
     .openapi(updateRoute, async (c) => {
       const { notebookId, outputId } = c.req.valid('param');

@@ -92,15 +92,10 @@ const TOO_MANY: Refusal = {
   code: API_ERROR.TOO_MANY_PAGES,
 };
 
-/** Why a PDF is refused: it cannot be read (the user's file, not our error) or has too many pages. */
+/** Why a PDF is refused: too many pages. An unreadable one throws UnreadablePdfError (415). */
 async function pdfRefusal(bytes: Uint8Array): Promise<Refusal | null> {
-  try {
-    const pages = await countPdfPages(bytes);
-    return pages > LIMITS.UPLOAD_MAX_PDF_PAGES ? TOO_MANY : null;
-  } catch (caught) {
-    if (caught instanceof Error) return UNREADABLE;
-    throw caught;
-  }
+  const pages = await countPdfPages(bytes);
+  return pages > LIMITS.UPLOAD_MAX_PDF_PAGES ? TOO_MANY : null;
 }
 
 /** Looks at an uploaded file before anything is stored: size, kind, and for a PDF its pages. */

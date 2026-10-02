@@ -1,13 +1,11 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
-import { API_ERROR, type ApiError, HealthSchema } from '@nlm/shared';
+import { API_ERROR, HealthSchema } from '@nlm/shared';
 import { HTTPException } from 'hono/http-exception';
 
-import { GeminiError } from './ai/gemini-error';
 import type { AppDeps } from './app-deps';
 import { type AuthVariables, requireUser } from './auth/session';
+import { errorBody, mapError } from './error-mapping';
 import { HTTP_STATUS } from './http-status';
-import { ImportError } from './import/fetch-url';
-import { QuotaExceededError } from './ingestion/ingest';
 import { log } from './logger';
 import { chatRoutes } from './routes/chat';
 import { chatConfigRoutes } from './routes/chat-config';
@@ -22,9 +20,6 @@ import { readerRoutes } from './routes/reader';
 import { sourceRoutes } from './routes/sources';
 import { studioRoutes } from './routes/studio';
 import { capabilityRoutes, webSearchRoutes } from './routes/web-search';
-
-const errorBody = (code: ApiError['code'], detail?: string): ApiError =>
-  detail === undefined ? { code } : { code, detail };
 
 export function createApp(deps: AppDeps) {
   const app = new OpenAPIHono<{ Variables: AuthVariables }>({
@@ -42,15 +37,8 @@ export function createApp(deps: AppDeps) {
   });
 
   app.onError((error, c) => {
-    if (error instanceof QuotaExceededError) {
-      return c.json(errorBody(API_ERROR.UPLOAD_LIMIT_REACHED), HTTP_STATUS.TOO_MANY_REQUESTS);
-    }
-    if (error instanceof ImportError) {
-      return c.json(errorBody(API_ERROR.INVALID_URL, error.code), HTTP_STATUS.BAD_REQUEST);
-    }
-    if (error instanceof GeminiError && error.status === HTTP_STATUS.TOO_MANY_REQUESTS) {
-      return c.json(errorBody(API_ERROR.CHAT_LIMIT_REACHED), HTTP_STATUS.TOO_MANY_REQUESTS);
-    }
+    const mapped = mapError(error);
+    if (mapped) return c.json(mapped.body, mapped.status);
     if (error instanceof HTTPException) return error.getResponse();
     // Log the kind of error and the route, never the message: it could carry document content.
     log({

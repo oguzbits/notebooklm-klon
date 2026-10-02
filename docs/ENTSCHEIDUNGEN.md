@@ -767,3 +767,19 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
   entfernt, README, [PLAN.md](PLAN.md) und [PRODUCT.md](../PRODUCT.md) nennen nur noch Hetzner. Die älteren Abschnitte
   oben, die Render und Neon erwähnen, bleiben als Protokoll stehen. Es gibt keinen Pooler (PgBouncer) in der Architektur:
   `pg-boss` und die Migrationen laufen über eine direkte Postgres-Verbindung.
+
+## 2026-10-02 (Fehlerabbildung an einer Stelle)
+
+- Alle fachlichen Fehler werden in `apps/api/src/error-mapping.ts` (`mapError`) auf Statuscode und `API_ERROR`-Code
+  abgebildet; `app.ts` ruft das nur im `onError` auf. Neu dort: `NoSourcesSelectedError` (409), `EmptyStudioOutputError`
+  (422), `WebSearchError` mit erschöpftem Kontingent (429) und `UnreadablePdfError` (415). Die try/catch-Blöcke in
+  `studio`, `chat`, `web-search` und `sources` sind weg; das Verhalten nach außen bleibt gleich.
+- `countPdfPages` fing vorher in der Route jeden `Error` und antwortete „nicht lesbar“, was echte Fehler tarnte. Jetzt
+  wirft der Parser selbst `UnreadablePdfError` (nur wenn pdf-lib die Datei nicht öffnet), alles andere ist ein 500.
+- Übrig bleibt `.catch(() => null)` beim Lesen des Request-Bodys (`chat`, `cover`): ungültiges JSON oder Formular ist
+  die Eingabe des Nutzers und wird zu 400, kein Ersatzwert. Der Chat-Stream meldet Fehler nach dem ersten Byte als
+  Ereignis, weil sich der Statuscode dann nicht mehr ändern lässt (siehe `error-mapping.ts`).
+- `ports` in `studio.ts` bleibt eine Fabrik (`studioPorts`). Der `Parameters<typeof …>`-Trick dort bleibt vorerst: ein
+  benannter Typ wäre ein zweiter, von Hand gepflegter Typ neben dem der Repository-Funktion.
+- Die Route-Tests für diese Fälle sind `*.db.test.ts` und liefen in dieser Sitzung nicht (kein Docker). Offline
+  abgesichert sind Statuscode und Code je Fehler in `error-mapping.test.ts`.

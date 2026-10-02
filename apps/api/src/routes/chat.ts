@@ -4,13 +4,7 @@ import { streamSSE } from 'hono/streaming';
 
 import type { AppDeps } from '../app-deps';
 import type { AuthVariables } from '../auth/session';
-import {
-  answerQuestion,
-  type ChatPorts,
-  NoSourcesSelectedError,
-  prepareAnswer,
-  type PreparedAnswer,
-} from '../chat/answer';
+import { answerQuestion, type ChatPorts, prepareAnswer } from '../chat/answer';
 import { AnswerRecorder } from '../chat/answer-recorder';
 import { getChatConfig } from '../db/chat-config-repository';
 import { findNotebook } from '../db/notebook-repository';
@@ -20,21 +14,6 @@ import { searchChunks } from '../db/retrieval';
 import { HTTP_STATUS } from '../http-status';
 
 const error = (code: (typeof API_ERROR)[keyof typeof API_ERROR]) => ({ code });
-
-/** The answer prepared for a question, or null when no source is selected to answer from. */
-async function tryPrepare(
-  deps: AppDeps,
-  ports: ChatPorts,
-  input: { userId: string; notebookId: string; question: string }
-): Promise<PreparedAnswer | null> {
-  try {
-    const config = await getChatConfig(deps.db, input.userId, input.notebookId);
-    return await prepareAnswer({ ...input, config: config ?? undefined }, ports);
-  } catch (caught) {
-    if (caught instanceof NoSourcesSelectedError) return null;
-    throw caught;
-  }
-}
 
 /** Asking a question about the selected sources of a notebook, answered as a stream of events. */
 export function chatRoutes(deps: AppDeps) {
@@ -56,12 +35,12 @@ export function chatRoutes(deps: AppDeps) {
     const parsed = ChatRequestSchema.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) return c.json(error(API_ERROR.INVALID_REQUEST), HTTP_STATUS.BAD_REQUEST);
 
-    const prepared = await tryPrepare(deps, ports, {
-      userId,
-      notebookId,
-      question: parsed.data.question,
-    });
-    if (!prepared) return c.json(error(API_ERROR.NO_SOURCES_SELECTED), HTTP_STATUS.CONFLICT);
+    // Throws NoSourcesSelectedError before the stream starts: the error handler answers 409.
+    const config = await getChatConfig(deps.db, userId, notebookId);
+    const prepared = await prepareAnswer(
+      { userId, notebookId, question: parsed.data.question, config: config ?? undefined },
+      ports
+    );
 
     // Saved only now: a rejected question (no source ready, quota) leaves no trace in the history.
     await saveUserMessage(deps.db, userId, notebookId, parsed.data.question);
