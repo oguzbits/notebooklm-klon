@@ -50,14 +50,15 @@ function LiveTurn({
     <>
       {startsDay(previous, live.askedAt) && <DayDivider iso={live.askedAt} />}
       <QuestionBubble text={live.question} askedAt={live.askedAt} />
-      <div className="pr-8">
+      {/* Polite: a screen reader reads each statement that is added, after what it is saying now. */}
+      <div className="pr-8" aria-live="polite">
         <AnswerView
           notebookId={citations.notebookId}
           statements={live.statements}
           finished={false}
           onOpenCitation={citations.onOpenCitation}
         />
-        <p className="mt-2 flex items-center gap-2 text-ui text-muted-foreground" role="status">
+        <p className="mt-2 flex items-center gap-2 text-ui text-muted-foreground">
           <LoaderCircle className="size-4 animate-spin" aria-hidden />
           Antwort wird geschrieben …
         </p>

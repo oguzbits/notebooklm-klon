@@ -252,6 +252,10 @@ describe('ChatPanel', () => {
 
     expect(await screen.findByText(/Dr\. Brandt leitet es\./)).toBeTruthy();
     expect(screen.getByText('Antwort wird geschrieben …')).toBeTruthy();
+    // A screen reader announces each statement as it arrives, not only that an answer is being written.
+    const region = screen.getByText(/Dr\. Brandt leitet es\./).closest('[aria-live]');
+    expect(region?.getAttribute('aria-live')).toBe('polite');
+    expect(region?.textContent).toContain('Antwort wird geschrieben …');
     // The question that is being answered opens the day as well, in an empty conversation.
     expect(screen.getByText(formatWeekday(new Date().toISOString()))).toBeTruthy();
     // One button per intent: while the answer is written it stops it, it does not send a second question.

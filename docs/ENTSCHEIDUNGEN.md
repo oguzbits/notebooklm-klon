@@ -1095,3 +1095,11 @@ bisherige Antwort im `finally` und die Oberfläche lädt den Verlauf neu. Weil d
 nach `SAVE_AFTER_STOP_MS` = 1 s ein zweites Neuladen; das ist eine Heuristik und kein Vertrag. Ein Stream, der ohne `DONE` oder
 `ERROR` endet, gilt als abgebrochene Verbindung und zeigt den Fehler mit Wiederholen (`INTERNAL`), nicht mehr als Erfolg. Das Lesen
 der Blöcke steht in `eventsOf`, damit `streamChat` unter den Grenzen von ESLint bleibt.
+
+## 2026-10-02 (Screenreader, M12)
+
+Die laufende Antwort steht in einem Bereich mit `aria-live="polite"` (`LiveTurn` in `chat/conversation.tsx`): Ein Screenreader liest jede
+Aussage vor, sobald sie dazukommt, nach dem, was er gerade spricht. Die Aussagen kommen als ganze Sätze, nicht Zeichen für Zeichen,
+deshalb ist `polite` ohne `aria-atomic` richtig. Der Satz "Antwort wird geschrieben …" liegt im selben Bereich und hat kein eigenes
+`role="status"` mehr, damit nicht zwei verschachtelte Bereiche dasselbe ansagen. Die gespeicherte Antwort nach dem Ende ist keine Live-Region
+mehr: Sie wird nicht ein zweites Mal vorgelesen.
