@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw';
 import { Route, Routes, useParams } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 
+import { ROUTES } from '@/lib/routes';
 import { notebook, NOTEBOOK_ID } from '@/test/fixtures';
 import { renderWithProviders } from '@/test/render';
 
@@ -33,9 +34,9 @@ function renderActions() {
   return renderWithProviders(
     <Routes>
       <Route path="/" element={<p>Liste</p>} />
-      <Route path="/notizbuecher/:notebookId" element={<Page />} />
+      <Route path={ROUTES.NOTEBOOK_PATTERN} element={<Page />} />
     </Routes>,
-    `/notizbuecher/${NOTEBOOK_ID}`
+    ROUTES.notebook(NOTEBOOK_ID)
   );
 }
 

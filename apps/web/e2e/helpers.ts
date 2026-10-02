@@ -32,7 +32,7 @@ export async function signOut(page: Page): Promise<void> {
 /** Makes a notebook with the button of the list and waits until it is open. */
 export async function createNotebook(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Neues Notebook' }).click();
-  await expect(page).toHaveURL(/\/notizbuecher\/[0-9a-f-]{36}$/);
+  await expect(page).toHaveURL(/\/notebook\/[0-9a-f-]{36}$/);
   await expect(page.getByLabel('Titel des Notebooks')).toBeVisible();
 }
 

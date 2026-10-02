@@ -34,7 +34,7 @@ describe('serveWeb', () => {
   });
 
   it('answers a page route of the app with the app, so a reload keeps working', async () => {
-    const response = await app.request('/notizbuecher/3f0f4a4e');
+    const response = await app.request('/notebook/3f0f4a4e');
 
     expect(response.status).toBe(200);
     expect(await response.text()).toContain('<title>Klon</title>');

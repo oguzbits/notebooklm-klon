@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw';
 import { Link, Route, Routes } from 'react-router';
 import { describe, expect, it } from 'vitest';
 
+import { ROUTES } from '@/lib/routes';
 import { notebook, NOTEBOOK_ID, source } from '@/test/fixtures';
 import { renderWithProviders } from '@/test/render';
 
@@ -16,9 +17,9 @@ const base = `*/api/notebooks/${NOTEBOOK_ID}`;
 function renderPage() {
   return renderWithProviders(
     <Routes>
-      <Route path="/notizbuecher/:notebookId" element={<NotebookPage />} />
+      <Route path={ROUTES.NOTEBOOK_PATTERN} element={<NotebookPage />} />
     </Routes>,
-    `/notizbuecher/${NOTEBOOK_ID}`
+    ROUTES.notebook(NOTEBOOK_ID)
   );
 }
 
@@ -118,12 +119,12 @@ describe('NotebookPage', () => {
     );
     renderWithProviders(
       <>
-        <Link to={`/notizbuecher/${OTHER_ID}`}>Anderes Notebook</Link>
+        <Link to={ROUTES.notebook(OTHER_ID)}>Anderes Notebook</Link>
         <Routes>
-          <Route path="/notizbuecher/:notebookId" element={<NotebookPage />} />
+          <Route path={ROUTES.NOTEBOOK_PATTERN} element={<NotebookPage />} />
         </Routes>
       </>,
-      `/notizbuecher/${NOTEBOOK_ID}`
+      ROUTES.notebook(NOTEBOOK_ID)
     );
     const user = userEvent.setup();
 

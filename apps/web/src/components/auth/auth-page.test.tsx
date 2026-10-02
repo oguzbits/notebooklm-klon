@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw';
 import { Route, Routes } from 'react-router';
 import { describe, expect, it } from 'vitest';
 
+import { ROUTES } from '@/lib/routes';
 import { renderWithProviders } from '@/test/render';
 
 import { server } from '../../../../../vitest.setup';
@@ -79,7 +80,7 @@ describe('AuthPage', () => {
       renderWithProviders(
         <Routes>
           <Route path="/" element={<AuthPage />} />
-          <Route path="/notizbuecher/:notebookId" element={<p>Das Demo-Notebook</p>} />
+          <Route path={ROUTES.NOTEBOOK_PATTERN} element={<p>Das Demo-Notebook</p>} />
         </Routes>
       );
 

@@ -67,7 +67,7 @@ test('notebooks are made, found, renamed, pinned and deleted from the list', asy
 test('an unknown notebook page says so instead of showing something', async ({ page }) => {
   await signUp(page, uniqueEmail('missing'));
 
-  await page.goto('/notizbuecher/00000000-0000-4000-8000-000000000000');
+  await page.goto('/notebook/00000000-0000-4000-8000-000000000000');
 
   await expect(page.getByRole('heading', { name: 'Notebook nicht gefunden' })).toBeVisible();
 });

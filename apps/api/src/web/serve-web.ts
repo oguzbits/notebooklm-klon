@@ -11,7 +11,7 @@ const HAS_EXTENSION = /\.[a-z0-9]+$/i;
 
 /**
  * Serves the built web app from `dir` next to the API: files as they are, and index.html for every
- * other page route so a reload on /notizbuecher/… works. An unknown API path or a missing file
+ * other page route so a reload on /notebook/… works. An unknown API path or a missing file
  * stays a 404 (JSON for the API): the app is not the answer for those. Call after the API routes.
  */
 export function serveWeb<E extends Env, S extends Schema, B extends string>(

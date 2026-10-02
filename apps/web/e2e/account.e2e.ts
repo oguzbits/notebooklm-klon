@@ -42,7 +42,7 @@ test.describe('account', () => {
   });
 
   test('a signed-out visitor cannot open a notebook page', async ({ page }) => {
-    await page.goto('/notizbuecher/00000000-0000-4000-8000-000000000000');
+    await page.goto('/notebook/00000000-0000-4000-8000-000000000000');
 
     await expect(page).toHaveURL(/\/anmelden$/);
   });

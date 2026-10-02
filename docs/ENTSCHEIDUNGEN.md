@@ -969,3 +969,12 @@ bei 4 GB RAM und 2 GB Swap: App 1,5 GB, Postgres 1 GB mit `shared_buffers=256MB`
 Die Werte sind Schätzungen ohne Messung auf dem Server (kein Zugriff von hier aus); sie lassen Spielraum für das Betriebssystem
 und sollten nach einigen Tagen mit `docker stats` gegengeprüft werden. Ein Dependabot für Docker gibt es nicht (YAGNI), die
 Versionen werden von Hand angehoben.
+
+### Notebook-Adresse und Platzhalter der Mitte
+
+Die Seite eines Notebooks liegt jetzt unter `/notebook/:id` statt `/notizbuecher/:id` (ersetzt die Zeile „Die URL bleibt“ im
+Eintrag „Notebook statt Notizbuch“). Die alte Adresse bleibt als Weiterleitung (`LegacyNotebookRedirect`, mit Query und
+Anker), damit gespeicherte Links halten; sie liegt außerhalb des geschützten Layouts, die Zielseite prüft die Anmeldung.
+Der Platzhalter der Chat-Spalte (`ChatSkeleton`) hält jetzt den Platz des Covers frei (`COVER_BOX`, dieselbe Größe wie das
+echte Cover, geteilt statt kopiert) und die sieben Balken im selben Abstand darunter wie die Zusammenfassung; vorher sprang
+die Spalte, sobald das Cover erschien.
