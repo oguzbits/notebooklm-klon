@@ -150,6 +150,26 @@ for (const tile of ['Karteikarten', 'Quiz']) {
   }
 }
 
+test('no word of a report template is cut off on a narrow screen', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.getByRole('tab', { name: 'Studio' }).click();
+  await page.getByRole('button', { name: 'Berichte', exact: true }).click();
+  const cards = page.getByRole('dialog').getByRole('radio');
+  await expect(cards.first()).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+
+  const texts = await cards.evaluateAll((elements) =>
+    elements.flatMap((card) =>
+      [...card.querySelectorAll('span')].map((text) => ({
+        scrollWidth: text.scrollWidth,
+        clientWidth: text.clientWidth,
+      }))
+    )
+  );
+  expect(texts.length).toBeGreaterThan(0);
+  for (const text of texts) expect(text.scrollWidth).toBeLessThanOrEqual(text.clientWidth);
+});
+
 const DIALOG_TILES = ['Berichte', 'Karteikarten', 'Quiz', 'Mindmap', 'Datentabelle'];
 const NARROW = { width: 390, height: 800 };
 

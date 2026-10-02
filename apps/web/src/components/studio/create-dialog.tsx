@@ -132,7 +132,7 @@ function TemplateCards({ value, onChange }: TemplateCardsProps) {
                   : 'veil border-border'
               )}
             >
-              <span className="flex items-start justify-between gap-2 text-[1.0625rem] leading-6">
+              <span className="flex items-start justify-between gap-2 text-[1.0625rem] leading-6 wrap-anywhere hyphens-auto">
                 {FORMAT_LABEL[format]}
                 {selected && (
                   <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-card">
@@ -140,7 +140,7 @@ function TemplateCards({ value, onChange }: TemplateCardsProps) {
                   </span>
                 )}
               </span>
-              <span className="line-clamp-4 text-small text-muted-foreground">
+              <span className="line-clamp-4 text-small wrap-anywhere hyphens-auto text-muted-foreground">
                 {FORMAT_DESCRIPTION[format]}
               </span>
             </button>
