@@ -1210,3 +1210,12 @@ unterstützt“, sondern mit dem neuen Code `UNREADABLE_FILE` (415, Vertrag in `
 `UNSUPPORTED_FILE`. Bei `PARSE_FAILED` (zum Beispiel eine ZIP als `.docx`, die mammoth ablehnt) nennt der Text die mögliche Ursache
 und rät sonst zu einem späteren Versuch, weil derselbe Code auch Fehler des Anbieters deckt. Ein eigener Quellen-Fehlercode für defekte
 Office-Dateien wäre nur durch Raten an der Fehlermeldung von mammoth zu trennen und ist nicht gebaut.
+
+## 2026-10-02 (SSRF-Sperrliste und Index fürs Kontingent)
+
+`core/ssrf.ts` sperrt zusätzlich 6to4 (`2002::/16`), Teredo (`2001::/32`), lokales NAT64
+(`64:ff9b:1::/48`) und das stillgelegte 6to4-Relay `192.88.99.0/24`. Die ersten drei tragen eine
+IPv4-Adresse im IPv6-Präfix (`2002:7f00:1::1` steckt 127.0.0.1); ob ein Router sie weiterleitet, hängt
+vom Netz ab, daher werden sie ganz gesperrt statt nur mit privatem Inhalt. Öffentliche Ziele gehen
+praktisch nie über diese Präfixe. Neuer Index `sources_user_created_at_idx` auf `(user_id, created_at)`
+für die Zählung der neuen Quellen je Zeitraum (Migration `0022`).

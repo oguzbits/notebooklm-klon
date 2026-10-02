@@ -89,7 +89,11 @@ export const sources = pgTable(
     overview: jsonb('overview'),
     createdAt: createdAt(),
   },
-  (table) => [unique('sources_user_content_hash_unique').on(table.userId, table.contentHash)]
+  (table) => [
+    unique('sources_user_content_hash_unique').on(table.userId, table.contentHash),
+    // The quota counts a user's sources created since a moment.
+    index('sources_user_created_at_idx').on(table.userId, table.createdAt),
+  ]
 );
 
 // The raw bytes of an upload live here only until the ingestion job has processed them, then the

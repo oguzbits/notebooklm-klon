@@ -20,7 +20,9 @@ const IPV4 = 'ipv4';
 const IPV6 = 'ipv6';
 
 // Loopback, private, link-local, carrier-grade NAT, documentation, benchmarking, multicast and
-// reserved ranges. BlockList also matches an IPv4 address written as an IPv4-mapped IPv6 address.
+// reserved ranges, plus the tunnel prefixes that carry an IPv4 address inside an IPv6 one (6to4
+// `2002::/16`, Teredo `2001::/32`, local-use NAT64) and the retired 6to4 relay `192.88.99.0/24`.
+// BlockList also matches an IPv4 address written as an IPv4-mapped IPv6 address.
 const NON_PUBLIC = new BlockList();
 for (const [network, prefix] of [
   ['0.0.0.0', 8],
@@ -31,6 +33,7 @@ for (const [network, prefix] of [
   ['172.16.0.0', 12],
   ['192.0.0.0', 24],
   ['192.0.2.0', 24],
+  ['192.88.99.0', 24],
   ['192.168.0.0', 16],
   ['198.18.0.0', 15],
   ['198.51.100.0', 24],
@@ -43,8 +46,11 @@ for (const [network, prefix] of [
   ['::', 128],
   ['::1', 128],
   ['64:ff9b::', 96],
+  ['64:ff9b:1::', 48],
   ['100::', 64],
+  ['2001::', 32],
   ['2001:db8::', 32],
+  ['2002::', 16],
   ['fc00::', 7],
   ['fe80::', 10],
   ['ff00::', 8],

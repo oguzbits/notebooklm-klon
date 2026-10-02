@@ -98,9 +98,10 @@ Die Schwächen liegen an den Rändern: **Zuverlässigkeit im Betrieb** (hängend
 - Kleines drehendes Symbol neben „Antwort wird geschrieben …“: gewollt oder Rest des Spinners? Offen.
 - Rohe Controls statt shadcn an einigen Stellen (`quiz-option.tsx`, `studio-tiles.tsx`, `library-row.tsx`),
   nicht einzeln beurteilt.
-- SSRF: `BlockList` kennt 6to4 (`2002::/16`) und `192.88.99.0/24` vermutlich nicht.
-- Hash über rohe HTML-Bytes: dynamische Seiten dedupen nie. Kein Index auf `(user_id, created_at)` für die
-  Kontingentzählung.
+- ~~SSRF: `BlockList` kennt 6to4 und `192.88.99.0/24` nicht.~~ ✅ Behoben: auch Teredo (`2001::/32`) und
+  lokales NAT64 (`64:ff9b:1::/48`) sind gesperrt.
+- Hash über rohe HTML-Bytes: dynamische Seiten dedupen nie.
+- ~~Kein Index auf `(user_id, created_at)` für die Kontingentzählung.~~ ✅ `sources_user_created_at_idx`.
 - `@types/node` uneinheitlich (Root ^24, Web ^26). `hono` im Web könnte `devDependency` sein.
   `pdf-lib` hat seit November 2021 kein Release mehr, funktioniert aber. Nur Patch-Updates offen.
 - Fehlende DB-Isolationsprüfung für das Notebook-Quellen-Repository.
