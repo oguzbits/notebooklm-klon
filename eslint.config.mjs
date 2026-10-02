@@ -51,7 +51,14 @@ const modelIdRule = {
 };
 
 export default defineConfig([
-  globalIgnores(['**/dist/**', '**/coverage/**', 'reports/**', 'spikes/**', 'pnpm-lock.yaml']),
+  globalIgnores([
+    '**/dist/**',
+    '**/coverage/**',
+    '**/.claude/**',
+    'reports/**',
+    'spikes/**',
+    'pnpm-lock.yaml',
+  ]),
   js.configs.recommended,
   tseslint.configs.recommended,
   {
