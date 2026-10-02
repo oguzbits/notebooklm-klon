@@ -14,7 +14,7 @@ Internet ──443/80──> Caddy ──> app (Hono + gebautes Web, Port 3000) 
 | ----------- | ------------------------------------------------------------ | ----------------------------------------------------------------- |
 | Stack       | [docker-compose.prod.yml](../deploy/docker-compose.prod.yml) | Vier Container; nur Caddy ist aus dem Internet erreichbar         |
 | Proxy       | [Caddyfile](../deploy/Caddyfile)                             | HTTPS-Zertifikat holen und erneuern, ohne Pufferung weiterreichen |
-| Einrichtung | [bootstrap.sh](../deploy/bootstrap.sh)                       | Einmalig auf dem frischen Server (siehe unten)                    |
+| Einrichtung | [provision.sh](../deploy/provision.sh)                       | Ein Befehl vom eigenen Rechner: Server, `server.env`, Secrets     |
 | Backup      | [backup.sh](../deploy/backup.sh)                             | Täglich 03:15 ein `pg_dump`, die letzten 7 bleiben                |
 | Deploy      | [deploy.yml](../.github/workflows/deploy.yml)                | Baut das Image, schickt es per SSH, startet den Stack             |
 
@@ -32,34 +32,32 @@ Was nur du tun kannst, ist hier fett.
 1. **Server buchen:** Hetzner Cloud CX23 (2 vCPU, 4 GB RAM, 40 GB), Ubuntu 24.04, deinen SSH-Schlüssel hinterlegen. Den
    Preis vor dem Buchen in der Hetzner-Konsole prüfen.
 2. **Firewall:** In der Hetzner-Konsole eine Firewall mit eingehend TCP 22, 80 und 443 anlegen und dem Server zuweisen.
-3. **Schlüsselpaar für den Deploy-Benutzer** (auf deinem Rechner):
-   `ssh-keygen -t ed25519 -f deploy_key -N ""`. Der private Teil geht nur in das GitHub-Secret (Schritt 6).
-4. **Hostname:** ohne eigene Domain `<IP mit Bindestrichen>.sslip.io`, zum Beispiel `203-0-113-7.sslip.io` für
-   `203.0.113.7`. Mit eigener Domain stattdessen einen A-Eintrag auf die IP setzen.
-5. **Bootstrap:** [bootstrap.sh](../deploy/bootstrap.sh) auf den Server kopieren und als root ausführen:
-   `bash bootstrap.sh <Hostname> "<Inhalt von deploy_key.pub>"`. Das Skript installiert Docker (Ubuntu-Pakete), legt 2 GB
-   Swap, den Benutzer `deploy` (nur Schlüssel-Login), die Firewall `ufw` und das nächtliche Backup an und schreibt
-   `/srv/nlm/server.env` mit frisch erzeugten Geheimnissen. Es gibt keins davon aus. Ein zweiter Lauf lässt eine vorhandene
-   `server.env` unverändert.
-6. **`server.env` ausfüllen** (`nano /srv/nlm/server.env`): alle Werte `FILL_IN` ersetzen.
-   - `GEMINI_API_KEY`: Schlüssel aus einem eigenen Google-Projekt (kostenloser Tarif), damit Tests das Kontingent der
-     Prüfer nicht verbrauchen.
-   - `AI_MODEL`, `PARSE_MODEL`, `PARSE_FALLBACK_MODEL`, `EMBEDDING_MODEL`: Modellnamen. Vorher in der aktuellen
-     Google-Doku prüfen; das Embedding-Modell muss zur Vektorgröße `EMBEDDING_DIMENSIONS` der Datenbank passen.
-     `PARSE_FALLBACK_MODEL` ist optional, die Zeile kann entfallen.
-   - `SEED_DEMO_EMAIL`: gültige E-Mail-Adresse des Demo-Kontos. Ohne sie antwortet „Beispiel ausprobieren“ mit einem Fehler.
-   - Optional `TAVILY_API_KEY=...` anhängen (Websuche; ohne Schlüssel fehlt das Suchfeld in der Oberfläche).
-   - Nicht ändern: `SITE_ADDRESS` (Hostname), `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`, `S3_*`. Ein neues
-     `POSTGRES_PASSWORD` gilt nur beim ersten Anlegen des Volumes; ein neues `BETTER_AUTH_SECRET` meldet alle ab.
-7. **GitHub-Secrets** (Settings > Secrets and variables > Actions):
-   - `DEPLOY_HOST`: der Hostname.
-   - `DEPLOY_SSH_KEY`: Inhalt der Datei `deploy_key` (privat).
-   - `DEPLOY_KNOWN_HOSTS`: Ausgabe von `ssh-keyscan -t ed25519 <Hostname>`. Den Fingerabdruck mit dem aus der
-     Hetzner-Konsole vergleichen, bevor du ihn einträgst.
-8. **Erster Deploy:** Actions > Deploy > Run workflow. Danach läuft er nach jedem grünen CI-Lauf auf `main`.
-9. **Beispiel-Notizbuch anlegen** (einmalig, siehe unten).
-10. **Uptime-Check** auf `https://<Hostname>/health` einrichten (zum Beispiel UptimeRobot, kostenlos). Dann Live-Link,
-    Demo-Zugang und Loom-Link in die [README](../README.md) eintragen.
+3. **Server einrichten, ein Befehl** auf deinem Rechner, im Repository: `deploy/provision.sh <IPv4 oder Hostname>`.
+   Hostname ohne eigene Domain: `<IP mit Bindestrichen>.sslip.io`, zum Beispiel `203-0-113-7.sslip.io` für `203.0.113.7`
+   (das Skript bildet ihn selbst). Mit eigener Domain stattdessen zuerst einen A-Eintrag auf die IP setzen und die Domain
+   übergeben. Voraussetzung: Login als root mit deinem SSH-Schlüssel, `gh auth login`, eine `.env.local` mit den Werten
+   `GEMINI_API_KEY`, `AI_MODEL`, `PARSE_MODEL`, `EMBEDDING_MODEL` (für den Betrieb ein Schlüssel aus einem eigenen
+   Google-Projekt, damit Tests das Kontingent der Prüfer nicht verbrauchen; Modellnamen vorher in der aktuellen Google-Doku
+   prüfen). Das Skript:
+   - zeigt den SSH-Fingerabdruck des Servers; du vergleichst ihn mit der Hetzner-Konsole (Server > Übersicht) und bestätigst,
+   - erzeugt ein neues Schlüsselpaar für den Benutzer `deploy` und führt [bootstrap.sh](../deploy/bootstrap.sh) aus
+     (Docker, 2 GB Swap, Benutzer `deploy` nur mit Schlüssel, `ufw`, nächtliches Backup, `server.env` mit frisch erzeugten
+     Geheimnissen),
+   - trägt die Werte aus `.env.local` per SSH in `/srv/nlm/server.env` ein (nur Zeilen mit `FILL_IN`, nichts wird
+     ausgegeben, eine ungesetzte `PARSE_FALLBACK_MODEL` entfällt, ein `TAVILY_API_KEY` wird übernommen) und fragt
+     `SEED_DEMO_EMAIL`, falls sie fehlt,
+   - prüft den Login als `deploy` und setzt die GitHub-Secrets `DEPLOY_HOST`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`.
+
+   Ein zweiter Lauf ist sicher: Er ersetzt das Deploy-Schlüsselpaar auf dem Server und in GitHub, ausgefüllte Werte in
+   `server.env` bleiben. Nicht ändern in `server.env`: `SITE_ADDRESS`, `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`, `S3_*`. Ein
+   neues `POSTGRES_PASSWORD` gilt nur beim ersten Anlegen des Volumes; ein neues `BETTER_AUTH_SECRET` meldet alle ab.
+   Von Hand geht es auch: die Schritte stehen als Kommentar in [provision.sh](../deploy/provision.sh) und in
+   [bootstrap.sh](../deploy/bootstrap.sh).
+
+4. **Erster Deploy:** Actions > Deploy > Run workflow. Danach läuft er nach jedem grünen CI-Lauf auf `main`.
+5. **Beispiel-Notizbuch anlegen** (einmalig, siehe unten).
+6. **Uptime-Check** auf `https://<Hostname>/health` einrichten (zum Beispiel UptimeRobot, kostenlos). Dann Live-Link,
+   Demo-Zugang und Loom-Link in die [README](../README.md) eintragen.
 
 ### Beispiel-Notizbuch anlegen
 

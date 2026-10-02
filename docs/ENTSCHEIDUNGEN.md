@@ -859,3 +859,9 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
 - Der Rate Limiter nimmt ein Signal: ein abgebrochener Aufruf wartet nicht mehr auf sein Fenster und verbraucht keine Quote (Chat reicht es durch; Embedder und PDF-Parser haben noch keins).
 - Durchsicht der sechs bisher ungelesenen Dateien (`html-text.ts`, `studio-prompt.ts`, `create-dialog.tsx`, `customize-notebook-dialog.tsx`, `chat-settings-dialog.tsx`, `notebook-overview.tsx`): keine Verstöße gegen Typen, Konstanten, Sprache oder UI-Zustände. `SettingsForm` (ca. 60 Zeilen) bleibt ungeteilt, weil es nur drei gleich gebaute `ChoiceGroup`s ohne Verschachtelung enthält; ein Auslöser für ein Refactoring fehlt. Dem `Dockerfile` fehlt bewusst ein `HEALTHCHECK`: das Compose prüft die App bereits, ein zweiter Check wäre eine Kopie.
 - **„Notebook“ statt „Notizbuch“ in der Oberfläche (2026-10-02):** Menüs, Dialoge, Leerzustände und Screenreader-Namen sagen überall „Notebook“ (wie das Original), im Plural „Notebooks“. Die URL `/notizbuecher/…` bleibt, damit gespeicherte Links halten. README, Loom-Skript und Designabgleich folgen; ältere Einträge dieses Logs behalten ihren damaligen Wortlaut.
+- **Server-Einrichtung als ein Befehl (2026-10-02):** [provision.sh](../deploy/provision.sh) läuft auf dem eigenen Rechner und ersetzt die
+  Handarbeit (Schlüssel erzeugen, Skript kopieren, `server.env` im Editor füllen, drei Secrets im Browser setzen), damit ein neuer
+  Server ein Befehl ist. Grund: Die Schritte verteilten sich auf Terminal, Server und GitHub-Oberfläche. Die Werte kommen aus der
+  lokalen Env-Datei und gehen nur über SSH-stdin auf den Server. Das Skript löst den Deploy nicht aus, weil `deploy.yml` erst
+  nach dem Merge auf `main` startbar ist. Die Merge-Logik für `server.env` wurde lokal mit Testwerten geprüft, das ganze Skript
+  noch nicht gegen einen echten Server. `hcloud` (Server buchen) bleibt bewusst draußen: braucht einen API-Token und kostet Geld.
