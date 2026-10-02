@@ -1,6 +1,7 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
 import {
   API_ERROR,
+  ApiErrorSchema,
   RenameSourceBodySchema,
   SetSourceSelectionBodySchema,
   SourceListSchema,
@@ -12,11 +13,14 @@ import { findNotebook } from '../db/notebook-repository';
 import {
   listNotebookSources,
   renameSource,
+  RESTART,
+  restartFailedSource,
   setReadySourcesSelected,
   setSourceSelected,
   unlinkSource,
 } from '../db/notebook-source-repository';
 import { HTTP_STATUS } from '../http-status';
+import { restartSource } from '../ingestion/submit';
 import { invalid, json, notebookParams, notFound, sourceParams, unauthenticated } from './openapi';
 
 const listSourcesRoute = createRoute({
@@ -84,6 +88,21 @@ const renameSourceRoute = createRoute({
   },
 });
 
+const retryRoute = createRoute({
+  method: 'post',
+  path: '/{notebookId}/sources/{sourceId}/retry',
+  request: { params: sourceParams },
+  responses: {
+    [HTTP_STATUS.ACCEPTED]: { description: 'The source is being read again' },
+    401: unauthenticated,
+    [HTTP_STATUS.NOT_FOUND]: notFound,
+    [HTTP_STATUS.CONFLICT]: json(
+      ApiErrorSchema,
+      'The source did not fail, or its original file is no longer kept'
+    ),
+  },
+});
+
 const removeRoute = createRoute({
   method: 'delete',
   path: '/{notebookId}/sources/{sourceId}',
@@ -95,7 +114,7 @@ const removeRoute = createRoute({
   },
 });
 
-/** The sources of a notebook: list them, choose which answers may use, rename one, take one out. */
+/** The sources of a notebook: list them, choose which answers may use, rename one, read a failed one again, take one out. */
 export function notebookSourceRoutes(deps: AppDeps) {
   const app = new OpenAPIHono<{ Variables: AuthVariables }>();
 
@@ -137,6 +156,17 @@ export function notebookSourceRoutes(deps: AppDeps) {
       return renamed
         ? c.json({ title }, HTTP_STATUS.OK)
         : c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);
+    })
+    .openapi(retryRoute, async (c) => {
+      const { notebookId, sourceId } = c.req.valid('param');
+      const result = await restartFailedSource(deps.db, c.var.userId, notebookId, sourceId);
+      if (result === RESTART.STARTED) {
+        await restartSource(sourceId, deps.ingest);
+        return c.body(null, HTTP_STATUS.ACCEPTED);
+      }
+      return result === RESTART.MISSING
+        ? c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND)
+        : c.json({ code: API_ERROR.SOURCE_NOT_RETRYABLE }, HTTP_STATUS.CONFLICT);
     })
     .openapi(removeRoute, async (c) => {
       const { notebookId, sourceId } = c.req.valid('param');

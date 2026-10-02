@@ -4,6 +4,7 @@ import {
   HealthSchema,
   NotebookListSchema,
   NotebookSchema,
+  SOURCE_FAILURE,
   SOURCE_KIND,
   SOURCE_STATUS,
   SourceListSchema,
@@ -681,5 +682,121 @@ describe('selection and removal', () => {
 
     expect(patched.status).toBe(404);
     expect(removed.status).toBe(404);
+  });
+});
+
+describe('reading a failed source again', () => {
+  async function failedSource(cookie: string, notebook: string, keepUpload = true) {
+    const added = SubmitSourceResultSchema.parse(
+      await (
+        await app.request(
+          `/api/notebooks/${notebook}/sources/file`,
+          upload(cookie, 'a.txt', `Inhalt ${Math.random()}`)
+        )
+      ).json()
+    );
+    await harness.pool.query('UPDATE sources SET status = $1, error_message = $2 WHERE id = $3', [
+      SOURCE_STATUS.FAILED,
+      SOURCE_FAILURE.PARSE_FAILED,
+      added.sourceId,
+    ]);
+    if (!keepUpload) {
+      await harness.pool.query('DELETE FROM source_uploads WHERE source_id = $1', [added.sourceId]);
+    }
+    harness.enqueued.length = 0;
+    return added.sourceId;
+  }
+
+  const retry = (cookie: string, notebook: string, source: string) =>
+    app.request(`/api/notebooks/${notebook}/sources/${source}/retry`, {
+      method: 'POST',
+      headers: { cookie },
+    });
+
+  const statusOf = async (cookie: string, notebook: string) =>
+    SourceListSchema.parse(
+      await (
+        await app.request(`/api/notebooks/${notebook}/sources`, { headers: { cookie } })
+      ).json()
+    )[0];
+
+  it('queues the kept file again and shows the source as pending without its old failure', async () => {
+    const notebook = await createNotebook(alice);
+    const source = await failedSource(alice, notebook);
+
+    const response = await retry(alice, notebook, source);
+
+    expect(response.status).toBe(202);
+    expect(harness.enqueued).toEqual([source]);
+    expect(await statusOf(alice, notebook)).toMatchObject({
+      id: source,
+      status: SOURCE_STATUS.PENDING,
+      failure: null,
+    });
+  });
+
+  it('is read to the end by the job that follows', async () => {
+    const notebook = await createNotebook(alice);
+    const source = await failedSource(alice, notebook);
+    await retry(alice, notebook, source);
+
+    await harness.runJobs();
+
+    expect(await statusOf(alice, notebook)).toMatchObject({ status: SOURCE_STATUS.READY });
+  });
+
+  it('answers 409 and queues nothing for a source that did not fail', async () => {
+    const notebook = await createNotebook(alice);
+    const source = await failedSource(alice, notebook);
+    await harness.pool.query('UPDATE sources SET status = $1 WHERE id = $2', [
+      SOURCE_STATUS.READY,
+      source,
+    ]);
+
+    const response = await retry(alice, notebook, source);
+
+    expect(response.status).toBe(409);
+    expect(ApiErrorSchema.parse(await response.json()).code).toBe(API_ERROR.SOURCE_NOT_RETRYABLE);
+    expect(harness.enqueued).toEqual([]);
+  });
+
+  it('answers 409 when the original file is no longer kept', async () => {
+    const notebook = await createNotebook(alice);
+    const source = await failedSource(alice, notebook, false);
+
+    const response = await retry(alice, notebook, source);
+
+    expect(response.status).toBe(409);
+    expect(harness.enqueued).toEqual([]);
+  });
+
+  it('marks the source failed again when the job cannot be queued', async () => {
+    const notebook = await createNotebook(alice);
+    const source = await failedSource(alice, notebook);
+    const enqueue = harness.deps.ingest.queue.enqueue;
+    harness.deps.ingest.queue.enqueue = async () => {
+      throw new Error('queue down');
+    };
+
+    try {
+      const response = await retry(alice, notebook, source);
+      expect(response.status).toBe(500);
+    } finally {
+      harness.deps.ingest.queue.enqueue = enqueue;
+    }
+
+    expect(await statusOf(alice, notebook)).toMatchObject({
+      status: SOURCE_STATUS.FAILED,
+      failure: SOURCE_FAILURE.ENQUEUE_FAILED,
+    });
+  });
+
+  it("answers 404 for another user's source and 401 without a session", async () => {
+    const bobsBook = await createNotebook(bob);
+    const source = await failedSource(bob, bobsBook);
+
+    expect((await retry(alice, bobsBook, source)).status).toBe(404);
+    expect((await retry('', bobsBook, source)).status).toBe(401);
+    expect(harness.enqueued).toEqual([]);
   });
 });

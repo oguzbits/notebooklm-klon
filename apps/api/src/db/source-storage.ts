@@ -93,8 +93,8 @@ async function isOverQuota(tx: Pick<Database, 'select'>, userId: string): Promis
 
 /**
  * A job the process did not finish (restart, crash) leaves its source PENDING or PROCESSING with the
- * upload still stored, and the queue does not retry it. Such sources are failed so the user can
- * upload again. Returns how many there were.
+ * upload still stored, and the queue does not retry it. Such sources are failed and keep their
+ * upload, so the user can read them again. Returns how many there were.
  */
 export async function failInterruptedSources(db: Database, olderThan: Date): Promise<number> {
   return db.transaction(async (tx) => {
@@ -114,7 +114,6 @@ export async function failInterruptedSources(db: Database, olderThan: Date): Pro
       .update(sources)
       .set({ status: SOURCE_STATUS.FAILED, errorMessage: SOURCE_FAILURE.INTERRUPTED })
       .where(inArray(sources.id, ids));
-    await tx.delete(sourceUploads).where(inArray(sourceUploads.sourceId, ids));
     return ids.length;
   });
 }

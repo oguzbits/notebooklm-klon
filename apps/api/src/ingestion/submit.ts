@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { type IngestPorts, processSource, type RegisterInput, registerSource } from './ingest';
 
 export interface SubmitPorts extends IngestPorts {
-  /** The raw bytes of an upload, kept only until its job has run. */
+  /** The raw bytes of an upload, kept until its source is ready, so a failed source can be read again. */
   uploads: {
     put: (sourceId: string, bytes: Uint8Array) => Promise<void>;
     load: (sourceId: string) => Promise<{ kind: SourceKind; bytes: Uint8Array } | null>;
@@ -39,16 +39,23 @@ export async function submitSource(
 }
 
 /**
- * The work behind one queued job. The upload is deleted whether processing worked or not: failed
- * sources are retried by uploading again, so the bytes are never kept longer than needed.
+ * The work behind one queued job. The upload is deleted only once the source is ready: after a
+ * failure the bytes stay, so the source can be read again without uploading it a second time.
  */
 export async function runIngestJob(payload: unknown, ports: SubmitPorts): Promise<void> {
   const { sourceId } = JobPayloadSchema.parse(payload);
   const upload = await ports.uploads.load(sourceId);
   if (!upload) throw new Error(`No upload stored for source ${sourceId}.`);
+  await processSource({ sourceId, kind: upload.kind, bytes: upload.bytes }, ports);
+  await ports.uploads.remove(sourceId);
+}
+
+/** Queues a source whose status is already PENDING again. The kept upload stays if that fails. */
+export async function restartSource(sourceId: string, ports: SubmitPorts): Promise<void> {
   try {
-    await processSource({ sourceId, kind: upload.kind, bytes: upload.bytes }, ports);
-  } finally {
-    await ports.uploads.remove(sourceId);
+    await ports.queue.enqueue(sourceId);
+  } catch (error) {
+    await ports.sources.markFailed(sourceId, SOURCE_FAILURE.ENQUEUE_FAILED);
+    throw error;
   }
 }

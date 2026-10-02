@@ -24,6 +24,8 @@ export const API_ERROR = {
   COVER_UNAVAILABLE: 'COVER_UNAVAILABLE',
   /** The file is no PNG, JPEG or WebP image, or it is too large. */
   COVER_INVALID: 'COVER_INVALID',
+  /** The source did not fail, or its original file is no longer kept: it cannot be read again. */
+  SOURCE_NOT_RETRYABLE: 'SOURCE_NOT_RETRYABLE',
   INTERNAL: 'INTERNAL',
 } as const;
 

@@ -7,6 +7,14 @@ import { notebooks, notebookSources, sources } from './schema';
 import { UUID } from './uuid';
 
 const MS_PER_HOUR = 3_600_000;
+
+/** What asking to read a failed source again led to. */
+export const RESTART = {
+  STARTED: 'STARTED',
+  MISSING: 'MISSING',
+  NOT_RETRYABLE: 'NOT_RETRYABLE',
+} as const;
+export type Restart = (typeof RESTART)[keyof typeof RESTART];
 const FAILURES = new Set<string>(Object.values(SOURCE_FAILURE));
 
 function toFailure(message: string | null): SourceFailure | null {
@@ -180,6 +188,37 @@ export async function unlinkSource(
       AND s.id = ns.source_id AND s.user_id = ${userId}
     RETURNING ns.source_id`);
   return result.rowCount === 1;
+}
+
+/**
+ * Puts a FAILED source of the user's notebook back to PENDING, but only while its original file is
+ * still kept. One statement, so two clicks cannot start it twice.
+ */
+export async function restartFailedSource(
+  db: Database,
+  userId: string,
+  notebookId: string,
+  sourceId: string
+): Promise<Restart> {
+  if (!UUID.test(notebookId) || !UUID.test(sourceId)) return RESTART.MISSING;
+  const started = await db.execute(sql`
+    UPDATE sources s
+    SET status = ${SOURCE_STATUS.PENDING}, error_message = NULL
+    FROM notebook_sources ns, notebooks n
+    WHERE s.id = ${sourceId} AND s.user_id = ${userId}
+      AND s.status = ${SOURCE_STATUS.FAILED}
+      AND EXISTS (SELECT 1 FROM source_uploads u WHERE u.source_id = s.id)
+      AND ns.source_id = s.id AND ns.notebook_id = ${notebookId}
+      AND n.id = ns.notebook_id AND n.user_id = ${userId}
+    RETURNING s.id`);
+  if (started.rowCount === 1) return RESTART.STARTED;
+  const [owned] = await db
+    .select({ id: sources.id })
+    .from(notebookSources)
+    .innerJoin(notebooks, eq(notebooks.id, notebookSources.notebookId))
+    .innerJoin(sources, eq(sources.id, notebookSources.sourceId))
+    .where(and(ownedNotebookSource(notebookId, userId), eq(sources.id, sourceId)));
+  return owned ? RESTART.NOT_RETRYABLE : RESTART.MISSING;
 }
 
 /** Sources the user created within the last `hours`, for the upload quota. */

@@ -238,7 +238,7 @@ describe('failing sources an interrupted job left behind', () => {
     (await db.select({ status: sources.status }).from(sources).where(eq(sources.id, id)))[0]
       ?.status;
 
-  it('fails a PENDING or PROCESSING source whose upload is older than the cutoff and removes the upload', async () => {
+  it('fails a PENDING or PROCESSING source whose upload is older than the cutoff and keeps the upload', async () => {
     const pending = await leftBehind('h-pending', SOURCE_STATUS.PENDING, 2 * HOUR_MS);
     const processing = await leftBehind('h-processing', SOURCE_STATUS.PROCESSING, 2 * HOUR_MS);
 
@@ -246,7 +246,8 @@ describe('failing sources an interrupted job left behind', () => {
 
     for (const id of [pending, processing]) {
       expect(await statusOf(id)).toBe(SOURCE_STATUS.FAILED);
-      expect(await uploads.load(id)).toBeNull();
+      // Kept, so the user can read the source again.
+      expect(await uploads.load(id)).not.toBeNull();
     }
     const [row] = await db
       .select({ errorMessage: sources.errorMessage })

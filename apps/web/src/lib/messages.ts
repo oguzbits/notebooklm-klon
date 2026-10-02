@@ -30,6 +30,8 @@ export const ERROR_MESSAGE: Record<ApiErrorCode, string> = {
   [API_ERROR.COVER_UNAVAILABLE]: 'Titelbilder sind hier nicht eingerichtet.',
   [API_ERROR.COVER_INVALID]:
     'Das Bild muss ein PNG, JPEG oder WebP sein und darf höchstens 2 MB groß sein.',
+  [API_ERROR.SOURCE_NOT_RETRYABLE]:
+    'Diese Quelle kann nicht noch einmal gelesen werden. Entferne sie und füge sie neu hinzu.',
   [API_ERROR.INTERNAL]: 'Etwas ist schiefgelaufen. Bitte versuche es noch einmal.',
 };
 
@@ -39,8 +41,7 @@ export const FAILURE_MESSAGE: Record<SourceFailure, string> = {
   [SOURCE_FAILURE.PARSE_FAILED]: 'Die Quelle konnte nicht gelesen werden.',
   [SOURCE_FAILURE.EMBED_FAILED]: 'Die Quelle konnte nicht für die Suche vorbereitet werden.',
   [SOURCE_FAILURE.ENQUEUE_FAILED]: 'Das Lesen der Quelle konnte nicht gestartet werden.',
-  [SOURCE_FAILURE.INTERRUPTED]:
-    'Das Lesen der Quelle wurde unterbrochen. Lade sie bitte noch einmal hoch.',
+  [SOURCE_FAILURE.INTERRUPTED]: 'Das Lesen der Quelle wurde unterbrochen.',
 };
 
 export const STATUS_LABEL: Record<SourceStatus, string> = {

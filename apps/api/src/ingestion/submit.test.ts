@@ -8,7 +8,7 @@ import {
 } from '@nlm/shared';
 import { describe, expect, it } from 'vitest';
 
-import { runIngestJob, type SubmitPorts, submitSource } from './submit';
+import { restartSource, runIngestJob, type SubmitPorts, submitSource } from './submit';
 
 const USER = 'user-a';
 const BYTES = new TextEncoder().encode('Inhalt');
@@ -125,7 +125,7 @@ describe('submitSource', () => {
 });
 
 describe('runIngestJob', () => {
-  it('loads the upload, processes the source and removes the upload', async () => {
+  it('loads the upload, processes the source and removes the upload once it is ready', async () => {
     const { ports, log } = fakePorts();
     await submitSource(input, ports);
 
@@ -134,7 +134,7 @@ describe('runIngestJob', () => {
     expect(log.uploads.size).toBe(0);
   });
 
-  it('removes the upload and rethrows when processing fails', async () => {
+  it('keeps the upload and rethrows when processing fails, so the source can be read again', async () => {
     const { ports, log } = fakePorts({
       parse: async () => {
         throw new Error('kaputt');
@@ -144,7 +144,7 @@ describe('runIngestJob', () => {
 
     await expect(runIngestJob({ sourceId: 's1' }, ports)).rejects.toThrow();
 
-    expect(log.uploads.size).toBe(0);
+    expect(log.uploads.get('s1')?.bytes).toEqual(BYTES);
   });
 
   it('fails when the upload is missing instead of pretending to succeed', async () => {
@@ -158,5 +158,34 @@ describe('runIngestJob', () => {
 
     await expect(runIngestJob({}, ports)).rejects.toThrow();
     await expect(runIngestJob(null, ports)).rejects.toThrow();
+  });
+});
+
+describe('restartSource', () => {
+  it('enqueues one job for the source and keeps its upload', async () => {
+    const { ports, log } = fakePorts();
+    await submitSource(input, ports);
+    log.enqueued.length = 0;
+
+    await restartSource('s1', ports);
+
+    expect(log.enqueued).toEqual(['s1']);
+    expect(log.uploads.has('s1')).toBe(true);
+  });
+
+  it('marks the source FAILED again, keeps the upload and rethrows when enqueuing fails', async () => {
+    const { ports, log } = fakePorts({
+      queue: {
+        enqueue: async () => {
+          throw new Error('queue down');
+        },
+      },
+    });
+    log.uploads.set('s1', { kind: SOURCE_KIND.TXT, bytes: BYTES });
+
+    await expect(restartSource('s1', ports)).rejects.toThrow('queue down');
+
+    expect(log.failed).toEqual([`s1:${SOURCE_FAILURE.ENQUEUE_FAILED}`]);
+    expect(log.uploads.has('s1')).toBe(true);
   });
 });

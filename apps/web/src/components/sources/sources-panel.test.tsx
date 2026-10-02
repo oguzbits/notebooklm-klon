@@ -1,9 +1,10 @@
-import { API_ERROR, SOURCE_FAILURE, SOURCE_STATUS } from '@nlm/shared';
+import { API_ERROR, SOURCE_FAILURE, SOURCE_STATUS, type SourceStatus } from '@nlm/shared';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 
+import { ERROR_MESSAGE } from '@/lib/messages';
 import { NOTEBOOK_ID, source, SOURCE_ID } from '@/test/fixtures';
 import { renderWithProviders } from '@/test/render';
 
@@ -110,6 +111,50 @@ describe('SourcesPanel', () => {
       'disabled',
       true
     );
+  });
+
+  it('reads a failed source again and shows it as waiting', async () => {
+    let status: SourceStatus = SOURCE_STATUS.FAILED;
+    let retried = 0;
+    server.use(
+      http.get(base, () =>
+        HttpResponse.json([
+          source({
+            id: SOURCE_ID,
+            title: 'kaputt.pdf',
+            status,
+            failure: status === SOURCE_STATUS.FAILED ? SOURCE_FAILURE.PARSE_FAILED : null,
+          }),
+        ])
+      ),
+      http.post(`${base}/${SOURCE_ID}/retry`, () => {
+        retried += 1;
+        status = SOURCE_STATUS.PENDING;
+        return new HttpResponse(null, { status: 202 });
+      })
+    );
+    renderPanel();
+
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'Erneut lesen' }));
+
+    expect(await screen.findByText('Wartet')).toBeTruthy();
+    expect(retried).toBe(1);
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('tells the user when a failed source cannot be read again', async () => {
+    server.use(
+      list([source({ id: SOURCE_ID, status: SOURCE_STATUS.FAILED })]),
+      http.post(`${base}/${SOURCE_ID}/retry`, () =>
+        HttpResponse.json({ code: API_ERROR.SOURCE_NOT_RETRYABLE }, { status: 409 })
+      )
+    );
+    renderPanel();
+
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'Erneut lesen' }));
+
+    expect(await screen.findByText(ERROR_MESSAGE[API_ERROR.SOURCE_NOT_RETRYABLE])).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Erneut lesen' })).toBeTruthy();
   });
 
   it('opens the text of a ready source', async () => {

@@ -107,6 +107,19 @@ export function useRenameSource(notebookId: string) {
   });
 }
 
+export function useRetrySource(notebookId: string) {
+  const refresh = useRefreshSources(notebookId);
+  return useMutation({
+    mutationFn: async (sourceId: string) =>
+      expectOk(
+        await api.api.notebooks[':notebookId'].sources[':sourceId'].retry.$post({
+          param: { notebookId, sourceId },
+        })
+      ),
+    onSuccess: refresh,
+  });
+}
+
 export function useRemoveSource(notebookId: string) {
   const refresh = useRefreshSources(notebookId);
   return useMutation({

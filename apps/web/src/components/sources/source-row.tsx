@@ -1,5 +1,12 @@
 import { SOURCE_STATUS, type SourceSummary } from '@nlm/shared';
-import { EllipsisVertical, LoaderCircle, Pencil, Trash2, TriangleAlert } from 'lucide-react';
+import {
+  EllipsisVertical,
+  LoaderCircle,
+  Pencil,
+  RotateCw,
+  Trash2,
+  TriangleAlert,
+} from 'lucide-react';
 import { useState } from 'react';
 
 import { SourceKindIcon } from '@/components/sources/kind-icon';
@@ -14,10 +21,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { RenameDialog } from '@/components/ui/rename-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useRenameSource } from '@/hooks/use-sources';
+import { useRenameSource, useRetrySource } from '@/hooks/use-sources';
 import { describeError, FAILURE_MESSAGE, STATUS_LABEL } from '@/lib/messages';
-
-const FAILED_HINT = 'Entferne die Quelle und füge sie noch einmal hinzu.';
 
 /** The menu at the end of a row: remove the source, or rename it. It shows while the row is hovered or focused. */
 function SourceMenu({
@@ -59,25 +64,46 @@ function SourceMenu({
   );
 }
 
+/** A failed source: why it failed, and the action to read it again. */
+function FailedSource({ notebookId, source }: { notebookId: string; source: SourceSummary }) {
+  const retry = useRetrySource(notebookId);
+  return (
+    <div className="mb-1 ml-9 space-y-1 text-small text-destructive">
+      <p className="flex items-start gap-1" role="alert">
+        <TriangleAlert className="mt-0.5 size-3 shrink-0" aria-hidden />
+        <span>
+          {source.failure ? FAILURE_MESSAGE[source.failure] : STATUS_LABEL[source.status]}
+        </span>
+      </p>
+      <Button
+        variant="outline"
+        size="xs"
+        disabled={retry.isPending}
+        onClick={() => retry.mutate(source.id)}
+      >
+        {retry.isPending ? (
+          <LoaderCircle className="animate-spin" aria-hidden />
+        ) : (
+          <RotateCw aria-hidden />
+        )}
+        Erneut lesen
+      </Button>
+      {retry.isError && <p>{describeError(retry.error)}</p>}
+    </div>
+  );
+}
+
 /** Under the title: what is being done to a source that is not ready, or why it failed. */
-function SourceStatus({ source }: { source: SourceSummary }) {
+function SourceStatus({ notebookId, source }: { notebookId: string; source: SourceSummary }) {
   if (source.status === SOURCE_STATUS.READY) return null;
-  if (source.status !== SOURCE_STATUS.FAILED) {
-    return (
-      <Badge variant="secondary" className="mb-1 ml-9">
-        <LoaderCircle className="animate-spin" aria-hidden />
-        {STATUS_LABEL[source.status]}
-      </Badge>
-    );
+  if (source.status === SOURCE_STATUS.FAILED) {
+    return <FailedSource notebookId={notebookId} source={source} />;
   }
   return (
-    <p className="mb-1 ml-9 flex items-start gap-1 text-small text-destructive" role="alert">
-      <TriangleAlert className="mt-0.5 size-3 shrink-0" aria-hidden />
-      <span>
-        {source.failure ? FAILURE_MESSAGE[source.failure] : STATUS_LABEL[source.status]}{' '}
-        {FAILED_HINT}
-      </span>
-    </p>
+    <Badge variant="secondary" className="mb-1 ml-9">
+      <LoaderCircle className="animate-spin" aria-hidden />
+      {STATUS_LABEL[source.status]}
+    </Badge>
   );
 }
 
@@ -149,7 +175,7 @@ export function SourceRow({
           aria-label={`„${source.title}“ für Antworten verwenden`}
         />
       </div>
-      <SourceStatus source={source} />
+      <SourceStatus notebookId={notebookId} source={source} />
     </li>
   );
 }

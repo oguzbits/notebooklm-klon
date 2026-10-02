@@ -1010,3 +1010,23 @@ was zu sehen ist, damit die Quelle nie leer ist. Der Parser hat dafür zwei Funk
 sich `read` (Wiederholung bei RECITATION, Prüfung auf `STOP`) teilen. `pdfParser` heißt in `providers.ts` jetzt
 `documentParser`. Bilder hinter einem Link werden nicht importiert (der URL-Import bleibt bei Webseite und PDF). Im
 E2E-Server liest der Stub keine Bilder (kein Netz); der Dialog zeigt "Bild (PNG, JPG, WEBP)" im Hilfetext.
+
+## 2026-10-02 (Fehlgeschlagene Quelle neu einlesen)
+
+Die Originaldatei bleibt jetzt bis die Quelle bereit ist (`runIngestJob` löscht erst nach dem erfolgreichen
+`processSource`); `failInterruptedSources` löscht sie auch nicht mehr. Damit hat eine fehlgeschlagene Quelle ihre Datei noch.
+Neue Route `POST /api/notebooks/:id/sources/:sourceId/retry`: ein einziges SQL-Statement setzt `FAILED` auf `PENDING`
+(mit Besitzprüfung über Notebook und `userId`, nur wenn noch eine Datei da ist) und gibt die Zeile zurück. Wer das Statement
+gewinnt, startet den Job, ein zweiter gleichzeitiger Klick bekommt 409, also kein Doppelstart. Antworten: 202 gestartet,
+404 unbekannt oder fremd, 409 `SOURCE_NOT_RETRYABLE` (Quelle ist nicht fehlgeschlagen oder hat keine Datei mehr, etwa bei
+Fehlern vor dieser Änderung). Schlägt das Einreihen fehl, wird die Quelle wieder `FAILED` (`ENQUEUE_FAILED`). Das Ergebnis
+heißt `RESTART.MISSING` statt `NOT_FOUND`, weil `audit:magic` den doppelten Wert sonst meldet.
+
+Aufbewahrung: Die Datei einer fehlgeschlagenen Quelle, die nie neu gelesen wird, bleibt in `source_uploads` (höchstens 10 MB
+je Quelle, begrenzt durch das 24-Stunden-Limit für neue Quellen). Sie verschwindet mit dem Entfernen der Quelle, des Notebooks
+oder des Kontos (`ON DELETE CASCADE`). Ein eigener Aufräumlauf wäre ein Entwurf ohne Bedarf (YAGNI); wird der Speicher
+knapp, kommt er neben `sweepInterruptedSources`.
+
+Oberfläche: eine fehlgeschlagene Zeile zeigt den Grund und "Erneut lesen" (gesperrt während der Anfrage, Fehler darunter).
+E2E: eine gültige, leere PDF (`offline-unreadable.pdf`) besteht die Prüfung beim Hochladen; der Offline-Server kann keine PDFs
+lesen, also schlägt sie fehl, und der Neuversuch läuft auf der behaltenen Datei.

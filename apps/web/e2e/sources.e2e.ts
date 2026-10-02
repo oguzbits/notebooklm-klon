@@ -1,6 +1,8 @@
+import path from 'node:path';
+
 import { expect, type Page, test } from '@playwright/test';
 
-import { addFixture, createNotebook, signUp, uniqueEmail } from './helpers';
+import { addFixture, createNotebook, FIXTURES, signUp, uniqueEmail } from './helpers';
 
 const FINANCE_TEXT =
   'Die Bilanz zeigt einen Gewinn von drei Millionen Euro. Die Rücklagen wurden im Herbst erhöht.';
@@ -91,4 +93,20 @@ test('an address that points into the private network is refused', async ({ page
     page.getByText('Diese Adresse kann nicht geladen werden. Prüfe den Link.')
   ).toBeVisible();
   await expect(page.getByRole('checkbox', { name: /für Antworten verwenden/ })).toHaveCount(0);
+});
+
+test('a source that could not be read is read again from the kept file', async ({ page }) => {
+  await page.getByRole('button', { name: 'Quellen hinzufügen' }).click();
+  await page
+    .locator('input[type=file]')
+    .setInputFiles(path.join(FIXTURES, 'offline-unreadable.pdf'));
+  const failure = page.getByRole('alert').filter({ hasText: 'konnte nicht gelesen werden' });
+  await expect(failure).toBeVisible();
+
+  // The offline server cannot read PDFs, so the file fails again; the retry ran on the kept file.
+  const retried = page.waitForResponse((r) => r.url().endsWith('/retry') && r.status() === 202);
+  await page.getByRole('button', { name: 'Erneut lesen' }).click();
+  await retried;
+  await expect(failure).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Erneut lesen' })).toBeEnabled();
 });
