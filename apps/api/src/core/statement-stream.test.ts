@@ -73,6 +73,35 @@ describe('StatementStream', () => {
     expect(followUps).toEqual(ANSWER.followUps);
   });
 
+  it('does not take an object inside a statement for the end of the statement', () => {
+    const text =
+      '{"statements":[{"text":"a","chunkIds":["c1"],"meta":{"k":{"x":1}}}],"followUps":[]}';
+    const stream = new StatementStream();
+    const innerEnd = text.indexOf('}}') + 1;
+
+    expect(stream.push(text.slice(0, innerEnd))).toEqual([]);
+    expect(stream.push(text.slice(innerEnd))).toEqual([{ text: 'a', chunkIds: ['c1'] }]);
+  });
+
+  it('does not take an array of arrays for a statement, and the contract check rejects it', () => {
+    const stream = new StatementStream();
+
+    expect(stream.push('{"statements":[[{"text":"a","chunkIds":[]}]],"followUps":[]}')).toEqual([]);
+    expect(() => stream.finish()).toThrow();
+  });
+
+  it('ends a string at its closing quote, also when it is empty, the very first one, or ends in a backslash', () => {
+    const text = JSON.stringify({
+      '': '',
+      statements: [{ text: 'Ende mit Backslash \\', chunkIds: [] }],
+      followUps: [],
+    });
+    const { emitted, rest } = collect([...text]);
+
+    expect(emitted).toEqual([{ text: 'Ende mit Backslash \\', chunkIds: [] }]);
+    expect(rest).toEqual([]);
+  });
+
   it('throws at the end when the model left out the questions', () => {
     const stream = new StatementStream();
     stream.push('{"statements": []}');
