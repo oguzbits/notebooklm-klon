@@ -1,7 +1,7 @@
 # Abgleich mit dem Original (Gemini Notebook, früher NotebookLM)
 
-Dieses Dokument ist der Plan und die Checkliste für die Oberfläche: Was das Original tut (gemessen), was der
-Nachbau heute tut, was geändert wird und ob es erledigt ist. Es wird mit jeder Änderung fortgeschrieben.
+Dieses Dokument hält fest, was das Original tut (gemessen) und was der Nachbau daraus übernommen hat. Die
+Spalten „Nachbau vorher“ und „Maßnahme“ zeigen den Weg dorthin; Abweichungen stehen in Abschnitt 3.
 Die Rohdaten (Messungen, Screenshots) liegen lokal in `spikes/reference/` und sind nicht im Repo; die
 Entscheidungen stehen in [ENTSCHEIDUNGEN.md](ENTSCHEIDUNGEN.md).
 
@@ -14,17 +14,11 @@ Entscheidungen stehen in [ENTSCHEIDUNGEN.md](ENTSCHEIDUNGEN.md).
 - **Nachweis pro Bereich:** (1) Zahlenvergleich der berechneten Stile Original gegen Nachbau, (2) Screenshot
   nebeneinander, hell und dunkel, (3) Test, wo sich das Verhalten prüfen lässt (jsdom misst keine Geometrie).
 - **Was es bei uns nicht gibt, wird nicht vorgetäuscht.** Kein Schalter ohne Funktion, keine Kachel für ein
-  Format, das wir nicht erzeugen. Die Abweichungen stehen in Abschnitt 4.
+  Format, das wir nicht erzeugen. Die Abweichungen stehen in Abschnitt 3.
 - **Texte bleiben deutsch und im Du**, Begriffe wie im Original („Quellen“, „Studio“, „Notizen“, „Chat“), ohne
   Fachwörter (Regel 10 in [AGENTS.md](../AGENTS.md)).
 
 ## 2. Abgleichtabelle
-
-Status: ✔ gleich, ◐ teilweise, ✘ fehlt oder weicht ab, ➜ in Arbeit.
-
-Hinweis: Beim Einbau der Tooltips fiel auf, dass `tailwind-merge` die eigenen Schriftgrößen (`text-ui`, `text-small`) und
-Gewichte nicht kannte und sie beim Zusammenführen mit einer Textfarbe stillschweigend verwarf. Das ist behoben
-(`apps/web/src/lib/utils.ts`), und jede Stelle mit dieser Kombination wird dadurch jetzt wie gedacht gesetzt.
 
 ### 2.1 Raster und Abstände (Notebookseite, ab 1056 px)
 
@@ -82,7 +76,7 @@ Gewichte nicht kannte und sie beim Zusammenführen mit einer Textfarbe stillschw
 
 ### 2.6 Weitere Bereiche
 
-Stand 2026-10-01, Maße gegen das Original im Browser geprüft (Spalten bei 1720 px, Chat-Einzug 53 px je Seite, Karten 272x185, Handy 390 px). ◐ heißt hier: das Aussehen stimmt, einzelne Funktionen fehlen bewusst (Abschnitt 4). ✔ heißt: nichts fehlt.
+Stand 2026-10-01, Maße gegen das Original im Browser geprüft (Spalten bei 1720 px, Chat-Einzug 53 px je Seite, Karten 272x185, Handy 390 px). ◐ heißt hier: das Aussehen stimmt, einzelne Funktionen fehlen bewusst (Abschnitt 3). ✔ heißt: nichts fehlt.
 
 | Bereich                    | Stand                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Status |
 | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
@@ -92,7 +86,7 @@ Stand 2026-10-01, Maße gegen das Original im Browser geprüft (Spalten bei 1720
 | Studio-Liste und Ansichten | Notizen und Ausgaben in einer Liste, gemeinsamer Rahmen, ⋮-Menü, Schimmerzeile beim Erzeugen, leere Liste wie im Original. Notiz-Editor (Tiptap, Markdown) mit Format-Leiste, „Notiz hinzufügen“ als Pille und als Knopf in der Leiste, Prompt-Chip, „Guter/Schlechter Bericht“. Ohne Teilen.                                                                                                                                                                                                                                                                                                                  | ◐      |
 | Chat                       | Zeitstempel, Fließtextfarbe, fette Begriffe, Aktionsleiste, Senden-Pfeil nach Eingabe, Eingabeleiste 628 px, Verläufe oben, Notebook-Übersicht (Emoji 40, Titel 36/44, „n Quellen · Datum“, Zusammenfassung, In Notiz speichern, Kopieren). Tagestrenner über dem ersten Eintrag eines Tages. „Nach unten springen“, „Notebook anpassen“ (Titelbild, Titel, eigene Zusammenfassung), Hover auf dem Titelblock (ohne Bild füllt sich die Fläche und eine Landschaft blendet ein, mit Bild ein heller Schleier; 24 px über den Text hinaus), „Vorgehen“ statt „Thoughts“ (echte Schritte, deutsch). Ohne Daumen. | ◐      |
 | Dunkelmodus                | Tokens aus den Messungen, Tooltip invertiert, Quellenkarte #2f334b, Markierung #32343e; Screenshots verglichen.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | ✔      |
-| Handy 390 px               | Tab-Leiste 12 px unter der Kopfzeile, Bottom-Sheets, Platzhalter wie Desktop. Titel bleibt sichtbar (Original blendet ihn aus Platzmangel aus). Screenshots 390x844 verglichen: Tab-Leiste, Eingabeleiste und Hinweistext stehen an gleicher Stelle; in der Kopfzeile fehlen Freigeben, PRO und Apps (Abschnitt 4).                                                                                                                                                                                                                                                                                            | ✔      |
+| Handy 390 px               | Tab-Leiste 12 px unter der Kopfzeile, Bottom-Sheets, Platzhalter wie Desktop. Titel bleibt sichtbar (Original blendet ihn aus Platzmangel aus). Screenshots 390x844 verglichen: Tab-Leiste, Eingabeleiste und Hinweistext stehen an gleicher Stelle; in der Kopfzeile fehlen Freigeben, PRO und Apps (Abschnitt 3).                                                                                                                                                                                                                                                                                            | ✔      |
 | Seite als Ganzes           | Schrift, Fokusring 3 px, Auswahlfarbe, Scrollbalken, `prefers-reduced-motion` (Schimmer steht still).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | ✔      |
 
 **Schrift (2026-10-01):** Breite, Gewichte und Knopfabstände sind an der Breite desselben Textes im Original gemessen und
@@ -102,19 +96,7 @@ Nicht gemessen: Dokumenttext der Quellenansicht, Symbolstärke.
 **Offen, nicht gebaut** (nicht ohne neuen Umfang möglich): Filter und Sammlungen auf der Startseite,
 Ausgabesprache als Kontoeinstellung, „Alle Notizen als Quelle festlegen“.
 
-## 3. Reihenfolge und Commits
-
-Ein Thema pro Commit, Feature-Branch `feat/ui-fidelity-round-2`:
-
-1. Zeiger und Tooltips.
-2. Raster und Abstände (2.1) und Kopfzeile (2.2).
-3. Ladezustände (2.4).
-4. Quellen lesen (2.5) samt Parser.
-5. Die Punkte aus 2.6, je Bereich ein Commit.
-
-Nachweis je Commit: `pnpm check`, `pnpm test`, Browser-Vergleich hell und dunkel.
-
-## 4. Bewusste Abweichungen (gibt es bei uns nicht oder mit Absicht anders)
+## 3. Bewusste Abweichungen (gibt es bei uns nicht oder mit Absicht anders)
 
 - **Google-Kontext:** „Freigeben“, „PRO“, Apps-Raster, Empfohlene Notebooks, Drive-Import, Bücher.
 - **Web-Recherche:** gebaut mit Tavily, nur „Web“ mit schneller Suche; ohne Drive (bräuchte Google-Anmeldung mit Dateizugriff) und ohne Deep Research (dauert Minuten, teuer). Die Google-Suche im Gemini-Tarif ist kostenlos nicht nutzbar (429).

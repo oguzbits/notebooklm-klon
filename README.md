@@ -10,24 +10,18 @@ Nachbau von NotebookLM. Der Schwerpunkt liegt auf dem Weg von der Quelle zum nac
 | Demo-Zugang | Auf der Anmeldeseite **„Demo ausprobieren“**: ein Gastkonto mit einer eigenen Kopie des Demo-Notebooks, ohne E-Mail und Passwort. Es wird nach 7 Tagen gelöscht. |
 | Video       | _Loom-Link folgt_                                                                                                                                                |
 
-> Hinweis für die Demo: Keine sensiblen Dokumente hochladen. Im kostenlosen Tarif von Google können Eingaben zur Verbesserung der Modelle genutzt werden. Die Demo soll auf einem Hetzner-Server laufen und schläft dort nicht ein (siehe Abschnitt „Deployment“).
+> Keine sensiblen Dokumente hochladen: Im kostenlosen Tarif von Google können Eingaben zur Verbesserung der Modelle genutzt werden.
 
 ## Was es kann
 
-- **Anmelden und Notebooks** anlegen, öffnen, löschen (E-Mail und Passwort, Sitzung in der eigenen Datenbank).
-- **Quellen** hinzufügen: PDF, DOCX, TXT, MD und Webseiten per Link. Die Verarbeitung läuft im Hintergrund mit sichtbarem Status und verständlichen Fehlermeldungen. Quellen lassen sich an- und abwählen, die Auswahl begrenzt auch die Suche.
-- **Chat** mit Streaming. Jede aussagekräftige Antwort besteht aus Aussagen mit nummerierten Chips. Hover zeigt die Textstelle mit Quellenname, Klick öffnet den Quelltext mit hervorgehobenem Abschnitt.
-- **Übersicht pro Quelle**: Zusammenfassung, Schlüsselthemen und Vorschlagsfragen, die das Gespräch starten.
-- **Übersicht des Notebooks** am Anfang des Chats: ein Emoji, der Titel, die Zahl der Quellen und eine Zusammenfassung aller fertigen Quellen mit fetten Schlüsselbegriffen. Sie entsteht einmal, wenn sich die Quellen ändern, und lässt sich als Notiz speichern oder kopieren.
-- **Notizen** aus Antworten, mit erhaltenen Zitaten, und eigene Notizen mit Editor (Format-Leiste, wird beim Tippen gespeichert, auf Wunsch als Quelle).
-- **Studio**: Bericht (Briefing, FAQ, Lernleitfaden, Blogbeitrag oder eigene Anweisung), Karteikarten, Quiz, Mindmap und Datentabelle aus den gewählten Quellen. Vor dem Erzeugen lassen sich Umfang und Schwierigkeit wählen; die Ausgaben tragen dieselben geprüften Zitate wie der Chat.
-- **Suche im Web** unter „Quellen hinzufügen“: Treffer ansehen und als Quelle übernehmen (Tavily, optional, mit Grenzen pro Nutzer und Tag).
-- **Notebook anpassen**: Titel, eigene Zusammenfassung und Titelbild (liegt in einem S3-kompatiblen Speicher, optional). Notebooks lassen sich kopieren, auf der Startseite anpinnen und umbenennen.
-- **Quellen und Ausgaben** sortieren und umbenennen; der Chat hat „Nach unten springen“ und zeigt je Antwort das **Vorgehen** (wie viele Quellen und Stellen geprüft wurden).
-- **Chat-Konfiguration** pro Notebook und Vorschlagsfragen unter der letzten Antwort.
-- **Verlauf** bleibt pro Notebook erhalten, gegliedert nach Tagen.
+- **Notebooks und Quellen:** PDF, DOCX, TXT, MD und Webseiten per Link, mit Status im Hintergrund. Die Auswahl der Quellen begrenzt auch die Suche. Websuche über Tavily ist optional.
+- **Chat** mit Streaming: Jede Aussage trägt nummerierte Chips, Hover zeigt die Textstelle, Klick öffnet den Quelltext mit hervorgehobenem Abschnitt. Der Verlauf bleibt pro Notebook erhalten.
+- **Übersichten** pro Quelle und pro Notebook mit Vorschlagsfragen.
+- **Notizen** aus Antworten (Zitate bleiben erhalten) und eigene Notizen mit Editor, auf Wunsch als Quelle.
+- **Studio:** Bericht (Briefing, FAQ, Lernleitfaden, Blogbeitrag, eigene Anweisung), Karteikarten, Quiz, Mindmap und Datentabelle, mit denselben geprüften Zitaten.
+- **Notebook anpassen:** Titel, Zusammenfassung, Titelbild, kopieren, anpinnen.
 
-Nicht gebaut (siehe [docs/PLAN.md](docs/PLAN.md), Kategorien Should und Stretch): Audio, Präsentation, Video und Infografik im Studio, PPTX als Quelle, agentische Suche im Chat, Deep Research, Drive-Anbindung, Bewertung von Chat-Antworten (Daumen). Der Umfang wurde bewusst auf die Kernstrecke begrenzt, die Gründe stehen in [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md).
+Nicht gebaut: Audio, Präsentation, Video und Infografik im Studio, PPTX als Quelle, agentische Suche, Deep Research, Drive-Anbindung, Bewertung von Antworten. Gründe: [docs/PLAN.md](docs/PLAN.md) und [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md).
 
 ## Architektur
 
@@ -58,7 +52,7 @@ flowchart LR
   Worker -- "PDF lesen, einbetten" --> Gemini
 ```
 
-Das Diagramm zeigt die Produktion (siehe „Deployment“); lokal laufen Postgres und der Speicher aus `pnpm db:up`. Das Frontend wird vom selben Prozess ausgeliefert wie die API (`WEB_DIST_DIR`), im Entwicklungsbetrieb leitet Vite `/api` weiter. Es gibt deshalb nur eine Origin, kein CORS und keine zweite Liste vertrauter Adressen.
+Das Frontend wird vom selben Prozess ausgeliefert wie die API (`WEB_DIST_DIR`), im Entwicklungsbetrieb leitet Vite `/api` weiter. Lokal laufen Postgres und der Speicher aus `pnpm db:up`.
 
 ### Schichten
 
@@ -120,22 +114,15 @@ Das Modell sieht nur kurze Labels pro Anfrage. Der Server bildet sie auf echte A
 
 ## Was ich entschieden habe und warum
 
-Die Entscheidungen mit Zahlen stehen im Repository, damit sie im Video zeigbar sind:
-
-- [docs/SPIKE-ERGEBNISSE.md](docs/SPIKE-ERGEBNISSE.md): Modell-Spike zu PDF-Parsing, Einbettungen, Chat und Zitat-Format, dazu die Hybridsuche.
-- [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md): kleine Entscheidungen mit Begründung und was sie später ändern würde.
-- [docs/PLAN.md](docs/PLAN.md): Anforderungen, Stack, Kostenstrategie und Risiken.
-- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md): Einrichtung, Betrieb und Wiederherstellung auf dem Hetzner-Server.
-
-Kurz: PDFs liest ein Gemini-Modell (Tabellen und Scans bleiben erhalten), die Suche ist ein Hybrid aus Vektor und Volltext in einer SQL-Abfrage, Zitate sind chunk-genau, weil auch NotebookLM ganze Absätze hervorhebt. Der Stack ist bewusst klein: eine Datenbank für alles, ein Container.
+Entscheidungen mit Zahlen: [Spike-Ergebnisse](docs/SPIKE-ERGEBNISSE.md) (PDF-Parsing, Einbettungen, Chat, Zitat-Format, Hybridsuche), [Entscheidungen](docs/ENTSCHEIDUNGEN.md) (Begründungen), [Plan](docs/PLAN.md) (Anforderungen, Stack, Risiken).
 
 ## Qualitätssicherung
 
 - `pnpm check`: TypeScript strict, ESLint, Architekturregeln, tote Abhängigkeiten, Duplikate (unter 2 %), Magic-String-Audit.
 - `pnpm test`: Vitest ohne Netzwerk. MSW lehnt jede nicht abgefangene Anfrage ab, kein Test kann Kontingent verbrauchen.
 - `pnpm test:db`: Tests gegen Postgres mit pgvector (`pnpm db:up`), darunter alle Zugriffsregeln: jede Abfrage filtert nach Nutzer, Notebook und gewählten Quellen.
-- `pnpm e2e`: Playwright-Nutzerreisen gegen den Offline-Server (Konto, Notebooks, Quellen, Trennung der Konten, Studio mit Quiz, Mindmap und Bericht, Darstellung auf dem Telefon; echte Datenbank, echte App, gefälschte Modelle, keine Token).
-- `pnpm eval:live`: die 18 Golden Questions gegen die echten Modelle, mit Trefferquote der Suche, Fakten in der Antwort und im zitierten Abschnitt und der Zahl der vom Server verworfenen Aussagen. Kostet Kontingent, läuft nicht in CI.
+- `pnpm e2e`: Playwright-Nutzerreisen gegen den Offline-Server (echte App und Datenbank, gefälschte Modelle).
+- `pnpm eval:live`: 18 Golden Questions gegen die echten Modelle (Trefferquote, Fakten, verworfene Aussagen). Kostet Kontingent, läuft nicht in CI.
 - CI (GitHub Actions): Qualität, Unit-Tests, Datenbank-Tests, Browser-Test, Build, Semgrep.
 
 Weitere Regeln, die im Code geprüft sind: SSRF-Schutz beim Link-Import (nur http und https, DNS-Auflösung, keine privaten Adressen, nach jeder Weiterleitung erneut), Größen- und Seitenlimits, Kontingent pro Nutzer, Ratenbegrenzung aller Modellaufrufe, keine Dokumentinhalte in Logs.
@@ -164,19 +151,15 @@ BETTER_AUTH_URL=http://localhost:5173 \
 pnpm --filter @nlm/api dev:offline   # dazu in einem zweiten Terminal: pnpm --filter @nlm/web dev
 ```
 
-Suche im Web (optional): `TAVILY_API_KEY` setzen (Tavily, kostenloser Tarif mit 1000 Suchen im Monat; an Tavily gehen nur die Suchbegriffe). Ohne Schlüssel zeigt die Oberfläche das Suchfeld nicht. Pro Nutzer sind 10 Suchen pro Stunde und für alle zusammen 30 pro Tag erlaubt.
+Suche im Web (optional): `TAVILY_API_KEY` setzen. Ohne Schlüssel zeigt die Oberfläche das Suchfeld nicht.
 
-Titelbilder (optional): Ein S3-kompatibler Speicher, dazu `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID` und `S3_SECRET_ACCESS_KEY` setzen (alle vier oder keins). Lokal startet `pnpm db:up` einen (SeaweedFS). Ohne Speicher zeigt der Dialog „Notebook anpassen“ keine Bildfläche. Die Bilder liegen im Speicher, nicht in der Datenbank: Der lokale Dienst aus `pnpm db:up` hält die Bilder nur im Arbeitsspeicher (`tmpfs`): nach `pnpm db:down` sind sie weg. Bei einem Docker-Volume (Deployment) sind sie dauerhaft, aber nicht gesichert.
+Titelbilder (optional): Ein S3-kompatibler Speicher, dazu `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID` und `S3_SECRET_ACCESS_KEY` setzen (alle vier oder keins). Lokal startet `pnpm db:up` einen (SeaweedFS), der die Bilder nur im Arbeitsspeicher hält.
 
 Demo-Notebook anlegen (braucht den Schlüssel, liest drei Beispieldokumente einmal ein): `SEED_DEMO_EMAIL` und `SEED_DEMO_PASSWORD` setzen, dann `pnpm seed:demo`. Der Befehl kann wiederholt werden. Gäste („Demo ausprobieren“) bekommen eine Kopie dieses Notebooks, dafür muss `SEED_DEMO_EMAIL` auch in der Umgebung der App stehen.
 
 ## Deployment
 
-> Stand: Es ist noch nichts deployt. Vorbereitet ist ein Hetzner-Server. Begründung: [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md), Abschnitt „Deployment: Entscheidung und Stand“.
-
-Die vollständige Anleitung (Einrichtung, Betrieb, Backup, Fehlersuche) steht in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
-
-- **Hetzner Cloud** (Docker Compose, Caddy). Dateien in [deploy/](deploy/): [docker-compose.prod.yml](deploy/docker-compose.prod.yml) (Caddy mit automatischem HTTPS, App, Postgres mit pgvector, SeaweedFS für die Titelbilder), [Caddyfile](deploy/Caddyfile), [bootstrap.sh](deploy/bootstrap.sh), [backup.sh](deploy/backup.sh). Der Workflow [deploy.yml](.github/workflows/deploy.yml) baut das Image, schickt es per SSH an den Server und startet den Stack, sobald CI auf `main` grün ist.
+Hetzner Cloud mit Docker Compose und Caddy (automatisches HTTPS). [deploy.yml](.github/workflows/deploy.yml) baut das Image und startet den Stack per SSH, sobald CI auf `main` grün ist. Einrichtung, Betrieb, Backup und Fehlersuche: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Wo es zuerst brechen würde
 
@@ -187,4 +170,4 @@ Die vollständige Anleitung (Einrichtung, Betrieb, Backup, Fehlersuche) steht in
 
 ## Agentischer Workflow
 
-Die Arbeit mit Coding-Agenten ist im Repository sichtbar: [AGENTS.md](AGENTS.md) (Regeln, Schichten, Produkt-Invarianten, Definition of Done), Hooks unter `.claude/` (blockierte Befehle, Geheimnisschutz, Gate vor dem Beenden), Husky-Hooks und die Commit-Historie mit einem Thema pro Commit. Tests entstehen vor dem Code, Entscheidungen werden in [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md) protokolliert.
+[AGENTS.md](AGENTS.md) (Regeln, Schichten, Invarianten, Definition of Done), Hooks unter `.claude/` (blockierte Befehle, Geheimnisschutz, Gate vor dem Beenden), Husky-Hooks und ein Thema pro Commit. Tests entstehen vor dem Code, Entscheidungen stehen in [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md).

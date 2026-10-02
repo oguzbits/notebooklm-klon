@@ -1,4 +1,4 @@
-# NotebookLM-Klon: Requirements, Stack v3 und Spike-Plan
+# NotebookLM-Klon: Requirements, Stack und Risiken
 
 Sep 29, 2026 · @Oguz Öztürk
 
@@ -150,26 +150,7 @@ Die Limits gelten pro **Projekt**, nicht pro Key. Das Tageslimit wird um Mittern
 
 **Paid-Wechsel:** 5 Dollar Guthaben als Reserve, Wechsel nur per Umgebungsvariable und neuer Limit-Tabelle. Offen ist, ob du nach dem Verknüpfen von Billing die Free-Kontingente behältst (rechne nicht damit), ob das Guthaben hart begrenzt ist und ob es eine automatische Aufladung gibt, die du ausschalten solltest.
 
-**Preise laut Drittquellen (pro Million Tokens):** GPT-6 Luna 0,10 $ Eingabe und 0,50 $ Ausgabe, Gemini 3.5 Flash-Lite 0,30 $ und 2,50 $. Auf den Preisseiten verifizieren.
 
-**Rechenbeispiel (Annahmen):** 5 Reviewer laden je 3 Dokumente à 20 Seiten hoch und stellen je 30 Fragen. Das ergibt etwa 60 Parsing-Anfragen (5 Seiten pro Anfrage) und etwa 150 Chat-Anfragen, beides unter 500 pro Tag. Bei den Embeddings hängt es davon ab, ob ein Batch als eine oder als viele Anfragen zählt.
-
-## Spike-Plan
-
-Ein Spike ist ein zeitlich begrenzter Wegwerf-Test, der eine Unsicherheit klärt, bevor wir uns festlegen. Ein kombinierter Modell-Spike (etwa ein halber Tag) entscheidet Parsing, Chat, Embeddings und Zitat-Format mit Zahlen.
-
-**Testmenge:** 6 bis 8 Dokumente (zweispaltiges Paper, tabellenlastiger Bericht, DOCX mit Tabellen und Bildern, einfacher Text-PDF, ein Scan, deutsch und englisch gemischt) und 10 bis 20 Fragen, darunter deutsche Fragen auf englische Quellen.
-
-| Aufgabe    | Kandidaten                                                              | Messgrößen                                                                                          | Entscheidungsregel                                                                               |
-| ---------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Parsing    | Gemini 3.1 Flash-Lite gegen liteparse (lokal, deterministisch)          | Auslassungen, Tabellenstruktur und Lesereihenfolge (Stichprobe von Hand), Zeit und Kosten pro Seite | Höchste Inhaltstreue gewinnt, bei Gleichstand der günstigere                                     |
-| Chat       | Gemini 3.5 Flash-Lite, ein größeres Flash-Modell nur als Stichprobe     | Antwortqualität, Zitat-Treffer, Zeit bis zum ersten Token, Kosten pro brauchbarer Antwort           | Die Zeit bis zum ersten Token darf den Chat nicht spürbar bremsen (Ziel ca. 5 Sekunden, Annahme) |
-| Embeddings | Gemini Embedding 2, `gemini-embedding-001` (je 768 Dimensionen)         | Trefferquote: liegt der passende Chunk in den Top 5, auch bei deutscher Frage auf englische Quelle  | Höhere Trefferquote, bei Gleichstand Embedding 2                                                 |
-| Zitate     | Strukturierte Ausgabe mit Chunk-Nummern                                 | Anteil der Antworten mit gültigen, tragenden Zitaten                                                | Format und Prompt festlegen                                                                      |
-
-**Entscheidung zum Umfang:** Es gibt keinen Vergleich mit OpenAI-Modellen, weil kein OpenAI-Zugang vorhanden ist. GPT-6 Luna bleibt als Alternative in der Stack-Tabelle und ist ungemessen. Das größere Flash-Modell läuft nur bei einer Stichprobe, weil es nur 20 Anfragen pro Tag gibt.
-
-**Regeln:** Der Code ist Wegwerf-Code. Ergebnisse und Entscheidung landen als kurze Notiz im Repo und sind im Video zeigbar. Die 5 Dollar Guthaben gehen an den Anbieter, der gewinnt. Weil Modell-IDs und Limits in der Config stehen, ist ein späterer Wechsel nur eine Umgebungsvariable.
 
 ## Risiken und offene Punkte
 
@@ -185,25 +166,3 @@ Das größte Risiko ist das Free-Tier-Kontingent im Live-Demo. Danach folgen Par
 - **Billing:** Unklar, ob Free-Kontingente nach dem Verknüpfen bleiben und ob das Guthaben hart begrenzt ist.
 - **Preise und Benchmarks** aus Drittquellen vor dem Bau auf den offiziellen Seiten prüfen.
 - **Take-home-Repos** sind nur Ideengeber: keinen Code kopieren.
-
-## Tagesplan
-
-Fünf Arbeitstage bis zur Abgabe, danach zwei Tage Puffer. Feature-Freeze ist am Abend von Tag 4, damit Tag 5 für Härtung, README und Video bleibt.
-
-| Tag     | Ziel                 | Aufgaben                                                                                                                                                                | Ausgangskriterium                                   |
-| ------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| 1       | Spike und Fundament  | Modell-Spike (halber Tag). Monorepo, CI, `AGENTS.md`, Setup aus notar-agent (erledigt, siehe oben), Config mit Limits, Schema und Migrationen, erstes Deployment (Hello World live) | Spike-Entscheidungen notiert, Deployment erreichbar |
-| 2       | Ingestion            | Auth, Notebooks, Upload, Parsing, kanonischer Text mit Segmenten, Chunking mit Offsets, Embeddings, pg-boss-Jobs, Status in der UI                                      | PDF, DOCX und URL werden verarbeitet                |
-| 3       | Chat und Zitate      | Hybrid-Retrieval mit RRF, Quellenauswahl, Streaming, Zitat-Chips, Hover-Popup, Quellenpanel mit Chunk-Hervorhebung                                                      | Frage stellen und per Klick zur Textstelle springen |
-| 4       | Umfang komplettieren | Quellenübersicht, Vorschlagsfragen, Notizen, Chat-Konfiguration, Studio (Bericht, Karteikarten, Quiz), Fehler-, Lade- und Leerzustände                                  | Feature-Freeze am Abend                             |
-| 5       | Härtung und Abgabe   | Tests, Eval-Skript, Quoten, SSRF-Schutz, README, Deployment-Check mit frischem Account, Demo-Notebook, Loom aufnehmen, abgeben                                      | E-Mail mit Repo, Live-Link und Loom verschickt      |
-| 6 bis 7 | Puffer               | Nur Fehlerbehebung, keine neuen Funktionen                                                                                                                              | Nicht eingeplant                                    |
-
-Die Mindmap kommt nur dazu, wenn Tag 4 früher fertig ist.
-
-**Loom-Video (max. 10 Minuten):**
-
-1. Eine Minute Ziel und Umfang.
-2. Drei Minuten Vorgehen und Architektur, inklusive KI-Tool-Einsatz (AGENTS.md, Specs, Iterationen) und den Spike-Ergebnissen.
-3. Vier Minuten Live-Test mit vorbereitetem Notebook. Vorher einmal komplett üben.
-4. Eine Minute Trade-offs und "Wo würde es zuerst brechen und was würde ich dann ändern?".

@@ -29,8 +29,7 @@ Internet ──443/80──> Caddy ──> app (Hono + gebautes Web, Port 3000) 
 
 Was nur du tun kannst, ist hier fett.
 
-1. **Server buchen:** Hetzner Cloud CX23 (2 vCPU, 4 GB RAM, 40 GB), Ubuntu 24.04, deinen SSH-Schlüssel hinterlegen. Den
-   Preis vor dem Buchen in der Hetzner-Konsole prüfen.
+1. **Server buchen:** Hetzner Cloud CX23 (2 vCPU, 4 GB RAM, 40 GB), Ubuntu 24.04, deinen SSH-Schlüssel hinterlegen.
 2. **Firewall:** In der Hetzner-Konsole eine Firewall mit eingehend TCP 22, 80 und 443 anlegen und dem Server zuweisen.
 3. **Server einrichten, ein Befehl** auf deinem Rechner, im Repository: `deploy/provision.sh <IPv4 oder Hostname>`.
    Hostname ohne eigene Domain: `<IP mit Bindestrichen>.sslip.io`, zum Beispiel `203-0-113-7.sslip.io` für `203.0.113.7`

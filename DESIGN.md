@@ -97,14 +97,14 @@ components:
 
 The source of truth for every value is [apps/web/src/index.css](apps/web/src/index.css) (semantic
 tokens, light in `:root`, dark in `.dark`). This file describes how to use them. The measured
-comparison with the original, with open items, is [docs/DESIGN-ABGLEICH.md](docs/DESIGN-ABGLEICH.md).
+comparison with the original is [docs/DESIGN-ABGLEICH.md](docs/DESIGN-ABGLEICH.md).
 
 ## Overview
 
 **Creative North Star: "Faithful to the Original".** A quiet, neutral grey workspace in which the
 sources and the cited answer are the content. Values were measured on the real product (computed
 styles at 1440x900 and 390x844, light and dark), not guessed. Deviations from the original are
-deliberate and listed in DESIGN-ABGLEICH.md, section 4. Color is rare and carries meaning: focus and
+deliberate and listed in DESIGN-ABGLEICH.md, section 3. Color is rare and carries meaning: focus and
 links, the selected state, the icons of the Studio formats, and one soft blue action. Anti-reference:
 decorative gradients, colored cards, and raw palette colors in components.
 
