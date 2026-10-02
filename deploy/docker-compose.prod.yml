@@ -15,6 +15,7 @@ services:
     image: caddy:2.11.4
     restart: unless-stopped
     logging: *logging
+    mem_limit: 256m
     ports:
       - '80:80'
       - '443:443'
@@ -34,6 +35,8 @@ services:
     # Above the shutdown waits in apps/api/src/config/limits.ts (10 s for requests + 60 s for the running job).
     stop_grace_period: 90s
     logging: *logging
+    # The server has 4 GB RAM and 2 GB swap (docs/DEPLOYMENT.md): the limits keep one service from taking the others down.
+    mem_limit: 1536m
     env_file: server.env
     environment:
       NODE_ENV: production
@@ -60,9 +63,12 @@ services:
       start_period: 20s
 
   db:
-    image: pgvector/pgvector:pg18
+    # Same image as pg18 when pinned (pgvector 0.8.7 on Postgres 18); a major upgrade is a deliberate step.
+    image: pgvector/pgvector:0.8.7-pg18
     restart: unless-stopped
     logging: *logging
+    mem_limit: 1g
+    command: postgres -c shared_buffers=256MB
     environment:
       POSTGRES_USER: nlm
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}

@@ -4,7 +4,7 @@
 # throwaway container only.
 services:
   db:
-    image: pgvector/pgvector:pg18
+    image: pgvector/pgvector:0.8.7-pg18
     environment:
       POSTGRES_USER: nlm
       POSTGRES_PASSWORD: nlm

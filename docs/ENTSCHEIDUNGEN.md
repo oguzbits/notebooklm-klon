@@ -959,3 +959,13 @@ fehl, setzt „Roll back“ das Image `previous` als `current` und startet die A
 nur bei diesen beiden Fehlern, nicht, wenn schon Bau oder Übertragung scheitern (dann läuft noch die alte Version).
 Grenze: Migrationen werden nicht zurückgenommen; ein Rollback über eine inkompatible Schemaänderung braucht den Dump vom
 Deploy (H4). Der Workflow ließ sich nur durch Lesen und YAML-Prüfung testen, nicht lokal ausführen.
+
+### M9: Speichergrenzen und feste Images
+
+`pgvector/pgvector:pg18` und `0.8.7-pg18` haben denselben Digest (geprüft), der Wechsel auf den festen Tag startet die
+Datenbank also nicht mit anderer Software; er steht jetzt in Produktion, Compose für die Entwicklung, CI und
+`restore-check.sh`. `node:24-slim` ist auf `24.21.0-slim` mit Digest des Image-Index festgelegt (Bau lokal geprüft). Grenzen
+bei 4 GB RAM und 2 GB Swap: App 1,5 GB, Postgres 1 GB mit `shared_buffers=256MB`, Caddy 256 MB; SeaweedFS hatte schon 512 MB.
+Die Werte sind Schätzungen ohne Messung auf dem Server (kein Zugriff von hier aus); sie lassen Spielraum für das Betriebssystem
+und sollten nach einigen Tagen mit `docker stats` gegengeprüft werden. Ein Dependabot für Docker gibt es nicht (YAGNI), die
+Versionen werden von Hand angehoben.

@@ -5,7 +5,7 @@
 set -euo pipefail
 
 dump="${1:?usage: restore-check.sh <dump.sql.gz>}"
-image="pgvector/pgvector:pg18"
+image="pgvector/pgvector:0.8.7-pg18"
 name="nlm-restore-check-$$"
 
 docker run -d --rm --name "$name" -e POSTGRES_PASSWORD=check -e POSTGRES_USER=nlm -e POSTGRES_DB=nlm "$image" >/dev/null

@@ -86,6 +86,12 @@ Alle Befehle auf dem Server als `deploy`, im Verzeichnis `/srv/nlm`. Kurzform:
 | Alte Version ausrollen | Actions > Deploy > Run workflow mit dem älteren Branch oder Tag        |
 | Neu starten            | `dc restart app`                                                       |
 
+Speichergrenzen in [docker-compose.prod.yml](../deploy/docker-compose.prod.yml): App 1,5 GB, Postgres 1 GB (`shared_buffers`
+256 MB), SeaweedFS 512 MB, Caddy 256 MB. Das sind Schätzwerte, keine Messung: ob sie passen, zeigt `docker stats`, und ein
+von Docker beendeter Container steht in `docker inspect <Name> --format '{{.State.OOMKilled}}'`. Images sind auf eine
+Version festgelegt (Postgres `0.8.7-pg18`, Node mit Digest im [Dockerfile](../Dockerfile), Caddy, SeaweedFS); ein Update ist
+ein bewusster Schritt, kein Nachziehen beim nächsten Deploy.
+
 Zu beobachten nach dem ersten Lauf: ob 4 GB RAM reichen (`docker stats`, Swap mit `free -h`). Die Logs enthalten nach
 Regel 7 in [AGENTS.md](../AGENTS.md) nur IDs, Längen, Dauer und Token-Zahlen, keine Dokumentinhalte. Docker rotiert sie
 (je 10 MB, 3 Dateien).
