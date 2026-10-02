@@ -11,7 +11,8 @@ x-logging: &logging
 
 services:
   caddy:
-    image: caddy:2
+    # Newest version of the official image on Docker Hub when pinned (the release on GitHub can be ahead).
+    image: caddy:2.11.4
     restart: unless-stopped
     logging: *logging
     ports:

@@ -796,3 +796,18 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
   `min-w-[37.5vw]` bleibt ein Literal und verweist im Kommentar auf die Konstante.
 - Nicht im Browser geprüft: Der Sandbox blockiert lokale Ports, der Dev-Server startet hier nicht. Das Verhalten der
   Spalten ist nur durch Unit-Tests belegt.
+
+## 2026-10-02 (Deploy: Reste und Härtung)
+
+- `Dockerfile` bekommt `EXPOSE 3000` als Dokumentation des Ports. Kein `HEALTHCHECK` im Image: die Compose-Datei hat
+  schon einen, ein zweiter wäre ein Duplikat.
+- Caddy ist auf `caddy:2.11.4` festgelegt statt auf einen losen Tag. Das ist der neueste Tag des offiziellen Images auf
+  Docker Hub (die GitHub-Version 2.11.6 ist dort noch kein Tag).
+- `deploy.yml` übergibt `DEPLOY_SSH_KEY` und `DEPLOY_KNOWN_HOSTS` über `env:` und nicht mehr als `${{ secrets.… }}`
+  im Skripttext: so steht das Secret nie im Shell-Quelltext des Schritts.
+- Vor dem Laden des neuen Images wird das laufende als `nlm-app:previous` getaggt (nur wenn es existiert). Damit gibt es
+  einen Rollback in zwei Befehlen, beschrieben in `DEPLOYMENT.md`.
+- Die Titelbilder (Volume `s3data`) bleiben bewusst außerhalb des Backups: sie lassen sich neu hochladen, ein Verlust
+  kostet kein Dokument. Das ist ein bewusst getragenes Risiko, in `DEPLOYMENT.md` und `backup.sh` benannt.
+- Nicht geprüft: `docker build` und der Workflow (Docker ist in der Sandbox nicht erreichbar, der Workflow läuft erst in
+  GitHub Actions).

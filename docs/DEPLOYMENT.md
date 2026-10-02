@@ -108,6 +108,18 @@ Regel 7 in [AGENTS.md](../AGENTS.md) nur IDs, Längen, Dauer und Token-Zahlen, k
   dc start app
   ```
 
+### Zurück auf die vorige Version
+
+Jeder Deploy behält das bisherige Image als `nlm-app:previous`. Ist die neue Version fehlerhaft, auf dem Server:
+
+```bash
+docker tag nlm-app:previous nlm-app:current
+dc up -d
+```
+
+Die Datenbank-Migrationen laufen beim Start der App vorwärts und werden dabei nicht zurückgenommen; ein Rollback über
+mehrere Versionen mit Schemaänderung braucht deshalb das Backup (siehe oben).
+
 ### Zertifikat und Hostname
 
 Caddy holt das Zertifikat beim ersten Start und erneuert es selbst; es liegt im Volume `caddy_data`. Bei `sslip.io` können

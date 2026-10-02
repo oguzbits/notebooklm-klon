@@ -31,17 +31,23 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - name: Prepare SSH
+        # The secrets reach the script as environment variables, never pasted into its text.
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
         run: |
           install -m 700 -d ~/.ssh
-          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_deploy
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
-          printf '%s\n' "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
           printf 'Host *\n  IdentityFile ~/.ssh/id_deploy\n  StrictHostKeyChecking yes\n' > ~/.ssh/config
       - name: Build image
         run: docker build -t nlm-app:current .
       - name: Copy files and image
         run: |
           scp deploy/docker-compose.prod.yml deploy/Caddyfile deploy/backup.sh "$TARGET:/srv/nlm/"
+          # The running image stays as "previous" for a rollback (docs/DEPLOYMENT.md); the first deploy has none.
+          ssh "$TARGET" 'if docker image inspect nlm-app:current >/dev/null 2>&1; then docker tag nlm-app:current nlm-app:previous; fi'
           docker save nlm-app:current | gzip | ssh "$TARGET" 'gunzip | docker load'
       - name: Start
         run: |

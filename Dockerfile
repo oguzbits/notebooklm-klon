@@ -14,5 +14,5 @@ COPY --from=build /app/apps/api/dist ./apps/api/dist
 COPY --from=build /app/apps/api/drizzle ./apps/api/drizzle
 COPY --from=build /app/apps/web/dist ./apps/web/dist
 USER node
-EXPOSE 10000
+EXPOSE 3000
 CMD ["node", "apps/api/dist/index.js"]
