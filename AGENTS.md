@@ -45,7 +45,9 @@ Project context and stack: [docs/PLAN.md](docs/PLAN.md). Use `pnpm`, never `npm`
    link-local addresses (again after every redirect); cap redirects, time and size.
 7. **No document content in logs.** Log IDs, lengths, durations and token counts only. Structured
    JSON lines, no `console`.
-8. **Env only via `apps/api/src/config/env.ts`.** Never read `process.env` elsewhere. Never print or
+8. **Env only via `apps/api/src/config/env.ts`.** Only the `parse*Env` functions there turn
+   `process.env` into config. The entry points (`index.ts`, `db/migrate-cli.ts`, `seed/run.ts`,
+   `e2e/server.ts`, `eval/*.ts`, the DB test setup) hand it to them; nothing else reads it. Never print or
    edit `.env*` files and never commit them; only `.env.example` is tracked. The one exception: a reviewed
    spike script may run as `node --env-file=.env.local spikes/<name>.mjs`, so Node loads the key
    and the agent never sees it (see `.claude/hooks/bash-rules.mjs`). The guard checks the form of the
