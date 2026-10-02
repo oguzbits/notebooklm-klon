@@ -1,6 +1,16 @@
 # SITE_ADDRESS is a host name without scheme, for example 203-0-113-7.sslip.io. Caddy gets and
 # renews the certificate by itself (ports 80 and 443 must be open).
 {$SITE_ADDRESS} {
+	# Scripts, fonts and images come only from this origin. style-src needs 'unsafe-inline' because
+	# React sets style attributes (mind map, columns); there is no inline script.
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+	}
+
 	# No buffering, so the streamed chat answer reaches the browser piece by piece.
 	reverse_proxy app:3000 {
 		flush_interval -1
