@@ -76,6 +76,15 @@ describe('AddSource', () => {
     await vi.waitFor(() => expect(screen.getByLabelText('Webadresse')).toHaveProperty('value', ''));
   });
 
+  it('tells that a YouTube link is read by what is spoken in the video', async () => {
+    renderWithProviders(<AddSource notebookId={NOTEBOOK_ID} />);
+
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Webseite' }));
+
+    expect(screen.getByText(/YouTube-Videos? ein/)).toBeTruthy();
+    expect(screen.getByText(/das gesprochene Wort/)).toBeTruthy();
+  });
+
   it('sends pasted text as a text file with its title', async () => {
     const uploads: File[] = [];
     vi.stubGlobal(

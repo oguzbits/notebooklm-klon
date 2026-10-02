@@ -16,8 +16,13 @@ describe('SourceKindIcon', () => {
     expect(container.querySelector('text')?.textContent).toBe(mark);
   });
 
-  it('draws a symbol without a mark for a recording, a web page and an image', () => {
-    for (const kind of [SOURCE_KIND.AUDIO, SOURCE_KIND.URL, SOURCE_KIND.IMAGE]) {
+  it('draws a symbol without a mark for a recording, a web page, a video and an image', () => {
+    for (const kind of [
+      SOURCE_KIND.AUDIO,
+      SOURCE_KIND.URL,
+      SOURCE_KIND.IMAGE,
+      SOURCE_KIND.YOUTUBE,
+    ]) {
       const { container, unmount } = render(<SourceKindIcon kind={kind} />);
 
       expect(container.querySelector('svg')).not.toBeNull();

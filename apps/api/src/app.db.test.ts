@@ -458,6 +458,85 @@ describe('URL import', () => {
     expect(harness.enqueued).toHaveLength(1);
   });
 
+  describe('a link to a YouTube video', () => {
+    const VIDEO_ID = 'jNQXAC9IVRw';
+    const WATCH_URL = `https://www.youtube.com/watch?v=${VIDEO_ID}`;
+    const neverFetch: FetchDeps = {
+      lookup: async () => {
+        throw new Error('The server must not look up a YouTube host.');
+      },
+      request: async () => {
+        throw new Error('The server must not fetch a YouTube page.');
+      },
+    };
+    const offline = createApp({ ...harness.deps, fetch: neverFetch });
+
+    const listSources = async (notebook: string) =>
+      SourceListSchema.parse(
+        await (
+          await app.request(`/api/notebooks/${notebook}/sources`, { headers: { cookie: alice } })
+        ).json()
+      );
+
+    it('adds a video source without fetching anything and queues it', async () => {
+      const notebook = await createNotebook(alice);
+
+      const response = await offline.request(
+        `/api/notebooks/${notebook}/sources/url`,
+        json(alice, { url: `https://youtu.be/${VIDEO_ID}?t=30` })
+      );
+
+      expect(response.status).toBe(202);
+      expect((await listSources(notebook))[0]).toMatchObject({
+        kind: SOURCE_KIND.YOUTUBE,
+        title: expect.stringContaining(VIDEO_ID),
+      });
+      const stored = await harness.pool.query('SELECT source_url FROM sources');
+      expect(stored.rows).toEqual([{ source_url: WATCH_URL }]);
+      expect(harness.enqueued).toHaveLength(1);
+    });
+
+    it('recognizes the same video under another link form and does not queue it again', async () => {
+      const notebook = await createNotebook(alice);
+      await offline.request(
+        `/api/notebooks/${notebook}/sources/url`,
+        json(alice, { url: WATCH_URL })
+      );
+
+      const second = await offline.request(
+        `/api/notebooks/${notebook}/sources/url`,
+        json(alice, { url: `https://youtu.be/${VIDEO_ID}` })
+      );
+
+      expect(SubmitSourceResultSchema.parse(await second.json()).action).toBe(SUBMIT_ACTION.REUSED);
+      expect(harness.enqueued).toHaveLength(1);
+    });
+
+    it('still fetches a link of a lookalike host as a normal page', async () => {
+      const notebook = await createNotebook(alice);
+
+      const response = await app.request(
+        `/api/notebooks/${notebook}/sources/url`,
+        json(alice, { url: `https://youtube.com.example.com/watch?v=${VIDEO_ID}` })
+      );
+
+      expect(response.status).toBe(202);
+      expect((await listSources(notebook))[0]).toMatchObject({ kind: SOURCE_KIND.URL });
+    });
+
+    it("does not add a video to another user's notebook", async () => {
+      const notebook = await createNotebook(alice);
+
+      const response = await offline.request(
+        `/api/notebooks/${notebook}/sources/url`,
+        json(bob, { url: WATCH_URL })
+      );
+
+      expect(response.status).toBe(404);
+      expect(harness.enqueued).toEqual([]);
+    });
+  });
+
   it.each(['http://127.0.0.1/admin', 'http://localhost/', 'ftp://example.com/x'])(
     'refuses %s',
     async (url) => {

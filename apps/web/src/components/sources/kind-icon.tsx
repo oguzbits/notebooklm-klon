@@ -1,11 +1,17 @@
 import { SOURCE_KIND, type SourceKind } from '@nlm/shared';
-import { AudioLines, Globe, Image } from 'lucide-react';
+import { AudioLines, Globe, Image, SquarePlay } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
 /** The color of the symbol of a file. */
 const FILE_COLOR: Record<
-  Exclude<SourceKind, typeof SOURCE_KIND.URL | typeof SOURCE_KIND.IMAGE | typeof SOURCE_KIND.AUDIO>,
+  Exclude<
+    SourceKind,
+    | typeof SOURCE_KIND.URL
+    | typeof SOURCE_KIND.IMAGE
+    | typeof SOURCE_KIND.AUDIO
+    | typeof SOURCE_KIND.YOUTUBE
+  >,
   string
 > = {
   [SOURCE_KIND.PDF]: 'text-destructive',
@@ -21,7 +27,7 @@ const MARK: Partial<Record<SourceKind, string>> = {
   [SOURCE_KIND.PPTX]: 'PPT',
 };
 
-/** The symbol of a source in the list: a rounded file with its type, the globe for a web page, a picture for an image, a waveform for a recording. */
+/** The symbol of a source in the list: a rounded file with its type, the globe for a web page, a picture for an image, a waveform for a recording, a play button for a video. */
 export function SourceKindIcon({ kind }: { kind: SourceKind }) {
   if (kind === SOURCE_KIND.URL) {
     return <Globe className="size-6 shrink-0 text-muted-foreground" aria-hidden />;
@@ -31,6 +37,9 @@ export function SourceKindIcon({ kind }: { kind: SourceKind }) {
   }
   if (kind === SOURCE_KIND.AUDIO) {
     return <AudioLines className="size-6 shrink-0 text-muted-foreground" aria-hidden />;
+  }
+  if (kind === SOURCE_KIND.YOUTUBE) {
+    return <SquarePlay className="size-6 shrink-0 text-muted-foreground" aria-hidden />;
   }
   // The mark inside the symbol is the kind itself, except that "DOCX" and "PPTX" do not fit.
   const mark = MARK[kind] ?? kind;

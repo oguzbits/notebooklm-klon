@@ -13,6 +13,7 @@ import type { AppDeps } from '../app-deps';
 import type { AuthVariables } from '../auth/session';
 import { LIMITS } from '../config/limits';
 import { detectSourceKind } from '../core/file-kind';
+import { youtubeVideoUrl } from '../core/youtube-url';
 import { findNotebook } from '../db/notebook-repository';
 import { linkSource } from '../db/notebook-source-repository';
 import { HTTP_STATUS } from '../http-status';
@@ -130,6 +131,37 @@ function pdfFileName(address: string): string | null {
   return /\.pdf$/i.test(name) ? name : null;
 }
 
+/**
+ * A YouTube link is not fetched by us: the model watches the video. The source is kept as the
+ * canonical link, so the same video under any link form is one source.
+ */
+function addVideo(deps: AppDeps, userId: string, notebookId: string, video: string) {
+  return addToNotebook(deps, {
+    userId,
+    notebookId,
+    kind: SOURCE_KIND.YOUTUBE,
+    title: `YouTube-Video ${new URL(video).searchParams.get('v')}`,
+    sourceUrl: video,
+    bytes: new TextEncoder().encode(video),
+  });
+}
+
+/** Fetches a public address and checks what came back like an upload. */
+async function fetchAsSource(deps: AppDeps, url: string) {
+  // An ImportError from here is turned into a 400 by the app-wide error handler.
+  const page = await fetchPublicUrl(url, deps.fetch);
+  const host = new URL(page.finalUrl).hostname;
+  const isPdf = page.contentType === PDF_CONTENT_TYPE;
+  const title = isPdf ? (pdfFileName(page.finalUrl) ?? host) : (pageTitle(page.body) ?? host);
+
+  // A PDF behind a link is checked like an upload: the answer may claim any type.
+  const checked = isPdf
+    ? await checkBytes(`${title}.pdf`, page.body)
+    : { ok: true as const, kind: SOURCE_KIND.URL, bytes: page.body };
+  if (!checked.ok) return checked;
+  return { ...checked, title, sourceUrl: page.finalUrl };
+}
+
 /** Adding sources: a file upload and a URL import. Both end in the same ingestion job. */
 export function sourceRoutes(deps: AppDeps) {
   const app = new OpenAPIHono<{ Variables: AuthVariables }>();
@@ -175,27 +207,14 @@ export function sourceRoutes(deps: AppDeps) {
     if (!(await findNotebook(deps.db, userId, notebookId))) {
       return c.json(error(API_ERROR.NOT_FOUND), HTTP_STATUS.NOT_FOUND);
     }
+    const video = youtubeVideoUrl(url);
+    if (video !== null)
+      return c.json(await addVideo(deps, userId, notebookId, video), HTTP_STATUS.ACCEPTED);
 
-    // An ImportError from here is turned into a 400 by the app-wide error handler.
-    const page = await fetchPublicUrl(url, deps.fetch);
-    const host = new URL(page.finalUrl).hostname;
-    const isPdf = page.contentType === PDF_CONTENT_TYPE;
-    const title = isPdf ? (pdfFileName(page.finalUrl) ?? host) : (pageTitle(page.body) ?? host);
-
-    // A PDF behind a link is checked like an upload: the answer may claim any type.
-    const checked = isPdf
-      ? await checkBytes(`${title}.pdf`, page.body)
-      : { ok: true as const, kind: SOURCE_KIND.URL, bytes: page.body };
-    if (!checked.ok) return c.json(error(checked.code), checked.status);
-
-    const result = await addToNotebook(deps, {
-      userId,
-      notebookId,
-      kind: checked.kind,
-      title,
-      sourceUrl: page.finalUrl,
-      bytes: checked.bytes,
-    });
+    const page = await fetchAsSource(deps, url);
+    if (!page.ok) return c.json(error(page.code), page.status);
+    const { ok: _ok, ...input } = page;
+    const result = await addToNotebook(deps, { userId, notebookId, ...input });
     return c.json(result, HTTP_STATUS.ACCEPTED);
   });
 }

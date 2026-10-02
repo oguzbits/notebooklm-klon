@@ -9,6 +9,7 @@ export const SOURCE_KIND = {
   URL: 'URL',
   IMAGE: 'IMAGE',
   AUDIO: 'AUDIO',
+  YOUTUBE: 'YOUTUBE',
 } as const;
 
 export const SOURCE_STATUS = {

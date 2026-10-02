@@ -6,6 +6,7 @@ import { AUDIO_MIME } from '../core/audio-type';
 import { createParseSource } from './parse-source';
 
 const encode = (text: string) => new TextEncoder().encode(text);
+const VIDEO_URL = 'https://www.youtube.com/watch?v=jNQXAC9IVRw';
 const NO_TEXT = { text: '', pageCount: null };
 
 /** A provider whose parts do nothing unless the test gives them something to do. */
@@ -13,6 +14,7 @@ const provider = (parts: Partial<Parameters<typeof createParseSource>[0]>) => ({
   parse: async () => NO_TEXT,
   parseImage: async () => NO_TEXT,
   parseAudio: async () => NO_TEXT,
+  parseVideoUrl: async () => NO_TEXT,
   ...parts,
 });
 
@@ -117,6 +119,57 @@ describe('createParseSource', () => {
     const parse = createParseSource(provider({}));
 
     await expect(parse(SOURCE_KIND.AUDIO, encode('<html>'))).rejects.toThrow(/not audio/);
+  });
+
+  it('hands the link of a YouTube source to the video reader', async () => {
+    let received: string | undefined;
+    const parse = createParseSource(
+      provider({
+        parseVideoUrl: async (url) => {
+          received = url;
+          return { text: 'Gesprochener Text', pageCount: null };
+        },
+      })
+    );
+
+    expect(await parse(SOURCE_KIND.YOUTUBE, encode(VIDEO_URL))).toEqual({
+      text: 'Gesprochener Text',
+      pageCount: null,
+    });
+    expect(received).toBe(VIDEO_URL);
+  });
+
+  it('hands the model the canonical link even when the stored bytes are another form of it', async () => {
+    let received: string | undefined;
+    const parse = createParseSource(
+      provider({
+        parseVideoUrl: async (url) => {
+          received = url;
+          return NO_TEXT;
+        },
+      })
+    );
+
+    await parse(SOURCE_KIND.YOUTUBE, encode('https://youtu.be/jNQXAC9IVRw?t=5'));
+
+    expect(received).toBe(VIDEO_URL);
+  });
+
+  it('fails when the bytes of a YouTube source are not a YouTube link, so no other address reaches the model', async () => {
+    let calls = 0;
+    const parse = createParseSource(
+      provider({
+        parseVideoUrl: async () => {
+          calls += 1;
+          return NO_TEXT;
+        },
+      })
+    );
+
+    await expect(parse(SOURCE_KIND.YOUTUBE, encode('https://example.com/video'))).rejects.toThrow(
+      /not a YouTube/
+    );
+    expect(calls).toBe(0);
   });
 
   it('never calls the PDF parser for other kinds', async () => {

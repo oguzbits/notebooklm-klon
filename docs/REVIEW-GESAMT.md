@@ -121,7 +121,7 @@ Websuche-Treffer. Grenzen: 10 MB, 50 PDF-Seiten, 5 MB je URL, 10 Quellen pro 24 
 | ----------- | ---------------------------------- | ------- | -------------------------------------------------------------- |
 | ✅ Erledigt | Bilder und Scans (PNG, JPEG, WEBP) | S bis M | Gemini nimmt Bilder direkt, gleicher Weg wie PDF.              |
 | ✅ Erledigt | PDF-Link im URL-Import             | S       | Wird wie ein Upload geprüft (Signatur, Seiten, 10 MB).         |
-| Später      | YouTube (Transkript)               | M       | NotebookLM kann es, hoher Nutzwert.                            |
+| ✅ Erledigt | YouTube (Transkript)               | M       | Gemini schaut das öffentliche Video, wir laden nichts.         |
 | ✅ Erledigt | Audio (MP3, WAV)                   | M       | Gemini transkribiert wörtlich, inline bis 10 MB.               |
 | ✅ Erledigt | PPTX                               | M       | Eigener Parser (fflate), Text, Tabellen und Sprechernotizen.   |
 | Später      | XLSX und CSV                       | M       | Problem mit `STUDIO_MAX_CHARS` (120k) bei großen Tabellen.     |
@@ -172,4 +172,4 @@ und Screenreader, `test:db`, `e2e`, Semgrep.
 3. ✅ **Härtung, klein:** H3 (Deploy-Bedingung), M3 (Header in Caddy), H6 nach Browserprüfung.
 4. **Betrieb:** M8 und M9 erledigt; H4 teilweise (Dump vor jedem Deploy, Restore-Probe), Kopie auf externen Speicher: vom Nutzer als nicht notwendig entschieden.
 5. **Funktionen:** PDF-Link ✅, Bilder ✅; „neu einlesen“ ✅; Markdown-Export ✅; Konto löschen ✅; Hinweis zum Gemini-Tarif im Upload-Dialog: zurückgestellt, solange die Seite eine Demo ist.
-6. **Danach:** M5 ✅, M2 ✅, M11 ✅, M12 ✅, M13 ✅, M14 ✅, M15 ✅, M16 ✅, M17 ✅, PPTX ✅, Audio ✅; YouTube.
+6. **Danach:** M5 ✅, M2 ✅, M11 ✅, M12 ✅, M13 ✅, M14 ✅, M15 ✅, M16 ✅, M17 ✅, PPTX ✅, Audio ✅, YouTube ✅.

@@ -101,6 +101,9 @@ const ingest: SubmitPorts = {
     parseAudio: async () => {
       throw new Error('Recordings need the provider and cannot be read offline.');
     },
+    parseVideoUrl: async () => {
+      throw new Error('Videos need the provider and cannot be read offline.');
+    },
   }),
   embed: async (texts) => texts.map((text) => hashEmbedding(text, EMBEDDING_DIMENSIONS)),
 };

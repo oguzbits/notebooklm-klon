@@ -34,6 +34,13 @@ const AUDIO_PROMPT =
   'anything. If there is no speech, describe in two or three plain sentences what can be heard. ' +
   'Output only the result.';
 
+const VIDEO_PROMPT =
+  'Transcribe the speech in this video completely and word for word, in the language spoken. ' +
+  'Start a new paragraph when the speaker changes or the topic does, and mark a change of ' +
+  'speaker with a label such as "Sprecher 1:". Do not summarize, translate, omit or add ' +
+  'anything. If there is no speech, describe in two or three plain sentences what the video ' +
+  'shows and what can be heard. Output only the result.';
+
 /** What differs between the kinds of input: the prompt, the cost per byte and the wait. */
 interface Reading {
   prompt: string;
@@ -52,6 +59,16 @@ const AUDIO_READING: Reading = {
   bytesPerToken: AUDIO_BYTES_PER_TOKEN,
   timeoutMs: LIMITS.AUDIO_PARSE_TIMEOUT_MS,
 };
+
+// The model fetches a video itself, so the server never sees its length. It takes as long as a
+// recording, and the limiter is told the length the limit assumes.
+const VIDEO_READING: Reading = { ...AUDIO_READING, prompt: VIDEO_PROMPT };
+
+/** What goes to the model: the part with the input and the tokens it is expected to cost. */
+interface Input {
+  part: Record<string, unknown>;
+  tokens: number;
+}
 
 const ResponseSchema = z.object({
   candidates: z
@@ -83,28 +100,19 @@ export interface GeminiPdfParserConfig {
 }
 
 /**
- * Reads a PDF, an image (scans included) or a recording with a Gemini model. An answer that did not end normally (cut off,
+ * Reads a PDF, an image (scans included), a recording or a YouTube video with a Gemini model. An answer that did not end normally (cut off,
  * blocked as recitation, filtered) is an error: partial text would silently lose content.
  */
 export function createGeminiPdfParser(config: GeminiPdfParserConfig) {
-  async function transcribe(model: string, bytes: Uint8Array, mimeType: string, reading: Reading) {
-    const estimatedTokens = Math.ceil(bytes.length / reading.bytesPerToken) + PROMPT_TOKENS;
-    const json = await config.limiter.schedule(estimatedTokens, () =>
+  async function transcribe(model: string, input: Input, reading: Reading) {
+    const json = await config.limiter.schedule(input.tokens, () =>
       postGemini(
         config,
         `models/${model}:generateContent`,
         {
           contents: [
             {
-              parts: [
-                {
-                  inlineData: {
-                    mimeType,
-                    data: Buffer.from(bytes).toString('base64'),
-                  },
-                },
-                { text: reading.prompt },
-              ],
+              parts: [input.part, { text: reading.prompt }],
             },
           ],
           generationConfig: { temperature: 0 },
@@ -117,15 +125,11 @@ export function createGeminiPdfParser(config: GeminiPdfParserConfig) {
     return candidate;
   }
 
-  async function read(
-    bytes: Uint8Array,
-    mimeType: string,
-    reading: Reading
-  ): Promise<ParsedDocument> {
-    let candidate = await transcribe(config.model, bytes, mimeType, reading);
+  async function read(input: Input, reading: Reading): Promise<ParsedDocument> {
+    let candidate = await transcribe(config.model, input, reading);
     let fallbackTried = false;
     if (candidate.finishReason === FINISH_RECITATION && config.fallbackModel) {
-      candidate = await transcribe(config.fallbackModel, bytes, mimeType, reading);
+      candidate = await transcribe(config.fallbackModel, input, reading);
       fallbackTried = true;
     }
     if (candidate.finishReason !== FINISH_STOP) {
@@ -138,9 +142,25 @@ export function createGeminiPdfParser(config: GeminiPdfParserConfig) {
     return { text, pageCount: null };
   }
 
+  const inline = (bytes: Uint8Array, mimeType: string, reading: Reading): Input => ({
+    part: { inlineData: { mimeType, data: Buffer.from(bytes).toString('base64') } },
+    tokens: Math.ceil(bytes.length / reading.bytesPerToken) + PROMPT_TOKENS,
+  });
+
   return {
-    parse: (bytes: Uint8Array) => read(bytes, PDF_MIME_TYPE, PDF_READING),
-    parseImage: (bytes: Uint8Array, mimeType: string) => read(bytes, mimeType, IMAGE_READING),
-    parseAudio: (bytes: Uint8Array, mimeType: string) => read(bytes, mimeType, AUDIO_READING),
+    parse: (bytes: Uint8Array) => read(inline(bytes, PDF_MIME_TYPE, PDF_READING), PDF_READING),
+    parseImage: (bytes: Uint8Array, mimeType: string) =>
+      read(inline(bytes, mimeType, IMAGE_READING), IMAGE_READING),
+    parseAudio: (bytes: Uint8Array, mimeType: string) =>
+      read(inline(bytes, mimeType, AUDIO_READING), AUDIO_READING),
+    /** A public YouTube link: Gemini fetches and watches the video, our server never does. */
+    parseVideoUrl: (url: string) =>
+      read(
+        {
+          part: { fileData: { fileUri: url } },
+          tokens: LIMITS.VIDEO_ESTIMATED_TOKENS + PROMPT_TOKENS,
+        },
+        VIDEO_READING
+      ),
   };
 }

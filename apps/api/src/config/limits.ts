@@ -24,6 +24,12 @@ export const LIMITS = {
   PARSE_TIMEOUT_MS: 120_000,
   /** Parsing: longest wait for one model to transcribe a recording, which it takes in real time. */
   AUDIO_PARSE_TIMEOUT_MS: 300_000,
+  /**
+   * Parsing: tokens the rate limiter reserves for one YouTube video. The model fetches the video
+   * itself, so its length is unknown here. About 100 tokens per second makes this a 15 min video;
+   * a longer one runs into the model's 429 retry instead.
+   */
+  VIDEO_ESTIMATED_TOKENS: 90_000,
   /** Chat: longest wait for one model answer, stream included. Without it a stalled stream hangs. */
   CHAT_TIMEOUT_MS: 120_000,
   /** Embedding: longest wait for one embedding request. */

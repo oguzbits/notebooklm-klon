@@ -1183,3 +1183,22 @@ macht). Das Zeitlimit ist 300 s (`AUDIO_PARSE_TIMEOUT_MS`), weil die Mitschrift 
 längere Aufnahmen ist nicht gebaut (YAGNI, zwei Wege hätten zwei Fehlerbilder). Symbol: `AudioLines`.
 Tests: `audio-type.test.ts`, `file-kind`, `gemini-pdf-parser` (Inline, Zeitlimit, Ratenbegrenzer), `parse-source`, Oberfläche
 (`add-source`, `kind-icon`). Mutationen an Token-Schätzung, Zeitlimit und Erkennung getötet.
+
+## 2026-10-02 (YouTube als Quelle)
+
+Neue Quellenart `YOUTUBE` (Vertrag in `packages/shared`, Migration `0021` ergänzt den Enum-Wert). Ein Link auf ein YouTube-Video im
+URL-Import wird **nicht von unserem Server geladen**: Gemini bekommt den Link als `fileData.fileUri` und schaut das Video selbst. Form der
+Anfrage laut Doku und Spike geprüft (`spikes/youtube-probe.mjs`, das konfigurierte Modell nimmt sie; die Doku listet keine Modelle). Der
+Prompt verlangt die wörtliche Mitschrift der Sprache wie beim Audio, bei fehlender Sprache eine kurze Beschreibung. **Es gibt keinen
+SSRF-Weg**, weil der Server nichts abruft; deshalb ist die Hostprüfung (`core/youtube-url.ts`) streng: nur `youtube.com`, `www.`, `m.`,
+`youtu.be`, nur http/https, keine Zugangsdaten im Link, ID genau 11 Zeichen aus `[\w-]`, Pfade `/watch?v=`, `/shorts/`, `/embed/`, `/live/`.
+Ein Lookalike wie `youtube.com.example.com` läuft als normale Webseite. `parse-source` prüft die Bytes erneut, weil das Modell sie abruft.
+**Idempotenz:** Die Bytes der Quelle sind der kanonische Link `https://www.youtube.com/watch?v=ID`, der SHA-256 darüber gibt je Nutzer
+dieselbe Quelle für dasselbe Video in jeder Linkform. **Kein Titel:** Wir holen keinen (das wäre ein Abruf), der Titel ist „YouTube-Video
+ID“. **Grenzen:** Vorschau-Funktion bei Google, nur öffentliche Videos (privat oder fehlend gibt 403 `PERMISSION_DENIED`, in der Oberfläche
+nur als fehlgeschlagen sichtbar), im kostenlosen Tarif 8 Stunden Video je Tag, rund 88 bis 100 Token je Sekunde. Da der Server die Länge nicht
+kennt, rechnet der Begrenzer mit festen 90 000 Token (`VIDEO_ESTIMATED_TOKENS`, rund 15 Minuten); längere Videos können auf 429-Wiederholungen
+oder `MAX_TOKENS` stoßen. Zeitlimit wie beim Audio (300 s). Symbol: `SquarePlay`.
+Tests: `youtube-url` (26), `gemini-pdf-parser` (Anfrageform, Zeitlimit, Schätzung, 403), `parse-source`, Route in `app.db.test.ts`
+(kein Abruf, dasselbe Video in anderer Linkform wird wiederverwendet, Lookalike, fremdes Notizbuch), Oberfläche. Mutationen getötet,
+bis auf eine äquivalente in `youtube-url.ts`.

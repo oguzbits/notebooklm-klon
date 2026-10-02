@@ -73,7 +73,7 @@ ein Nachbau ist. Dazu:
 
 - Audio- und Video-Overview, Infografik, Präsentation, Deep Research.
 - Später ergänzt (Runde 4): eine schnelle Websuche mit Tavily (ohne Deep Research) und ein Titelbild im S3-Speicher; siehe [ENTSCHEIDUNGEN.md](ENTSCHEIDUNGEN.md).
-- Sharing und Kollaboration, YouTube-Transkription, Drive-Anbindung. Eine eigene Handy-App entfällt; die Seite selbst hat ein Handy-Layout (Tabs).
+- Sharing und Kollaboration, Drive-Anbindung. Eine eigene Handy-App entfällt; die Seite selbst hat ein Handy-Layout (Tabs).
 - Originaldateien speichern (nur extrahierter Text plus Metadaten).
 
 **Qualitätsanforderungen (production-ready)**

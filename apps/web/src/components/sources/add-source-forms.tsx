@@ -43,8 +43,8 @@ export function WebPageForm({ pending, onSubmit, onBack }: WebPageFormProps) {
     <form onSubmit={submit} className="flex flex-col gap-4">
       <BackHeader title="Webseite hinzufügen" onBack={onBack} />
       <p className="text-read text-muted-foreground">
-        Füge die Adresse einer Webseite oder eines PDFs ein. Bei einer Webseite wird der sichtbare
-        Text importiert.
+        Füge die Adresse einer Webseite, eines PDFs oder eines öffentlichen YouTube-Videos ein. Bei
+        einer Webseite wird der sichtbare Text importiert, bei einem Video das gesprochene Wort.
       </p>
       <div className="flex flex-col gap-2">
         <Label htmlFor="source-url">Webadresse</Label>

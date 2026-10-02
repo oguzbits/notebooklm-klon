@@ -10,6 +10,7 @@ import { RateLimiter } from './rate-limiter';
 const MODEL = 'test-parse-model';
 const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 const KEY = 'test-key-not-real';
+const VIDEO_URL = 'https://www.youtube.com/watch?v=jNQXAC9IVRw';
 const PDF = new TextEncoder().encode('%PDF-1.4 fake');
 
 const FALLBACK_MODEL = 'test-fallback-model';
@@ -131,6 +132,68 @@ describe('createGeminiPdfParser', () => {
       pageCount: null,
     });
     await expect(small.parseAudio(tooLong, 'audio/mpeg')).rejects.toThrow(RangeError);
+  });
+
+  it('hands a YouTube link to the model as a file and asks for the speech', async () => {
+    let seen: Record<string, unknown> | undefined;
+    server.use(
+      http.post(ENDPOINT, async ({ request }) => {
+        seen = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json(answer('Das ist ein Elefant.'));
+      })
+    );
+
+    const result = await parser().parseVideoUrl(VIDEO_URL);
+
+    expect(result).toEqual({ text: 'Das ist ein Elefant.', pageCount: null });
+    const parts = (seen as { contents: { parts: Record<string, unknown>[] }[] }).contents[0]?.parts;
+    expect(parts?.[0]).toEqual({ fileData: { fileUri: VIDEO_URL } });
+    expect(String(parts?.[1]?.text)).toMatch(/speech/);
+  });
+
+  it('waits as long for a video as for a recording', async () => {
+    server.use(http.post(ENDPOINT, () => HttpResponse.json(answer('Text'))));
+    const timeout = vi.spyOn(AbortSignal, 'timeout');
+
+    await parser().parseVideoUrl(VIDEO_URL);
+
+    expect(timeout).toHaveBeenCalledWith(LIMITS.AUDIO_PARSE_TIMEOUT_MS);
+    timeout.mockRestore();
+  });
+
+  it('counts a video at the length the limit assumes, because its length is not known', async () => {
+    server.use(http.post(ENDPOINT, () => HttpResponse.json(answer('Text'))));
+    const limiter = new RateLimiter({ requestsPerMinute: 1000, tokensPerMinute: 1_000_000 });
+    const schedule = vi.spyOn(limiter, 'schedule');
+    const reader = createGeminiPdfParser({
+      apiKey: KEY,
+      model: MODEL,
+      limiter,
+      sleep: async () => {},
+    });
+
+    await reader.parseVideoUrl(VIDEO_URL);
+
+    expect(schedule.mock.calls[0]?.[0]).toBe(LIMITS.VIDEO_ESTIMATED_TOKENS + 500);
+  });
+
+  it('turns the refusal for a private or removed video into an error with the status', async () => {
+    server.use(
+      http.post(ENDPOINT, () =>
+        HttpResponse.json(
+          {
+            error: {
+              code: 403,
+              status: 'PERMISSION_DENIED',
+              message: 'The caller does not have permission',
+            },
+          },
+          { status: 403 }
+        )
+      )
+    );
+
+    await expect(parser().parseVideoUrl(VIDEO_URL)).rejects.toThrow(GeminiError);
   });
 
   it('refuses an image answer that did not end normally, like a PDF', async () => {
