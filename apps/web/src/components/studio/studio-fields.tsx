@@ -41,7 +41,7 @@ export function SegmentedField<T extends string>({
       <div
         role="radiogroup"
         aria-labelledby={labelId}
-        className="flex w-fit max-w-full overflow-hidden rounded-full border border-border"
+        className="flex w-fit max-w-full rounded-full border border-border"
       >
         {options.map((option, index) => {
           const selected = option.value === value;
@@ -53,7 +53,7 @@ export function SegmentedField<T extends string>({
               aria-checked={selected}
               onClick={() => onChange(option.value)}
               className={cn(
-                'veil flex h-10 items-center gap-2 px-4 text-ui font-label whitespace-nowrap',
+                'veil flex h-10 items-center gap-2 px-3 text-ui font-label whitespace-nowrap first:rounded-l-full last:rounded-r-full',
                 index > 0 && 'border-l border-border',
                 selected && 'bg-accent'
               )}

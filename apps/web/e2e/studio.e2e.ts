@@ -108,6 +108,30 @@ test('a report from a template shows its sections, each statement cited', async 
   await expect(library(page).getByRole('button', { name: /Überblick/ })).toBeVisible();
 });
 
+for (const tile of ['Karteikarten', 'Quiz']) {
+  test(`every option of the ${tile} dialog is fully visible on a desktop screen`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.getByRole('button', { name: tile, exact: true }).click();
+    const dialog = page.getByRole('dialog');
+    const groups = dialog.getByRole('radiogroup');
+    await expect(groups.first()).toBeVisible();
+
+    // The width of the text depends on the loaded font; scrollWidth is in layout pixels, so the zoom-in
+    // animation of the dialog does not distort it.
+    await page.evaluate(() => document.fonts.ready);
+    const bars = await groups.evaluateAll((elements) =>
+      elements.map((group) => ({ scrollWidth: group.scrollWidth, clientWidth: group.clientWidth }))
+    );
+    expect(bars.length).toBeGreaterThan(0);
+    // Nothing may be cut off: the options together are not wider than the bar that holds them.
+    for (const bar of bars) {
+      expect(bar.scrollWidth).toBeLessThanOrEqual(bar.clientWidth);
+    }
+  });
+}
+
 const DIALOG_TILES = ['Berichte', 'Karteikarten', 'Quiz', 'Mindmap', 'Datentabelle'];
 const NARROW = { width: 390, height: 800 };
 

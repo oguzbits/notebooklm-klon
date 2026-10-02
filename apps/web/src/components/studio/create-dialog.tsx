@@ -172,7 +172,7 @@ function SizeFields({ kind, size, difficulty, onSize, onDifficulty }: SizeFields
     { value: STUDIO_SIZE.MORE, label: 'Mehr' },
   ];
   return (
-    <div className="grid gap-7 sm:grid-cols-2">
+    <div className="grid gap-6 sm:grid-cols-2">
       <SegmentedField
         label={COUNT_LABEL[kind]}
         options={sizeOptions}

@@ -1247,3 +1247,13 @@ verloren geht. Ein Rückgängig bräuchte Soft-Delete: eine Migration, einen Fil
 Abfrage (Rule 3 gilt dann doppelt) und gelöschte Inhalte, die noch Tage liegen. Das widerspricht
 "Konto und Daten löschen" und bringt Datenschutz-Aufwand für wenig Nutzen. Wer es später will, fängt bei
 Notizen an (kleinster Umfang).
+
+## 2026-10-03 (Segmentleisten im Quiz- und Lernkarten-Dialog wurden abgeschnitten)
+
+Bei 1440 px waren die Leisten 425 px breit, die Spalte aber nur 405 px (Innenabstand 16 px je Segment, Lücke
+28 px). `overflow-hidden` an der Leiste schnitt "Mehr" und "Schwierig" still ab. Gemessen im Original: Spalte
+407 px, Lücke 24 px, Segmente mit rund 12 px Innenabstand (80 / 263 / 59 px). Im Klon jetzt `px-3` je Segment
+und `gap-6` im Raster; `overflow-hidden` ist weg, damit ein Überlauf nie wieder still verschwindet. Die Rundung
+sitzt dafür am ersten und letzten Segment. Der Playwright-Test `every option of the … dialog is fully visible`
+prüft `scrollWidth <= clientWidth` je Leiste (jsdom hat kein Layout) und wartet auf die geladene Schrift, weil
+die Textbreite davon abhängt.
