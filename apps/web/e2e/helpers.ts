@@ -48,5 +48,5 @@ export async function renameOpenNotebook(page: Page, title: string): Promise<voi
 export async function addFixture(page: Page, name: string): Promise<void> {
   await page.getByRole('button', { name: 'Quellen hinzufügen' }).click();
   await page.locator('input[type=file]').setInputFiles(path.join(FIXTURES, name));
-  await expect(page.getByRole('checkbox', { name: new RegExp(name) })).toBeEnabled();
+  await expect(page.getByRole('checkbox', { name })).toBeEnabled();
 }

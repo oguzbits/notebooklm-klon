@@ -18,7 +18,7 @@ async function submitPastedText(page: Page, title: string, text: string): Promis
 
 async function addPastedText(page: Page, title: string, text: string): Promise<void> {
   await submitPastedText(page, title, text);
-  await expect(page.getByRole('checkbox', { name: new RegExp(title) })).toBeEnabled();
+  await expect(page.getByRole('checkbox', { name: title })).toBeEnabled();
 }
 
 test.beforeEach(async ({ page }) => {
