@@ -36,7 +36,7 @@ export function NotebookNotFound() {
           Dieses Notebook gibt es nicht (mehr) in deinem Konto.
         </p>
         <Button asChild variant="outline">
-          <Link to={ROUTES.HOME}>Zu deinen Notebooksn</Link>
+          <Link to={ROUTES.HOME}>Zu deinen Notebooks</Link>
         </Button>
       </div>
     </>

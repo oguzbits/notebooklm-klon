@@ -2,7 +2,7 @@ import { expect, type Page, test } from '@playwright/test';
 
 import { createNotebook, renameOpenNotebook, signUp, uniqueEmail } from './helpers';
 
-const backToList = (page: Page) => page.getByRole('link', { name: 'Zu deinen Notebooksn' }).click();
+const backToList = (page: Page) => page.getByRole('link', { name: 'Zu deinen Notebooks' }).click();
 
 test('notebooks are made, found, renamed, pinned and deleted from the list', async ({ page }) => {
   await signUp(page, uniqueEmail('list'));
