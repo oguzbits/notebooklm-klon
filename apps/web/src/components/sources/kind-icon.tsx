@@ -10,8 +10,15 @@ const FILE_COLOR: Record<
 > = {
   [SOURCE_KIND.PDF]: 'text-destructive',
   [SOURCE_KIND.DOCX]: 'text-studio-blue',
+  [SOURCE_KIND.PPTX]: 'text-studio-purple',
   [SOURCE_KIND.TXT]: 'text-muted-foreground',
   [SOURCE_KIND.MD]: 'text-muted-foreground',
+};
+
+/** The mark of the kinds whose name is too long for the symbol. */
+const MARK: Partial<Record<SourceKind, string>> = {
+  [SOURCE_KIND.DOCX]: 'DOC',
+  [SOURCE_KIND.PPTX]: 'PPT',
 };
 
 /** The symbol of a source in the list: a rounded file with its type, the globe for a web page, a picture for an image. */
@@ -22,8 +29,8 @@ export function SourceKindIcon({ kind }: { kind: SourceKind }) {
   if (kind === SOURCE_KIND.IMAGE) {
     return <Image className="size-6 shrink-0 text-muted-foreground" aria-hidden />;
   }
-  // The mark inside the symbol is the kind itself, except that "DOCX" does not fit.
-  const mark = kind === SOURCE_KIND.DOCX ? 'DOC' : kind;
+  // The mark inside the symbol is the kind itself, except that "DOCX" and "PPTX" do not fit.
+  const mark = MARK[kind] ?? kind;
   const color = FILE_COLOR[kind];
   return (
     <svg viewBox="0 0 24 24" className={cn('size-6 shrink-0', color)} aria-hidden>

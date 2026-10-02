@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const SOURCE_KIND = {
   PDF: 'PDF',
   DOCX: 'DOCX',
+  PPTX: 'PPTX',
   TXT: 'TXT',
   MD: 'MD',
   URL: 'URL',

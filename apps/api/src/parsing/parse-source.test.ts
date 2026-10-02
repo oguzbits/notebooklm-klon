@@ -1,4 +1,5 @@
 import { SOURCE_KIND } from '@nlm/shared';
+import { strToU8, zipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
 
 import { createParseSource } from './parse-source';
@@ -37,6 +38,26 @@ describe('createParseSource', () => {
 
     expect(await parse(SOURCE_KIND.PDF, bytes)).toEqual({ text: 'aus dem PDF', pageCount: 4 });
     expect(received).toBe(bytes);
+  });
+
+  it('reads a PPTX source as a presentation and rejects a ZIP that is none', async () => {
+    const parse = createParseSource(provider({}));
+    const slides = zipSync({
+      'ppt/presentation.xml': strToU8(
+        '<p:presentation xmlns:p="p" xmlns:r="r"><p:sldIdLst><p:sldId r:id="rId1"/></p:sldIdLst></p:presentation>'
+      ),
+      'ppt/_rels/presentation.xml.rels': strToU8(
+        '<Relationships><Relationship Id="rId1" Type="t/slide" Target="slides/slide1.xml"/></Relationships>'
+      ),
+      'ppt/slides/slide1.xml': strToU8(
+        '<p:sld xmlns:p="p" xmlns:a="a"><p:sp><p:txBody><a:p><a:r><a:t>Folientext</a:t></a:r></a:p></p:txBody></p:sp></p:sld>'
+      ),
+    });
+
+    expect((await parse(SOURCE_KIND.PPTX, slides)).text).toContain('Folientext');
+    await expect(
+      parse(SOURCE_KIND.PPTX, zipSync({ 'word/document.xml': strToU8('<w/>') }))
+    ).rejects.toThrow();
   });
 
   it('reads a URL source as a web page', async () => {

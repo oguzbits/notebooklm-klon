@@ -1151,3 +1151,15 @@ sind sie Bereiche nebeneinander, und die Rolle müsste mit der Breite wechseln. 
 **Der Umbruch bei 66 rem bleibt.** Er ist am Original gemessen (`index.css`), und Querformat-Tablets ab 1056 px zeigen schon drei Spalten
 (1100 px im E2E-Test). Darunter bleibt eine Spalte, weil 25 % von 1000 px für die Quellen zu schmal wären. Tests: `column-tabs.test.tsx`
 (Mutationen am Umlauf, an Pos1/Ende, am Fokus und am Tab-Index getötet) und `e2e/column-tabs.e2e.ts` auf 360 px.
+
+## 2026-10-02 (PPTX als Quelle)
+
+Neue Quellenart `PPTX` (Vertrag in `packages/shared`, Migration `0019` ergänzt den Enum-Wert). **Parser selbst gebaut** (`parsing/parse-pptx.ts`)
+auf `fflate` (klein, ohne Abhängigkeiten) und `linkedom` (schon vorhanden): `officeparser` 8.1 bringt 31 MB mit `tesseract.js` und `pdfjs-dist`
+mit, für Text aus ein paar XML-Dateien zu schwer. Gelesen wird je Folie der Text in der Reihenfolge der Präsentation (`presentation.xml`
+und ihre Beziehungen, nicht die Dateinummer, die beim Verschieben bleibt), Tabellen als Markdown-Tabelle, Sprechernotizen als „Notizen:“ unter
+der Folie. Titel wandert in die Überschrift „## Folie N: Titel“; Foliennummer, Fußzeile und Datum entfallen. Bilder, Diagramme und SmartArt
+haben keinen Text und fehlen. Das alte `.ppt` bleibt unterstützt-nicht. **Schutz:** Nur die Teile, die gelesen werden, werden entpackt, und
+ein Teil über 5 MB entpackt bricht ab (fflate kürzt eine falsch angegebene Größe, geprüft). Ein ZIP ohne `ppt/presentation.xml` (zum Beispiel
+ein DOCX als `.pptx`) wirft und wird `PARSE_FAILED`. Das Seitenzähler-Feld bleibt `null`, weil „Seite“ für Folien falsch wäre.
+Tests: `parse-pptx.test.ts` (Mutationen an Größenlimit, Einrückung, Zeilenzeichen, Dekoration und Notizen getötet), `file-kind`, `parse-source`.

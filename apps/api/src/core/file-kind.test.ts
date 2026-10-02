@@ -18,6 +18,11 @@ describe('detectSourceKind', () => {
     expect(detectSourceKind('bericht.pdf', TEXT)).toBeNull();
   });
 
+  it('accepts a PPTX only when the name and the ZIP signature agree', () => {
+    expect(detectSourceKind('folien.pptx', ZIP)).toBe(SOURCE_KIND.PPTX);
+    expect(detectSourceKind('folien.pptx', TEXT)).toBeNull();
+  });
+
   it('accepts a DOCX only when the name and the ZIP signature agree', () => {
     expect(detectSourceKind('brief.docx', ZIP)).toBe(SOURCE_KIND.DOCX);
     expect(detectSourceKind('brief.docx', TEXT)).toBeNull();

@@ -3,6 +3,7 @@ import { SOURCE_KIND, type SourceKind } from '@nlm/shared';
 import { detectImageType } from '../core/image-type';
 import type { IngestPorts, ParsedDocument } from '../ingestion/ingest';
 import { parseDocx } from './parse-docx';
+import { parsePptx } from './parse-pptx';
 import { parseText } from './parse-text';
 import { parseWebPage } from './parse-web';
 
@@ -19,6 +20,8 @@ export function createParseSource(provider: {
         return readImage(provider, bytes);
       case SOURCE_KIND.DOCX:
         return parseDocx(bytes);
+      case SOURCE_KIND.PPTX:
+        return parsePptx(bytes);
       case SOURCE_KIND.TXT:
       case SOURCE_KIND.MD:
         return parseText(bytes);

@@ -3,12 +3,17 @@ import { SOURCE_KIND, type SourceKind } from '@nlm/shared';
 import { detectImageType } from './image-type';
 
 const PDF_SIGNATURE = [0x25, 0x50, 0x44, 0x46, 0x2d]; // %PDF-
-const ZIP_SIGNATURE = [0x50, 0x4b, 0x03, 0x04]; // PK\x03\x04, a DOCX is a ZIP
+const ZIP_SIGNATURE = [0x50, 0x4b, 0x03, 0x04]; // PK\x03\x04, a DOCX and a PPTX are ZIPs
 
 const TEXT_KINDS = new Map<string, SourceKind>([
   ['txt', SOURCE_KIND.TXT],
   ['md', SOURCE_KIND.MD],
   ['markdown', SOURCE_KIND.MD],
+]);
+
+const ZIP_KINDS = new Map<string, SourceKind>([
+  ['docx', SOURCE_KIND.DOCX],
+  ['pptx', SOURCE_KIND.PPTX],
 ]);
 
 const IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'webp']);
@@ -26,7 +31,8 @@ export function detectSourceKind(filename: string, bytes: Uint8Array): SourceKin
   const extension = dot >= 0 ? filename.slice(dot + 1).toLowerCase() : '';
 
   if (extension === 'pdf') return startsWith(bytes, PDF_SIGNATURE) ? SOURCE_KIND.PDF : null;
-  if (extension === 'docx') return startsWith(bytes, ZIP_SIGNATURE) ? SOURCE_KIND.DOCX : null;
+  const zipped = ZIP_KINDS.get(extension);
+  if (zipped) return startsWith(bytes, ZIP_SIGNATURE) ? zipped : null;
   if (IMAGE_EXTENSIONS.has(extension)) {
     return detectImageType(bytes) === null ? null : SOURCE_KIND.IMAGE;
   }
