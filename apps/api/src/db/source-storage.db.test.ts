@@ -1,9 +1,15 @@
-import { EMBEDDING_DIMENSIONS, SOURCE_FAILURE, SOURCE_KIND, SOURCE_STATUS } from '@nlm/shared';
+import {
+  EMBEDDING_DIMENSIONS,
+  SOURCE_FAILURE,
+  SOURCE_KIND,
+  SOURCE_STATUS,
+  type SourceStatus,
+} from '@nlm/shared';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { chunks, sources } from './schema';
-import { createSourceStorage, createUploadStorage } from './source-storage';
+import { createSourceStorage, createUploadStorage, failInterruptedSources } from './source-storage';
 import { axisVector, createTestDb, ensureUsers } from './testing/test-db';
 
 const { db, pool } = createTestDb();
@@ -136,6 +142,60 @@ describe('source storage', () => {
     const [row] = await db.select().from(sources).where(eq(sources.id, id));
     expect(row?.status).toBe(SOURCE_STATUS.PENDING);
     expect(await db.select().from(chunks).where(eq(chunks.sourceId, id))).toHaveLength(0);
+  });
+});
+
+describe('failing sources an interrupted job left behind', () => {
+  const HOUR_MS = 60 * 60 * 1000;
+  const cutoff = () => new Date(Date.now() - HOUR_MS);
+
+  /** A source with an upload of the given age and the given status, as a job leaves it when the process dies. */
+  async function leftBehind(hash: string, status: SourceStatus, ageMs: number) {
+    const { id } = await storage.create(newSource(hash));
+    await db.update(sources).set({ status }).where(eq(sources.id, id));
+    await uploads.put(id, new Uint8Array([1]));
+    await pool.query(`UPDATE source_uploads SET created_at = $1 WHERE source_id = $2`, [
+      new Date(Date.now() - ageMs),
+      id,
+    ]);
+    return id;
+  }
+  const statusOf = async (id: string) =>
+    (await db.select({ status: sources.status }).from(sources).where(eq(sources.id, id)))[0]
+      ?.status;
+
+  it('fails a PENDING or PROCESSING source whose upload is older than the cutoff and removes the upload', async () => {
+    const pending = await leftBehind('h-pending', SOURCE_STATUS.PENDING, 2 * HOUR_MS);
+    const processing = await leftBehind('h-processing', SOURCE_STATUS.PROCESSING, 2 * HOUR_MS);
+
+    expect(await failInterruptedSources(db, cutoff())).toBe(2);
+
+    for (const id of [pending, processing]) {
+      expect(await statusOf(id)).toBe(SOURCE_STATUS.FAILED);
+      expect(await uploads.load(id)).toBeNull();
+    }
+    const [row] = await db
+      .select({ errorMessage: sources.errorMessage })
+      .from(sources)
+      .where(eq(sources.id, pending));
+    expect(row?.errorMessage).toBe(SOURCE_FAILURE.INTERRUPTED);
+  });
+
+  it('leaves a source alone whose job may still be running or waiting', async () => {
+    const fresh = await leftBehind('h-fresh', SOURCE_STATUS.PROCESSING, 1000);
+
+    expect(await failInterruptedSources(db, cutoff())).toBe(0);
+    expect(await statusOf(fresh)).toBe(SOURCE_STATUS.PROCESSING);
+    expect(await uploads.load(fresh)).not.toBeNull();
+  });
+
+  it('leaves READY and FAILED sources alone, however old their upload is', async () => {
+    const ready = await leftBehind('h-ready', SOURCE_STATUS.READY, 2 * HOUR_MS);
+    const failed = await leftBehind('h-failed', SOURCE_STATUS.FAILED, 2 * HOUR_MS);
+
+    expect(await failInterruptedSources(db, cutoff())).toBe(0);
+    expect(await statusOf(ready)).toBe(SOURCE_STATUS.READY);
+    expect(await statusOf(failed)).toBe(SOURCE_STATUS.FAILED);
   });
 });
 

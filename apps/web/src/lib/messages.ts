@@ -39,6 +39,8 @@ export const FAILURE_MESSAGE: Record<SourceFailure, string> = {
   [SOURCE_FAILURE.PARSE_FAILED]: 'Die Quelle konnte nicht gelesen werden.',
   [SOURCE_FAILURE.EMBED_FAILED]: 'Die Quelle konnte nicht für die Suche vorbereitet werden.',
   [SOURCE_FAILURE.ENQUEUE_FAILED]: 'Das Lesen der Quelle konnte nicht gestartet werden.',
+  [SOURCE_FAILURE.INTERRUPTED]:
+    'Das Lesen der Quelle wurde unterbrochen. Lade sie bitte noch einmal hoch.',
 };
 
 export const STATUS_LABEL: Record<SourceStatus, string> = {

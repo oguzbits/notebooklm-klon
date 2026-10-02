@@ -9,7 +9,7 @@ const WAIT_MS = 15_000;
 let queue: JobQueue | undefined;
 
 afterEach(async () => {
-  await queue?.stop();
+  await queue?.stop(1000);
   queue = undefined;
 });
 

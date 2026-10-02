@@ -31,6 +31,8 @@ services:
     # Loaded by the deploy workflow (docker save | docker load), tagged "current".
     image: nlm-app:current
     restart: unless-stopped
+    # Above the shutdown waits in apps/api/src/config/limits.ts (10 s for requests + 60 s for the running job).
+    stop_grace_period: 90s
     logging: *logging
     env_file: server.env
     environment:

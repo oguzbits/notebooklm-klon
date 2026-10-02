@@ -18,7 +18,8 @@ export interface JobQueue {
   enqueue: (sourceId: string) => Promise<void>;
   /** Registers the worker for ingestion jobs. A handler that throws marks the job as failed. */
   work: (handler: (payload: unknown) => Promise<void>) => Promise<void>;
-  stop: () => Promise<void>;
+  /** Lets the running job finish for up to `waitMs`, then closes the queue. */
+  stop: (waitMs: number) => Promise<void>;
 }
 
 /** The ingestion job queue, stored in the same PostgreSQL database. */
@@ -41,8 +42,8 @@ export async function createJobQueue(
         for (const job of jobs) await handler(job.data);
       });
     },
-    async stop() {
-      await boss.stop({ graceful: true });
+    async stop(waitMs) {
+      await boss.stop({ graceful: true, timeout: waitMs });
     },
   };
 }

@@ -885,3 +885,17 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
   nennt die Einstiegspunkte (statt „nirgends sonst“), Test-first bindet nur Fehlerbehebungen, neuer Abschnitt „Tests“ (Verhalten
   statt Markup, Auth-Tests je Route bleiben, Handmutation). Verworfen: DoD-Quittung abschaffen und AGENTS.md aufteilen (nicht
   belegt); eine ESLint-Regel für `process.env` (neun Einstiegspunkte brauchten Ausnahmen, Nutzen klein).
+
+## 2026-10-02 (Review: Fehlerbehebungen H1, H2, H7)
+
+- **Hängende Quellen (H1).** Ein Job, den ein Neustart abbricht, wird von der Queue nicht wiederholt (`retryLimit` 0) und ließ die
+  Quelle für immer auf „Wird gelesen“ stehen. Beim Start und danach stündlich setzt `failInterruptedSources` jede Quelle mit
+  Status PENDING oder PROCESSING, deren Upload älter als eine Stunde ist, auf FAILED (Code `INTERRUPTED`, deutsche Meldung) und
+  löscht den Upload. Maßstab ist das Alter der Zeile in `source_uploads`, nicht `sources.created_at`: Die Upload-Zeile gibt es genau
+  so lange, wie ein Job läuft oder wartet, und ein erneuter Upload legt sie neu an. Ohne Migration. SIGTERM schließt erst den
+  Server (höchstens 10 s), dann wartet `queue.stop` bis zu 60 s auf den laufenden Job; `stop_grace_period` im Compose steht mit 90 s
+  darüber.
+- **Notebook-Wechsel (H2).** `key={notebookId}` am `NotebookView`: Die Route-Komponente bleibt beim Wechsel von `:notebookId`
+  erhalten, die offene Quellenansicht wanderte ins neue Notebook (404 auf dem alten Chunk).
+- **CSV (H7).** Felder, die mit `=`, `+`, `-`, `@`, Tab oder CR beginnen, bekommen ein Apostroph; reine Zahlen (`-5`, `+3,5`) bleiben.
+- **„Prompt“ bleibt.** Das Wort steht so im Original („Prompt und n Quellen ansehen“) und ist oben als bewusste Wahl festgehalten.

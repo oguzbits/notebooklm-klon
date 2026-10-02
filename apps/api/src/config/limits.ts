@@ -44,6 +44,12 @@ export const LIMITS = {
   WEB_SEARCH_TIMEOUT_MS: 10_000,
   /** Ingestion: chunks per embedding request. */
   EMBED_BATCH_SIZE: 16,
+  /** Ingestion: age after which a source still PENDING or PROCESSING counts as interrupted (the queue gives a job 15 min). */
+  INTERRUPTED_JOB_AFTER_MS: 60 * 60 * 1000,
+  /** Shutdown: how long open requests may finish before the running ingestion job is waited for. */
+  SHUTDOWN_SERVER_WAIT_MS: 10_000,
+  /** Shutdown: how long a running ingestion job may finish. Keep the compose stop_grace_period above both. */
+  SHUTDOWN_JOB_WAIT_MS: 60_000,
 } as const;
 
 /**

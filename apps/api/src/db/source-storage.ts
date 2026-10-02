@@ -1,5 +1,5 @@
-import { SOURCE_STATUS } from '@nlm/shared';
-import { and, eq } from 'drizzle-orm';
+import { SOURCE_FAILURE, SOURCE_STATUS } from '@nlm/shared';
+import { and, eq, inArray, lt } from 'drizzle-orm';
 
 import type { IngestPorts } from '../ingestion/ingest';
 import type { SubmitPorts } from '../ingestion/submit';
@@ -63,6 +63,34 @@ export function createSourceStorage(db: Database): IngestPorts['sources'] {
         .where(eq(sources.id, sourceId));
     },
   };
+}
+
+/**
+ * A job the process did not finish (restart, crash) leaves its source PENDING or PROCESSING with the
+ * upload still stored, and the queue does not retry it. Such sources are failed so the user can
+ * upload again. Returns how many there were.
+ */
+export async function failInterruptedSources(db: Database, olderThan: Date): Promise<number> {
+  return db.transaction(async (tx) => {
+    const stale = await tx
+      .select({ id: sources.id })
+      .from(sources)
+      .innerJoin(sourceUploads, eq(sourceUploads.sourceId, sources.id))
+      .where(
+        and(
+          inArray(sources.status, [SOURCE_STATUS.PENDING, SOURCE_STATUS.PROCESSING]),
+          lt(sourceUploads.createdAt, olderThan)
+        )
+      );
+    const ids = stale.map((row) => row.id);
+    if (ids.length === 0) return 0;
+    await tx
+      .update(sources)
+      .set({ status: SOURCE_STATUS.FAILED, errorMessage: SOURCE_FAILURE.INTERRUPTED })
+      .where(inArray(sources.id, ids));
+    await tx.delete(sourceUploads).where(inArray(sourceUploads.sourceId, ids));
+    return ids.length;
+  });
 }
 
 /** Holds the raw bytes of an upload until its ingestion job has run. */

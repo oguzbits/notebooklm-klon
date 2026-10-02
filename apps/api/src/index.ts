@@ -8,7 +8,11 @@ import { createDb } from './db/client';
 import { deleteExpiredGuests } from './db/guest-repository';
 import { runMigrations } from './db/migrate';
 import { createQuota } from './db/quota';
-import { createSourceStorage, createUploadStorage } from './db/source-storage';
+import {
+  createSourceStorage,
+  createUploadStorage,
+  failInterruptedSources,
+} from './db/source-storage';
 import { systemDeps } from './import/system-deps';
 import { IngestError } from './ingestion/ingest';
 import { runIngestJob, type SubmitPorts } from './ingestion/submit';
@@ -16,6 +20,7 @@ import { createJobQueue } from './jobs/queue';
 import { errorName, log } from './logger';
 import { createProviders } from './providers';
 import { createTavilySearch } from './search/tavily-search';
+import { createShutdown } from './shutdown';
 import { userCoverPrefix } from './storage/cover-key';
 import type { ObjectStore } from './storage/object-store';
 import { removePrefixQuietly } from './storage/remove-quietly';
@@ -110,7 +115,16 @@ async function removeExpiredGuests() {
   if (deleted.length > 0)
     log({ level: 'info', msg: 'expired guests deleted', count: deleted.length });
 }
+// A job the process did not finish (restart, crash) is not retried: fail its source so it can be uploaded again.
+async function sweepInterruptedSources() {
+  const count = await failInterruptedSources(
+    db,
+    new Date(Date.now() - LIMITS.INTERRUPTED_JOB_AFTER_MS)
+  );
+  if (count > 0) log({ level: 'warn', msg: 'interrupted sources failed', count });
+}
 await removeExpiredGuests();
+await sweepInterruptedSources();
 setInterval(() => {
   removeExpiredGuests().catch((error: unknown) =>
     log({
@@ -119,10 +133,40 @@ setInterval(() => {
       name: errorName(error),
     })
   );
+  sweepInterruptedSources().catch((error: unknown) =>
+    log({
+      level: 'error',
+      msg: 'interrupted source cleanup failed',
+      name: errorName(error),
+    })
+  );
 }, HOUR_MS).unref();
 
 if (env.WEB_DIST_DIR) serveWeb(app, env.WEB_DIST_DIR);
 
-serve({ fetch: app.fetch, port: env.PORT }, (info) => {
+const server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {
   log({ level: 'info', msg: 'listening', port: info.port });
+});
+
+// A deploy stops the container with SIGTERM: finish open requests, let the running job end.
+const shutdown = createShutdown({
+  closeServer: () =>
+    new Promise<void>((resolve) => {
+      const giveUp = setTimeout(resolve, LIMITS.SHUTDOWN_SERVER_WAIT_MS);
+      server.close(() => {
+        clearTimeout(giveUp);
+        resolve();
+      });
+    }),
+  stopQueue: () => queue.stop(LIMITS.SHUTDOWN_JOB_WAIT_MS),
+});
+process.once('SIGTERM', () => {
+  log({ level: 'info', msg: 'shutting down' });
+  shutdown().then(
+    () => process.exit(0),
+    (error: unknown) => {
+      log({ level: 'error', msg: 'shutdown failed', name: errorName(error) });
+      process.exit(1);
+    }
+  );
 });
