@@ -17,6 +17,11 @@ import { useWideLayout } from '@/hooks/use-wide-layout';
  */
 export function NotebookPage() {
   const { notebookId = '' } = useParams();
+  // The key gives every notebook its own state: the open source, the column, a running answer.
+  return <NotebookView key={notebookId} notebookId={notebookId} />;
+}
+
+function NotebookView({ notebookId }: { notebookId: string }) {
   const notebook = useNotebook(notebookId);
   const layout = useNotebookLayout();
   const [customizing, setCustomizing] = useState(false);

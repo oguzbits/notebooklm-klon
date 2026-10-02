@@ -2,7 +2,7 @@ import { SOURCE_KIND } from '@nlm/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { Route, Routes } from 'react-router';
+import { Link, Route, Routes } from 'react-router';
 import { describe, expect, it } from 'vitest';
 
 import { notebook, NOTEBOOK_ID, source } from '@/test/fixtures';
@@ -91,6 +91,56 @@ describe('NotebookPage', () => {
     await waitFor(() => expect(document.title).toBe('Forschung'));
     unmount();
     expect(document.title).toBe('Start');
+  });
+
+  it('opens a notebook the user switches to with its own state, not the source reader of the one before', async () => {
+    const OTHER_ID = '7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d';
+    const otherBase = `*/api/notebooks/${OTHER_ID}`;
+    server.use(
+      http.get('*/api/notebooks', () =>
+        HttpResponse.json([notebook({ id: NOTEBOOK_ID }), notebook({ id: OTHER_ID })])
+      ),
+      http.get(`${base}/sources`, () => HttpResponse.json([source({ title: 'projekt.pdf' })])),
+      http.get(`${otherBase}/sources`, () => HttpResponse.json([])),
+      http.get(`${base}/sources/${source().id}/text`, () =>
+        HttpResponse.json({
+          id: source().id,
+          title: 'projekt.pdf',
+          kind: SOURCE_KIND.PDF,
+          sourceUrl: null,
+          text: 'Dr. Brandt leitet das Projekt.',
+        })
+      ),
+      http.get(`${base}/sources/${source().id}/overview`, pending),
+      http.get(`*/api/notebooks/*/messages`, () => HttpResponse.json([])),
+      http.get(`*/api/notebooks/*/studio`, () => HttpResponse.json([])),
+      http.get(`*/api/notebooks/*/notes`, () => HttpResponse.json([]))
+    );
+    renderWithProviders(
+      <>
+        <Link to={`/notizbuecher/${OTHER_ID}`}>Anderes Notebook</Link>
+        <Routes>
+          <Route path="/notizbuecher/:notebookId" element={<NotebookPage />} />
+        </Routes>
+      </>,
+      `/notizbuecher/${NOTEBOOK_ID}`
+    );
+    const user = userEvent.setup();
+
+    const sources = await screen.findByRole('region', { name: 'Quellen' });
+    await user.click(await within(sources).findByRole('button', { name: 'Quellen ausblenden' }));
+    await user.click(within(sources).getByRole('button', { name: 'Quelle anzeigen: projekt.pdf' }));
+    await within(sources).findByRole('button', { name: 'Quellenansicht schließen' });
+    await user.click(screen.getByRole('link', { name: 'Anderes Notebook' }));
+
+    // The page of the other notebook is a new tree, so the region is looked up again.
+    await waitFor(() =>
+      expect(
+        within(screen.getByRole('region', { name: 'Quellen' })).queryByRole('button', {
+          name: 'Quellenansicht schließen',
+        })
+      ).toBeNull()
+    );
   });
 
   describe('folding a column', () => {
