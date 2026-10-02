@@ -67,7 +67,10 @@ Project context and stack: [docs/PLAN.md](docs/PLAN.md). Use `pnpm`, never `npm`
 **Pre-flight (before touching code)**, in a few lines: scope, what is explicitly out of scope, the
 command that proves success. Skip it for copy changes, pure styling and Markdown.
 
-Then: contract first (`packages/shared`), failing test first, smallest diff that passes.
+Then: contract first (`packages/shared`), smallest diff that passes. A bug fix starts with a test
+that fails for the bug and passes after the fix. For a new feature, tests come with the change and
+are written first where the contract is clear; the history does not prove the order, so the rule is
+the convention, not a gate.
 Refactor only on a trigger: third identical use, or a failing quality gate.
 UI changes are inspected in a browser (chrome-devtools MCP, set up per user and not in the repo, or
 Playwright) before they count as done.
