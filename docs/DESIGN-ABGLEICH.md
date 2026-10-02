@@ -57,13 +57,13 @@ Entscheidungen stehen in [ENTSCHEIDUNGEN.md](ENTSCHEIDUNGEN.md).
 
 ### 2.4 Ladezustände
 
-| Was            | Original                                                                                             | Nachbau vorher                     | Maßnahme                                     | Status |
-| -------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------- | -------------------------------------------- | ------ |
-| Art            | Schimmer (Verlauf 90°, 25/37/63 %, 400 %, 1,4 s), kein Pulsieren; Form wie der spätere Inhalt        | `animate-pulse`, graue Balken      | Schimmer-Baustein mit Tokens                 | ✔      |
-| Startseite     | Kartenraster                                                                                         | 3 Balken                           | 4 Karten 272x185, Radius 40                  | ✔      |
-| Notebook       | Layout steht sofort; Chat: Spinner + 7 Balken (46 hoch, Lücke 8, 85–100 %); Studio: 5 Zeilen 64 hoch | ganze Seite durch 3 Balken ersetzt | Layout bleibt, Platzhalter an Ort und Stelle | ✔      |
-| Anmeldeprüfung | leere Fläche                                                                                         | 3 Balken                           | leere Fläche mit dünnem Spinner              | ✔      |
-| Reader, Popup  | Spinner in der Übersichtskarte; Zeilen                                                               | 5 Balken / 2 Balken                | Zeilenplatzhalter                            | ✔      |
+| Was            | Original                                                                                                                            | Nachbau vorher                     | Maßnahme                                     | Status |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- | -------------------------------------------- | ------ |
+| Art            | Schimmer (Verlauf 90°, 25/37/63 %, 400 %, 1,4 s), kein Pulsieren; Form wie der spätere Inhalt                                       | `animate-pulse`, graue Balken      | Schimmer-Baustein mit Tokens                 | ✔      |
+| Startseite     | Kartenraster                                                                                                                        | 3 Balken                           | 4 Karten 272x185, Radius 40                  | ✔      |
+| Notebook       | Layout steht sofort; Chat: Spinner + 7 Balken (bei uns bewusst ohne Spinner) (46 hoch, Lücke 8, 85–100 %); Studio: 5 Zeilen 64 hoch | ganze Seite durch 3 Balken ersetzt | Layout bleibt, Platzhalter an Ort und Stelle | ✔      |
+| Anmeldeprüfung | leere Fläche                                                                                                                        | 3 Balken                           | leere Fläche mit dünnem Spinner              | ✔      |
+| Reader, Popup  | Spinner in der Übersichtskarte; Zeilen                                                                                              | 5 Balken / 2 Balken                | Zeilenplatzhalter                            | ✔      |
 
 ### 2.5 Quellen lesen
 

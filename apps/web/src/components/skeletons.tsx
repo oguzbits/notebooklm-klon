@@ -35,13 +35,10 @@ const BAR_WIDTHS = [
 const TextBars = () =>
   BAR_WIDTHS.map((width, index) => <Skeleton key={index} className={`h-[46px] ${width}`} />);
 
-/** The chat while its history loads: a spinner over seven bars of text. */
+/** The chat while its history loads: seven bars of text, no spinner (the bars already say it loads). */
 export function ChatSkeleton() {
   return (
     <div className="flex flex-col gap-2 pt-2" {...STATUS}>
-      <div className="mx-auto mb-4 flex size-10 items-center justify-center rounded-full bg-card shadow-glow">
-        <LoaderCircle className="size-7 animate-spin text-muted-foreground" aria-hidden />
-      </div>
       <TextBars />
     </div>
   );

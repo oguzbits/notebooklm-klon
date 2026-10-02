@@ -35,6 +35,10 @@ describe('the placeholders', () => {
     expect(boxes(render(<SourceRowsSkeleton />).container)).toHaveLength(9);
   });
 
+  it('show no spinner beside the bars', () => {
+    expect(render(<ChatSkeleton />).container.querySelector('.animate-spin')).toBeNull();
+  });
+
   it('shimmer instead of pulsing', () => {
     const { container } = render(<ChatSkeleton />);
 
