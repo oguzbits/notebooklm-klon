@@ -193,3 +193,40 @@ for (const tile of DIALOG_TILES) {
     expect(ideasBox!.y + ideasBox!.height).toBeLessThanOrEqual(fieldBox!.y + fieldBox!.height + 1);
   });
 }
+
+test.describe('on a touch screen', () => {
+  test.use({ hasTouch: true, isMobile: true });
+
+  test('the menu of an unread output can be opened without a pointer to hover', async ({
+    page,
+  }) => {
+    await page.setViewportSize(NARROW);
+    await page.getByRole('tab', { name: 'Studio' }).click();
+    await page.getByRole('button', { name: 'Quiz', exact: true }).click();
+    await page.getByRole('button', { name: 'Generieren' }).click();
+    await expect(library(page).getByRole('button', { name: /^Ungelesen: / })).toBeVisible();
+
+    await library(page)
+      .getByRole('button', { name: /^Weitere Aktionen für/ })
+      .tap();
+    await expect(page.getByRole('menuitem', { name: 'Löschen' })).toBeVisible();
+  });
+
+  test('the controls of an opened output are at least 40px high, like the original', async ({
+    page,
+  }) => {
+    await page.setViewportSize(NARROW);
+    await page.getByRole('tab', { name: 'Studio' }).click();
+    await generateAndOpen(page, 'Quiz');
+
+    for (const control of [
+      page.getByRole('button', { name: 'Quizansicht schließen' }),
+      page.getByRole('button', { name: 'Zurück zum Studio' }),
+    ]) {
+      const box = await control.boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.height).toBeGreaterThanOrEqual(40);
+      expect(box!.width).toBeGreaterThanOrEqual(40);
+    }
+  });
+});

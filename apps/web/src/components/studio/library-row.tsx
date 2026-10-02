@@ -15,7 +15,10 @@ interface LibraryRowProps {
   iconClassName: string;
   title: string;
   subtitle: string;
-  /** Nobody has opened it yet: a blue dot stands where the menu is until the pointer comes. */
+  /**
+   * Nobody has opened it yet: a blue dot stands where the menu is until the pointer comes. A touch
+   * screen has no pointer to come, so the menu is there next to the dot.
+   */
   unread?: boolean;
   deleting: boolean;
   onOpen: () => void;
@@ -43,7 +46,7 @@ function RowMenu({ title, unread, deleting, onRename, onDelete }: RowMenuProps) 
           className={cn(
             'mr-1',
             unread &&
-              'hidden group-focus-within/row:inline-flex group-hover/row:inline-flex data-[state=open]:inline-flex'
+              'hidden pointer-coarse:inline-flex group-focus-within/row:inline-flex group-hover/row:inline-flex data-[state=open]:inline-flex'
           )}
           aria-label={`Weitere Aktionen für „${title}“`}
           tooltip="Mehr"

@@ -10,7 +10,12 @@ import { Button } from '@/components/ui/button';
 export function ViewerPath({ crumb, onBack }: { crumb: string; onBack: () => void }) {
   return (
     <nav aria-label="Pfad" className="flex min-w-0 items-center gap-1 text-ui">
-      <button type="button" aria-label="Zurück zum Studio" onClick={onBack} className="rounded-md">
+      <button
+        type="button"
+        aria-label="Zurück zum Studio"
+        onClick={onBack}
+        className="rounded-md pointer-coarse:min-h-10 pointer-coarse:px-1"
+      >
         Studio
       </button>
       <ChevronRight className="size-5 shrink-0" aria-hidden />
@@ -24,7 +29,14 @@ export function ViewerPath({ crumb, onBack }: { crumb: string; onBack: () => voi
 /** The button that closes the view and takes the place of the fold button in the header. */
 export function CloseViewerButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <Button variant="ghost" size="icon-sm" aria-label={label} tooltip={label} onClick={onClick}>
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      className="pointer-coarse:size-10"
+      aria-label={label}
+      tooltip={label}
+      onClick={onClick}
+    >
       <Minimize2 />
     </Button>
   );
