@@ -856,4 +856,4 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
 - Nicht umgesetzt: den Körper einer wiederholten Antwort mit `body.cancel()` freigeben (hängt unter MSW; die
   Fehlerkörper sind klein), und ein Test für einen Stream, der nach dem Start stehen bleibt (MSW reicht den Abbruch
   nicht an den Körper weiter, nur gegen die echte API prüfbar).
-- Offen: der Rate Limiter kennt kein Signal; ein abgebrochener Aufruf wartet seine Warteschlange noch ab.
+- Der Rate Limiter nimmt ein Signal: ein abgebrochener Aufruf wartet nicht mehr auf sein Fenster und verbraucht keine Quote (Chat reicht es durch; Embedder und PDF-Parser haben noch keins).

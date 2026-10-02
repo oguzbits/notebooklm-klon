@@ -142,13 +142,16 @@ export function createGeminiChat(config: GeminiChatConfig) {
       const estimatedTokens = Math.ceil(
         (input.system.length + input.user.length) / CHARS_PER_TOKEN
       );
-      const response = await config.limiter.schedule(estimatedTokens, () =>
-        requestGemini(
-          config,
-          `models/${config.model}:streamGenerateContent?alt=sse`,
-          requestBody(input),
-          input.signal
-        )
+      const response = await config.limiter.schedule(
+        estimatedTokens,
+        () =>
+          requestGemini(
+            config,
+            `models/${config.model}:streamGenerateContent?alt=sse`,
+            requestBody(input),
+            input.signal
+          ),
+        input.signal
       );
       if (!response.body) throw new Error('The model returned no stream.');
 
