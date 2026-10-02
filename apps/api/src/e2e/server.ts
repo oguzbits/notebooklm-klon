@@ -85,6 +85,9 @@ const ingest: SubmitPorts = {
     parse: async () => {
       throw new Error('PDFs need the provider and cannot be read offline.');
     },
+    parseImage: async () => {
+      throw new Error('Images need the provider and cannot be read offline.');
+    },
   }),
   embed: async (texts) => texts.map((text) => hashEmbedding(text, EMBEDDING_DIMENSIONS)),
 };

@@ -22,7 +22,7 @@ describe('source contracts', () => {
     for (const kind of Object.values(SOURCE_KIND)) {
       expect(SourceKindSchema.parse(kind)).toBe(kind);
     }
-    expect(SourceKindSchema.safeParse('IMAGE').success).toBe(false);
+    expect(SourceKindSchema.safeParse('AUDIO').success).toBe(false);
   });
 
   it('fixes the embedding size at 768 dimensions', () => {

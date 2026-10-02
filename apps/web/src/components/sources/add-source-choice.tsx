@@ -4,7 +4,7 @@ import { type DragEvent, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-const ACCEPTED_FILES = '.pdf,.docx,.txt,.md';
+const ACCEPTED_FILES = '.pdf,.docx,.txt,.md,.png,.jpg,.jpeg,.webp';
 
 /** The dashed area that files are dropped on (or clicked to choose one). */
 function FileDropZone({
@@ -39,7 +39,7 @@ function FileDropZone({
       <p>
         Dateien zum Hochladen per Drag-and-drop hierher ziehen.
         <br />
-        PDF, DOCX, TXT oder MD, bis 10 MB.
+        PDF, DOCX, TXT, MD oder Bild (PNG, JPG, WEBP), bis 10 MB.
       </p>
     </div>
   );

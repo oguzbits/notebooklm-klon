@@ -33,6 +33,17 @@ describe('AddSource', () => {
     expect(requests).toEqual([`/api/notebooks/${NOTEBOOK_ID}/sources/file`]);
   });
 
+  it('lets the file chooser offer photos and scans next to documents, and says so', () => {
+    renderWithProviders(<AddSource notebookId={NOTEBOOK_ID} />);
+
+    // The attribute is the feature: without it the chooser would grey out every image.
+    const accepted = screen.getByLabelText('Datei auswählen').getAttribute('accept') ?? '';
+    for (const extension of ['.pdf', '.docx', '.png', '.jpg', '.jpeg', '.webp']) {
+      expect(accepted.split(',')).toContain(extension);
+    }
+    expect(screen.getByText(/Bild \(PNG, JPG, WEBP\)/)).toBeTruthy();
+  });
+
   it('sends the web address and clears the field when it was accepted', async () => {
     let body: unknown;
     server.use(

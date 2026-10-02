@@ -18,7 +18,7 @@ export function createProviders(
   >
 ) {
   const provider = { apiKey: env.GEMINI_API_KEY, sleep: systemClock.sleep };
-  const pdfParser = createGeminiPdfParser({
+  const documentParser = createGeminiPdfParser({
     ...provider,
     model: env.PARSE_MODEL,
     fallbackModel: env.PARSE_FALLBACK_MODEL,
@@ -39,7 +39,7 @@ export function createProviders(
   });
 
   return {
-    parse: createParseSource(pdfParser),
+    parse: createParseSource(documentParser),
     embedDocuments: (texts: string[]) => embedder.embedDocuments(texts),
     embedQuery: (text: string) => embedder.embedQuery(text),
     stream: (input: ChatInput) => chat.stream(input),

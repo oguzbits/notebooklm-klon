@@ -6,6 +6,7 @@ export const SOURCE_KIND = {
   TXT: 'TXT',
   MD: 'MD',
   URL: 'URL',
+  IMAGE: 'IMAGE',
 } as const;
 
 export const SOURCE_STATUS = {

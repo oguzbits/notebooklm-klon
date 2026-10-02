@@ -54,6 +54,35 @@ describe('createGeminiPdfParser', () => {
     ).toBe(0);
   });
 
+  it('sends an image inline with its own type and a prompt that reads text and describes a picture', async () => {
+    let seen: Record<string, unknown> | undefined;
+    server.use(
+      http.post(ENDPOINT, async ({ request }) => {
+        seen = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json(answer('Rechnung Nr. 5'));
+      })
+    );
+    const image = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
+
+    const result = await parser().parseImage(image, 'image/png');
+
+    expect(result).toEqual({ text: 'Rechnung Nr. 5', pageCount: null });
+    const parts = (seen as { contents: { parts: Record<string, unknown>[] }[] }).contents[0]?.parts;
+    expect(parts?.[0]).toEqual({
+      inlineData: { mimeType: 'image/png', data: Buffer.from(image).toString('base64') },
+    });
+    expect(String(parts?.[1]?.text)).toMatch(/image/);
+    expect(String(parts?.[1]?.text)).not.toMatch(/page/);
+  });
+
+  it('refuses an image answer that did not end normally, like a PDF', async () => {
+    server.use(http.post(ENDPOINT, () => HttpResponse.json(answer('halb', 'MAX_TOKENS'))));
+
+    await expect(parser().parseImage(new Uint8Array([1]), 'image/png')).rejects.toThrow(
+      /did not finish normally: MAX_TOKENS/
+    );
+  });
+
   it('joins the text of several parts', async () => {
     server.use(
       http.post(ENDPOINT, () =>

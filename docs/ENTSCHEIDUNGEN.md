@@ -988,3 +988,17 @@ Upload (10 MB), eine Webseite bleibt bei 5 MB; die Grenze wird nach dem Typ der 
 Der Titel ist der Dateiname aus dem Pfad der Adresse (decodiert, bei kaputter Escape-Folge unverändert), sonst der Host. Die
 Quelle ist vom Typ `PDF` mit `sourceUrl`; die SSRF-Prüfungen und Grenzen für Weiterleitungen und Zeit gelten unverändert. Der
 Hilfetext im Formular nennt jetzt Webseite oder PDF.
+
+### Bilder und Scans als Quelle
+
+Neuer Quellentyp `IMAGE` (Migration 0018). Erlaubt sind PNG, JPEG und WEBP, kein HEIC (Gemini nimmt es zwar, aber Browser und
+Betriebssysteme liefern es uneinheitlich; YAGNI). Der Typ wird wie bei PDF aus den Bytes erkannt (`detectImageType`), die
+Endung allein reicht nicht: `bild.png` mit Text darin wird abgelehnt, ebenso GIF und SVG. Die Grenze ist die des Uploads
+(10 MB); Gemini nimmt inline bis 20 MB.
+
+Gelesen wird mit einem Aufruf an dasselbe Modell wie beim PDF, mit eigenem Prompt: Text vollständig als Markdown in
+Lesereihenfolge, Tabellen als Markdown-Tabellen; enthält das Bild keinen Text, beschreibt das Modell in zwei bis drei Sätzen,
+was zu sehen ist, damit die Quelle nie leer ist. Der Parser hat dafür zwei Funktionen, `parse` (PDF) und `parseImage`, die
+sich `read` (Wiederholung bei RECITATION, Prüfung auf `STOP`) teilen. `pdfParser` heißt in `providers.ts` jetzt
+`documentParser`. Bilder hinter einem Link werden nicht importiert (der URL-Import bleibt bei Webseite und PDF). Im
+E2E-Server liest der Stub keine Bilder (kein Netz); der Dialog zeigt "Bild (PNG, JPG, WEBP)" im Hilfetext.
