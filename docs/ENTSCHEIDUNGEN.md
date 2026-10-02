@@ -1163,3 +1163,9 @@ haben keinen Text und fehlen. Das alte `.ppt` bleibt unterstützt-nicht. **Schut
 ein Teil über 5 MB entpackt bricht ab (fflate kürzt eine falsch angegebene Größe, geprüft). Ein ZIP ohne `ppt/presentation.xml` (zum Beispiel
 ein DOCX als `.pptx`) wirft und wird `PARSE_FAILED`. Das Seitenzähler-Feld bleibt `null`, weil „Seite“ für Folien falsch wäre.
 Tests: `parse-pptx.test.ts` (Mutationen an Größenlimit, Einrückung, Zeilenzeichen, Dekoration und Notizen getötet), `file-kind`, `parse-source`.
+
+**Nachtrag PPTX: der erste Deploy ist zurückgerollt worden.** Das Bundle startete nicht (`SyntaxError: Identifier 'createRequire' has already
+been declared`): Die Node-Fassung von `fflate` importiert selbst `createRequire`, und das Banner von esbuild tat es auch. Der Rollback hat
+gegriffen, die Seite blieb auf der alten Fassung. Behoben, indem das Banner den Import umbenennt (`bundleRequire`). Damit das nicht wieder
+erst im Deploy auffällt, baut `bundle.test.ts` das Bundle und startet es mit leerer Umgebung: Es muss bei der Prüfung der Konfiguration
+anhalten, nicht an einem Syntaxfehler (Test geprüft: mit dem alten Banner schlägt er fehl).
