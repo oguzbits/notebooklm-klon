@@ -83,11 +83,12 @@ describe('parseImportUrl', () => {
     expect(parseImportUrl(input)).toEqual({ ok: false, reason: URL_REJECTION.MALFORMED });
   });
 
-  it('rejects credentials in the URL', () => {
-    expect(parseImportUrl('https://user:pass@example.com')).toEqual({
-      ok: false,
-      reason: URL_REJECTION.CREDENTIALS,
-    });
+  it.each([
+    'https://user:pass@example.com',
+    'https://user@example.com',
+    'https://:pass@example.com',
+  ])('rejects credentials in %s, whether user name, password or both are set', (input) => {
+    expect(parseImportUrl(input)).toEqual({ ok: false, reason: URL_REJECTION.CREDENTIALS });
   });
 
   it.each(['http://127.0.0.1/admin', 'http://[::1]/', 'http://169.254.169.254/latest/meta-data'])(
