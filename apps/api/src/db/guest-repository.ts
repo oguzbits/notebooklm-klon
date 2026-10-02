@@ -4,6 +4,7 @@ import { and, asc, count, eq, gte, isNotNull, lt, sql } from 'drizzle-orm';
 import { notebookOverviewKey } from '../core/notebook-overview-prompt';
 import { user } from './auth-schema';
 import type { Database } from './client';
+import { ownedNotebook } from './ownership';
 import { notebooks, notebookSources, sources } from './schema';
 
 /** The example notebook that guests get a copy of, and whose it is. */
@@ -99,7 +100,7 @@ export async function copyNotebookToUser(
         overview: notebooks.overview,
       })
       .from(notebooks)
-      .where(and(eq(notebooks.id, template.notebookId), eq(notebooks.userId, template.userId)));
+      .where(ownedNotebook(template.notebookId, template.userId));
     if (!original) throw new Error('The example notebook does not exist.');
 
     const [copy] = await tx

@@ -10,6 +10,7 @@ import {
 import { and, asc, eq, isNotNull, sql } from 'drizzle-orm';
 
 import type { Database } from './client';
+import { ownedNotebook, ownedNotebookSource } from './ownership';
 import { chatMessages, chunks, notebooks, notebookSources, sources } from './schema';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -40,14 +41,7 @@ export async function findChunkDetail(
     .innerJoin(sources, eq(sources.id, chunks.sourceId))
     .innerJoin(notebookSources, eq(notebookSources.sourceId, sources.id))
     .innerJoin(notebooks, eq(notebooks.id, notebookSources.notebookId))
-    .where(
-      and(
-        eq(chunks.id, chunkId),
-        eq(notebookSources.notebookId, notebookId),
-        eq(notebooks.userId, userId),
-        eq(sources.userId, userId)
-      )
-    );
+    .where(and(eq(chunks.id, chunkId), ownedNotebookSource(notebookId, userId)));
   return row ?? null;
 }
 
@@ -72,9 +66,7 @@ export async function findSourceText(
     .where(
       and(
         eq(sources.id, sourceId),
-        eq(notebookSources.notebookId, notebookId),
-        eq(notebooks.userId, userId),
-        eq(sources.userId, userId),
+        ownedNotebookSource(notebookId, userId),
         isNotNull(sources.canonicalText)
       )
     );
@@ -174,7 +166,7 @@ export async function clearChatMessages(
   const [notebook] = await db
     .select({ id: notebooks.id })
     .from(notebooks)
-    .where(and(eq(notebooks.id, notebookId), eq(notebooks.userId, userId)));
+    .where(ownedNotebook(notebookId, userId));
   if (!notebook) return false;
   await db
     .delete(chatMessages)

@@ -2,6 +2,7 @@ import { type SourceOverview, SourceOverviewSchema } from '@nlm/shared';
 import { and, eq, isNotNull } from 'drizzle-orm';
 
 import type { Database } from './client';
+import { ownedNotebookSource } from './ownership';
 import { notebooks, notebookSources, sources } from './schema';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -22,9 +23,7 @@ export async function findSourceForOverview(
     .where(
       and(
         eq(sources.id, sourceId),
-        eq(notebookSources.notebookId, notebookId),
-        eq(notebooks.userId, userId),
-        eq(sources.userId, userId),
+        ownedNotebookSource(notebookId, userId),
         isNotNull(sources.canonicalText)
       )
     );

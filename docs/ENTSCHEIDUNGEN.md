@@ -811,3 +811,21 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
   kostet kein Dokument. Das ist ein bewusst getragenes Risiko, in `DEPLOYMENT.md` und `backup.sh` benannt.
 - Nicht geprüft: `docker build` und der Workflow (Docker ist in der Sandbox nicht erreichbar, der Workflow läuft erst in
   GitHub Actions).
+
+## 2026-10-02 (Eigentümer-Prädikate an einer Stelle)
+
+- Neu: `apps/api/src/db/ownership.ts` mit `ownedNotebook(notebookId, userId)` (Notizbuch gehört dem Nutzer) und
+  `ownedNotebookSource(notebookId, userId)` (Verknüpfung liegt im Notizbuch, Notizbuch und Quelle gehören dem Nutzer).
+  Beide liefern strikt `SQL`: drizzle typt `and(…)` als `SQL | undefined`, und `.where(undefined)` würde den Scope
+  stillschweigend weglassen; `allOf` wirft stattdessen.
+- Umgestellt: zehn Stellen für das Notizbuch-Prädikat (`notebook-`, `chat-config-`, `studio-`, `reader-`,
+  `notebook-overview-`, `guest-repository`), sieben für den Quellen-Join (`notebook-source-`, `notebook-overview-`,
+  `reader-`, `overview-repository`). Die Prädikate waren inhaltlich gleich; die übrigen Terme (`selected`, `status`,
+  `sourceId`, `canonicalText`) bleiben an der Aufrufstelle.
+- Bewusst nicht umgestellt: `eq(notebooks.userId, userId)` ohne Notizbuch-ID (Liste der Notizbücher), Abfragen nur auf
+  `sources.userId` (Quote, Hash-Suche, Quelle ohne Notizbuch) und der Join im `guest-repository` über die Vorlage:
+  das sind andere Prädikate, keine Kopien. Die Raw-SQL-Abfragen (`retrieval.ts`) bleiben unberührt.
+- Beleg offline: `ownership.test.ts` vergleicht das erzeugte SQL der Helfer mit dem ausgeschriebenen Prädikat.
+- Nicht geprüft: `pnpm test:db` (Docker ist in der Sandbox nicht erreichbar). Ein eigener Isolationstest für
+  `notebook-source-repository` fehlt noch (es gibt keine `*.db.test.ts` dafür, nur indirekt die Route- und
+  Importtests); ihn ohne Lauf zu schreiben wäre ungeprüft. Offen für den Lauf mit Docker.
