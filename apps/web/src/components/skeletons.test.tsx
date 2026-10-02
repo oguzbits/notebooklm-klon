@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   ChatSkeleton,
+  COVER_BOX,
   DialogSpinner,
   NotebookCardsSkeleton,
   OutputRowsSkeleton,
@@ -29,10 +30,17 @@ describe('the placeholders', () => {
   });
 
   it('have the number of parts the original shows', () => {
-    expect(boxes(render(<ChatSkeleton />).container)).toHaveLength(7);
+    expect(boxes(render(<ChatSkeleton />).container)).toHaveLength(8);
     expect(boxes(render(<OutputRowsSkeleton />).container)).toHaveLength(5);
     expect(boxes(render(<NotebookCardsSkeleton />).container)).toHaveLength(6);
     expect(boxes(render(<SourceRowsSkeleton />).container)).toHaveLength(9);
+  });
+
+  // The class is the feature: the cover and its placeholder must be the same size, or the page jumps.
+  it('hold a place for the cover of the notebook before the summary, in the size of the cover', () => {
+    const { container } = render(<ChatSkeleton />);
+
+    expect(boxes(container)[0]?.className).toContain(COVER_BOX);
   });
 
   it('show no spinner beside the bars', () => {

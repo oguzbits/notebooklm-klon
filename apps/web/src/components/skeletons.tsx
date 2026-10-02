@@ -35,11 +35,24 @@ const BAR_WIDTHS = [
 const TextBars = () =>
   BAR_WIDTHS.map((width, index) => <Skeleton key={index} className={`h-[46px] ${width}`} />);
 
-/** The chat while its history loads: seven bars of text, no spinner (the bars already say it loads). */
+/**
+ * The size of the cover of a notebook: 265 high like in the original, on a phone, which was not
+ * measured, a good deal shorter. It reaches 24 px beyond the text on each side. The cover and its
+ * placeholder share it, so nothing moves when the real one arrives.
+ */
+export const COVER_BOX = '-mx-6 min-h-[200px] rounded-panel sm:min-h-[265px]';
+
+/**
+ * The chat while its history loads, laid out like the overview that follows: the place of the cover,
+ * then seven bars of text. No spinner (the bars already say it loads).
+ */
 export function ChatSkeleton() {
   return (
-    <div className="flex flex-col gap-2 pt-2" {...STATUS}>
-      <TextBars />
+    <div className="-mt-2 flex flex-col" {...STATUS}>
+      <Skeleton className={COVER_BOX} />
+      <div className="mt-6 flex flex-col gap-2">
+        <TextBars />
+      </div>
     </div>
   );
 }

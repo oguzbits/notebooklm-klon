@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { InlineText } from '@/components/chat/inline-text';
 import { ErrorNotice } from '@/components/query-boundary';
-import { SummarySkeleton } from '@/components/skeletons';
+import { COVER_BOX, SummarySkeleton } from '@/components/skeletons';
 import { Button } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
 import { useNotebookOverview } from '@/hooks/use-notebook-overview';
@@ -71,11 +71,11 @@ function OverviewCover({
   onCustomize: () => void;
 }) {
   return (
-    // 265 high like in the original; on a phone, which was not measured, a good deal shorter. The
-    // panel reaches 24 px beyond the text on each side; on hover it fills (no picture) or gets a veil.
+    // The size is shared with its placeholder; on hover the panel fills (no picture) or gets a veil.
     <header
       className={cn(
-        'group relative -mx-6 flex min-h-[200px] flex-col justify-end overflow-hidden rounded-panel px-6 pb-6 sm:min-h-[265px]',
+        'group relative flex flex-col justify-end overflow-hidden px-6 pb-6',
+        COVER_BOX,
         !cover && 'transition-colors duration-200 hover:bg-muted'
       )}
     >
