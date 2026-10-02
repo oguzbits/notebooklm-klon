@@ -49,8 +49,11 @@ export function chatRoutes(deps: AppDeps) {
       const recorder = new AnswerRecorder((statements, followUps, trace) =>
         saveAssistantMessage(deps.db, userId, notebookId, { statements, followUps, trace })
       );
+      // The reader closes the tab: stop the model request, so it neither runs on nor costs quota.
+      const reader = new AbortController();
+      stream.onAbort(() => reader.abort());
       try {
-        for await (const event of answerQuestion(prepared, ports)) {
+        for await (const event of answerQuestion(prepared, ports, reader.signal)) {
           recorder.note(event);
           if (event.type !== CHAT_EVENT.STATEMENT) {
             await recorder.saveOnce(event.type === CHAT_EVENT.DONE);

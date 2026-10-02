@@ -110,13 +110,15 @@ class AnswerTally {
 async function* streamStatements(
   prepared: PreparedAnswer,
   ports: ChatPorts,
-  tally: AnswerTally
+  tally: AnswerTally,
+  signal: AbortSignal | undefined
 ): AsyncGenerator<ChatEvent, string[]> {
   const parser = new StatementStream();
   const input: ChatInput = {
     system: chatSystemPrompt(prepared.config),
     user: buildUserMessage(prepared.context, prepared.question),
     schema: ANSWER_JSON_SCHEMA,
+    signal,
   };
   for await (const piece of ports.stream(input)) {
     yield* tally.events(parser.push(piece));
@@ -138,19 +140,23 @@ const errorEvent = (error: unknown): ChatEvent => ({
 /**
  * Streams the answer as events. A statement is checked against the context and sent as soon as the
  * model has finished it; one without a valid citation is left out. A failure ends the stream with
- * an ERROR event after the statements that already arrived.
+ * an ERROR event after the statements that already arrived. When `signal` aborts, the model request
+ * ends and the stream stops without an event.
  */
 export async function* answerQuestion(
   prepared: PreparedAnswer,
-  ports: ChatPorts
+  ports: ChatPorts,
+  signal?: AbortSignal
 ): AsyncGenerator<ChatEvent> {
   const tally = new AnswerTally(prepared.context);
   let suggested: string[] = [];
 
   if (prepared.context.labels.length > 0) {
     try {
-      suggested = yield* streamStatements(prepared, ports, tally);
+      suggested = yield* streamStatements(prepared, ports, tally, signal);
     } catch (error) {
+      // The reader left: nobody is waiting for the end, and it is no failure of ours.
+      if (signal?.aborted) return;
       ports.onError(error);
       yield errorEvent(error);
       return;

@@ -43,6 +43,8 @@ export interface ChatInput {
   user: string;
   /** JSON Schema of the answer the model must produce. */
   schema: Record<string, unknown>;
+  /** Ends the request and the stream, e.g. when the reader leaves. */
+  signal?: AbortSignal;
 }
 
 /** Lines of a server-sent event stream, whatever the network cut the chunks into. */
@@ -134,7 +136,7 @@ class StreamReport {
  */
 export function createGeminiChat(config: GeminiChatConfig) {
   return {
-    async *stream(input: ChatInput, signal?: AbortSignal): AsyncGenerator<string> {
+    async *stream(input: ChatInput): AsyncGenerator<string> {
       const estimatedTokens = Math.ceil(
         (input.system.length + input.user.length) / CHARS_PER_TOKEN
       );
@@ -143,7 +145,7 @@ export function createGeminiChat(config: GeminiChatConfig) {
           config,
           `models/${config.model}:streamGenerateContent?alt=sse`,
           requestBody(input),
-          signal
+          input.signal
         )
       );
       if (!response.body) throw new Error('The model returned no stream.');
