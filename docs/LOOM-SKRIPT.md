@@ -1,6 +1,6 @@
 # Loom-Skript (höchstens 10 Minuten)
 
-Gliederung nach [PLAN.md](PLAN.md#tagesplan). Vorher einmal komplett üben, mit dem Live-Deployment und einem frischen Konto. Die Zahlen stammen aus [SPIKE-ERGEBNISSE.md](SPIKE-ERGEBNISSE.md) und sind Einzelmessungen.
+Vorher einmal komplett üben, mit dem Live-Deployment und einem frischen Konto. Die Zahlen stammen aus [SPIKE-ERGEBNISSE.md](SPIKE-ERGEBNISSE.md) und sind Einzelmessungen.
 
 ## 1. Ziel und Umfang (1 Minute)
 

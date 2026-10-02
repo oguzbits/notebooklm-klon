@@ -1,6 +1,6 @@
 # Spike-Ergebnisse
 
-Ergebnisse des Modell-Spikes (Plan: [PLAN.md](PLAN.md#spike-plan)). Der Spike-Code liegt in [spikes/](../spikes/) und ist Wegwerf-Code. Die Rohausgaben stehen unter `spikes/results/` (nicht im Repo, sie enthalten Fremdtext). Kein Vergleich mit OpenAI-Modellen, weil kein Zugang vorhanden ist.
+Ergebnisse des Modell-Spikes (Messplan: Parsing, Chat, Einbettungen, Zitate). Der Spike-Code liegt in [spikes/](../spikes/) und ist Wegwerf-Code. Die Rohausgaben stehen unter `spikes/results/` (nicht im Repo, sie enthalten Fremdtext). Kein Vergleich mit OpenAI-Modellen, weil kein Zugang vorhanden ist.
 
 Testmenge: 7 öffentliche Dokumente ([spikes/corpus/README.md](../spikes/corpus/README.md)), 18 Golden-Fragen ([golden-questions.json](../apps/api/src/eval/golden-questions.json)).
 
