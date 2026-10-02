@@ -5,6 +5,11 @@ export type SideColumn = typeof COLUMN.SOURCES | typeof COLUMN.STUDIO;
 
 /** No column gets narrower than this (measured in the original, where it is 285 px at any drag). */
 export const COLUMN_MIN_PX = 285;
+/**
+ * The share of the window the Studio asks for while an output is open. The same value stands in
+ * `FLEX.STUDIO_VIEWING` (`min-w-[37.5vw]`), which Tailwind needs as a literal class.
+ */
+export const STUDIO_VIEWING_SHARE = 0.375;
 /** The strip between two columns that is dragged. */
 export const GUTTER_PX = 8;
 /** What a side column measures before it was dragged, in percent of the columns' box. */
@@ -42,3 +47,7 @@ export function sideWidthPercent(options: {
   const px = Math.min(Math.max(wanted, minPx), Math.max(minPx, maxPx));
   return (px / box.width) * 100;
 }
+
+/** The width the Studio may not go below: the usual minimum, or what it asks for while it shows an output. */
+export const studioMinPx = (viewingOutput: boolean, windowWidth: number): number =>
+  viewingOutput ? Math.max(COLUMN_MIN_PX, windowWidth * STUDIO_VIEWING_SHARE) : COLUMN_MIN_PX;

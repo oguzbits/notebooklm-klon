@@ -783,3 +783,16 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
   benannter Typ wäre ein zweiter, von Hand gepflegter Typ neben dem der Repository-Funktion.
 - Die Route-Tests für diese Fälle sind `*.db.test.ts` und liefen in dieser Sitzung nicht (kein Docker). Offline
   abgesichert sind Statuscode und Code je Fehler in `error-mapping.test.ts`.
+
+## 2026-10-02 (Web: Query-Key, Cast, Studio-Mindestbreite)
+
+- `use-notebooks.ts` invalidiert die Übersichten über `queryKeys.notebookOverviews(notebookId)` statt über einen rohen
+  Key; `notebookOverview` beginnt mit demselben Präfix (Test in `query-keys.test.ts`).
+- `readThemePreference` prüft den Cookie-Wert über `Object.values(THEME_PREFERENCE).find(…)`: der Typ kommt aus dem
+  Dictionary, kein Cast. Kein Zod, weil der Wert nur lokal gelesen wird und kein Vertrag mit der API ist.
+- `0.375` heißt jetzt `STUDIO_VIEWING_SHARE`, die Rechnung steht als reine Funktion `studioMinPx` in
+  `lib/column-widths.ts` (getestet). `window.innerWidth` liest der Hook `useWindowWidth`; die Mindestbreite folgt damit
+  auch einem Fenster, das während der Ansicht skaliert wird (vorher erst beim nächsten Rendern). Die Tailwind-Klasse
+  `min-w-[37.5vw]` bleibt ein Literal und verweist im Kommentar auf die Konstante.
+- Nicht im Browser geprüft: Der Sandbox blockiert lokale Ports, der Dev-Server startet hier nicht. Das Verhalten der
+  Spalten ist nur durch Unit-Tests belegt.

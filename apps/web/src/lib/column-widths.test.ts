@@ -5,6 +5,8 @@ import {
   DEFAULT_SIDE_PERCENT,
   GUTTER_PX,
   sideWidthPercent,
+  STUDIO_VIEWING_SHARE,
+  studioMinPx,
   wantedWidth,
 } from '@/lib/column-widths';
 import { COLUMN } from '@/lib/columns';
@@ -50,5 +52,19 @@ describe('sideWidthPercent', () => {
       minPx: 645,
     });
     expect(px(percent)).toBeCloseTo(645);
+  });
+});
+
+describe('studioMinPx', () => {
+  it('is the usual minimum while no output is open', () => {
+    expect(studioMinPx(false, 1720)).toBe(COLUMN_MIN_PX);
+  });
+
+  it('asks for its share of the window while an output is open', () => {
+    expect(studioMinPx(true, 1720)).toBe(1720 * STUDIO_VIEWING_SHARE);
+  });
+
+  it('never goes below the usual minimum on a narrow window', () => {
+    expect(studioMinPx(true, 600)).toBe(COLUMN_MIN_PX);
   });
 });

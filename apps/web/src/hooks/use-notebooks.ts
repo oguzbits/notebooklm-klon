@@ -59,7 +59,7 @@ export function useUpdateNotebook(notebookId: string) {
     onSuccess: async () => {
       await client.invalidateQueries({ queryKey: queryKeys.notebooks, exact: true });
       // Whatever sources it was made from, the summary on the page may have changed.
-      await client.invalidateQueries({ queryKey: ['notebooks', notebookId, 'overview'] });
+      await client.invalidateQueries({ queryKey: queryKeys.notebookOverviews(notebookId) });
     },
   });
 }

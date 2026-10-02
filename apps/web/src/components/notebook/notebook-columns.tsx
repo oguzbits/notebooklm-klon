@@ -8,7 +8,8 @@ import { SourcesRail } from '@/components/sources/sources-rail';
 import { StudioPanel } from '@/components/studio/studio-panel';
 import { useColumnWidths } from '@/hooks/use-column-widths';
 import type { AskedQuestion, useNotebookLayout } from '@/hooks/use-notebook-layout';
-import { COLUMN_MIN_PX } from '@/lib/column-widths';
+import { useWindowWidth } from '@/hooks/use-window-width';
+import { COLUMN_MIN_PX, studioMinPx } from '@/lib/column-widths';
 import { COLUMN, type Column } from '@/lib/columns';
 import type { ReaderTarget } from '@/lib/reader-target';
 import { cn } from '@/lib/utils';
@@ -145,9 +146,23 @@ export function StudioColumn({
   );
 }
 
-/** The width the Studio may not go below: the usual minimum, or what it asks for while it shows an output. */
-const studioMinPx = (layout: ReturnType<typeof useNotebookLayout>) =>
-  layout.viewingOutput ? Math.max(COLUMN_MIN_PX, window.innerWidth * 0.375) : COLUMN_MIN_PX;
+/** The strip in front of the Studio: it follows the window width while the Studio shows an output. */
+function StudioGutter({
+  columns,
+  viewing,
+}: {
+  columns: ReturnType<typeof useColumnWidths>;
+  viewing: boolean;
+}) {
+  const windowWidth = useWindowWidth();
+  return (
+    <ColumnGutter
+      side={COLUMN.STUDIO}
+      columns={columns}
+      minPx={studioMinPx(viewing, windowWidth)}
+    />
+  );
+}
 
 /** The three columns side by side (or one at a time below the wide layout), with strips to drag. */
 export function NotebookColumns({
@@ -192,7 +207,7 @@ export function NotebookColumns({
         onOpenCitation={layout.openCitation}
         onCustomize={onCustomize}
       />
-      <ColumnGutter side={COLUMN.STUDIO} columns={columns} minPx={studioMinPx(layout)} />
+      <StudioGutter columns={columns} viewing={layout.viewingOutput} />
       <StudioColumn
         notebookId={notebookId}
         shown={layout.column}
