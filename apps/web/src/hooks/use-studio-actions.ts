@@ -11,15 +11,25 @@ import {
 import type { useStudioLibrary } from '@/hooks/use-studio-library';
 import { ENTRY, type LibraryEntry, type OpenEntry } from '@/lib/library-entries';
 
-/** The two questions the list can ask: delete this note, and what this output should be called. */
+/** The questions the list can ask: delete this note or output, and what this output should be called. */
 function useStudioQuestions() {
   const [noteToDelete, setNoteToDelete] = useState<Note | null>(null);
+  const [outputToDelete, setOutputToDelete] = useState<StudioOutput | null>(null);
   const [outputToRename, setOutputToRename] = useState<StudioOutput | null>(null);
   const closeQuestion = () => {
     setNoteToDelete(null);
+    setOutputToDelete(null);
     setOutputToRename(null);
   };
-  return { noteToDelete, outputToRename, setNoteToDelete, setOutputToRename, closeQuestion };
+  return {
+    noteToDelete,
+    outputToDelete,
+    outputToRename,
+    setNoteToDelete,
+    setOutputToDelete,
+    setOutputToRename,
+    closeQuestion,
+  };
 }
 
 /** The line whose deletion is under way, if any. */
@@ -67,7 +77,7 @@ export function useStudioActions(
     });
   const deleteEntry = (entry: LibraryEntry) =>
     entry.type === ENTRY.OUTPUT
-      ? remove.mutate(entry.output.id)
+      ? questions.setOutputToDelete(entry.output)
       : questions.setNoteToDelete(entry.note);
 
   return {

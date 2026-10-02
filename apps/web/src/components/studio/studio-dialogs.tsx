@@ -3,7 +3,7 @@ import { type Note, NOTE_KIND, type StudioOutput } from '@nlm/shared';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { RenameDialog } from '@/components/ui/rename-dialog';
 import type { useDeleteNote } from '@/hooks/use-notes';
-import type { useUpdateStudioOutput } from '@/hooks/use-studio';
+import type { useDeleteStudioOutput, useUpdateStudioOutput } from '@/hooks/use-studio';
 import { describeError } from '@/lib/messages';
 
 /** Asks before a note is deleted; only a saved answer has a copy that stays in the chat. */
@@ -30,6 +30,30 @@ export function DeleteNoteDialog({
       }
       pending={pending}
       onConfirm={() => note && onConfirm(note.id)}
+    />
+  );
+}
+
+/** Asks before an output is deleted. */
+export function DeleteOutputDialog({
+  output,
+  pending,
+  onCancel,
+  onConfirm,
+}: {
+  output: StudioOutput | null;
+  pending: boolean;
+  onCancel: () => void;
+  onConfirm: (outputId: string) => void;
+}) {
+  return (
+    <ConfirmDialog
+      open={output !== null}
+      onOpenChange={(isOpen) => !isOpen && onCancel()}
+      title="Ausgabe löschen?"
+      description={output ? `„${output.title}“ wird gelöscht.` : ''}
+      pending={pending}
+      onConfirm={() => output && onConfirm(output.id)}
     />
   );
 }
@@ -63,24 +87,29 @@ export function RenameOutputDialog({
 }
 
 type RemoveNote = ReturnType<typeof useDeleteNote>;
+type RemoveOutput = ReturnType<typeof useDeleteStudioOutput>;
 type Update = ReturnType<typeof useUpdateStudioOutput>;
 
-/** The two questions the list can ask: delete this note, and what an output should be called. */
+/** The questions the list can ask: delete this note or output, and what an output should be called. */
 export function StudioDialogs({
   noteToDelete,
+  outputToDelete,
   outputToRename,
   removeNote,
+  removeOutput,
   update,
   onClose,
   onDone,
 }: {
   noteToDelete: Note | null;
+  outputToDelete: StudioOutput | null;
   outputToRename: StudioOutput | null;
   removeNote: RemoveNote;
+  removeOutput: RemoveOutput;
   update: Update;
   /** Closes the question that is open. */
   onClose: () => void;
-  /** A deleted note was open: the view goes back to the list. */
+  /** A deleted note or output was open: the view goes back to the list. */
   onDone: () => void;
 }) {
   return (
@@ -91,6 +120,19 @@ export function StudioDialogs({
         onCancel={onClose}
         onConfirm={(noteId) =>
           removeNote.mutate(noteId, {
+            onSuccess: () => {
+              onClose();
+              onDone();
+            },
+          })
+        }
+      />
+      <DeleteOutputDialog
+        output={outputToDelete}
+        pending={removeOutput.isPending}
+        onCancel={onClose}
+        onConfirm={(outputId) =>
+          removeOutput.mutate(outputId, {
             onSuccess: () => {
               onClose();
               onDone();

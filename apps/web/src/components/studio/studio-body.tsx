@@ -15,7 +15,6 @@ export function StudioBody({
   sources,
   output,
   note,
-  onBack,
   onOpenCitation,
   onAsk,
 }: {
@@ -25,7 +24,6 @@ export function StudioBody({
   sources: { usable: SourceSummary[]; loaded: boolean };
   output: StudioOutput | undefined;
   note: Note | undefined;
-  onBack: () => void;
   onOpenCitation: (chunkId: string) => void;
   onAsk: (question: string) => void;
 }) {
@@ -37,7 +35,7 @@ export function StudioBody({
         note={note}
         deletingOutput={studio.remove.isPending}
         deletingNote={studio.removeNote.isPending}
-        onDeleteOutput={(outputId) => studio.remove.mutate(outputId, { onSuccess: onBack })}
+        onDeleteOutput={studio.setOutputToDelete}
         onDeleteNote={studio.setNoteToDelete}
         onOpenCitation={onOpenCitation}
         onAsk={onAsk}

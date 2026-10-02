@@ -83,6 +83,7 @@ describe('StudioPanel', () => {
     renderPanel();
 
     expect(await screen.findByText('Hier wird die Ausgabe von Studio gespeichert.')).toBeTruthy();
+    await vi.waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
   });
 
   it('tells what a tile makes when the pointer rests on it', async () => {
@@ -257,8 +258,12 @@ describe('StudioPanel', () => {
       within(list).getByRole('button', { name: 'Weitere Aktionen für „Karteikarten“' })
     );
     await user.click(await screen.findByRole('menuitem', { name: 'Löschen' }));
+    await user.click(
+      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Löschen' })
+    );
 
     expect(await screen.findByText('Hier wird die Ausgabe von Studio gespeichert.')).toBeTruthy();
+    await vi.waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
   });
 
   it('renames an output from the menu of the list', async () => {
@@ -289,6 +294,34 @@ describe('StudioPanel', () => {
     expect(await within(list).findByRole('button', { name: /^Mein Name/ })).toBeTruthy();
   });
 
+  it('asks before an output is deleted and keeps it when the question is declined', async () => {
+    let deleted = false;
+    serve({ outputs: [flashcardsOutput()] });
+    server.use(
+      http.delete(`${base}/studio/${OUTPUT_ID}`, () => {
+        deleted = true;
+        return new HttpResponse(null, { status: 204 });
+      })
+    );
+    renderPanel();
+    const user = userEvent.setup();
+
+    await user.click(await waitForRow(/^Karteikarten/));
+    await user.click(await screen.findByRole('button', { name: 'Zurück zum Studio' }));
+    const list = screen.getByRole('region', { name: 'Erstellte Ausgaben' });
+    await user.click(
+      within(list).getByRole('button', { name: 'Weitere Aktionen für „Karteikarten“' })
+    );
+    await user.click(await screen.findByRole('menuitem', { name: 'Löschen' }));
+    const dialog = await screen.findByRole('alertdialog');
+    expect(within(dialog).getByText(/„Karteikarten“ wird gelöscht/)).toBeTruthy();
+    await user.click(within(dialog).getByRole('button', { name: 'Abbrechen' }));
+
+    await vi.waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+    expect(deleted).toBe(false);
+    expect(within(list).getByRole('button', { name: /^Karteikarten/ })).toBeTruthy();
+  });
+
   it('deletes an output from inside its view and returns to the list', async () => {
     let deleted = false;
     serve();
@@ -305,8 +338,12 @@ describe('StudioPanel', () => {
     await user.click(await waitForRow(/^Karteikarten/));
     await user.click(await screen.findByRole('button', { name: 'Weitere Aktionen' }));
     await user.click(await screen.findByRole('menuitem', { name: 'Löschen' }));
+    await user.click(
+      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Löschen' })
+    );
 
     expect(await screen.findByText('Hier wird die Ausgabe von Studio gespeichert.')).toBeTruthy();
+    await vi.waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
   });
 
   it('writes the path of an open output into the header and closes it with the button there', async () => {

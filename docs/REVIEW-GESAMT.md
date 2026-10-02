@@ -78,7 +78,7 @@ Die Schwächen liegen an den Rändern: **Zuverlässigkeit im Betrieb** (hängend
   ohne `isComposing`-Prüfung (Japanisch und Chinesisch). Fix: `readOnly`, Fokus zurücksetzen.
 - **M14 „Erklären“ geht still verloren** ✅ (siehe ENTSCHEIDUNGEN), wenn gerade eine Antwort läuft oder keine Quelle bereit ist
   (`use-incoming-question.ts`).
-- **M15 Ausgabe löschen ohne Rückfrage**, Notizen fragen vorher (`use-studio-actions.ts:68-71`).
+- **M15 Ausgabe löschen ohne Rückfrage** ✅ (siehe ENTSCHEIDUNGEN), Notizen fragen vorher (`use-studio-actions.ts:68-71`).
 - **M16 Bundle.** Alle Seiten werden eager importiert, Hauptbundle 878 KB unkomprimiert, `written-note` 460 KB.
   Caddy hat kein `encode` (bestätigt), statische Dateien kommen daher unkomprimiert.
   Fix: `lazy()` für die Notebook-Seite, `encode` nur für statische Pfade (der Chat-Stream darf nicht
@@ -172,4 +172,4 @@ und Screenreader, `test:db`, `e2e`, Semgrep.
 3. ✅ **Härtung, klein:** H3 (Deploy-Bedingung), M3 (Header in Caddy), H6 nach Browserprüfung.
 4. **Betrieb:** M8 und M9 erledigt; H4 teilweise (Dump vor jedem Deploy, Restore-Probe), Kopie auf externen Speicher: vom Nutzer als nicht notwendig entschieden.
 5. **Funktionen:** PDF-Link ✅, Bilder ✅; „neu einlesen“ ✅; Markdown-Export ✅; Konto löschen ✅; Hinweis zum Gemini-Tarif im Upload-Dialog: zurückgestellt, solange die Seite eine Demo ist.
-6. **Danach:** M5 ✅, M2 ✅, M11 ✅, M12 ✅, M13 ✅, M14 ✅; M15 bis M17, YouTube, Audio, PPTX.
+6. **Danach:** M5 ✅, M2 ✅, M11 ✅, M12 ✅, M13 ✅, M14 ✅, M15 ✅; M16, M17, YouTube, Audio, PPTX.

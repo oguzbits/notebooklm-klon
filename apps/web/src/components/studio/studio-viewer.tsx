@@ -54,7 +54,7 @@ export function OpenedEntry({
   note: Note | undefined;
   deletingOutput: boolean;
   deletingNote: boolean;
-  onDeleteOutput: (outputId: string) => void;
+  onDeleteOutput: (output: StudioOutput) => void;
   onDeleteNote: (note: Note) => void;
   onOpenCitation: (chunkId: string) => void;
   onAsk: (question: string) => void;
@@ -65,7 +65,7 @@ export function OpenedEntry({
         notebookId={notebookId}
         output={output}
         deleting={deletingOutput}
-        onDelete={() => onDeleteOutput(output.id)}
+        onDelete={() => onDeleteOutput(output)}
         onOpenCitation={onOpenCitation}
         onAsk={onAsk}
       />

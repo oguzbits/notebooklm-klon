@@ -1122,3 +1122,11 @@ verworfen und nicht später nachgeholt, wenn eine Quelle fertig wird: Die Person
 zu schlucken, sagt der Hinweis unter dem Feld dann "Die Frage wurde nicht gestellt." vor dem Quellen-Hinweis. Die verworfene ID steht im
 State und wird beim Rendern gesetzt (kein `setState` im Effekt, `react-hooks/set-state-in-effect`). Der Hinweis wandert mit `useChatSession`
 (`hint`), damit `ChatPanel` unter der Zeilengrenze bleibt.
+
+## 2026-10-02 (Ausgabe löschen mit Rückfrage, M15)
+
+Eine Studio-Ausgabe wird wie eine Notiz erst nach einer Rückfrage gelöscht ("Ausgabe löschen?" mit dem Titel in der Beschreibung,
+`DeleteOutputDialog` in `studio/studio-dialogs.tsx`). Beide Wege laufen durch denselben Dialog: das Menü der Liste (`deleteEntry`) und der
+Löschen-Knopf in der geöffneten Ansicht (`onDeleteOutput` übergibt jetzt die Ausgabe statt der ID und setzt `outputToDelete`). Der Dialog
+löscht, schließt sich und führt die Ansicht zurück zur Liste. Zwei fast gleiche Dialoge (Notiz, Ausgabe) bleiben getrennt (Regel der
+Drei); `ConfirmDialog` ist schon die gemeinsame Hülle.

@@ -73,14 +73,15 @@ export function StudioPanel({
         sources={{ usable, loaded: sources.isSuccess }}
         output={openedOutput}
         note={openedNote}
-        onBack={back}
         onOpenCitation={onOpenCitation}
         onAsk={onAsk}
       />
       <StudioDialogs
         noteToDelete={studio.noteToDelete}
+        outputToDelete={studio.outputToDelete}
         outputToRename={studio.outputToRename}
         removeNote={studio.removeNote}
+        removeOutput={studio.remove}
         update={studio.update}
         onClose={studio.closeQuestion}
         onDone={back}
