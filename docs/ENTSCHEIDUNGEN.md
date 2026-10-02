@@ -899,3 +899,10 @@ CI war seit dem 30.09. auf `main` rot, ohne dass es auffiel: Die Hooks lassen `t
   erhalten, die offene Quellenansicht wanderte ins neue Notebook (404 auf dem alten Chunk).
 - **CSV (H7).** Felder, die mit `=`, `+`, `-`, `@`, Tab oder CR beginnen, bekommen ein Apostroph; reine Zahlen (`-5`, `+3,5`) bleiben.
 - **„Prompt“ bleibt.** Das Wort steht so im Original („Prompt und n Quellen ansehen“) und ist oben als bewusste Wahl festgehalten.
+
+### H5: `/health` fragt die Datenbank
+
+`/health` führt jetzt `select 1` aus. Antwortet die Datenbank nicht, wirft die Route und die Fehlerbehandlung
+macht daraus eine 500 (fail fast, kein Fallback). Der Docker-Healthcheck der App meldet dann „unhealthy“.
+Bewusst nicht geprüft: Objektspeicher und Anbieter (Gemini, Tavily). Ihr Ausfall soll die App nicht als
+tot markieren, solange Lesen und Notizen noch gehen.

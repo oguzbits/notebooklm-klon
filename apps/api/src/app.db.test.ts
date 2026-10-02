@@ -97,6 +97,15 @@ describe('health and authentication', () => {
     expect(HealthSchema.safeParse(await response.json()).success).toBe(true);
   });
 
+  it('fails the health check when the database cannot be reached', async () => {
+    const down = createHarness();
+    await down.pool.end();
+
+    const response = await createApp(down.deps).request('/health');
+
+    expect(response.status).toBe(500);
+  });
+
   it.each(['/api/notebooks', '/api/notebooks/abc/sources'])('protects %s', async (path) => {
     const response = await app.request(path);
 

@@ -1,5 +1,6 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { API_ERROR, HealthSchema } from '@nlm/shared';
+import { sql } from 'drizzle-orm';
 import { HTTPException } from 'hono/http-exception';
 
 import type { AppDeps } from './app-deps';
@@ -50,7 +51,11 @@ export function createApp(deps: AppDeps) {
     return c.json(errorBody(API_ERROR.INTERNAL), HTTP_STATUS.INTERNAL_SERVER_ERROR);
   });
 
-  app.get('/health', (c) => c.json(HealthSchema.parse({ status: 'ok' })));
+  // The container is only healthy while the database answers: a failure throws and becomes a 500.
+  app.get('/health', async (c) => {
+    await deps.db.execute(sql`select 1`);
+    return c.json(HealthSchema.parse({ status: 'ok' }));
+  });
   // Guests are made by the guest route only: it copies the example and counts them.
   app.post('/api/auth/sign-in/anonymous', (c) => c.json(errorBody(API_ERROR.NOT_FOUND), 404));
   app.on(['GET', 'POST'], '/api/auth/*', (c) => deps.auth.handler(c.req.raw));
