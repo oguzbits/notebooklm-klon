@@ -1697,3 +1697,20 @@ vollständig" lautet. Der Pflichtfakt kannte nur feste Wortfolgen ("verhindert n
 obwohl der Anker wörtlich in der Quelle steht. Möglich ist, dass ein Abschnitt den Satz zerschneidet; ohne die
 Abschnitte aus der Datenbank nicht belegt. Regel dahinter: ein Assert wird nur korrigiert, wenn die Quelle zeigt,
 dass er falsch ist, nicht weil das Modell anders antwortet.
+
+## Chat: Label im Aussagetext wird entfernt (Lauf 18:05 UTC)
+
+`nist-voluntary` verlor beide Aussagen als "Zahl nicht im Zitat (1)". Ursache: Das Modell schrieb das Label
+("[c1]") zusätzlich in den Text, die Zahlenprüfung las daraus die "1". Der Server entfernt `[cN]` und
+`[cN, cM]` jetzt aus dem Aussagetext (`resolveCitations`); die Quelle der Zitate bleibt `chunkIds`. Der Nutzer
+sieht das Label so auch nie. Test: `chat-context.test.ts`.
+
+Geprüft und bewusst nicht geändert:
+
+- `destatis-landwirtschaft`: Die Aussage mit "464 Tausend (464 in 1 000)" wurde verworfen, weil die Einheit
+  "in 1 000" in der Quelle in der Tabellenkopfzeile weit von der Zahl steht (Zeile 835 und 1726 gegen 1501),
+  also in einem anderen Abschnitt als dem zitierten. Das ist der offene Punkt "Tabellenkopf pro Abschnitt", kein
+  Fehler der Prüfung. Die Richtung ist sicher (eine Aussage zu wenig, keine zu viel).
+- `rag-halluzinationen`: Der Satz steht ganz in genau einem von 19 Abschnitten, die Suche findet ihn trotzdem
+  nicht unter den Treffern. Das ist ein Suchproblem, kein Assert-Fehler; der Pflichtfakt wird deshalb nicht
+  weiter an die Antwort angepasst.

@@ -61,4 +61,19 @@ describe('resolveCitations', () => {
     expect(result.answer.statements).toEqual([]);
     expect(result.strippedCitations).toBe(1);
   });
+
+  it('removes a label the model wrote into the text: the citation is in chunkIds, not in the words', () => {
+    const result = resolveCitations(
+      {
+        statements: [
+          { text: 'Es ist freiwillig [c1]. Auch belegt [c1, c2] hier.', chunkIds: ['c1'] },
+        ],
+      },
+      buildChatContext(CHUNKS)
+    );
+
+    expect(result.answer.statements).toEqual([
+      { text: 'Es ist freiwillig. Auch belegt hier.', chunkIds: ['uuid-1'] },
+    ]);
+  });
 });

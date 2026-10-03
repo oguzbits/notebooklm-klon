@@ -47,6 +47,9 @@ export function buildChatContext(chunks: readonly ContextChunk[]): ChatContext {
   return { labels, promptText, idByLabel, textByLabel };
 }
 
+// The model sometimes also writes a label into the words: [c1] or [c1, c2]. The citation is in chunkIds.
+const LABEL_IN_TEXT = /\s*\[c\d+(?:\s*,\s*c\d+)*\]/g;
+
 /** Validates the model's labels against the context and returns the answer with real chunk IDs. */
 export function resolveCitations(answer: Answer, context: ChatContext): SanitizedAnswer {
   const sanitized = sanitizeAnswer(answer, context.labels);
@@ -54,7 +57,7 @@ export function resolveCitations(answer: Answer, context: ChatContext): Sanitize
     ...sanitized,
     answer: {
       statements: sanitized.answer.statements.map((statement) => ({
-        text: statement.text,
+        text: statement.text.replace(LABEL_IN_TEXT, ''),
         chunkIds: statement.chunkIds.flatMap((label) => {
           const id = context.idByLabel.get(label);
           return id === undefined ? [] : [id];
