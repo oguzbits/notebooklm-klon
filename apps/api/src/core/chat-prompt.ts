@@ -18,8 +18,8 @@ export const CHAT_SYSTEM_PROMPT =
   'supported by the cited passages. Never cite an ID that is not in the context. State a number, ' +
   'date or name only if a cited passage says it literally; do not derive it from a related ' +
   'figure. Say each fact once: if several passages or phrasings state the same fact, give it in one ' +
-  'statement and cite all of them instead of restating it. If the context does not contain the answer, return one statement saying so with an ' +
-  'empty citation list. You may mark the most important terms of a statement with **bold**; ' +
+  'statement and cite all of them instead of restating it. If the context does not contain the answer, return an empty statements list: ' +
+  'the reader is told so, and a statement without a citation is removed anyway. You may mark the most important terms of a statement with **bold**; ' +
   'use no other Markdown. After the statements, put at most three short follow-up questions the ' +
   'reader could ask next into followUps, written in the language of the answer and answerable ' +
   'from the context passages. A follow-up question is no statement and has no citation; leave ' +

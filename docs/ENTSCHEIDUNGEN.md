@@ -1394,3 +1394,12 @@ Jetzt fließen die letzten Antworten des Notebooks in Suche und Antwort ein (`co
 - **Nicht gemessen:** Qualität der Umformulierung live (der Eval fragt ohne Verlauf), Mehrkosten durch den zweiten
   Aufruf auf dem gemeinsamen Gratis-Kontingent. Ein Eval mit Folgefragen wäre der nächste Schritt (`pnpm eval:live`
   braucht Freigabe).
+
+## 2026-10-03 (Verweigerung ohne Scheinaussage)
+
+Der Prompt verlangte bei fehlender Antwort eine Aussage "steht nicht in den Quellen" ohne Zitat. Der Server verwirft
+Aussagen ohne Zitat, also erschien unter der Verweigerung "1 Aussage ohne Beleg wurde weggelassen", als hätte das Modell
+etwas Unbelegtes behauptet. Jetzt soll das Modell in diesem Fall eine leere Aussagenliste liefern. Die Anzeige "keine
+belegte Antwort gefunden" kommt aus der Oberfläche und bleibt. Der Server ändert sich nicht: schreibt das Modell doch
+eine unzitierte Aussage, wird sie wie bisher verworfen. Nicht gemessen: ob Gemini die leere Liste zuverlässig liefert
+(die Eval-Fragen ohne Antwort zeigen es im nächsten Live-Lauf an `droppedStatements` bei `abstained`).
