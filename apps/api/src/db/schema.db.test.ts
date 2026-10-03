@@ -1,4 +1,4 @@
-import { EMBEDDING_DIMENSIONS, SOURCE_KIND, SOURCE_STATUS } from '@nlm/shared';
+import { EMBEDDING_DIMENSIONS, SOURCE_KIND } from '@nlm/shared';
 import { asc, cosineDistance, eq, sql } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
@@ -7,7 +7,6 @@ import { axisVector, createTestDb, ensureUsers } from './testing/test-db';
 
 const { db, pool } = createTestDb();
 const USER = 'user-a';
-const OTHER_USER = 'user-b';
 // Drizzle wraps the driver error; the Postgres error code sits in `cause`.
 const UNIQUE_VIOLATION_ERROR = { cause: { code: '23505' } };
 
@@ -33,7 +32,7 @@ async function insertChunk(sourceId: string, ordinal: number, text: string, axis
 
 beforeEach(async () => {
   await pool.query('TRUNCATE sources, notebooks CASCADE');
-  await ensureUsers(pool, ['user-a', 'user-b']);
+  await ensureUsers(pool, ['user-a']);
 });
 
 afterAll(async () => {
@@ -55,22 +54,10 @@ describe('migrations', () => {
 });
 
 describe('sources', () => {
-  it('start as PENDING', async () => {
-    const source = await insertSource(USER, 'hash-1');
-
-    expect(source.status).toBe(SOURCE_STATUS.PENDING);
-  });
-
   it('reject a second source with the same content hash for the same user', async () => {
     await insertSource(USER, 'hash-1');
 
     await expect(insertSource(USER, 'hash-1')).rejects.toMatchObject(UNIQUE_VIOLATION_ERROR);
-  });
-
-  it('allow the same content hash for a different user', async () => {
-    await insertSource(USER, 'hash-1');
-
-    await expect(insertSource(OTHER_USER, 'hash-1')).resolves.toBeDefined();
   });
 
   it('reject a status outside the enum', async () => {

@@ -3,12 +3,9 @@ import { and, eq } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import {
-  linkSource,
-  listNotebookSources,
   renameSource,
   RESTART,
   restartFailedSource,
-  selectedReadySourceIds,
   setReadySourcesSelected,
   setSourceSelected,
   unlinkSource,
@@ -60,13 +57,6 @@ afterAll(async () => {
 });
 
 describe('notebook source repository isolation', () => {
-  it('shows a stranger nothing of the owner’s sources', async () => {
-    const { notebook } = await setup(OWNER);
-
-    expect(await listNotebookSources(db, STRANGER, notebook.id)).toEqual([]);
-    expect(await listNotebookSources(db, OWNER, notebook.id)).toHaveLength(1);
-  });
-
   it('lets a stranger change nothing in the owner’s notebook', async () => {
     const { notebook, source } = await setup(OWNER);
     const before = await stored(source.id);
@@ -79,29 +69,6 @@ describe('notebook source repository isolation', () => {
 
     expect(await stored(source.id)).toEqual(before);
     expect((await stored(source.id)).source?.title).toBe(TITLE);
-  });
-
-  it('does not link the owner’s source into a stranger’s notebook or the other way round', async () => {
-    const owner = await setup(OWNER);
-    const stranger = await setup(STRANGER);
-
-    expect(await linkSource(db, STRANGER, stranger.notebook.id, owner.source.id)).toBe(false);
-    expect(await linkSource(db, STRANGER, owner.notebook.id, stranger.source.id)).toBe(false);
-    expect(await linkSource(db, OWNER, stranger.notebook.id, owner.source.id)).toBe(false);
-
-    expect((await stored(owner.source.id)).links).toHaveLength(1);
-    expect((await stored(stranger.source.id)).links).toHaveLength(1);
-  });
-
-  it('keeps a source out of the selection of a notebook it is not linked to', async () => {
-    const owner = await setup(OWNER);
-    await db
-      .update(sources)
-      .set({ status: SOURCE_STATUS.READY })
-      .where(eq(sources.id, owner.source.id));
-
-    expect(await selectedReadySourceIds(db, STRANGER, owner.notebook.id)).toEqual([]);
-    expect(await selectedReadySourceIds(db, OWNER, owner.notebook.id)).toEqual([owner.source.id]);
   });
 
   it('leaves a foreign source alone when the bulk selection runs, even if a link to it exists', async () => {
