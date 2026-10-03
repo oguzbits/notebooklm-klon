@@ -1285,5 +1285,8 @@ Menüs, Dialogen und allen fünf Ansichten (Quiz, Karteikarten, Tabelle, Mindmap
   gibt Knöpfen mit Symbol `pl-2 pr-3` (8/12 px): 40x36, das Symbol saß aus der Mitte. Der Knopf in der Kopfzeile des
   Notebooks (`pl-3 pr-4`) hatte denselben Fehler.
 - **Entscheidung:** Ohne Beschriftung ist der Knopf rund und gleichmäßig (`max-wide:w-9 max-wide:px-0`, 36x36 wie im
-  Original), mit Beschriftung bleibt alles wie vorher. Eine andere versteckte Beschriftung gibt es nicht. Der e2e-Test
-  misst Breite gleich Höhe und gleichen Abstand links und rechts vom Symbol (390 px, Liste und Kopfzeile).
+  Original), mit Beschriftung bleibt alles wie vorher. Eine andere versteckte Beschriftung gibt es nicht. Kein Test: das
+  ist reine Optik, im Browser geprüft.
+- **Tests für Optik gestrichen:** Die e2e-Tests, die nur Pixelmaße und Abschneiden messen (Leisten der Dialoge in sechs
+  Breiten, Wörter der Berichtsvorlagen, Ideen im Textfeld, 40-px-Tippflächen), sind entfernt. Sie testeten Kleinigkeiten
+  und kosteten e2e-Laufzeit. Es bleiben Tests für Verhalten (zum Beispiel das Menü ungelesener Ausgaben per Touch).

@@ -1,4 +1,4 @@
-import { expect, type Locator, type Page, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 import { createNotebook, renameOpenNotebook, signUp, uniqueEmail } from './helpers';
 
@@ -70,33 +70,4 @@ test('an unknown notebook page says so instead of showing something', async ({ p
   await page.goto('/notebook/00000000-0000-4000-8000-000000000000');
 
   await expect(page.getByRole('heading', { name: 'Notebook nicht gefunden' })).toBeVisible();
-});
-
-/** The icon sits in the middle of the button: the same room to the left and to the right of it. */
-async function iconOffCenter(button: Locator): Promise<number> {
-  const box = await button.boundingBox();
-  const icon = await button.locator('svg').boundingBox();
-  expect(box).not.toBeNull();
-  expect(icon).not.toBeNull();
-  return Math.abs(icon!.x - box!.x - (box!.x + box!.width - icon!.x - icon!.width));
-}
-
-test('the button for a new notebook is an even round icon on a narrow screen', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 800 });
-  await signUp(page, uniqueEmail('round'));
-
-  const button = page.getByRole('button', { name: 'Neues Notebook' });
-  const box = await button.boundingBox();
-  expect(box).not.toBeNull();
-  expect(box!.width).toBe(box!.height);
-  expect(await iconOffCenter(button)).toBeLessThanOrEqual(0.5);
-
-  // The same button in the header of an open notebook.
-  await button.click();
-  await expect(page.getByLabel('Titel des Notebooks')).toBeVisible();
-  const inHeader = page.getByRole('button', { name: 'Notebook erstellen' });
-  const headerBox = await inHeader.boundingBox();
-  expect(headerBox).not.toBeNull();
-  expect(headerBox!.width).toBe(headerBox!.height);
-  expect(await iconOffCenter(inHeader)).toBeLessThanOrEqual(0.5);
 });
