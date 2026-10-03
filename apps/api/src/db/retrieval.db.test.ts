@@ -160,10 +160,11 @@ describe('searchChunks ranking', () => {
   it('finds a chunk by the vector of any version of the question', async () => {
     const notebook = await insertNotebook(USER);
     const source = await insertSource(USER, notebook.id, 'a');
+    // One distractor only: with two, a tie broken by the random ID can put one of them second in both
+    // rankings, and that outscores a chunk that is first in just one.
     await insertChunk(source.id, 0, 'ohne Bezug', 0);
-    await insertChunk(source.id, 1, 'ganz woanders', 2);
-    await insertChunk(source.id, 2, 'passt zur ersten Fassung', 3);
-    await insertChunk(source.id, 3, 'passt zur zweiten Fassung', 1);
+    await insertChunk(source.id, 1, 'passt zur ersten Fassung', 3);
+    await insertChunk(source.id, 2, 'passt zur zweiten Fassung', 1);
 
     const results = await searchChunks(db, {
       userId: USER,
