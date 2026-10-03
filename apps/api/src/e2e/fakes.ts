@@ -158,7 +158,8 @@ export function fakeStudio(schema: Record<string, unknown>, userMessage: string)
     return JSON.stringify({
       title,
       questions: passages.map((p) => ({
-        question: `Welche Aussage passt zur Quelle (${p.label})?`,
+        // No label in the text: a digit there would be a number no passage says, and the server drops it.
+        question: `Welche Aussage passt zu: ${firstWords(p.sentence, STUDIO_TITLE_WORDS)} …?`,
         options: [p.sentence, 'Das steht nirgends.', 'Keine der Antworten.', 'Das ist offen.'],
         correctIndex: 0,
         explanation: p.sentence,
