@@ -17,8 +17,15 @@ export const CHAT_SYSTEM_PROMPT =
   'statement must cite one or more passage IDs (for example "c2") from the context and must be ' +
   'supported by the cited passages. Never cite an ID that is not in the context. State a number, ' +
   'date or name only if a cited passage says it literally; do not derive it from a related ' +
-  'figure. Give a figure as the passage gives it and name its unit from the table header or the text around it (46 185 thousand). Never round it; converting the unit is allowed only without rounding (46,185 million). Say each fact once: if several passages or phrasings state the same fact, give it in one ' +
-  'statement and cite all of them instead of restating it. If the context does not contain the answer, return an empty statements list: ' +
+  'figure. Name the unit of a figure from the table header or the text around it. When one ' +
+  'passage gives a figure rounded in words (46.2 million) and another gives it exactly in a ' +
+  'table (46 185 thousand), give both in one statement (about 46.2 million, exactly 46,185,000) ' +
+  'and cite both passages; never round a figure yourself. Say each fact once: if several ' +
+  'passages or phrasings state the same fact, give it in one statement and cite all of them ' +
+  'instead of restating it. After the direct answer add what the passages say that belongs to it ' +
+  '(the parts a total is made of, the year it refers to). If a passage gives another figure for ' +
+  'the same measure because it counts another group or uses another method, say so in its own ' +
+  'statement and name the difference. If the context does not contain the answer, return an empty statements list: ' +
   'the reader is told so, and a statement without a citation is removed anyway. You may mark the most important terms of a statement with **bold**; ' +
   'use no other Markdown. After the statements, put at most three short follow-up questions the ' +
   'reader could ask next into followUps, written in the language of the answer and answerable ' +

@@ -1488,3 +1488,20 @@ Tausend" in der Antwort galt als nicht belegt. Die einzige Aussage wurde verworf
   Zahlencheck lässt beides weiter zu (`46 185`, `46,185`), er schützt vor erfundenen Zahlen.
 - Offen: Steht die Einheit in einer Überschrift außerhalb des Abschnitts, sieht das Modell sie nicht.
   Das löst erst die Kopfzeile pro Abschnitt (Schritt 3, BACKLOG). Wirkung des Prompts am Live-Eval messen.
+
+## Chat-Prompt: Antwort wie NotebookLM (Kernzahl und genauer Wert, Teilzahlen, Abweichungen)
+
+- Anlass: NotebookLM antwortet auf die Erwerbspersonen-Frage mit „rund 46,2 Millionen (exakt
+  46.185.000)“ und zwei Quellen, danach die Teilzahlen (Erwerbstätige, Erwerbslose), ein Hinweis auf
+  die abweichende Mikrozensus-Zahl und eine Folgefrage. Unsere Regel „nie runden, nur eine Zahl“
+  hätte die Zahl aus dem ersten Satz (46,2) verdrängt.
+- Lösung: Der Prompt verlangt, Kernzahl (Text) und genauen Wert (Tabelle) in einer Aussage zu nennen
+  und beide Passagen zu zitieren. Danach folgen die zugehörigen Angaben der Passagen. Eine
+  abweichende Zahl für dieselbe Größe (andere Gruppe, andere Methode) steht in einer eigenen Aussage
+  mit dem Unterschied. Der Zahlencheck trägt das ohne Änderung: `46,2` steht im Satz, `46.185.000` folgt
+  aus `46 185`.
+- Verworfen: Die Quellen einer verworfenen Wiederholung an die behaltene Aussage hängen. Aussagen
+  werden schon gestreamt, wenn die Wiederholung auffällt; das bräuchte ein neues Ereignis im Vertrag.
+  Der Prompt lässt das Modell die Quellen gleich in einer Aussage bündeln. Bleibt eine Wiederholung,
+  verliert sie weiter ihre Quelle.
+- Offen: Wirkung am Live-Eval messen (Rang des erwarteten Chunks steht im Bericht).
