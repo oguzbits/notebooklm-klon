@@ -120,18 +120,6 @@ describe('StudioPanel', () => {
     expect(await screen.findByText(/^1 Quelle · /)).toBeTruthy();
   });
 
-  it('keeps the order of the tiles of the original', async () => {
-    serve();
-    renderPanel();
-
-    await screen.findByRole('button', { name: 'Quiz' });
-    const names = screen
-      .getAllByRole('button')
-      .map((button) => button.textContent)
-      .filter((text) => ['Mindmap', 'Berichte', 'Karteikarten', 'Quiz'].includes(text ?? ''));
-    expect(names).toEqual(['Mindmap', 'Berichte', 'Karteikarten', 'Quiz']);
-  });
-
   it('shows a blue dot on an output nobody opened and clears it when it is opened', async () => {
     let unread = true;
     serve({ outputs: [flashcardsOutput()] });

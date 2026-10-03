@@ -101,19 +101,6 @@ describe('ChatPanel', () => {
     expect(screen.queryByText('Stelle deine erste Frage')).toBeNull();
   });
 
-  it('keeps the overview above the conversation, so it scrolls away with it', async () => {
-    server.use(
-      sources(),
-      history([question('Wer leitet es?'), answer([{ text: 'Er.', chunkIds: [CHUNK_ID] }])])
-    );
-    renderChat();
-
-    const title = await screen.findByRole('heading', { name: 'Steuerrecht' });
-    const asked = await screen.findByText('Wer leitet es?');
-
-    expect(title.compareDocumentPosition(asked) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  });
-
   it('shows saved answers with numbered chips that repeat for the same passage', async () => {
     server.use(
       sources(),
@@ -751,18 +738,6 @@ describe('ChatPanel', () => {
 
     expect(await screen.findByText('In Notiz gespeichert')).toBeTruthy();
     expect(body).toEqual({ kind: NOTE_KIND.ANSWER, messageId: ANSWER_ID });
-  });
-
-  it('puts "In Notiz speichern" before "Kopieren" under an answer, like the original', async () => {
-    server.use(sources(), history([answer([{ text: 'Aussage.', chunkIds: [CHUNK_ID] }])]));
-    renderChat();
-
-    const saves = await screen.findAllByRole('button', { name: 'In Notiz speichern' });
-    const copies = screen.getAllByRole('button', { name: 'Kopieren' });
-    const save = saves[saves.length - 1]!;
-    const copy = copies[copies.length - 1]!;
-
-    expect(save.compareDocumentPosition(copy) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('offers the steps of an answer that kept them, and nothing for an older one', async () => {

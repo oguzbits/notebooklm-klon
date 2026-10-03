@@ -8,15 +8,10 @@ import { normalizeText } from './scorers';
 
 const GOLDEN_PATH = fileURLToPath(new URL('./golden-questions.json', import.meta.url));
 const TEXT_DIR = fileURLToPath(new URL('../../../../spikes/corpus/_text/', import.meta.url));
-const GOLDEN_COUNT = 18;
 
 const dataset = EvalDatasetSchema.parse(JSON.parse(readFileSync(GOLDEN_PATH, 'utf8')));
 
 describe('golden questions', () => {
-  it('has the planned number of questions', () => {
-    expect(dataset).toHaveLength(GOLDEN_COUNT);
-  });
-
   // The corpus is git-ignored. Build it with spikes/build-corpus.py, then
   // spikes/extract-corpus-text.py. Without the extracted text the anchors cannot be verified.
   describe.skipIf(!existsSync(TEXT_DIR))('anchors against the extracted source text', () => {

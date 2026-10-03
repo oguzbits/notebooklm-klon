@@ -1301,3 +1301,7 @@ Menüs, Dialogen und allen fünf Ansichten (Quiz, Karteikarten, Tabelle, Mindmap
   doppelte DATABASE_URL-Prüfung. Die beiden Bewertungs-Tests des Studio-Rahmens sind einer.
 - **Bewusst behalten:** Verhalten pro Route (Auth, nicht gefunden), DB- und e2e-Tests (laufen nur in CI, nicht lokal
   prüfbar), Tests, die einen Zweig allein abdecken.
+- **Zweiter Durchgang:** Entfernt sind außerdem die Tests, die nur die Reihenfolge im DOM prüfen (Übersicht über dem
+  Verlauf, "In Notiz speichern" vor "Kopieren", Reihenfolge der Studio-Kacheln), `ownership.test.ts` (baute dasselbe SQL
+  nach, das der Code erzeugt; die Mandantentrennung beweisen die DB-Tests der Routen) und der Zähltest der Golden-Fragen.
+  Die großen Dateien `chat-panel` und `studio-panel` prüfen sonst durchweg Verhalten und bleiben.
