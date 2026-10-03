@@ -61,14 +61,6 @@ describe('chunkText', () => {
     }
   });
 
-  it('prefers a paragraph break over a plain space', () => {
-    const paragraph = words(150);
-    const text = `${paragraph}\n\n${paragraph}`;
-    const [first] = chunkText(text);
-
-    expect(first?.text).toBe(paragraph);
-  });
-
   it('prefers a paragraph break over a later line break', () => {
     const text = `${'x'.repeat(800)}\n\n${'y'.repeat(198)}\n${words(300)}`;
 

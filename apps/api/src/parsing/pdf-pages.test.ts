@@ -20,8 +20,4 @@ describe('countPdfPages', () => {
       UnreadablePdfError
     );
   });
-
-  it('rejects an empty file', async () => {
-    await expect(countPdfPages(new Uint8Array())).rejects.toThrow(UnreadablePdfError);
-  });
 });

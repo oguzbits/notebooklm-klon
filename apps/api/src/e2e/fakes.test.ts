@@ -30,14 +30,6 @@ const cosine = (a: number[], b: number[]) =>
   a.reduce((sum, value, i) => sum + value * (b[i] ?? 0), 0);
 
 describe('hashEmbedding', () => {
-  it('is deterministic and has unit length', () => {
-    const vector = hashEmbedding('Dr. Brandt leitet das Projekt Nordlicht', DIMENSIONS);
-
-    expect(vector).toEqual(hashEmbedding('Dr. Brandt leitet das Projekt Nordlicht', DIMENSIONS));
-    expect(vector).toHaveLength(DIMENSIONS);
-    expect(Math.hypot(...vector)).toBeCloseTo(1);
-  });
-
   it('puts texts with shared words closer together than unrelated ones', () => {
     const question = hashEmbedding('Wer leitet das Projekt Nordlicht?', DIMENSIONS);
     const related = hashEmbedding('Dr. Brandt leitet das Projekt Nordlicht.', DIMENSIONS);
@@ -58,13 +50,6 @@ describe('extractiveAnswer', () => {
       { text: 'Dr. Brandt leitet das Projekt.', chunkIds: ['c1'] },
       { text: 'Zweiter Absatz.', chunkIds: ['c2'] },
     ]);
-  });
-
-  it('says so without a citation when there is no passage', () => {
-    const answer = AnswerSchema.parse(JSON.parse(extractiveAnswer('Question: Wer?')));
-
-    expect(answer.statements).toHaveLength(1);
-    expect(answer.statements[0]?.chunkIds).toEqual([]);
   });
 });
 

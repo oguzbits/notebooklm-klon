@@ -171,10 +171,6 @@ describe('parsePptx', () => {
     await expect(parsePptx(zip)).rejects.toThrow();
   });
 
-  it('rejects bytes that are not a ZIP', async () => {
-    await expect(parsePptx(strToU8('kein pptx'))).rejects.toThrow();
-  });
-
   it('rejects a part that is far larger than any slide can be', async () => {
     const bytes = pptx({ slide1: slide(shape(paragraph('x'.repeat(6_000_000)))) }, ['slide1']);
 

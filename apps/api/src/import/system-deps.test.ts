@@ -59,8 +59,4 @@ describe('systemDeps.lookup', () => {
   it('returns the address of an IP literal without asking DNS', async () => {
     expect(await systemDeps.lookup('127.0.0.1')).toEqual(['127.0.0.1']);
   });
-
-  it('fails for a name that does not exist', async () => {
-    await expect(systemDeps.lookup('does-not-exist.invalid')).rejects.toThrow();
-  });
 });

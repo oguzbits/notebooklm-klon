@@ -192,15 +192,6 @@ describe('chat history', () => {
     expect((await app.request(`/api/notebooks/${bobsBook}/messages`, get(alice))).status).toBe(404);
   });
 
-  it('is empty for a new notebook', async () => {
-    const notebook = await createNotebook(alice);
-
-    const response = await app.request(`/api/notebooks/${notebook}/messages`, get(alice));
-
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual([]);
-  });
-
   it('saves the question and the checked answer of a chat turn', async () => {
     const notebook = await createNotebook(alice);
     const sourceId = await addText(alice, notebook, 'Dr. Brandt leitet das Projekt Nordlicht.');

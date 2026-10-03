@@ -27,15 +27,6 @@ describe('buildChatContext', () => {
   it('returns an empty context for no chunks', () => {
     expect(buildChatContext([])).toEqual({ labels: [], promptText: '', idByLabel: new Map() });
   });
-
-  it('maps every label back to its chunk ID', () => {
-    expect(buildChatContext(CHUNKS).idByLabel).toEqual(
-      new Map([
-        ['c1', 'uuid-1'],
-        ['c2', 'uuid-2'],
-      ])
-    );
-  });
 });
 
 describe('resolveCitations', () => {

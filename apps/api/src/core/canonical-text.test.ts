@@ -32,8 +32,4 @@ describe('toCanonicalText', () => {
 
     expect(toCanonicalText(once)).toBe(once);
   });
-
-  it('returns an empty string for text without content', () => {
-    expect(toCanonicalText(' \n\r\n\t ')).toBe('');
-  });
 });

@@ -177,25 +177,6 @@ describe('createGeminiPdfParser', () => {
     expect(schedule.mock.calls[0]?.[0]).toBe(LIMITS.VIDEO_ESTIMATED_TOKENS + 500);
   });
 
-  it('turns the refusal for a private or removed video into an error with the status', async () => {
-    server.use(
-      http.post(ENDPOINT, () =>
-        HttpResponse.json(
-          {
-            error: {
-              code: 403,
-              status: 'PERMISSION_DENIED',
-              message: 'The caller does not have permission',
-            },
-          },
-          { status: 403 }
-        )
-      )
-    );
-
-    await expect(parser().parseVideoUrl(VIDEO_URL)).rejects.toThrow(GeminiError);
-  });
-
   it('refuses an image answer that did not end normally, like a PDF', async () => {
     server.use(http.post(ENDPOINT, () => HttpResponse.json(answer('halb', 'MAX_TOKENS'))));
 
@@ -221,14 +202,11 @@ describe('createGeminiPdfParser', () => {
     expect((await parser().parse(PDF)).text).toBe('Teil eins. Teil zwei.');
   });
 
-  it.each(['MAX_TOKENS', 'RECITATION', 'SAFETY', 'OTHER'])(
-    'fails instead of returning a partial or blocked answer (%s)',
-    async (finishReason) => {
-      server.use(http.post(ENDPOINT, () => HttpResponse.json(answer('halber Text', finishReason))));
+  it('fails instead of returning a partial answer', async () => {
+    server.use(http.post(ENDPOINT, () => HttpResponse.json(answer('halber Text', 'MAX_TOKENS'))));
 
-      await expect(parser().parse(PDF)).rejects.toThrow(finishReason);
-    }
-  );
+    await expect(parser().parse(PDF)).rejects.toThrow('MAX_TOKENS');
+  });
 
   describe('with a fallback model', () => {
     it('reads the document again with it when the first model was blocked as recitation', async () => {

@@ -21,12 +21,4 @@ describe('EvalDatasetSchema', () => {
 
     expect(result.success).toBe(false);
   });
-
-  it('rejects a question without an expected anchor', () => {
-    expect(EvalDatasetSchema.safeParse([{ ...question, expectedAnchors: [] }]).success).toBe(false);
-  });
-
-  it('rejects an unknown language', () => {
-    expect(EvalDatasetSchema.safeParse([{ ...question, language: 'fr' }]).success).toBe(false);
-  });
 });

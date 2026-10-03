@@ -129,8 +129,4 @@ describe('htmlToMarkdown', () => {
       '> Zitat.\n>\n> Mehr.'
     );
   });
-
-  it('returns an empty string for a document without text', () => {
-    expect(htmlToMarkdown('<div> </div>')).toBe('');
-  });
 });

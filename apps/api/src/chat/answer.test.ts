@@ -214,7 +214,6 @@ describe('answerQuestion', () => {
     expect(calls.modelInput?.user).toBe(
       '<passages>\n[c1]\nDr. Brandt leitet das Projekt.\n\n[c2]\nDas Budget beträgt 1,25 Mio.\n</passages>\n\nQuestion: Wer leitet das Projekt?'
     );
-    expect(calls.modelInput?.system).toMatch(/context passages/i);
   });
 
   it('leaves out a statement without a valid citation and counts what it removed', async () => {

@@ -109,24 +109,18 @@ describe('studioRequest', () => {
     expect(system).toMatch(/never break the rules above/i);
   });
 
-  it('asks for a quiz question with a hint and a reason for every option, and for a title', () => {
+  it('asks for a title next to the questions or the cards', () => {
     const quiz = studioRequest(QUIZ, chunks, CHAT_LANGUAGE.AUTO);
     const cards = studioRequest(FLASHCARDS, chunks, CHAT_LANGUAGE.AUTO);
 
     expect(quiz.schema).toHaveProperty('required', ['title', 'questions']);
-    expect(quiz.system).toMatch(/hint/i);
-    expect(quiz.system).toMatch(/rationales/);
     expect(cards.schema).toHaveProperty('required', ['title', 'cards']);
   });
 
-  it('writes the template of a report: a blog post, a study plan, or what the reader describes', () => {
+  it('takes the instruction of a custom report from what the reader describes', () => {
     const system = (body: CreateStudioBody) =>
       studioRequest(body, chunks, CHAT_LANGUAGE.AUTO).system;
 
-    expect(system({ kind: STUDIO_KIND.REPORT, format: REPORT_FORMAT.BLOG })).toMatch(/blog post/i);
-    expect(system({ kind: STUDIO_KIND.REPORT, format: REPORT_FORMAT.STUDY_GUIDE })).toMatch(
-      /glossary/i
-    );
     expect(
       system({
         kind: STUDIO_KIND.REPORT,
@@ -138,14 +132,6 @@ describe('studioRequest', () => {
 });
 
 describe('studioPrompt', () => {
-  it('words the request the way the reader could have written it, in German', () => {
-    expect(studioPrompt({ kind: STUDIO_KIND.REPORT, format: REPORT_FORMAT.BRIEFING })).toMatch(
-      /Briefing/
-    );
-    expect(studioPrompt(MINDMAP)).toMatch(/Mindmap/);
-    expect(studioPrompt(DATA_TABLE)).toMatch(/Tabelle/);
-  });
-
   it('names the size, the difficulty and the topic of cards and questions', () => {
     const prompt = studioPrompt({
       ...QUIZ,

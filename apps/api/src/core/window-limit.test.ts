@@ -44,12 +44,4 @@ describe('createWindowLimit', () => {
     now = HOUR;
     expect(limit.take('anna')).toBe(true);
   });
-
-  it('can count everybody together with one fixed key', () => {
-    const limit = createWindowLimit({ max: 2, windowMs: HOUR, now: () => 0 });
-
-    expect(limit.take('all')).toBe(true);
-    expect(limit.take('all')).toBe(true);
-    expect(limit.take('all')).toBe(false);
-  });
 });

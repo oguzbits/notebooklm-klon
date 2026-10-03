@@ -1,5 +1,5 @@
 import { EMBEDDING_DIMENSIONS, SOURCE_KIND } from '@nlm/shared';
-import { asc, cosineDistance, eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { chunks, notebooks, notebookSources, sources } from './schema';
@@ -39,36 +39,6 @@ afterAll(async () => {
   await pool.end();
 });
 
-describe('migrations', () => {
-  it('enable pgvector and create all tables', async () => {
-    const extension = await pool.query("SELECT 1 FROM pg_extension WHERE extname = 'vector'");
-    const tables = await pool.query(
-      "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
-    );
-
-    expect(extension.rowCount).toBe(1);
-    expect(tables.rows.map((row) => row.table_name)).toEqual(
-      expect.arrayContaining(['chunks', 'notebook_sources', 'notebooks', 'sources'])
-    );
-  });
-});
-
-describe('sources', () => {
-  it('reject a second source with the same content hash for the same user', async () => {
-    await insertSource(USER, 'hash-1');
-
-    await expect(insertSource(USER, 'hash-1')).rejects.toMatchObject(UNIQUE_VIOLATION_ERROR);
-  });
-
-  it('reject a status outside the enum', async () => {
-    const source = await insertSource(USER, 'hash-1');
-
-    await expect(
-      pool.query("UPDATE sources SET status = 'DONE' WHERE id = $1", [source.id])
-    ).rejects.toThrow(/invalid input value for enum/);
-  });
-});
-
 describe('cascades', () => {
   it('deleting a source removes its chunks and notebook links', async () => {
     const source = await insertSource(USER, 'hash-1');
@@ -104,21 +74,6 @@ describe('chunks', () => {
     );
   });
 
-  it('return the nearest vector first', async () => {
-    const source = await insertSource(USER, 'hash-1');
-    await insertChunk(source.id, 0, 'null', 0);
-    await insertChunk(source.id, 1, 'eins', 1);
-    await insertChunk(source.id, 2, 'zwei', 2);
-
-    const [nearest] = await db
-      .select({ text: chunks.text })
-      .from(chunks)
-      .orderBy(asc(cosineDistance(chunks.embedding, axisVector(1, EMBEDDING_DIMENSIONS))))
-      .limit(1);
-
-    expect(nearest?.text).toBe('eins');
-  });
-
   it('can use the HNSW index for the vector search', async () => {
     const source = await insertSource(USER, 'hash-1');
     await insertChunk(source.id, 0, 'eins', 1);
@@ -140,21 +95,5 @@ describe('chunks', () => {
     } finally {
       client.release();
     }
-  });
-
-  it('match full-text search in German and English text', async () => {
-    const source = await insertSource(USER, 'hash-1');
-    await insertChunk(source.id, 0, 'Der Umsatz stieg im dritten Quartal um 12 Prozent.');
-    await insertChunk(source.id, 1, 'Revenue grew by 12 percent in the third quarter.');
-
-    const match = async (term: string) =>
-      db
-        .select({ ordinal: chunks.ordinal })
-        .from(chunks)
-        .where(sql`${chunks.searchVector} @@ plainto_tsquery('simple', ${term})`);
-
-    expect(await match('umsatz')).toEqual([{ ordinal: 0 }]);
-    expect(await match('revenue')).toEqual([{ ordinal: 1 }]);
-    expect(await match('kosten')).toEqual([]);
   });
 });

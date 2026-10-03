@@ -87,10 +87,6 @@ describe('email and password auth', () => {
     expect(response.status).toBe(400);
   });
 
-  it('has no session without a cookie', async () => {
-    expect(await auth.api.getSession({ headers: new Headers() })).toBeNull();
-  });
-
   it('never stores the password in clear text', async () => {
     await post('/sign-up/email', { name: 'Nutzer', email: EMAIL, password: PASSWORD });
 

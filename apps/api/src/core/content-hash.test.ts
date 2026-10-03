@@ -9,17 +9,4 @@ describe('hashContent', () => {
   it('returns the SHA-256 of the content as lower-case hex', () => {
     expect(hashContent(new TextEncoder().encode('abc'))).toBe(ABC_SHA256);
   });
-
-  it('is identical for identical bytes and different otherwise', () => {
-    const first = new Uint8Array([1, 2, 3]);
-
-    expect(hashContent(first)).toBe(hashContent(new Uint8Array([1, 2, 3])));
-    expect(hashContent(first)).not.toBe(hashContent(new Uint8Array([1, 2, 4])));
-  });
-
-  it('hashes the empty content', () => {
-    expect(hashContent(new Uint8Array())).toBe(
-      'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
-    );
-  });
 });

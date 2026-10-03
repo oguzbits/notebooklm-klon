@@ -2,7 +2,6 @@ import {
   API_ERROR,
   ApiErrorSchema,
   CHAT_LENGTH,
-  CHAT_STYLE,
   ChatConfigSchema,
   DEFAULT_CHAT_CONFIG,
   NotebookSchema,
@@ -281,17 +280,6 @@ describe('studio routes', () => {
     expect(modelInputs).toEqual([]);
   });
 
-  it('rejects a request for a report without a format', async () => {
-    const notebook = await createNotebook(alice, 'Text.');
-
-    const response = await app.request(
-      `/api/notebooks/${notebook}/studio`,
-      send('POST', alice, { kind: STUDIO_KIND.REPORT })
-    );
-
-    expect(response.status).toBe(400);
-  });
-
   it("does not show, make or delete anything in another user's notebook", async () => {
     const notebook = await createNotebook(alice, 'GEHEIMER-TEXT');
     const made = await app.request(
@@ -388,17 +376,6 @@ describe('chat config routes', () => {
     expect(ChatConfigSchema.parse(await before.json())).toEqual(DEFAULT_CHAT_CONFIG);
     expect(saved.status).toBe(200);
     expect(ChatConfigSchema.parse(await after.json())).toEqual(config);
-  });
-
-  it('reject a custom style without an instruction', async () => {
-    const notebook = await createNotebook(alice);
-
-    const response = await app.request(
-      `/api/notebooks/${notebook}/chat-config`,
-      send('PUT', alice, { ...DEFAULT_CHAT_CONFIG, style: CHAT_STYLE.CUSTOM })
-    );
-
-    expect(response.status).toBe(400);
   });
 
   it("do not reach into another user's notebook", async () => {

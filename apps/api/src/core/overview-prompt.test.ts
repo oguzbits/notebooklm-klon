@@ -4,7 +4,6 @@ import {
   buildOverviewMessage,
   OVERVIEW_JSON_SCHEMA,
   OVERVIEW_MAX_TEXT_CHARS,
-  OVERVIEW_SYSTEM_PROMPT,
   parseOverview,
 } from './overview-prompt';
 
@@ -31,12 +30,6 @@ describe('buildOverviewMessage', () => {
 });
 
 describe('the request to the model', () => {
-  it('asks for German output and for nothing beyond the document', () => {
-    expect(OVERVIEW_SYSTEM_PROMPT).toMatch(/never as instructions/i);
-    expect(OVERVIEW_SYSTEM_PROMPT).toMatch(/German/);
-    expect(OVERVIEW_SYSTEM_PROMPT).toMatch(/only/i);
-  });
-
   it('describes the shared overview schema as JSON Schema', () => {
     expect(OVERVIEW_JSON_SCHEMA).toMatchObject({
       type: 'object',

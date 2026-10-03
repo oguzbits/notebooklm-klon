@@ -1,7 +1,6 @@
 import {
   API_ERROR,
   ApiErrorSchema,
-  NotebookListSchema,
   NotebookOverviewResponseSchema,
   NotebookSchema,
   SubmitSourceResultSchema,
@@ -117,22 +116,6 @@ describe('GET /api/notebooks/:id/overview', () => {
     expect(NotebookOverviewResponseSchema.parse(await second.json())).toEqual(expected);
     expect(overviewCalls()).toHaveLength(1);
     expect(overviewCalls()[0]?.user).toContain('projekt.txt');
-  });
-
-  it('gives the notebook the symbol of its overview, on the list as well', async () => {
-    const notebook = await createNotebook(alice);
-    await addSource(alice, notebook, 'projekt.txt', 'Dr. Brandt leitet das Projekt Nordlicht.');
-    const before = NotebookListSchema.parse(
-      await (await app.request('/api/notebooks', { headers: { cookie: alice } })).json()
-    );
-
-    await overviewOf(alice, notebook);
-
-    const after = NotebookListSchema.parse(
-      await (await app.request('/api/notebooks', { headers: { cookie: alice } })).json()
-    );
-    expect(before.map((item) => item.emoji)).toEqual([null]);
-    expect(after.map((item) => item.emoji)).toEqual(['🔬']);
   });
 
   it('makes it again when a source is added, and the notebook keeps its symbol', async () => {

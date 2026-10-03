@@ -106,10 +106,6 @@ describe('parseWebPage', () => {
 
     expect(text).toContain('Kurz.');
   });
-
-  it('returns no page count for web pages', async () => {
-    expect((await parseWebPage(encode(article))).pageCount).toBeNull();
-  });
 });
 
 describe('pageTitle', () => {

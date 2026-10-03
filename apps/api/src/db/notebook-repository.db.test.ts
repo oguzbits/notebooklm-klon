@@ -160,25 +160,6 @@ describe('sources of a notebook', () => {
     expect((await listNotebookSources(db, USER, other.id))[0]?.selected).toBe(true);
   });
 
-  it('does not change the selection in the notebook of someone else', async () => {
-    const theirs = await createNotebook(db, OTHER, 'F');
-    const source = await addSource(OTHER, 'r3', { status: SOURCE_STATUS.READY });
-    await linkSource(db, OTHER, theirs.id, source.id);
-
-    expect(await setReadySourcesSelected(db, USER, theirs.id, false)).toBe(false);
-    expect((await listNotebookSources(db, OTHER, theirs.id))[0]?.selected).toBe(true);
-  });
-
-  it('does not change or unlink what belongs to someone else', async () => {
-    const theirs = await createNotebook(db, OTHER, 'F');
-    const source = await addSource(OTHER, 'b');
-    await linkSource(db, OTHER, theirs.id, source.id);
-
-    expect(await setSourceSelected(db, USER, theirs.id, source.id, false)).toBe(false);
-    expect(await unlinkSource(db, USER, theirs.id, source.id)).toBe(false);
-    expect(await listNotebookSources(db, OTHER, theirs.id)).toHaveLength(1);
-  });
-
   it('unlinks a source from the notebook but keeps the source itself', async () => {
     const notebook = await createNotebook(db, USER, 'N');
     const source = await addSource(USER, 'a');

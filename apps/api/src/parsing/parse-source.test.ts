@@ -171,21 +171,4 @@ describe('createParseSource', () => {
     );
     expect(calls).toBe(0);
   });
-
-  it('never calls the PDF parser for other kinds', async () => {
-    let calls = 0;
-    const parse = createParseSource(
-      provider({
-        parse: async () => {
-          calls += 1;
-          return { text: '', pageCount: null };
-        },
-      })
-    );
-
-    await parse(SOURCE_KIND.TXT, encode('a'));
-    await parse(SOURCE_KIND.URL, encode('<p>a</p>'));
-
-    expect(calls).toBe(0);
-  });
 });

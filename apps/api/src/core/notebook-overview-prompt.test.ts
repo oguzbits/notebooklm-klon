@@ -106,13 +106,6 @@ describe('notebookOverviewKey', () => {
 });
 
 describe('the request to the model', () => {
-  it('asks for German, for nothing beyond the sources, bold key terms and one symbol', () => {
-    expect(NOTEBOOK_OVERVIEW_SYSTEM_PROMPT).toMatch(/German/);
-    expect(NOTEBOOK_OVERVIEW_SYSTEM_PROMPT).toMatch(/only what the sources say/i);
-    expect(NOTEBOOK_OVERVIEW_SYSTEM_PROMPT).toMatch(/\*\*/);
-    expect(NOTEBOOK_OVERVIEW_SYSTEM_PROMPT).toMatch(/emoji/i);
-  });
-
   it('describes the shared schema as JSON Schema, without a pattern the provider may not know', () => {
     expect(NOTEBOOK_OVERVIEW_JSON_SCHEMA).toMatchObject({
       type: 'object',

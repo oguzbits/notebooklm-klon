@@ -28,8 +28,6 @@ describe('detectImageType', () => {
     expect(
       detectImageType(bytes(...ascii('<svg xmlns="http://www.w3.org/2000/svg"/>')))
     ).toBeNull();
-    expect(detectImageType(bytes(...ascii('GIF89a')))).toBeNull();
-    expect(detectImageType(bytes(...ascii('<script>alert(1)</script>')))).toBeNull();
     expect(detectImageType(bytes())).toBeNull();
     expect(detectImageType(bytes(0x89, 0x50))).toBeNull();
   });

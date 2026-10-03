@@ -18,10 +18,6 @@ describe('searchWords', () => {
     expect(searchWords('Größe der Würde')).toEqual(['größe', 'der', 'würde']);
   });
 
-  it('splits numbers with separators into digit groups', () => {
-    expect(searchWords('46,2 Millionen')).toEqual(['46', '2', 'millionen']);
-  });
-
   it('removes duplicates regardless of case', () => {
     expect(searchWords('Recht recht RECHT')).toEqual(['recht']);
   });

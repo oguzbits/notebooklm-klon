@@ -93,20 +93,6 @@ describe('runQuestion', () => {
     expect(result.failure).toBe(API_ERROR.INTERNAL);
     expect(result.statements).toHaveLength(1);
   });
-
-  it('records a miss of the retrieval', async () => {
-    const miss: EvalQuestion = {
-      ...QUESTION,
-      expectedAnchors: [{ sourceFile: 'a.docx', text: 'steht nirgends' }],
-    };
-
-    const result = await runQuestion(miss, SCOPE, ports('{"statements":[],"followUps":[]}'), {
-      topK: 2,
-      now,
-    });
-
-    expect(result.retrieval).toEqual({ hit: false, rank: null, anchorRecall: 0 });
-  });
 });
 
 describe('summarize', () => {

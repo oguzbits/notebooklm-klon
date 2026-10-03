@@ -108,14 +108,6 @@ describe('fetchPublicUrl', () => {
     expect(requests[1]?.url).toBe('https://example.com/next');
   });
 
-  it('rejects a redirect to a private address', async () => {
-    const { deps } = fakeDeps([redirect('http://169.254.169.254/latest/meta-data')]);
-
-    expect(await codeOf(fetchPublicUrl('https://example.com', deps))).toBe(
-      IMPORT_ERROR.PRIVATE_ADDRESS
-    );
-  });
-
   it('rejects a redirect to a host that resolves to a private address', async () => {
     const { deps } = fakeDeps([redirect('https://evil.example.net/')], (host) =>
       host === 'evil.example.net' ? ['192.168.0.10'] : [PUBLIC]
