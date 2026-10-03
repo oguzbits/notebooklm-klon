@@ -1541,3 +1541,23 @@ Tausend" in der Antwort galt als nicht belegt. Die einzige Aussage wurde verworf
 
 **Offen:** Wirkung der Änderungen messen (Nutzer führt `pnpm eval:live` aus). Danach entscheiden, ob
 zusammengehörende Aussagen im Strom zusammengeführt werden müssen (neues Ereignis im Vertrag).
+
+## Retrieval: Reservierung je Quelle ausprobiert und zurückgenommen
+
+**Versuch:** Jede gewählte Quelle bekam ihren besten Auszug sicher in den Kontext (Commit 1c74b16), damit
+eine Quelle in anderer Sprache als die Frage nicht verdrängt wird.
+
+**Messung** (`reports/eval-live-2026-10-03T16-12-45.823Z.md`, jetzt mit acht Quellen, der NIST-Scan wurde
+diesmal gelesen): Trefferquote 86 % (vorher 92 %). `dpr-top5` fiel von Rang 7 auf "fehlt", obwohl die Frage
+englisch ist; keine der deutschen Fragen an englische Quellen wurde besser (`dpr-top5-de`,
+`dpr-rag-cross-source`, `rag-halluzinationen` weiter ohne Treffer). `nist-fines` (nicht beantwortbar) wurde
+aus einem reservierten, fremden Auszug beantwortet.
+
+**Ursache:** Bei acht Quellen gehen bis zu sieben der zwölf Plätze an die besten Auszüge der übrigen Quellen,
+auch wenn die Frage nur eine betrifft. Das verdrängt echte Treffer und füttert das Modell mit Fremdem. Der
+Vorteil blieb aus, weil der Auszug mit der Antwort oft nicht der beste seiner Quelle ist.
+
+**Entscheidung:** Zurückgenommen (Revert). Das Problem bleibt offen: Die Textsuche trägt über Sprachgrenzen
+nichts bei, die Vektorsuche reicht für deutsche Fragen an englische Quellen nicht. Der nächste Kandidat ist
+die Frage vorab in die Sprachen der Quellen zu übersetzen (ein kleiner Modellaufruf je Frage, Kosten
+entscheidet der Nutzer).
