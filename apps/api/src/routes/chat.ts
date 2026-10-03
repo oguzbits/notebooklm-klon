@@ -7,15 +7,31 @@ import type { AuthVariables } from '../auth/session';
 import { answerQuestion, type ChatPorts, prepareAnswer } from '../chat/answer';
 import { AnswerRecorder } from '../chat/answer-recorder';
 import { LIMITS } from '../config/limits';
+import { historyTurns } from '../core/chat-history';
 import { createWindowLimit, HOUR_MS } from '../core/window-limit';
 import { getChatConfig } from '../db/chat-config-repository';
 import { findNotebook } from '../db/notebook-repository';
 import { selectedReadySourceIds } from '../db/notebook-source-repository';
-import { saveAssistantMessage, saveUserMessage } from '../db/reader-repository';
+import {
+  listRecentChatMessages,
+  saveAssistantMessage,
+  saveUserMessage,
+} from '../db/reader-repository';
 import { searchChunks } from '../db/retrieval';
 import { HTTP_STATUS } from '../http-status';
 
 const error = (code: (typeof API_ERROR)[keyof typeof API_ERROR]) => ({ code });
+
+/** The last answered turns of the conversation, for a follow-up question. */
+async function earlierTurns(deps: AppDeps, userId: string, notebookId: string) {
+  const recent = await listRecentChatMessages(
+    deps.db,
+    userId,
+    notebookId,
+    LIMITS.CHAT_HISTORY_TURNS * 2
+  );
+  return historyTurns(recent, LIMITS.CHAT_HISTORY_TURNS, LIMITS.CHAT_HISTORY_ANSWER_CHARS);
+}
 
 /** Asking a question about the selected sources of a notebook, answered as a stream of events. */
 export function chatRoutes(deps: AppDeps) {
@@ -45,15 +61,24 @@ export function chatRoutes(deps: AppDeps) {
 
     // Throws NoSourcesSelectedError before the stream starts: the error handler answers 409.
     const config = await getChatConfig(deps.db, userId, notebookId);
-    const prepared = await prepareAnswer(
-      { userId, notebookId, question: parsed.data.question, config: config ?? undefined },
-      ports
-    );
-
-    // Counted only now: a question that is rejected above never reaches the model.
+    // Read before the new question is saved, so the history holds only what came before it.
+    const history = await earlierTurns(deps, userId, notebookId);
+    // Counted before the search: the search already calls the embedding and, for a follow-up, the
+    // model. A question rejected above never gets here.
     if (!perUser.take(userId)) {
       return c.json(error(API_ERROR.CHAT_LIMIT_REACHED), HTTP_STATUS.TOO_MANY_REQUESTS);
     }
+
+    const prepared = await prepareAnswer(
+      {
+        userId,
+        notebookId,
+        question: parsed.data.question,
+        config: config ?? undefined,
+        history,
+      },
+      ports
+    );
 
     // Saved only now: a rejected question (no source ready, quota) leaves no trace in the history.
     await saveUserMessage(deps.db, userId, notebookId, parsed.data.question);

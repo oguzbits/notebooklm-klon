@@ -21,6 +21,17 @@ describe('chat prompt', () => {
     );
   });
 
+  it('puts the earlier turns before the passages, so the question stays last', () => {
+    const context = buildChatContext([{ id: 'a', text: 'Abschnitt.' }]);
+    const message = buildUserMessage(context, 'Und 2019?', [
+      { question: 'Wer?', answer: 'Brandt.' },
+    ]);
+
+    expect(message).toBe(
+      '<history>\nQuestion: Wer?\nAnswer: Brandt.\n</history>\n\n<passages>\n[c1]\nAbschnitt.\n</passages>\n\nQuestion: Und 2019?'
+    );
+  });
+
   it('builds a message with no passages when nothing was found', () => {
     expect(buildUserMessage(buildChatContext([]), 'Frage?')).toBe('Question: Frage?');
   });
@@ -53,6 +64,11 @@ describe('chat prompt', () => {
 describe('chatSystemPrompt', () => {
   it('is the plain prompt for the default config', () => {
     expect(chatSystemPrompt(DEFAULT_CHAT_CONFIG)).toBe(CHAT_SYSTEM_PROMPT);
+  });
+
+  it('adds the rule that the history is no source only when there is a history', () => {
+    expect(chatSystemPrompt(DEFAULT_CHAT_CONFIG, true)).toMatch(/<history>.*no source/);
+    expect(chatSystemPrompt(DEFAULT_CHAT_CONFIG, false)).not.toMatch(/history/i);
   });
 
   it('adds the style, the length and the language the notebook asks for', () => {

@@ -7,7 +7,7 @@ import {
   type ChunkDetail,
   type SourceText,
 } from '@nlm/shared';
-import { and, asc, eq, isNotNull, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, isNotNull, sql } from 'drizzle-orm';
 
 import type { Database } from './client';
 import { ownedNotebook, ownedNotebookSource } from './ownership';
@@ -73,6 +73,18 @@ export async function findSourceText(
   return row && row.text !== null ? { ...row, text: row.text } : null;
 }
 
+// A row that does not fit the contract is a bug, not a case to skip: parse throws.
+const toChatMessage = (row: typeof chatMessages.$inferSelect): ChatMessage =>
+  ChatMessageSchema.parse({
+    id: row.id,
+    role: row.role,
+    text: row.text ?? undefined,
+    statements: row.statements ?? undefined,
+    followUps: row.followUps ?? undefined,
+    trace: row.trace ?? undefined,
+    createdAt: row.createdAt.toISOString(),
+  });
+
 export async function listChatMessages(
   db: Database,
   userId: string,
@@ -84,18 +96,24 @@ export async function listChatMessages(
     .from(chatMessages)
     .where(and(eq(chatMessages.notebookId, notebookId), eq(chatMessages.userId, userId)))
     .orderBy(asc(chatMessages.seq));
-  // A row that does not fit the contract is a bug, not a case to skip: parse throws.
-  return rows.map((row) =>
-    ChatMessageSchema.parse({
-      id: row.id,
-      role: row.role,
-      text: row.text ?? undefined,
-      statements: row.statements ?? undefined,
-      followUps: row.followUps ?? undefined,
-      trace: row.trace ?? undefined,
-      createdAt: row.createdAt.toISOString(),
-    })
-  );
+  return rows.map(toChatMessage);
+}
+
+/** The latest `limit` messages of a notebook, oldest first: the part of the history a new question can refer to. */
+export async function listRecentChatMessages(
+  db: Database,
+  userId: string,
+  notebookId: string,
+  limit: number
+): Promise<ChatMessage[]> {
+  if (!UUID.test(notebookId)) return [];
+  const rows = await db
+    .select()
+    .from(chatMessages)
+    .where(and(eq(chatMessages.notebookId, notebookId), eq(chatMessages.userId, userId)))
+    .orderBy(desc(chatMessages.seq))
+    .limit(limit);
+  return rows.reverse().map(toChatMessage);
 }
 
 interface NewMessage {

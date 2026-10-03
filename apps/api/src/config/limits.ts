@@ -20,6 +20,10 @@ export const LIMITS = {
   QUOTA_WINDOW_HOURS: 24,
   /** Chat: passages handed to the model per question. */
   CHAT_CONTEXT_CHUNKS: 8,
+  /** Chat: earlier exchanges handed to the model so that a short follow-up question has a subject. */
+  CHAT_HISTORY_TURNS: 3,
+  /** Chat: characters of an earlier answer that go into the history; the rest is cut. */
+  CHAT_HISTORY_ANSWER_CHARS: 600,
   /** Parsing: longest wait for one model to read a PDF. Without it a stalled call hangs for 5 min. */
   PARSE_TIMEOUT_MS: 120_000,
   /** Parsing: longest wait for one model to transcribe a recording, which it takes in real time. */

@@ -117,6 +117,54 @@ describe('prepareAnswer', () => {
     expect(calls.modelInput?.system).toContain('Antworte kurz und sachlich.');
   });
 
+  it('searches a follow-up question with the query the model rewrote from the history', async () => {
+    const inputs: { system: string; user: string }[] = [];
+    const { ports, calls } = fakePorts({
+      stream: async function* (input) {
+        inputs.push(input);
+        yield '{"query":"Wer leitet das Projekt Nordlicht 2019?"}';
+      },
+    });
+    const history = [{ question: 'Wer leitet Nordlicht?', answer: 'Dr. Brandt.' }];
+
+    const prepared = await prepareAnswer({ ...INPUT, question: 'Und 2019?', history }, ports);
+
+    expect(inputs).toHaveLength(1);
+    expect(inputs[0]?.user).toContain('Wer leitet Nordlicht?');
+    expect(inputs[0]?.user).toContain('Last question: Und 2019?');
+    expect(calls.embedded).toEqual(['Wer leitet das Projekt Nordlicht 2019?']);
+    expect(calls.search).toMatchObject([{ queryText: 'Wer leitet das Projekt Nordlicht 2019?' }]);
+    // The model still answers the question as the user wrote it.
+    expect(prepared.question).toBe('Und 2019?');
+  });
+
+  it('asks the model nothing before the search when there is no history', async () => {
+    let modelCalls = 0;
+    const { ports } = fakePorts({
+      stream: async function* () {
+        modelCalls += 1;
+        yield '';
+      },
+    });
+
+    await prepareAnswer(INPUT, ports);
+
+    expect(modelCalls).toBe(0);
+  });
+
+  it('fails instead of searching the bare follow-up when the rewrite is no valid query', async () => {
+    const { ports, calls } = fakePorts({
+      stream: async function* () {
+        yield 'kein json';
+      },
+    });
+    const history = [{ question: 'Frage?', answer: 'Antwort.' }];
+
+    await expect(prepareAnswer({ ...INPUT, history }, ports)).rejects.toThrow();
+
+    expect(calls.search).toEqual([]);
+  });
+
   it('fails before any provider call when no source is selected', async () => {
     const { ports, calls } = fakePorts({ selectedSourceIds: async () => [] });
 
@@ -204,6 +252,23 @@ describe('answerQuestion', () => {
     });
 
     expect((await run(ports)).at(-1)).toMatchObject({ type: CHAT_EVENT.DONE, followUps: [] });
+  });
+
+  it('shows the model the history with the question, marked as no source', async () => {
+    const { ports, calls } = fakePorts();
+    const prepared = await prepareAnswer(INPUT, ports);
+
+    for await (const _event of answerQuestion(
+      { ...prepared, history: [{ question: 'Davor?', answer: 'Davon.' }] },
+      ports
+    )) {
+      // Only the request to the model matters here.
+    }
+
+    expect(calls.modelInput?.user).toContain(
+      '<history>\nQuestion: Davor?\nAnswer: Davon.\n</history>'
+    );
+    expect(calls.modelInput?.system).toMatch(/no source/);
   });
 
   it('shows the model the numbered passages and the question', async () => {

@@ -1369,3 +1369,28 @@ ein Zitat existiert, nicht ob die Zahl im zitierten Abschnitt steht. Beides erzw
 - **Nicht gemessen:** Falsch-positive bei gerundeten oder ausgeschriebenen Zahlen ("zwei" statt "2") und bei
   Aufzählungsziffern; das zeigt erst ein Live-Lauf (`pnpm eval:live`, steigende `droppedStatements` bei Fragen mit
   Antwort).
+
+## 2026-10-03 (Chat kennt den bisherigen Verlauf)
+
+Jede Frage wurde bisher allein beantwortet: "Und seit wann?" fand nichts, weil die Suche den Bezug nicht kannte.
+Jetzt fließen die letzten Antworten des Notebooks in Suche und Antwort ein (`core/chat-history.ts`, rein).
+
+- **Verlauf nur vom Server:** Die Route liest die letzten Nachrichten selbst aus der Datenbank
+  (`listRecentChatMessages`, gefiltert nach `userId` und `notebookId`), bevor die neue Frage gespeichert wird. Der
+  Client schickt keinen Verlauf, damit Invariante 3 (Identität nur aus der Sitzung) gilt und `packages/shared`
+  unverändert bleibt.
+- **Umformulierung für die Suche:** Hat der Verlauf Einträge, macht ein Modellaufruf (über `ports.stream`, also durch
+  den Rate Limiter) aus der Folgefrage eine eigenständige Suchanfrage. Sie geht in `embedQuery` und `queryText`. Das
+  Modell beantwortet weiter die Frage, wie sie gestellt wurde. Ohne Verlauf kein zusätzlicher Aufruf.
+- **Verlauf ist keine Quelle:** Der Block `<history>` steht vor den Abschnitten, `HISTORY_RULE` sagt dem Modell, dass er
+  nur Bezüge klärt. Zitate und die Zahlenprüfung zählen weiter nur die Abschnitte dieser Frage.
+- **Grenzen:** 3 Runden, Antworten auf 600 Zeichen gekürzt (`CHAT_HISTORY_TURNS`, `CHAT_HISTORY_ANSWER_CHARS`).
+  Unbeantwortete Fragen und Verweigerungen zählen nicht als Runde.
+- **Fail fast:** Scheitert die Umformulierung, scheitert die Frage. Ein Rückfall auf die nackte Folgefrage würde
+  still schlechter suchen. Ein Gemini-429 wird wie sonst auf das Chat-Limit abgebildet.
+- **Limit vor der Suche:** Das Stundenlimit wird jetzt vor `prepareAnswer` gezählt, weil schon die Suche (Einbettung,
+  bei Folgefragen auch das Modell) Kontingent kostet. Ein Fehlerfall davor (404, 400, 409) zählt weiterhin nicht.
+  Der DB-Test zum Limit hat das gefunden: die abgewiesene Frage hatte noch die Umformulierung ausgelöst.
+- **Nicht gemessen:** Qualität der Umformulierung live (der Eval fragt ohne Verlauf), Mehrkosten durch den zweiten
+  Aufruf auf dem gemeinsamen Gratis-Kontingent. Ein Eval mit Folgefragen wäre der nächste Schritt (`pnpm eval:live`
+  braucht Freigabe).

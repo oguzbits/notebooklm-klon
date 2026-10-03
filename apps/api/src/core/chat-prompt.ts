@@ -8,6 +8,7 @@ import {
 import { z } from 'zod';
 
 import { type ChatContext, PASSAGES_RULE, passagesBlock } from './chat-context';
+import { HISTORY_RULE, historyBlock, type HistoryTurn } from './chat-history';
 
 export const CHAT_SYSTEM_PROMPT =
   'You answer questions about the user documents. Use only the numbered context passages. ' +
@@ -30,10 +31,14 @@ export const ANSWER_JSON_SCHEMA: Record<string, unknown> = (() => {
   return schema;
 })();
 
-/** The user turn: numbered passages, then the question. */
-export function buildUserMessage(context: ChatContext, question: string): string {
-  const block = passagesBlock(context);
-  return `${block === '' ? '' : `${block}\n\n`}Question: ${question}`;
+/** The user turn: the earlier turns if there are any, the numbered passages, then the question. */
+export function buildUserMessage(
+  context: ChatContext,
+  question: string,
+  history: readonly HistoryTurn[] = []
+): string {
+  const blocks = [historyBlock(history), passagesBlock(context)].filter((block) => block !== '');
+  return `${blocks.map((block) => `${block}\n\n`).join('')}Question: ${question}`;
 }
 
 const LENGTH_NOTE = {
@@ -51,8 +56,9 @@ const LANGUAGE_NOTE = {
  * The user's own words come last and cannot lift the rules above them: the server checks every
  * citation whatever the prompt says.
  */
-export function chatSystemPrompt(config: ChatConfig): string {
+export function chatSystemPrompt(config: ChatConfig, hasHistory = false): string {
   const notes: string[] = [];
+  if (hasHistory) notes.push(HISTORY_RULE);
   if (config.style === CHAT_STYLE.LEARNING_GUIDE) {
     notes.push(
       'Act as a patient learning guide: explain step by step, define terms and point out what to remember.'

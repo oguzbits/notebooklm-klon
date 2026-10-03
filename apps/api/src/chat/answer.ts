@@ -10,6 +10,13 @@ import type { ChatInput } from '../ai/gemini-chat';
 import { GeminiError } from '../ai/gemini-error';
 import { LIMITS } from '../config/limits';
 import { buildChatContext, type ChatContext, resolveCitations } from '../core/chat-context';
+import {
+  buildRewriteMessage,
+  type HistoryTurn,
+  parseRewrite,
+  REWRITE_JSON_SCHEMA,
+  REWRITE_SYSTEM_PROMPT,
+} from '../core/chat-history';
 import { ANSWER_JSON_SCHEMA, buildUserMessage, chatSystemPrompt } from '../core/chat-prompt';
 import { cleanFollowUps } from '../core/follow-ups';
 import { findUnsupportedNumbers, repeatsStatement } from '../core/statement-check';
@@ -50,6 +57,29 @@ export interface PreparedAnswer {
   sourcesSearched: number;
   context: ChatContext;
   config: ChatConfig;
+  /** Earlier exchanges of the conversation; they only tell the model what the question refers to. */
+  history: HistoryTurn[];
+}
+
+/**
+ * A follow-up question like "und 2019?" says nothing to a search. The model turns it, with the
+ * earlier turns, into one self-contained query. A failure throws: a search on the bare follow-up
+ * would silently return passages for a different question.
+ */
+async function rewriteQuery(
+  question: string,
+  history: readonly HistoryTurn[],
+  ports: ChatPorts
+): Promise<string> {
+  let reply = '';
+  for await (const piece of ports.stream({
+    system: REWRITE_SYSTEM_PROMPT,
+    user: buildRewriteMessage(history, question),
+    schema: REWRITE_JSON_SCHEMA,
+  })) {
+    reply += piece;
+  }
+  return parseRewrite(reply);
 }
 
 /**
@@ -57,19 +87,29 @@ export interface PreparedAnswer {
  * search. Kept apart from streaming so the route can still answer with an HTTP status.
  */
 export async function prepareAnswer(
-  input: { userId: string; notebookId: string; question: string; config?: ChatConfig },
+  input: {
+    userId: string;
+    notebookId: string;
+    question: string;
+    config?: ChatConfig;
+    history?: HistoryTurn[];
+  },
   ports: ChatPorts
 ): Promise<PreparedAnswer> {
   const sourceIds = await ports.selectedSourceIds(input.userId, input.notebookId);
   if (sourceIds.length === 0) throw new NoSourcesSelectedError();
 
-  const queryEmbedding = await ports.embedQuery(input.question);
+  const history = input.history ?? [];
+  // Searched after the sources check: a notebook without a source never calls the model.
+  const query =
+    history.length === 0 ? input.question : await rewriteQuery(input.question, history, ports);
+  const queryEmbedding = await ports.embedQuery(query);
   const chunks = await ports.search({
     userId: input.userId,
     notebookId: input.notebookId,
     sourceIds,
     queryEmbedding,
-    queryText: input.question,
+    queryText: query,
     limit: LIMITS.CHAT_CONTEXT_CHUNKS,
   });
   return {
@@ -77,6 +117,7 @@ export async function prepareAnswer(
     sourcesSearched: sourceIds.length,
     context: buildChatContext(chunks),
     config: input.config ?? DEFAULT_CHAT_CONFIG,
+    history,
   };
 }
 
@@ -131,8 +172,8 @@ async function* streamStatements(
 ): AsyncGenerator<ChatEvent, string[]> {
   const parser = new StatementStream();
   const input: ChatInput = {
-    system: chatSystemPrompt(prepared.config),
-    user: buildUserMessage(prepared.context, prepared.question),
+    system: chatSystemPrompt(prepared.config, prepared.history.length > 0),
+    user: buildUserMessage(prepared.context, prepared.question, prepared.history),
     schema: ANSWER_JSON_SCHEMA,
     signal,
   };

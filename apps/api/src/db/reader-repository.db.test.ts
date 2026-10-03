@@ -6,6 +6,7 @@ import {
   findChunkDetail,
   findSourceText,
   listChatMessages,
+  listRecentChatMessages,
   saveAssistantMessage,
   saveUserMessage,
 } from './reader-repository';
@@ -185,6 +186,21 @@ describe('chat messages', () => {
     expect(await listChatMessages(db, USER, first.id)).toMatchObject([{ text: 'Erste' }]);
     expect(await listChatMessages(db, USER, foreign.id)).toEqual([]);
     expect(await listChatMessages(db, USER, 'kein-uuid')).toEqual([]);
+  });
+
+  it('lists only the latest messages of a notebook, oldest first', async () => {
+    const notebook = await insertNotebook(USER);
+    const foreign = await insertNotebook(OTHER_USER);
+    await saveUserMessage(db, USER, notebook.id, 'Alt');
+    await saveUserMessage(db, USER, notebook.id, 'Mittel');
+    await saveUserMessage(db, USER, notebook.id, 'Neu');
+    await saveUserMessage(db, OTHER_USER, foreign.id, 'Fremde');
+
+    expect(await listRecentChatMessages(db, USER, notebook.id, 2)).toMatchObject([
+      { text: 'Mittel' },
+      { text: 'Neu' },
+    ]);
+    expect(await listRecentChatMessages(db, USER, foreign.id, 2)).toEqual([]);
   });
 
   it('does not save into a notebook of another user', async () => {

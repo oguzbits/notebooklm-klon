@@ -141,6 +141,29 @@ describe('POST /api/notebooks/:id/chat', () => {
     expect(harness.modelInputs).toEqual([]);
   });
 
+  it('rewrites a follow-up with the saved conversation, which holds only the earlier turns', async () => {
+    const notebook = await createNotebook(alice);
+    await addText(alice, notebook, 'a.txt', 'Dr. Brandt leitet das Projekt Nordlicht.');
+    await harness.runJobs();
+    const ask = async (question: string) =>
+      (
+        await events(
+          await app.request(`/api/notebooks/${notebook}/chat`, post(alice, { question }))
+        )
+      ).length;
+
+    await ask('Wer leitet das Projekt?');
+    expect(harness.modelInputs).toHaveLength(1);
+    await ask('Und seit wann?');
+
+    const [, rewrite, answer] = harness.modelInputs;
+    expect(rewrite?.user).toContain('Question: Wer leitet das Projekt?');
+    expect(rewrite?.user).toContain('Last question: Und seit wann?');
+    expect(rewrite?.user).not.toMatch(/Question: Und seit wann\?/);
+    expect(answer?.user).toContain('Question: Und seit wann?');
+    expect(answer?.user).toContain('<history>');
+  });
+
   it('gives each user a number of questions an hour and refuses the next before the model', async () => {
     const notebook = await createNotebook(alice);
     await addText(alice, notebook, 'a.txt', 'Dr. Brandt leitet das Projekt Nordlicht.');

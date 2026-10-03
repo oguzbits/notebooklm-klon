@@ -3,6 +3,7 @@ import { EMBEDDING_DIMENSIONS } from '@nlm/shared';
 import type { ChatInput } from '../ai/gemini-chat';
 import type { AppDeps } from '../app-deps';
 import { createAuth } from '../auth/auth';
+import { REWRITE_SYSTEM_PROMPT } from '../core/chat-history';
 import { createSourceStorage, createUploadStorage } from '../db/source-storage';
 import { axisVector, createTestDb } from '../db/testing/test-db';
 import type { FetchDeps } from '../import/fetch-url';
@@ -74,6 +75,10 @@ export function createHarness(options: HarnessOptions = {}) {
         options.model ??
         async function* (input) {
           modelInputs.push(input);
+          if (input.system === REWRITE_SYSTEM_PROMPT) {
+            yield '{"query":"Umformulierte Frage"}';
+            return;
+          }
           yield '{"statements":[{"text":"Antwort.","chunkIds":["c1"]}],"followUps":["Und was noch?"]}';
         },
       onError: (error) => {
