@@ -1278,3 +1278,12 @@ Menüs, Dialogen und allen fünf Ansichten (Quiz, Karteikarten, Tabelle, Mindmap
   "Studio" 43x20; auf Touch-Geräten jetzt mindestens 40 (`pointer-coarse:`), am Desktop unverändert.
 - **Offen (Abgleich mit dem Original):** Zeile "Fragetypen" mit "Neu!" und Chips, Sprachauswahl, Nutzungsanzeige,
   "Später generieren". Siehe [DESIGN-ABGLEICH.md](DESIGN-ABGLEICH.md), Abschnitt 3.
+
+## 2026-10-03 (Knopf "Neues Notebook" ohne Beschriftung)
+
+- **Fehler:** Unter 66 rem blendet `CreateNotebookButton` die Beschriftung aus, nur das "+" bleibt. Die Größe `default`
+  gibt Knöpfen mit Symbol `pl-2 pr-3` (8/12 px): 40x36, das Symbol saß aus der Mitte. Der Knopf in der Kopfzeile des
+  Notebooks (`pl-3 pr-4`) hatte denselben Fehler.
+- **Entscheidung:** Ohne Beschriftung ist der Knopf rund und gleichmäßig (`max-wide:w-9 max-wide:px-0`, 36x36 wie im
+  Original), mit Beschriftung bleibt alles wie vorher. Eine andere versteckte Beschriftung gibt es nicht. Der e2e-Test
+  misst Breite gleich Höhe und gleichen Abstand links und rechts vom Symbol (390 px, Liste und Kopfzeile).

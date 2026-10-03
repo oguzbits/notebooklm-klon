@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useCreateNotebook } from '@/hooks/use-notebooks';
 import { describeError } from '@/lib/messages';
 import { ROUTES } from '@/lib/routes';
+import { cn } from '@/lib/utils';
 
 /** The title of a notebook that was just made; it is renamed in its header. */
 export const UNTITLED_NOTEBOOK = 'Unbenanntes Notebook';
@@ -39,7 +40,13 @@ export function CreateNotebookButton({
 
   return (
     <>
-      <Button variant={variant} className={className} disabled={create.isPending} onClick={make}>
+      {/* Below the wide layout only the icon shows: then it is a round button with an even padding. */}
+      <Button
+        variant={variant}
+        className={cn(className, 'max-wide:w-9 max-wide:px-0 max-wide:has-[>svg]:px-0')}
+        disabled={create.isPending}
+        onClick={make}
+      >
         <Plus />
         <span className="max-wide:sr-only">{label}</span>
       </Button>
