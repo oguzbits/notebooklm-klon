@@ -1686,3 +1686,14 @@ wenn der Kontext keinen Teil der Antwort enthält. Allgemeine Regeln, kein Fall.
 **Offen.** Nicht gemessen: der Nutzer lässt `pnpm eval:live` laufen und prüft diese zwei Fragen. Der fehlende
 Teil einer Teilantwort wird nicht benannt, weil eine Aussage ohne Zitat vom Server entfernt wird. Bringt es
 nichts oder entstehen Aussagen ohne Beleg, wird es zurückgenommen.
+
+## Eval: Prüfung der Asserts, Pflichtfakt von `rag-halluzinationen` zu eng
+
+Die Frage, ob Prompt-Änderungen nur auf einzelne Eval-Läufe (n = 1) zugeschnitten sind, führte zu einer Prüfung
+der Asserts gegen den Quelltext. Ergebnis: alle Anker sind wörtlicher Quelltext (`golden.test.ts` prüft das).
+Eine Messung war falsch: `rag-halluzinationen` zählte 0 %, obwohl die Antwort "verhindert Halluzinationen nicht
+vollständig" lautet. Der Pflichtfakt kannte nur feste Wortfolgen ("verhindert nicht"). Er kennt jetzt auch
+"Halluzinationen nicht" und "nicht vollständig". Offen: derselbe Lauf zeigt für diese Frage "Fehlt" in der Suche,
+obwohl der Anker wörtlich in der Quelle steht. Möglich ist, dass ein Abschnitt den Satz zerschneidet; ohne die
+Abschnitte aus der Datenbank nicht belegt. Regel dahinter: ein Assert wird nur korrigiert, wenn die Quelle zeigt,
+dass er falsch ist, nicht weil das Modell anders antwortet.
