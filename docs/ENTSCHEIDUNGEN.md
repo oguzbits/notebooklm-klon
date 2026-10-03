@@ -1477,3 +1477,14 @@ Tausend" in der Antwort galt als nicht belegt. Die einzige Aussage wurde verworf
   gemeinsame Themenwörter, Jahresregel, Zeilenstart, Fensterhälfte u. a.) wurden alle von einem Test
   erkannt. Eine überlebte zuerst (`MIN_SHARED_TOPIC_WORDS` 2 auf 1); dafür gibt es den Test
   „nur ein Themenwort“.
+
+## Chat-Prompt: Zahl wie in der Quelle, mit Einheit, ohne Runden
+
+- Anlass: NotebookLM antwortet auf dieselbe Frage mit `46,185 Millionen` (Einheit umgerechnet, nicht
+  gerundet), nur die Quellenübersicht rundet (`46,2`). Unser Prompt sagte nichts zu Einheiten, die
+  Antwort hing davon ab, wie das Modell die Tabellenüberschrift las.
+- Lösung: Eine Regel im Chat-Prompt: Zahl so wiedergeben, wie die Passage sie nennt, die Einheit aus
+  Tabellenüberschrift oder Umgebung nennen, nie runden, eine Umrechnung nur ohne Rundung. Der
+  Zahlencheck lässt beides weiter zu (`46 185`, `46,185`), er schützt vor erfundenen Zahlen.
+- Offen: Steht die Einheit in einer Überschrift außerhalb des Abschnitts, sieht das Modell sie nicht.
+  Das löst erst die Kopfzeile pro Abschnitt (Schritt 3, BACKLOG). Wirkung des Prompts am Live-Eval messen.
