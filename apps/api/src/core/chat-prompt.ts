@@ -13,7 +13,9 @@ import { HISTORY_RULE, historyBlock, type HistoryTurn } from './chat-history';
 export const CHAT_SYSTEM_PROMPT =
   'You answer questions about the user documents. Use only the numbered context passages. ' +
   `${PASSAGES_RULE} ` +
-  'Answer in the language of the question. Split the answer into short statements. Every ' +
+  'Answer in the language of the question, also when the passages are in another language: ' +
+  'translate their content instead of quoting it, and keep names, terms and figures. Split the ' +
+  'answer into short statements. Every ' +
   'statement must cite one or more passage IDs (for example "c2") from the context and must be ' +
   'supported by the cited passages. Never cite an ID that is not in the context. State a number, ' +
   'date or name only if a cited passage says it literally; do not derive it from a related ' +

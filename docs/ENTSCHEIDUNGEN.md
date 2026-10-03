@@ -1624,3 +1624,24 @@ Wortprüfung wie zuvor.
 fehlende ein Verlust. Fußnotenziffern hinter einem Wort zählen als Zahl und können eine echte Wiederholung
 durchlassen (siehe BACKLOG). Die Wirkung ist noch nicht gemessen; der nächste `eval:live` zeigt, ob die
 beiden Aussagen jetzt ankommen.
+
+## Mehrteilige Fragen: Teilfragen in der Übersetzung, Antwortsprache im Prompt
+
+**Anlass.** Im dritten `eval:live`-Lauf fand `dpr-rag-cross-source` (zwei Teile aus zwei Quellen in einer
+Frage) keinen Anker: ein Vektor für die ganze Frage liegt zwischen den Themen und trifft keines scharf.
+`rag-halluzinationen` wurde auf Englisch beantwortet, obwohl die Frage deutsch war.
+
+**Entscheidung.**
+
+- Der Übersetzungsaufruf liefert zusätzlich bis zu drei Teilfragen (`parts`, höchstens `MAX_PARTS`), wenn die
+  Frage mehrere Themen verbindet; bei einer einfachen Frage bleibt die Liste leer. Jede Teilfrage wird wie
+  eine Übersetzung als eigene Version gesucht (eigener Vektor, eigene Rangliste, Fusion per RRF). Kein
+  neuer Aufruf, nur eine längere Antwort desselben Aufrufs.
+- `CHAT_SYSTEM_PROMPT` verlangt die Antwort in der Sprache der Frage auch dann, wenn die Passagen in einer
+  anderen Sprache stehen (übersetzen statt zitieren, Namen, Begriffe und Zahlen bleiben). Das ist eine
+  allgemeine Regel, kein Fall.
+
+**Kosten und offen.** Bis zu drei weitere Vektoren pro mehrteiliger Frage (Embedding-Aufrufe) und ein etwas
+längerer Übersetzungsaufruf. Die Wirkung ist **nicht gemessen**: der Nutzer lässt `pnpm eval:live` laufen und
+sieht sich `dpr-rag-cross-source` und `rag-halluzinationen` an. Bringt es nichts, wird es zurückgenommen.
+Nicht gelöst: der Treffer für `rag-halluzinationen` selbst (Anker wird nicht gefunden).
