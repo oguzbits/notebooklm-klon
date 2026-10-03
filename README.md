@@ -125,7 +125,7 @@ Entscheidungen mit Zahlen: [Spike-Ergebnisse](docs/SPIKE-ERGEBNISSE.md) (PDF-Par
 - `pnpm eval:live`: 23 Golden Questions gegen die echten Modelle (Trefferquote, Fakten, verworfene Aussagen; dazu drei Fragen ohne Antwort in der Quelle für die Verweigerung, ein Quelltext mit eingebetteter Anweisung und rein rechnerische Auffälligkeiten wie wiederholte Aussagen). Kostet Kontingent, läuft von Hand und nicht in CI.
 - CI (GitHub Actions): Qualität, Unit-Tests, Datenbank-Tests, Browser-Test, Build, Semgrep.
 
-Weitere Regeln, die im Code geprüft sind: SSRF-Schutz beim Link-Import (nur http und https, DNS-Auflösung, keine privaten Adressen, nach jeder Weiterleitung erneut), Größen- und Seitenlimits, Kontingent pro Nutzer, Ratenbegrenzung aller Modellaufrufe, keine Dokumentinhalte in Logs.
+Weitere Regeln, die im Code geprüft sind: SSRF-Schutz beim Link-Import (nur http und https, DNS-Auflösung, keine privaten Adressen, nach jeder Weiterleitung erneut), Größen- und Seitenlimits, Ratenbegrenzung aller Modellaufrufe, Grenzen für Gäste und die Websuche, keine Dokumentinhalte in Logs.
 
 ## Lokal starten
 
@@ -163,7 +163,7 @@ Hetzner Cloud mit Docker Compose und Caddy (automatisches HTTPS). [deploy.yml](.
 
 ## Wo es zuerst brechen würde
 
-- **Kontingent des Anbieters.** Im kostenlosen Tarif sind die Tageslimits knapp. Gegenmittel im Code: Inhalts-Hash statt doppelter Verarbeitung, Ratenbegrenzer mit Token-Gewichten, Kontingent pro Nutzer, vorbefülltes Demo-Notebook.
+- **Kosten beim Anbieter.** Es gibt bewusst kein Limit pro Nutzer. Begrenzt wird über: Inhalts-Hash statt doppelter Verarbeitung, Seitenlimit pro Quelle, Ratenbegrenzer mit Token-Gewichten, Grenzen für Gäste, vorbefülltes Demo-Notebook. Wer die Seite offen ins Netz stellt, zahlt jede Frage und jede Quelle der Nutzer selbst.
 - **Suche bei Fragen in anderer Sprache als die Quelle.** Die Textseite der Hybridsuche liefert dort nur Rauschen, das Gewicht 0,5 ist nicht durch Messung begründet (siehe Nachtrag in den Spike-Ergebnissen). Mit mehr Golden Questions neu bewerten.
 - **PDF-Parsing per Sprachmodell** ist nicht deterministisch und kann Bildunterschriften auslassen. Manche PDFs (gemessen: das NIST-Dokument im Lasttest) lehnt das Modell als Wiedergabe geschützten Textes ab (`RECITATION`), auch das größere Fallback-Modell nicht immer; die Quelle meldet dann einen Fehler. Ein Abgleich mit einem lokalen Parser wäre der nächste Schritt.
 - **Mehrere Instanzen.** Die Ratenbegrenzer liegen im Speicher eines Prozesses. Bei mehr als einer Instanz müssten sie in die Datenbank.

@@ -1714,3 +1714,22 @@ Geprüft und bewusst nicht geändert:
 - `rag-halluzinationen`: Der Satz steht ganz in genau einem von 19 Abschnitten, die Suche findet ihn trotzdem
   nicht unter den Treffern. Das ist ein Suchproblem, kein Assert-Fehler; der Pflichtfakt wird deshalb nicht
   weiter an die Antwort angepasst.
+
+## Kein Limit pro Nutzer (Chat, Studio, neue Quellen)
+
+Entscheidung des Nutzers: Es gibt kein Limit pro Nutzer. Entfernt sind `CHAT_QUESTIONS_PER_USER_PER_HOUR`,
+`STUDIO_OUTPUTS_PER_USER_PER_HOUR`, `SOURCES_PER_USER_PER_WINDOW`, `QUOTA_WINDOW_HOURS`, `QuotaExceededError`,
+`countSourcesSince` und der Fehlercode `UPLOAD_LIMIT_REACHED`. Der Anbieter-Account ist bezahlt, die Nutzerzahl klein.
+Die Kosten begrenzen jetzt: Inhalts-Hash, Seitenlimit pro Quelle (50), Ratenbegrenzer für alle Modellaufrufe, Gästegrenzen
+(`GUESTS_PER_HOUR`, `GUESTS_ALIVE`) und das Demo-Notebook.
+
+- **Bleibt:** das Fenster der Websuche (10 pro Nutzer und Stunde, 30 pro Tag global), weil es Tavily-Guthaben verbraucht.
+  `createWindowLimit` hat damit nur noch diesen einen Aufrufer. Ein Anbieter-429 wird weiter als `CHAT_LIMIT_REACHED`
+  gemeldet.
+- **Der Advisory-Lock in `findOrCreateSource` entfällt.** Er diente dem Zählen unter dem Kontingent. Zwei gleichzeitige
+  Einfügungen desselben Inhalts löst der Unique-Index auf (Nutzer, Hash) mit `on conflict do nothing`; der zweite wartet auf den
+  ersten und findet dessen Zeile. Der DB-Test mit gleichzeitigen Uploads bleibt.
+- **Ersetzt:** der Abschnitt "M1: Hash-Suche, Anlegen und Kontingent" (Lock, Zählung, `enforceQuota`) und der Eintrag
+  "Limits pro Nutzer, M2" (Gleitfenster für Chat und Studio) gelten nicht mehr. `createSourceStorage(db)` hat keine Optionen.
+- **Offen:** `PROVIDER_LIMITS` hält noch die Werte des Gratis-Tarifs (15 Anfragen pro Minute); die Werte des bezahlten Tarifs
+  sind nicht aus der Google-Doku geprüft.

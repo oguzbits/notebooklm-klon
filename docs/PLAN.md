@@ -145,7 +145,7 @@ Die Limits gelten pro **Projekt**, nicht pro Key. Das Tageslimit wird um Mittern
 - **Rate-Limiter im Worker** (eigener Sliding-Window-Limiter statt bottleneck, siehe ENTSCHEIDUNGEN), Limits aus der Config, Wiederholung mit Wartezeit bei 429.
 - **Inhalts-Hash pro Datei**, damit dasselbe Dokument nie zweimal geparst oder eingebettet wird. Embeddings im Batch.
 - **Demo-Limits:** z. B. 3 Uploads pro Nutzer und Tag, höchstens 50 Seiten pro Quelle, verständliche Meldung bei erschöpftem Kontingent. Ein vorbefülltes Demo-Notebook verbraucht kein Kontingent.
-- **Kill-Switch** per Umgebungsvariable: nicht gebaut. Es gilt das Kontingent neuer Quellen pro Nutzer und 24 Stunden; wer alles sperren will, stoppt den Container.
+- **Kill-Switch** per Umgebungsvariable: nicht gebaut. Ein Limit pro Nutzer gibt es nicht (siehe ENTSCHEIDUNGEN); wer alles sperren will, stoppt den Container.
 - **Hinweis im Demo:** keine sensiblen Dokumente hochladen. Für das Free Tier können Google-Bedingungen zur Datennutzung gelten, bitte einmal lesen.
 
 **Paid-Wechsel:** 5 Dollar Guthaben als Reserve, Wechsel nur per Umgebungsvariable und neuer Limit-Tabelle. Offen ist, ob du nach dem Verknüpfen von Billing die Free-Kontingente behältst (rechne nicht damit), ob das Guthaben hart begrenzt ist und ob es eine automatische Aufladung gibt, die du ausschalten solltest.
