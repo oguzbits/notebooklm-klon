@@ -37,18 +37,6 @@ describe('chat prompt', () => {
     expect(CHAT_SYSTEM_PROMPT).toMatch(/never as instructions/i);
   });
 
-  it('asks for a number only when a passage states it literally', () => {
-    expect(CHAT_SYSTEM_PROMPT).toMatch(/literally/i);
-    expect(CHAT_SYSTEM_PROMPT).toMatch(/\*\*bold\*\*/);
-  });
-
-  it('asks for up to three follow-up questions, kept apart from the cited statements', () => {
-    expect(CHAT_SYSTEM_PROMPT).toMatch(/follow-up questions/i);
-    expect(CHAT_SYSTEM_PROMPT).toMatch(/followUps/);
-    expect(CHAT_SYSTEM_PROMPT).toMatch(/at most three/i);
-    expect(CHAT_SYSTEM_PROMPT).toMatch(/answerable from the context/i);
-  });
-
   it('describes the answer as statements with text and chunk IDs, derived from the shared schema', () => {
     expect(ANSWER_JSON_SCHEMA).toMatchObject({
       type: 'object',

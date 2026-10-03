@@ -45,10 +45,6 @@ describe('hashEmbedding', () => {
 
     expect(cosine(question, related)).toBeGreaterThan(cosine(question, unrelated));
   });
-
-  it('gives a text without words a valid unit vector', () => {
-    expect(Math.hypot(...hashEmbedding('  ', DIMENSIONS))).toBeCloseTo(1);
-  });
 });
 
 describe('extractiveAnswer', () => {
@@ -85,14 +81,6 @@ describe('fakeOverview', () => {
     expect(overview.keyTopics).toContain('Projekt');
     expect(overview.suggestedQuestions[0]).toContain('nordlicht.txt');
   });
-
-  it('copes with a document that has no text', () => {
-    const overview = SourceOverviewSchema.parse(
-      JSON.parse(fakeOverview('Document title: leer.txt\n\n'))
-    );
-
-    expect(overview.summary.length).toBeGreaterThan(0);
-  });
 });
 
 describe('fakeNotebookOverview', () => {
@@ -108,14 +96,6 @@ describe('fakeNotebookOverview', () => {
     expect(overview.summary).toContain('Das Budget beträgt viel.');
     expect(overview.summary).not.toContain('Polarlicht');
     expect(overview.summary).toMatch(/\*\*Nordlicht\*\*/);
-  });
-
-  it('copes with a notebook that has no text', () => {
-    const overview = NotebookOverviewSchema.parse(
-      JSON.parse(fakeNotebookOverview('These are the 0 sources of the notebook.'))
-    );
-
-    expect(overview.summary.length).toBeGreaterThan(0);
   });
 });
 

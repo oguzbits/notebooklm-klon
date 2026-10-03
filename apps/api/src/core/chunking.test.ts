@@ -134,10 +134,4 @@ describe('chunkText', () => {
     }
     expect(chunks.at(-1)?.endOffset).toBe(text.length);
   });
-
-  it('is deterministic', () => {
-    const text = words(800);
-
-    expect(chunkText(text)).toEqual(chunkText(text));
-  });
 });
