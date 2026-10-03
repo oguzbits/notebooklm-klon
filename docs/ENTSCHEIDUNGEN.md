@@ -1417,3 +1417,18 @@ Zeile bleibt). Der Prompt verlangt das schon; jetzt erzwingt es der Server.
 - Risiko: eine Zahl, die der Abschnitt nur als Wort nennt ("zwei"), oder eine abgeleitete Zahl
   ("4 Optionen" in einer Quizfrage) führt zum Verwerfen. Lieber ein Element zu wenig als eine
   erfundene Zahl; nicht live gemessen, wie oft das vorkommt.
+
+## Zahlencheck: Tausendertrennung mit Leerzeichen und gerundete Zahlen
+
+Fehler im Zahlencheck (`findUnsupportedNumbers`): Die Frage "Wie viele Erwerbspersonen gab es 2018
+in Deutschland?" bekam die Verweigerung. Im Destatis-Abschnitt steht die Zahl als Tabellenspalte
+`46 185` (in Tausend). Der Check las das als "46" und "185", und "46,2 Millionen" oder "46.185
+Tausend" in der Antwort galt als nicht belegt. Die einzige Aussage wurde verworfen.
+
+- Ein Leerzeichen zwischen Dreiergruppen ist jetzt ein Tausendertrenner (`46 185` ist eine Zahl).
+- Eine Zahl gilt auch als belegt, wenn sie die gerundete Form einer Zahl im Abschnitt ist
+  (`46,2` für `46 185`), ab zwei Stellen. Eine einzelne Ziffer zählt nicht als Rundung.
+- Bleibt falsch: eine Zahl, die weder dort steht noch eine Rundung davon ist (`46,9`).
+- Grenze: der Check kennt keine Einheiten. `46,2` würde auch zu `4,62` passen. Das ist bewusst
+  nachsichtig; ein Fehlalarm, der eine richtige Antwort löscht, ist für Nutzende schlimmer.
+- Nicht live gemessen: ob das Modell bei dieser Frage danach immer eine Aussage liefert.

@@ -41,4 +41,26 @@ describe('findUnsupportedNumbers', () => {
   it('matches a number whatever its separators are', () => {
     expect(findUnsupportedNumbers('Es sind 1.250.000 Euro.', 'Budget: 1,250,000 Euro')).toEqual([]);
   });
+
+  describe('a figure from a table, in thousands with a space as the thousands separator', () => {
+    const table = '2018\n82 902\n46 185\n1 468\n44 717';
+
+    it('reads 46 185 as one number', () => {
+      expect(findUnsupportedNumbers('Es waren 46.185 Tausend Erwerbspersonen.', table)).toEqual([]);
+    });
+
+    it('accepts the same figure rounded and in millions', () => {
+      expect(findUnsupportedNumbers('Es waren 46,2 Millionen Erwerbspersonen.', table)).toEqual([]);
+    });
+
+    it('still rejects a figure that is neither the number nor a rounding of it', () => {
+      expect(findUnsupportedNumbers('Es waren 46,9 Millionen Erwerbspersonen.', table)).toEqual([
+        '469',
+      ]);
+    });
+
+    it('does not take one digit as a rounding of a longer number', () => {
+      expect(findUnsupportedNumbers('Es waren 5 Erwerbspersonen.', table)).toEqual(['5']);
+    });
+  });
 });

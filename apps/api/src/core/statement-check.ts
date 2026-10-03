@@ -49,15 +49,44 @@ export function repeatsStatement(first: string, second: string): boolean {
   return shared >= MIN_SHARED_TOPIC_WORDS && shared / smaller >= REPEAT_OVERLAP;
 }
 
-/** A number as digits only, so 46,2 and 46.2 are the same figure. */
+/**
+ * A number as digits only, so 46,2 and 46.2 are the same figure. A space between groups of three
+ * digits is a thousands separator (a table column reads 46 185), so it joins the groups.
+ */
+const NUMBER = /\d{1,3}(?:[ \u00a0\u202f]\d{3})+(?:[.,]\d+)?|\d+(?:[.,]\d+)*/g;
 const numbersOf = (text: string): string[] =>
-  (text.match(/\d+(?:[.,]\d+)*/g) ?? []).map((number) => number.replace(/[.,]/g, ''));
+  (text.match(NUMBER) ?? []).map((number) => number.replace(/[^\d]/g, ''));
+
+const MIN_ROUNDED_DIGITS = 2;
+const MAX_ROUNDED_SOURCE_DIGITS = 15;
+const ROUND_UP_FROM = 5;
+
+/** Digits of a figure rounded to a number of significant digits, without trailing zeros. */
+function roundedTo(digits: string, count: number): string {
+  const head = Number(digits.slice(0, count));
+  const up = Number(digits[count]) >= ROUND_UP_FROM ? 1 : 0;
+  return String(head + up).replace(/0+$/, '');
+}
+
+/** Whether a figure is the evidence figure written shorter (46,2 Millionen for 46 185 Tausend). */
+function isRoundingOf(figure: string, evidence: string): boolean {
+  const count = figure.replace(/0+$/, '').length;
+  return (
+    count >= MIN_ROUNDED_DIGITS &&
+    evidence.length > count &&
+    evidence.length <= MAX_ROUNDED_SOURCE_DIGITS &&
+    roundedTo(evidence, count) === figure.replace(/0+$/, '')
+  );
+}
 
 /**
  * The numbers of a statement that the evidence does not contain. The prompt allows a number only
- * if a cited passage says it, so one that is missing was derived, rounded or invented.
+ * if a cited passage says it, so one that is missing was derived or invented. A figure the passage
+ * says in other units and rounded (46,2 Millionen for 46 185 Tausend) counts as said.
  */
 export function findUnsupportedNumbers(statement: string, evidence: string): string[] {
-  const supported = new Set(numbersOf(evidence));
-  return [...new Set(numbersOf(statement))].filter((number) => !supported.has(number));
+  const supported = numbersOf(evidence);
+  return [...new Set(numbersOf(statement))].filter(
+    (number) => !supported.some((said) => said === number || isRoundingOf(number, said))
+  );
 }
