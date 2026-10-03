@@ -245,6 +245,56 @@ describe('answerQuestion', () => {
     ]);
   });
 
+  it('leaves out a statement whose number no cited passage says, and counts it as unbacked', async () => {
+    const { ports } = fakePorts({
+      stream: async function* () {
+        yield* pieces(
+          json(
+            { text: 'Das Budget beträgt 1,25 Mio.', chunkIds: ['c2'] },
+            { text: 'Das Budget wuchs um 12 Prozent.', chunkIds: ['c2'] }
+          )
+        );
+      },
+    });
+
+    const events = await run(ports);
+
+    expect(events.map((event) => event.type)).toEqual([CHAT_EVENT.STATEMENT, CHAT_EVENT.DONE]);
+    expect(events[1]).toMatchObject({ statements: 1, droppedStatements: 1 });
+  });
+
+  it('accepts a number that only the question names', async () => {
+    const { ports } = fakePorts({
+      stream: async function* () {
+        yield* pieces(json({ text: 'Dr. Brandt leitet das Projekt seit 2019.', chunkIds: ['c1'] }));
+      },
+    });
+    const prepared = await prepareAnswer({ ...INPUT, question: 'Wer leitet es seit 2019?' }, ports);
+
+    const events: ChatEvent[] = [];
+    for await (const event of answerQuestion(prepared, ports)) events.push(event);
+
+    expect(events[0]).toMatchObject({ type: CHAT_EVENT.STATEMENT });
+  });
+
+  it('sends a fact once when the model restates it, without counting it as unbacked', async () => {
+    const { ports } = fakePorts({
+      stream: async function* () {
+        yield* pieces(
+          json(
+            { text: 'Dr. Brandt leitet das Projekt Nordlicht.', chunkIds: ['c1'] },
+            { text: 'Das Projekt Nordlicht wird von Dr. Brandt geleitet.', chunkIds: ['c1'] }
+          )
+        );
+      },
+    });
+
+    const events = await run(ports);
+
+    expect(events.map((event) => event.type)).toEqual([CHAT_EVENT.STATEMENT, CHAT_EVENT.DONE]);
+    expect(events[1]).toMatchObject({ statements: 1, droppedStatements: 0 });
+  });
+
   it('sends each statement as soon as it is complete, before the model has finished', async () => {
     const order: string[] = [];
     const { ports } = fakePorts({

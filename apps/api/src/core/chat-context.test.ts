@@ -25,7 +25,12 @@ describe('buildChatContext', () => {
   });
 
   it('returns an empty context for no chunks', () => {
-    expect(buildChatContext([])).toEqual({ labels: [], promptText: '', idByLabel: new Map() });
+    expect(buildChatContext([])).toEqual({
+      labels: [],
+      promptText: '',
+      idByLabel: new Map(),
+      textByLabel: new Map(),
+    });
   });
 });
 

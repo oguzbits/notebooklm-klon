@@ -1347,3 +1347,25 @@ mit eingebetteter Anweisung (`forbiddenFacts` enthält das Befehlswort).
   "Auffälligkeiten", brechen aber keinen Lauf ab, weil ein Heuristik-Fehlalarm sonst echte Läufe blockieren würde.
 - Nicht gemacht (nicht freigegeben): LLM-Richter, drei Läufe je Frage. Der Live-Lauf bleibt von Hand und ungeprüft, bis
   jemand `pnpm eval:live` ausführt; die Ergebnisse dieser neuen Fälle sind nicht gemessen.
+
+## 2026-10-03 (Server prüft Zahlen und Wiederholungen der Antwort)
+
+Der Prompt allein hielt das Modell nicht davon ab, dieselbe Tatsache zweimal zu nennen, und der Server prüfte nur, ob
+ein Zitat existiert, nicht ob die Zahl im zitierten Abschnitt steht. Beides erzwingt jetzt `core/statement-check.ts`
+(rein, ohne I/O), angewendet in `AnswerTally` (`chat/answer.ts`) auf jede Aussage, sobald sie vollständig ist.
+
+- **Zahl ohne Beleg:** Kommt eine Zahl der Aussage weder in einem zitierten Abschnitt noch in der Frage vor (Punkte und
+  Kommas werden beim Vergleich entfernt), wird die Aussage verworfen und als `droppedStatements` gezählt. Die Anzeige
+  "N Aussage(n) ohne Beleg wurde weggelassen" bleibt damit wahr. Kein neues Feld in `packages/shared`.
+- **Wiederholung:** Eine Aussage, die eine bereits gesendete wiederholt, wird still verworfen und nicht gezählt, sie
+  ist ja nicht unbelegt. Maßstab wie im Eval: mindestens zwei gemeinsame Themenwörter und 60 % der kleineren Menge.
+  Neu: Nennen beide Aussagen verschiedene Jahreszahlen (1500 bis 2099), ist es keine Wiederholung (Erwerbsquote 2018
+  gegen 2019). Im Zweifel bleibt die Aussage stehen, weil eine verlorene andere Tatsache schlimmer ist als eine doppelte.
+- **Grenze:** Gestreamt wird jede Aussage sofort, ein späteres Duplikat kann also nur verworfen werden, seine
+  zusätzlichen Zitate gehen verloren. Der Prompt verlangt weiter, alle belegenden Abschnitte in einem Satz zu zitieren.
+- **Eval:** Das Signal `unsupportedNumbers` und `findUnsupportedNumbers` im Eval entfallen, weil der Server solche
+  Aussagen jetzt selbst entfernt und das Signal nie mehr ausschlagen könnte. Die Zahl verworfener Aussagen steht weiter
+  im Bericht. `countRepeatedStatements` nutzt dieselbe Funktion `repeatsStatement` wie der Server (eine Quelle).
+- **Nicht gemessen:** Falsch-positive bei gerundeten oder ausgeschriebenen Zahlen ("zwei" statt "2") und bei
+  Aufzählungsziffern; das zeigt erst ein Live-Lauf (`pnpm eval:live`, steigende `droppedStatements` bei Fragen mit
+  Antwort).

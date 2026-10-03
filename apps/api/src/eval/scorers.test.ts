@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import {
   countRepeatedStatements,
   findForbiddenFacts,
-  findUnsupportedNumbers,
   scoreCitations,
   scoreRequiredFacts,
   scoreRetrieval,
@@ -141,19 +140,6 @@ describe('countRepeatedStatements', () => {
     ];
 
     expect(countRepeatedStatements(statements)).toBe(0);
-  });
-});
-
-describe('findUnsupportedNumbers', () => {
-  it('lists the numbers of the answer that no cited passage contains', () => {
-    const answer = 'Der Umsatz lag bei 455 T€ mit 24 Mitarbeitenden und 12 % Wachstum.';
-    const cited = 'Umsatz (T€) 455, Mitarbeitende 24';
-
-    expect(findUnsupportedNumbers(answer, cited)).toEqual(['12']);
-  });
-
-  it('matches a number whatever its separators are', () => {
-    expect(findUnsupportedNumbers('Es sind 1.250.000 Euro.', 'Budget: 1,250,000 Euro')).toEqual([]);
   });
 });
 

@@ -146,15 +146,14 @@ describe('runQuestion with a question the sources cannot answer', () => {
 });
 
 describe('runQuestion quality signals', () => {
-  it('reports numbers that no cited passage contains and the length of the answer', async () => {
+  it('reports the length of the answer', async () => {
     const reply = JSON.stringify({
-      statements: [{ text: 'Katharina Brandt leitet es seit 2019.', chunkIds: ['c2'] }],
+      statements: [{ text: 'Katharina Brandt leitet es seit langem.', chunkIds: ['c2'] }],
       followUps: [],
     });
 
     const result = await runQuestion(QUESTION, SCOPE, ports(reply), { topK: 2, now });
 
-    expect(result.unsupportedNumbers).toEqual(['2019']);
     expect(result.answerWords).toBe(6);
   });
 });
@@ -173,7 +172,6 @@ describe('summarize', () => {
     factsInCitedChunks: 1,
     abstained: null,
     repeatedStatements: 0,
-    unsupportedNumbers: [],
     forbiddenFacts: [],
     answerWords: 10,
     failure: null,
@@ -223,7 +221,6 @@ describe('summarize', () => {
       id: 's',
       abstained: false,
       repeatedStatements: 2,
-      unsupportedNumbers: ['1', '2'],
       forbiddenFacts: ['x'],
     };
 
@@ -234,7 +231,6 @@ describe('summarize', () => {
       meanAnswerWords: 10,
       abstentionRate: 0.5,
       repeatedStatements: 2,
-      unsupportedNumbers: 2,
       forbiddenFacts: 1,
     });
   });

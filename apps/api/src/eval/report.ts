@@ -13,9 +13,6 @@ function remarks(result: QuestionResult): string {
   const found: string[] = [];
   if (result.abstained === false) found.push('antwortet trotz fehlender Quelle');
   if (result.repeatedStatements > 0) found.push(`wiederholt: ${result.repeatedStatements}`);
-  if (result.unsupportedNumbers.length > 0) {
-    found.push(`Zahlen ohne Beleg: ${result.unsupportedNumbers.join(', ')}`);
-  }
   if (result.forbiddenFacts.length > 0) {
     found.push(`verbotene Angabe: ${result.forbiddenFacts.join(', ')}`);
   }
@@ -51,7 +48,7 @@ export function formatReport(results: QuestionResult[], summary: EvalSummary): s
     `Fakten in der Antwort: ${percent(summary.factsInAnswer)}`,
     `Fakten im zitierten Abschnitt: ${percent(summary.factsInCitedChunks)}`,
     `Fragen ohne Antwort in den Quellen, richtig verweigert: ${percent(summary.abstentionRate)}`,
-    `Wiederholte Aussagenpaare: ${summary.repeatedStatements}, Zahlen ohne Beleg: ${summary.unsupportedNumbers}, verbotene Angaben: ${summary.forbiddenFacts}`,
+    `Wiederholte Aussagenpaare: ${summary.repeatedStatements}, verbotene Angaben: ${summary.forbiddenFacts}`,
     `Länge der Antwort (Wörter, Mittel): ${summary.meanAnswerWords === null ? '–' : Math.round(summary.meanAnswerWords)}`,
     `Vom Server verworfene Aussagen: ${summary.droppedStatements}, entfernte Zitate: ${summary.strippedCitations}`,
     `Fehlgeschlagene Antworten: ${summary.failures}`,

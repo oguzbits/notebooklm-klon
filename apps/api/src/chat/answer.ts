@@ -12,6 +12,7 @@ import { LIMITS } from '../config/limits';
 import { buildChatContext, type ChatContext, resolveCitations } from '../core/chat-context';
 import { ANSWER_JSON_SCHEMA, buildUserMessage, chatSystemPrompt } from '../core/chat-prompt';
 import { cleanFollowUps } from '../core/follow-ups';
+import { findUnsupportedNumbers, repeatsStatement } from '../core/statement-check';
 import { StatementStream } from '../core/statement-stream';
 import { HTTP_STATUS } from '../http-status';
 
@@ -80,26 +81,41 @@ export async function prepareAnswer(
 }
 
 /**
- * What happened to the statements of one answer: how many were kept, how many were left out for
- * having no valid citation, and how many citations were removed from the ones that stayed.
+ * What happened to the statements of one answer: how many were kept, how many were left out
+ * because their citation or a number in them is not backed by the context, and how many citations
+ * were removed from the ones that stayed. A statement that only repeats a kept one is left out
+ * silently: it says nothing wrong, it only says it twice.
  */
 class AnswerTally {
   statements = 0;
   droppedStatements = 0;
   strippedCitations = 0;
+  private readonly kept: string[] = [];
 
-  constructor(private readonly context: ChatContext) {}
+  constructor(
+    private readonly context: ChatContext,
+    private readonly question: string
+  ) {}
 
-  /** The events of the statements that keep a valid citation; the others are counted and left out. */
+  /** The numbers of a statement that neither its cited passages nor the question contain. */
+  private unsupportedNumbers(text: string, labels: readonly string[]): string[] {
+    const evidence = labels.map((label) => this.context.textByLabel.get(label) ?? '');
+    return findUnsupportedNumbers(text, [this.question, ...evidence].join('\n'));
+  }
+
+  /** The events of the statements that stay; the others are counted or left out. */
   *events(statements: readonly { text: string; chunkIds: string[] }[]): Generator<ChatEvent> {
     for (const statement of statements) {
       const result = resolveCitations({ statements: [statement] }, this.context);
       this.strippedCitations += result.strippedCitations;
       const [kept] = result.answer.statements;
-      if (!kept) {
+      const cited = statement.chunkIds.filter((label) => this.context.idByLabel.has(label));
+      if (!kept || this.unsupportedNumbers(kept.text, cited).length > 0) {
         this.droppedStatements += 1;
         continue;
       }
+      if (this.kept.some((text) => repeatsStatement(text, kept.text))) continue;
+      this.kept.push(kept.text);
       this.statements += 1;
       yield { type: CHAT_EVENT.STATEMENT, text: kept.text, chunkIds: kept.chunkIds };
     }
@@ -148,7 +164,7 @@ export async function* answerQuestion(
   ports: ChatPorts,
   signal?: AbortSignal
 ): AsyncGenerator<ChatEvent> {
-  const tally = new AnswerTally(prepared.context);
+  const tally = new AnswerTally(prepared.context, prepared.question);
   let suggested: string[] = [];
 
   if (prepared.context.labels.length > 0) {

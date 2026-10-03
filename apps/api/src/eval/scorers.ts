@@ -5,6 +5,8 @@
  * answer or an empty fact list cannot inflate or deflate an average.
  */
 
+import { repeatsStatement } from '../core/statement-check';
+
 export interface RetrievedChunk {
   id: string;
   text: string;
@@ -91,52 +93,15 @@ export function scoreRequiredFacts(
   return ratio(present.length, requiredFacts.length);
 }
 
-/** Words that say what a statement is about: long words and numbers like years, not filler. */
-const MIN_TOPIC_WORD_LENGTH = 5;
-const MIN_TOPIC_NUMBER_LENGTH = 4;
-const MIN_SHARED_TOPIC_WORDS = 2;
-const REPEAT_OVERLAP = 0.6;
-
-function topicWords(text: string): Set<string> {
-  const words = normalizeText(text).match(/[\p{L}\p{N}]+/gu) ?? [];
-  return new Set(
-    words.filter((word) =>
-      /\d/.test(word)
-        ? word.length >= MIN_TOPIC_NUMBER_LENGTH
-        : word.length >= MIN_TOPIC_WORD_LENGTH
-    )
-  );
-}
-
-/**
- * Pairs of statements that say about the same thing: they share at least two topic words and most
- * of the shorter one's. A heuristic that finds the same fact restated in other words; it can
- * miss a paraphrase and flag two statements that only look alike, so it is a signal, not a gate.
- */
+/** Pairs of statements that say about the same thing in other words (see `repeatsStatement`). */
 export function countRepeatedStatements(statements: CitedStatement[]): number {
-  const words = statements.map((statement) => topicWords(statement.text));
   let repeated = 0;
-  words.forEach((first, index) => {
-    for (const second of words.slice(index + 1)) {
-      const shared = [...first].filter((word) => second.has(word)).length;
-      const smaller = Math.min(first.size, second.size);
-      if (shared >= MIN_SHARED_TOPIC_WORDS && shared / smaller >= REPEAT_OVERLAP) repeated += 1;
+  statements.forEach((first, index) => {
+    for (const second of statements.slice(index + 1)) {
+      if (repeatsStatement(first.text, second.text)) repeated += 1;
     }
   });
   return repeated;
-}
-
-/** A number as digits only, so 46,2 and 46.2 are the same figure. */
-const numbersOf = (text: string): string[] =>
-  (text.match(/\d+(?:[.,]\d+)*/g) ?? []).map((number) => number.replace(/[.,]/g, ''));
-
-/**
- * The numbers of the answer that no cited passage contains. The prompt allows a number only if a
- * cited passage says it, so one that is missing was derived or invented (or rounded).
- */
-export function findUnsupportedNumbers(answer: string, citedText: string): string[] {
-  const supported = new Set(numbersOf(citedText));
-  return [...new Set(numbersOf(answer))].filter((number) => !supported.has(number));
 }
 
 /** The forbidden strings (a plausible wrong figure, an injected word) that the answer contains. */

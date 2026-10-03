@@ -7,7 +7,6 @@ import {
   type CitedStatement,
   countRepeatedStatements,
   findForbiddenFacts,
-  findUnsupportedNumbers,
   type RetrievalScore,
   scoreRequiredFacts,
   scoreRetrieval,
@@ -46,8 +45,6 @@ export interface QuestionResult {
   abstained: boolean | null;
   /** Pairs of kept statements that say the same thing. */
   repeatedStatements: number;
-  /** Numbers of the answer that no cited passage contains. */
-  unsupportedNumbers: string[];
   /** Forbidden strings of the question that the answer contains. */
   forbiddenFacts: string[];
   answerWords: number;
@@ -65,7 +62,6 @@ export interface EvalSummary {
   /** Share of the unanswerable questions the chat refused. */
   abstentionRate: number | null;
   repeatedStatements: number;
-  unsupportedNumbers: number;
   forbiddenFacts: number;
   meanAnswerWords: number | null;
   droppedStatements: number;
@@ -141,7 +137,6 @@ export async function runQuestion(
     factsInCitedChunks: scoreRequiredFacts(citedText, question.requiredFacts),
     abstained: question.answerable ? null : failure === null && statements.length === 0,
     repeatedStatements: countRepeatedStatements(statements),
-    unsupportedNumbers: findUnsupportedNumbers(answer, citedText),
     forbiddenFacts: findForbiddenFacts(answer, question.forbiddenFacts),
     answerWords: answer.split(/\s+/).filter(Boolean).length,
     failure,
@@ -179,7 +174,6 @@ export function summarize(results: QuestionResult[]): EvalSummary {
       results.map((result) => (result.abstained === null ? null : result.abstained ? 1 : 0))
     ),
     repeatedStatements: sum(results.map((result) => result.repeatedStatements)),
-    unsupportedNumbers: sum(results.map((result) => result.unsupportedNumbers.length)),
     forbiddenFacts: sum(results.map((result) => result.forbiddenFacts.length)),
     meanAnswerWords: mean(
       results.filter((result) => result.answerable).map((result) => result.answerWords)

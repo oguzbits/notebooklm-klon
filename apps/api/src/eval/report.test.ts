@@ -18,7 +18,6 @@ const result: QuestionResult = {
   factsInCitedChunks: 0.5,
   abstained: null,
   repeatedStatements: 0,
-  unsupportedNumbers: [],
   forbiddenFacts: [],
   answerWords: 1,
   failure: null,
@@ -54,7 +53,7 @@ describe('formatReport', () => {
     expect(report).toContain('–');
   });
 
-  it('names what stands out: an answer to an unanswerable question, repeats, numbers, forbidden facts', () => {
+  it('names what stands out: an answer to an unanswerable question, repeats, forbidden facts', () => {
     const odd: QuestionResult = {
       ...result,
       id: 'ohne-quelle',
@@ -62,7 +61,6 @@ describe('formatReport', () => {
       retrieval: null,
       abstained: false,
       repeatedStatements: 1,
-      unsupportedNumbers: ['12'],
       forbiddenFacts: ['5,9'],
     };
 
@@ -71,7 +69,6 @@ describe('formatReport', () => {
     expect(report).toMatch(/ohne-quelle \| – /);
     expect(report).toContain('antwortet trotz fehlender Quelle');
     expect(report).toContain('wiederholt: 1');
-    expect(report).toContain('Zahlen ohne Beleg: 12');
     expect(report).toContain('verbotene Angabe: 5,9');
     expect(report).toContain('richtig verweigert: 0 %');
   });

@@ -13,6 +13,8 @@ export interface ChatContext {
   /** The numbered passages as they go into the prompt. */
   promptText: string;
   idByLabel: Map<string, string>;
+  /** The text of each passage, to check a statement against what it cites. */
+  textByLabel: Map<string, string>;
 }
 
 /**
@@ -38,10 +40,11 @@ const BLOCK_TAG = /<(\/?)passages>/gi;
 export function buildChatContext(chunks: readonly ContextChunk[]): ChatContext {
   const labels = chunks.map((_, index) => `c${index + 1}`);
   const idByLabel = new Map(chunks.map((chunk, index) => [`c${index + 1}`, chunk.id]));
+  const textByLabel = new Map(chunks.map((chunk, index) => [`c${index + 1}`, chunk.text]));
   const promptText = chunks
     .map((chunk, index) => `[c${index + 1}]\n${chunk.text.replace(BLOCK_TAG, '‹$1passages›')}`)
     .join('\n\n');
-  return { labels, promptText, idByLabel };
+  return { labels, promptText, idByLabel, textByLabel };
 }
 
 /** Validates the model's labels against the context and returns the answer with real chunk IDs. */
