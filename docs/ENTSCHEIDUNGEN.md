@@ -1328,3 +1328,22 @@ Millionen, dann 46 185 Tausend), weil die Quelle ihn zweimal nennt. Beide Zitate
 unnötig lang. Der Chat-Prompt verlangt jetzt, jede Tatsache nur einmal zu nennen und alle belegenden Abschnitte in
 einem Satz zu zitieren. Kein Test: nur der Wortlaut des Prompts ändert sich, der Vertrag (Zitate, Schema) nicht. Nicht
 verifiziert: ob das Modell die Regel auf der Live-Seite einhält; das zeigt erst ein Versuch nach dem Deploy.
+
+## 2026-10-03 (Evals: Fragen ohne Antwort und modellfreie Prüfungen)
+
+Die Evals prüften nur Fragen mit Antwort in der Quelle und sagten nichts über erfundene Antworten, doppelte Aussagen
+oder Zahlen ohne Beleg. Neu: ein Feld `answerable` im Dataset (bei `false` keine Anker, dafür `sourceFiles`, damit
+`live.ts` die richtigen Dateien importiert und die Trefferquote nicht verwässert wird) und Fragen ohne Antwort
+(Umsatz Q4 2025, Erwerbslosenquote 2021, DPR auf MS MARCO), eine Frage über zwei Quellen und `08-lieferhinweis-de.txt`
+mit eingebetteter Anweisung (`forbiddenFacts` enthält das Befehlswort).
+
+- **Verweigerung** heißt: kein Fehler und keine behaltene Aussage. Der Server verwirft eine Aussage ohne gültiges Zitat
+  absichtlich, die Verweigerung (leere `chunkIds`) wird also verworfen und der Lauf zeigt `statements 0`. Falsch-positiv,
+  wenn das Modell in der Verweigerung trotzdem ein Zitat setzt; der Bericht zeigt den Antworttext zur Handprüfung.
+- **Auffälligkeiten sind Signale, keine Tore:** `countRepeatedStatements` (Themenwörter mit mindestens fünf Zeichen,
+  bei Zahlen vier; Paar gilt als wiederholt ab zwei gemeinsamen Themenwörtern und 60 % Überdeckung der kleineren Menge;
+  Jaccard über alle Wörter lag im echten Fall bei 0,26 und hätte ihn verfehlt), `findUnsupportedNumbers` (Ziffern ohne
+  Trennzeichen; Runden löst falschen Alarm aus) und `findForbiddenFacts`. Sie stehen im Bericht in der Spalte
+  "Auffälligkeiten", brechen aber keinen Lauf ab, weil ein Heuristik-Fehlalarm sonst echte Läufe blockieren würde.
+- Nicht gemacht (nicht freigegeben): LLM-Richter, drei Läufe je Frage. Der Live-Lauf bleibt von Hand und ungeprüft, bis
+  jemand `pnpm eval:live` ausführt; die Ergebnisse dieser neuen Fälle sind nicht gemessen.

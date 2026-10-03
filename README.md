@@ -122,7 +122,7 @@ Entscheidungen mit Zahlen: [Spike-Ergebnisse](docs/SPIKE-ERGEBNISSE.md) (PDF-Par
 - `pnpm test`: Vitest ohne Netzwerk. MSW lehnt jede nicht abgefangene Anfrage ab, kein Test kann Kontingent verbrauchen.
 - `pnpm test:db`: Tests gegen Postgres mit pgvector (`pnpm db:up`), darunter alle Zugriffsregeln: jede Abfrage filtert nach Nutzer, Notebook und gewählten Quellen.
 - `pnpm e2e`: Playwright-Nutzerreisen gegen den Offline-Server (echte App und Datenbank, gefälschte Modelle).
-- `pnpm eval:live`: 18 Golden Questions gegen die echten Modelle (Trefferquote, Fakten, verworfene Aussagen). Kostet Kontingent, läuft nicht in CI.
+- `pnpm eval:live`: 23 Golden Questions gegen die echten Modelle (Trefferquote, Fakten, verworfene Aussagen; dazu drei Fragen ohne Antwort in der Quelle für die Verweigerung, ein Quelltext mit eingebetteter Anweisung und rein rechnerische Auffälligkeiten wie wiederholte Aussagen oder Zahlen ohne Beleg). Kostet Kontingent, läuft von Hand und nicht in CI.
 - CI (GitHub Actions): Qualität, Unit-Tests, Datenbank-Tests, Browser-Test, Build, Semgrep.
 
 Weitere Regeln, die im Code geprüft sind: SSRF-Schutz beim Link-Import (nur http und https, DNS-Auflösung, keine privaten Adressen, nach jeder Weiterleitung erneut), Größen- und Seitenlimits, Kontingent pro Nutzer, Ratenbegrenzung aller Modellaufrufe, keine Dokumentinhalte in Logs.

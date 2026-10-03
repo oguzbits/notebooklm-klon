@@ -35,6 +35,7 @@ def main() -> None:
         "04-grundgesetz-auszug-de.pdf": pdf_text(ROOT / "04-grundgesetz-auszug-de.pdf"),
         "05-nist-ai-rmf-scan-en.pdf": pdf_text(RAW / "nist.pdf", 5, 7),
         "06-bdsg-auszug-de.txt": (ROOT / "06-bdsg-auszug-de.txt").read_text(encoding="utf-8"),
+        "08-lieferhinweis-de.txt": (ROOT / "08-lieferhinweis-de.txt").read_text(encoding="utf-8"),
         "07-wikipedia-rag-en.html": BeautifulSoup(
             (ROOT / "07-wikipedia-rag-en.html").read_text(encoding="utf-8"), "html.parser"
         ).get_text("\n"),
