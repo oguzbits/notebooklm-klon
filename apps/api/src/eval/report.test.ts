@@ -23,8 +23,10 @@ const result: QuestionResult = {
   forbiddenFacts: [],
   answerWords: 1,
   failure: null,
-  firstStatementMs: 1234,
-  totalMs: 2000,
+  translateMs: 1500,
+  prepareMs: 2100,
+  firstStatementMs: 3456,
+  totalMs: 5000,
 };
 
 describe('formatReport', () => {
@@ -35,7 +37,16 @@ describe('formatReport', () => {
     expect(report).toMatch(/Rang 2/);
     expect(report).toMatch(/100 %/);
     expect(report).toMatch(/50 %/);
-    expect(report).toContain('1,2 s');
+    expect(report).toContain('3,5 s');
+  });
+
+  it('shows how long the preparation took and how much of it the translation', () => {
+    const report = formatReport([result], summarize([result]));
+
+    expect(report).toContain('2,1 s (davon Übersetzung 1,5 s)');
+    expect(report).toContain(
+      'Vorbereitung vor der Antwort (Median): 2,1 s, davon Übersetzung: 1,5 s'
+    );
   });
 
   it('marks a miss, a failure and a ratio that does not apply', () => {

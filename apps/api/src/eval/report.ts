@@ -50,6 +50,7 @@ export function formatReport(results: QuestionResult[], summary: EvalSummary): s
       percent(result.factsInAnswer),
       percent(result.factsInCitedChunks),
       `${result.droppedStatements} / ${result.strippedCitations}`,
+      `${seconds(result.prepareMs)} (davon Übersetzung ${seconds(result.translateMs)})`,
       seconds(result.firstStatementMs),
       remarks(result),
       result.failure ?? '',
@@ -57,8 +58,8 @@ export function formatReport(results: QuestionResult[], summary: EvalSummary): s
   );
 
   return [
-    '| Frage | Suche | Fakten in Antwort | Fakten im Zitat | verworfen / entfernt | erste Aussage | Auffälligkeiten | Fehler |',
-    '| --- | --- | --- | --- | --- | --- | --- | --- |',
+    '| Frage | Suche | Fakten in Antwort | Fakten im Zitat | verworfen / entfernt | Vorbereitung | erste Aussage | Auffälligkeiten | Fehler |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- | --- |',
     ...rows.map((row) => `| ${row} |`),
     '',
     ...omissions(results),
@@ -71,6 +72,7 @@ export function formatReport(results: QuestionResult[], summary: EvalSummary): s
     `Länge der Antwort (Wörter, Mittel): ${summary.meanAnswerWords === null ? '–' : Math.round(summary.meanAnswerWords)}`,
     `Vom Server verworfene Aussagen: ${summary.droppedStatements}, entfernte Zitate: ${summary.strippedCitations}`,
     `Fehlgeschlagene Antworten: ${summary.failures}`,
+    `Vorbereitung vor der Antwort (Median): ${seconds(summary.medianPrepareMs)}, davon Übersetzung: ${seconds(summary.medianTranslateMs)}`,
     `Zeit bis zur ersten Aussage (Median): ${seconds(summary.medianFirstStatementMs)}`,
   ].join('\n');
 }

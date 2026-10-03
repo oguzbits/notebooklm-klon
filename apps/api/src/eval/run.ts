@@ -56,6 +56,10 @@ export interface QuestionResult {
   forbiddenFacts: string[];
   answerWords: number;
   failure: ApiErrorCode | null;
+  /** The question translated for the search (also the rewrite is not in it). */
+  translateMs: number;
+  /** Everything before the model answers: rewrite, translation, embeddings, search. */
+  prepareMs: number;
   firstStatementMs: number | null;
   totalMs: number;
 }
@@ -75,6 +79,8 @@ export interface EvalSummary {
   strippedCitations: number;
   failures: number;
   medianFirstStatementMs: number | null;
+  medianTranslateMs: number | null;
+  medianPrepareMs: number | null;
 }
 
 /**
@@ -90,10 +96,19 @@ export async function runQuestion(
   const now = options.now ?? Date.now;
   let retrieved: { id: string; text: string }[] = [];
   const omittedStatements: OmittedStatement[] = [];
+  let translateMs = 0;
   const chatPorts: ChatPorts = {
     ...ports,
     onOmitted: (omitted) => omittedStatements.push(omitted),
     selectedSourceIds: async () => scope.sourceIds,
+    translateQuery: async (text) => {
+      const translating = now();
+      try {
+        return await ports.translateQuery(text);
+      } finally {
+        translateMs += now() - translating;
+      }
+    },
     search: async (request) => {
       retrieved = await ports.search(request);
       return retrieved;
@@ -102,6 +117,7 @@ export async function runQuestion(
 
   const started = now();
   const prepared = await prepareAnswer({ ...scope, question: question.question }, chatPorts);
+  const prepareMs = now() - started;
   const statements: CitedStatement[] = [];
   let droppedStatements = 0;
   let strippedCitations = 0;
@@ -150,6 +166,8 @@ export async function runQuestion(
     forbiddenFacts: findForbiddenFacts(answer, question.forbiddenFacts),
     answerWords: answer.split(/\s+/).filter(Boolean).length,
     failure,
+    translateMs,
+    prepareMs,
     firstStatementMs,
     totalMs: now() - started,
   };
@@ -192,5 +210,7 @@ export function summarize(results: QuestionResult[]): EvalSummary {
     strippedCitations: results.reduce((sum, result) => sum + result.strippedCitations, 0),
     failures: results.filter((result) => result.failure !== null).length,
     medianFirstStatementMs: median(results.map((result) => result.firstStatementMs)),
+    medianTranslateMs: median(results.map((result) => result.translateMs)),
+    medianPrepareMs: median(results.map((result) => result.prepareMs)),
   };
 }

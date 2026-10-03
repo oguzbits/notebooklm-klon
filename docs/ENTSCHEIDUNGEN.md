@@ -1652,3 +1652,17 @@ Der Lauf nach den Teilfragen zeigte `rag-benefits-limits` mit 100 % in der Antwo
 Abschnitt, obwohl der Anker auf Rang 1 lag. Ursache war die Messung, nicht die Antwort: der Pflichtfakt
 "Halluzination" ist deutsch, die Quelle ist englisch. Der Fakt steht jetzt mit beiden Schreibweisen
 ("Halluzination", "hallucination") in `golden-questions.json`, wie schon bei `rag-halluzinationen`.
+
+## Eval: Vorbereitung und Übersetzung getrennt messen
+
+Nach den Teilfragen stieg der Median der Zeit bis zur ersten Aussage von 4,1 s auf 10,4 s. Der Bericht zeigte
+nur die Gesamtzeit, nicht, ob sie in der Übersetzung, in den Vektoren, in der Suche oder im Antwortmodell
+liegt.
+
+**Entscheidung.** `runQuestion` misst `translateMs` (nur der Übersetzungsaufruf) und `prepareMs` (alles vor
+dem Antwortmodell: Umformulierung, Übersetzung, Vektoren, Suche). Der Bericht hat dafür eine Spalte
+"Vorbereitung" ("X s (davon Übersetzung Y s)") und eine Medianzeile. Der Rest bis zur ersten Aussage ist das
+Antwortmodell. Das ändert nichts am Chat, nur an der Messung.
+
+**Offen.** Der Lauf mit `gemini-3.8-flash` (Konfiguration `AI_MODEL`) soll zeigen, wo die Zeit liegt. Erst
+danach lohnt sich eine Änderung (zum Beispiel eine Denkstufe für Übersetzung und Umformulierung).

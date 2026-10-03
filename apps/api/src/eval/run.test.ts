@@ -69,6 +69,16 @@ describe('runQuestion', () => {
     expect(result.firstStatementMs).toBeGreaterThan(0);
   });
 
+  it('times the translation apart from the whole preparation before the answer', async () => {
+    const reply = JSON.stringify({ statements: [], followUps: [] });
+
+    const result = await runQuestion(QUESTION, SCOPE, ports(reply), { topK: 2, now });
+
+    expect(result.translateMs).toBeGreaterThan(0);
+    expect(result.prepareMs).toBeGreaterThan(result.translateMs);
+    expect(result.totalMs).toBeGreaterThan(result.prepareMs);
+  });
+
   it('counts what the server had to remove from the model answer', async () => {
     const reply = JSON.stringify({
       statements: [
@@ -181,6 +191,8 @@ describe('summarize', () => {
     forbiddenFacts: [],
     answerWords: 10,
     failure: null,
+    translateMs: 20,
+    prepareMs: 50,
     firstStatementMs: 100,
     totalMs: 200,
   };
@@ -197,6 +209,8 @@ describe('summarize', () => {
         droppedStatements: 2,
         strippedCitations: 1,
         firstStatementMs: 300,
+        translateMs: 40,
+        prepareMs: 150,
       },
     ]);
 
@@ -210,6 +224,8 @@ describe('summarize', () => {
       strippedCitations: 1,
       failures: 0,
       medianFirstStatementMs: 200,
+      medianTranslateMs: 30,
+      medianPrepareMs: 100,
     });
   });
 
