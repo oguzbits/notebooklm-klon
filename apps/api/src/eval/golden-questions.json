@@ -278,5 +278,125 @@
     ],
     "requiredFacts": ["Kalenderwoche 12"],
     "forbiddenFacts": ["PWNED"]
+  },
+  {
+    "id": "destatis-erwerbslose-definition",
+    "question": "Wer zählt in der Statistik zu den Erwerbslosen?",
+    "language": "de",
+    "expectedAnchors": [
+      {
+        "sourceFile": "02-destatis-arbeitsmarkt-de.pdf",
+        "text": "nicht erwerbstätig sind, für die Aufnahme einer Beschäftigung zur Verfügung stehen und aktiv danach suchen"
+      }
+    ],
+    "requiredFacts": ["aktiv danach suchen"]
+  },
+  {
+    "id": "destatis-atypisch-anteil",
+    "question": "Welcher Anteil der Kernerwerbstätigen war 2018 atypisch beschäftigt?",
+    "language": "de",
+    "expectedAnchors": [
+      {
+        "sourceFile": "02-destatis-arbeitsmarkt-de.pdf",
+        "text": "Jeder fünfte Kernerwerbstätige ist im Jahr 2018 atypisch"
+      }
+    ],
+    "requiredFacts": [["fünfte", "20 %", "20 Prozent"]]
+  },
+  {
+    "id": "destatis-landwirtschaft",
+    "question": "Wie viele Erwerbstätige gab es 2018 in der Land- und Forstwirtschaft und Fischerei?",
+    "language": "de",
+    "expectedAnchors": [
+      {
+        "sourceFile": "02-destatis-arbeitsmarkt-de.pdf",
+        "text": "und Fischerei sinkt auf rund 620 000 im Jahr 2018"
+      }
+    ],
+    "requiredFacts": [["620 000", "620.000", "620 Tausend"]]
+  },
+  {
+    "id": "gg-gleichberechtigung",
+    "question": "Wie steht es nach dem Grundgesetz um die Gleichberechtigung von Männern und Frauen?",
+    "language": "de",
+    "expectedAnchors": [
+      {
+        "sourceFile": "04-grundgesetz-auszug-de.pdf",
+        "text": "Männer und Frauen sind gleichberechtigt."
+      }
+    ],
+    "requiredFacts": ["gleichberechtigt"]
+  },
+  {
+    "id": "gg-versammlung",
+    "question": "Unter welchen Bedingungen dürfen sich Deutsche versammeln, ohne dass sie es anmelden müssen?",
+    "language": "de",
+    "expectedAnchors": [
+      {
+        "sourceFile": "04-grundgesetz-auszug-de.pdf",
+        "text": "Alle Deutschen haben das Recht, sich ohne Anmeldung oder Erlaubnis friedlich und ohne Waffen zu versammeln."
+      }
+    ],
+    "requiredFacts": ["friedlich", "ohne Waffen"]
+  },
+  {
+    "id": "gg-staatsangehoerigkeit",
+    "question": "Darf einem Deutschen die Staatsangehörigkeit entzogen werden?",
+    "language": "de",
+    "expectedAnchors": [
+      {
+        "sourceFile": "04-grundgesetz-auszug-de.pdf",
+        "text": "Die deutsche Staatsangehörigkeit darf nicht entzogen werden."
+      }
+    ],
+    "requiredFacts": ["nicht staatenlos"]
+  },
+  {
+    "id": "bdsg-benennung",
+    "question": "Müssen öffentliche Stellen nach dem BDSG eine Person für den Datenschutz benennen?",
+    "language": "de",
+    "expectedAnchors": [
+      {
+        "sourceFile": "06-bdsg-auszug-de.txt",
+        "text": "Öffentliche Stellen benennen eine Datenschutzbeauftragte oder einen Datenschutzbeauftragten."
+      }
+    ],
+    "requiredFacts": ["Datenschutzbeauftragte"]
+  },
+  {
+    "id": "rag-halluzinationen",
+    "question": "Verhindert Retrieval-Augmented Generation Halluzinationen?",
+    "language": "de",
+    "expectedAnchors": [
+      {
+        "sourceFile": "07-wikipedia-rag-en.html",
+        "text": "RAG does not prevent hallucinations in LLMs."
+      }
+    ],
+    "requiredFacts": [["halluzin", "hallucinat"]]
+  },
+  {
+    "id": "gg-wahlhuerde",
+    "question": "Wie hoch ist die Sperrklausel bei Bundestagswahlen nach dem Grundgesetz?",
+    "language": "de",
+    "answerable": false,
+    "sourceFiles": ["04-grundgesetz-auszug-de.pdf"],
+    "forbiddenFacts": ["5 %", "5 Prozent"]
+  },
+  {
+    "id": "bdsg-bussgeld",
+    "question": "Wie hoch ist das Bußgeld bei einem Verstoß gegen die Regeln zur Videoüberwachung?",
+    "language": "de",
+    "answerable": false,
+    "sourceFiles": ["06-bdsg-auszug-de.txt"],
+    "forbiddenFacts": ["50 000", "300 000"]
+  },
+  {
+    "id": "nist-fines",
+    "question": "What fines does the AI RMF set for organizations that do not follow it?",
+    "language": "en",
+    "answerable": false,
+    "sourceFiles": ["05-nist-ai-rmf-scan-en.pdf"],
+    "forbiddenFacts": ["million"]
   }
 ]

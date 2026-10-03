@@ -1505,3 +1505,17 @@ Tausend" in der Antwort galt als nicht belegt. Die einzige Aussage wurde verworf
   Der Prompt lässt das Modell die Quellen gleich in einer Aussage bündeln. Bleibt eine Wiederholung,
   verliert sie weiter ihre Quelle.
 - Offen: Wirkung am Live-Eval messen (Rang des erwarteten Chunks steht im Bericht).
+
+## Eval: Golden-Set von 23 auf 34 Fragen erweitert
+
+- Anlass: Der Satz bildete vor allem Zahlenfragen ab. Definitionen, Rechtsnormen, Aussagen mit
+  Verneinung und Fragen ohne Antwort fehlten, also gerade das, was Zitat- und Ablehnungsverhalten prüft.
+- Neu: 8 beantwortbare Fragen (Definition, Anteil in Textform, Zahl im Fließtext, drei Normen aus
+  Grundgesetz und BDSG, eine Einschränkung aus der englischen Quelle bei deutscher Frage) und 3 ohne
+  Antwort (Sperrklausel, Bußgeld, Geldbußen des AI RMF) mit einer plausiblen falschen Angabe als
+  `forbiddenFacts`. Die Fragen sind nicht auf einen Fall zugeschnitten; jeder Anker ist wörtlicher
+  Quelltext, das prüft `golden.test.ts` (von Hand mit einem verfälschten Anker bestätigt).
+- Ohne Anker für das gescannte NIST-Dokument bleiben nur Fragen ohne Antwort: Der Text dort kommt aus
+  OCR, ein Anker wäre fragil.
+- Offen: Antworten und Ränge am Live-Eval messen, `requiredFacts` mit Schreibvarianten nachziehen,
+  wenn eine korrekte Antwort sie verfehlt.
