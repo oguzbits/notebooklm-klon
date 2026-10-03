@@ -1645,3 +1645,10 @@ Frage) keinen Anker: ein Vektor für die ganze Frage liegt zwischen den Themen u
 längerer Übersetzungsaufruf. Die Wirkung ist **nicht gemessen**: der Nutzer lässt `pnpm eval:live` laufen und
 sieht sich `dpr-rag-cross-source` und `rag-halluzinationen` an. Bringt es nichts, wird es zurückgenommen.
 Nicht gelöst: der Treffer für `rag-halluzinationen` selbst (Anker wird nicht gefunden).
+
+## Eval: Pflichtfakt von `rag-benefits-limits` in beiden Sprachen
+
+Der Lauf nach den Teilfragen zeigte `rag-benefits-limits` mit 100 % in der Antwort, aber 0 % im zitierten
+Abschnitt, obwohl der Anker auf Rang 1 lag. Ursache war die Messung, nicht die Antwort: der Pflichtfakt
+"Halluzination" ist deutsch, die Quelle ist englisch. Der Fakt steht jetzt mit beiden Schreibweisen
+("Halluzination", "hallucination") in `golden-questions.json`, wie schon bei `rag-halluzinationen`.
