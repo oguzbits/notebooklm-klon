@@ -9,7 +9,14 @@ import { describe, expect, it } from 'vitest';
 
 import { GeminiError } from '../ai/gemini-error';
 import { LIMITS } from '../config/limits';
-import { answerQuestion, type ChatPorts, NoSourcesSelectedError, prepareAnswer } from './answer';
+import {
+  answerQuestion,
+  type ChatPorts,
+  NoSourcesSelectedError,
+  OMISSION_REASON,
+  type OmittedStatement,
+  prepareAnswer,
+} from './answer';
 
 const INPUT = { userId: 'user-a', notebookId: 'notebook-1', question: 'Wer leitet das Projekt?' };
 const CHUNKS = [
@@ -326,6 +333,38 @@ describe('answerQuestion', () => {
 
     expect(events.map((event) => event.type)).toEqual([CHAT_EVENT.STATEMENT, CHAT_EVENT.DONE]);
     expect(events[1]).toMatchObject({ statements: 1, droppedStatements: 1 });
+  });
+
+  it('reports each omitted statement with its text and the reason, for the eval', async () => {
+    const omitted: OmittedStatement[] = [];
+    const { ports } = fakePorts({
+      onOmitted: (statement) => omitted.push(statement),
+      stream: async function* () {
+        yield* pieces(
+          json(
+            { text: 'Dr. Brandt leitet das Projekt Nordlicht.', chunkIds: ['c1'] },
+            { text: 'Das Projekt Nordlicht wird von Dr. Brandt geleitet.', chunkIds: ['c1'] },
+            { text: 'Das Budget wuchs um 12 Prozent.', chunkIds: ['c2'] },
+            { text: 'Ohne Zitat.', chunkIds: ['c7'] }
+          )
+        );
+      },
+    });
+
+    await run(ports);
+
+    expect(omitted).toEqual([
+      {
+        text: 'Das Projekt Nordlicht wird von Dr. Brandt geleitet.',
+        reason: OMISSION_REASON.REPEATED,
+      },
+      {
+        text: 'Das Budget wuchs um 12 Prozent.',
+        reason: OMISSION_REASON.UNSUPPORTED_NUMBER,
+        numbers: ['12'],
+      },
+      { text: 'Ohne Zitat.', reason: OMISSION_REASON.NOT_CITED },
+    ]);
   });
 
   it('accepts a number that only the question names', async () => {

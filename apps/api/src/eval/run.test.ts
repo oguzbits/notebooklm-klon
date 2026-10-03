@@ -2,6 +2,7 @@ import { API_ERROR } from '@nlm/shared';
 import { describe, expect, it } from 'vitest';
 
 import type { ChatInput } from '../ai/gemini-chat';
+import { OMISSION_REASON } from '../chat/answer';
 import type { EvalQuestion } from './dataset';
 import { type EvalPorts, type QuestionResult, runQuestion, summarize } from './run';
 
@@ -81,6 +82,9 @@ describe('runQuestion', () => {
     expect(result.strippedCitations).toBe(1);
     expect(result.droppedStatements).toBe(1);
     expect(result.statements).toHaveLength(1);
+    expect(result.omittedStatements).toEqual([
+      { text: 'Ohne Beleg.', reason: OMISSION_REASON.NOT_CITED },
+    ]);
   });
 
   it('finds facts in the answer but not in the cited passage when the citation is wrong', async () => {
@@ -167,6 +171,7 @@ describe('summarize', () => {
     statements: [],
     answer: '',
     droppedStatements: 0,
+    omittedStatements: [],
     strippedCitations: 0,
     factsInAnswer: 1,
     factsInCitedChunks: 1,

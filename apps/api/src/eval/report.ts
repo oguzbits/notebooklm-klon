@@ -1,3 +1,4 @@
+import { OMISSION_REASON, type OmittedStatement } from '../chat/answer';
 import type { EvalSummary, QuestionResult } from './run';
 
 const MS_PER_SECOND = 1000;
@@ -17,6 +18,23 @@ function remarks(result: QuestionResult): string {
     found.push(`verbotene Angabe: ${result.forbiddenFacts.join(', ')}`);
   }
   return found.join('; ');
+}
+
+const OMISSION_LABEL = {
+  [OMISSION_REASON.NOT_CITED]: 'ohne Zitat',
+  [OMISSION_REASON.UNSUPPORTED_NUMBER]: 'Zahl nicht im Zitat',
+  [OMISSION_REASON.REPEATED]: 'wiederholt',
+} as const;
+
+const omissionLine = (omitted: OmittedStatement) =>
+  `  - ${OMISSION_LABEL[omitted.reason]}${omitted.numbers ? ` (${omitted.numbers.join(', ')})` : ''}: ${omitted.text}`;
+
+/** The statements the server left out, per question. The text is document content: this is a report, not a log. */
+function omissions(results: QuestionResult[]): string[] {
+  const lines = results
+    .filter((result) => result.omittedStatements.length > 0)
+    .flatMap((result) => [`- ${result.id}`, ...result.omittedStatements.map(omissionLine)]);
+  return lines.length === 0 ? [] : ['Weggelassene Aussagen:', ...lines, ''];
 }
 
 /** The result of a run as a Markdown table, for the terminal and for the report file. */
@@ -43,6 +61,7 @@ export function formatReport(results: QuestionResult[], summary: EvalSummary): s
     '| --- | --- | --- | --- | --- | --- | --- | --- |',
     ...rows.map((row) => `| ${row} |`),
     '',
+    ...omissions(results),
     `Fragen: ${summary.questions}`,
     `Trefferquote der Suche: ${percent(summary.retrievalHitRate)}`,
     `Fakten in der Antwort: ${percent(summary.factsInAnswer)}`,

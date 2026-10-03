@@ -1,6 +1,7 @@
 import { API_ERROR } from '@nlm/shared';
 import { describe, expect, it } from 'vitest';
 
+import { OMISSION_REASON } from '../chat/answer';
 import { formatReport } from './report';
 import type { QuestionResult } from './run';
 import { summarize } from './run';
@@ -13,6 +14,7 @@ const result: QuestionResult = {
   statements: [{ text: 'Brandt.', chunkIds: ['k'] }],
   answer: 'Brandt.',
   droppedStatements: 1,
+  omittedStatements: [{ text: 'Ohne Beleg.', reason: OMISSION_REASON.NOT_CITED }],
   strippedCitations: 0,
   factsInAnswer: 1,
   factsInCitedChunks: 0.5,
@@ -71,5 +73,33 @@ describe('formatReport', () => {
     expect(report).toContain('wiederholt: 1');
     expect(report).toContain('verbotene Angabe: 5,9');
     expect(report).toContain('richtig verweigert: 0 %');
+  });
+
+  it('lists what the server left out with its text and reason, under the table', () => {
+    const odd: QuestionResult = {
+      ...result,
+      omittedStatements: [
+        { text: 'Ohne Beleg.', reason: OMISSION_REASON.NOT_CITED },
+        { text: 'Wuchs um 12 %.', reason: OMISSION_REASON.UNSUPPORTED_NUMBER, numbers: ['12'] },
+        { text: 'Nochmal dasselbe.', reason: OMISSION_REASON.REPEATED },
+      ],
+    };
+
+    const report = formatReport([odd], summarize([odd]));
+
+    expect(report).toContain('nordlicht-lead');
+    expect(report).toContain('Ohne Beleg.');
+    expect(report).toContain('Wuchs um 12 %.');
+    expect(report).toContain('12');
+    expect(report).toContain('Nochmal dasselbe.');
+    expect(report).toContain('ohne Zitat');
+    expect(report).toContain('Zahl nicht im Zitat');
+    expect(report).toContain('wiederholt');
+  });
+
+  it('has no list of omitted statements when the server left nothing out', () => {
+    const clean: QuestionResult = { ...result, omittedStatements: [] };
+
+    expect(formatReport([clean], summarize([clean]))).not.toContain('Weggelassene Aussagen');
   });
 });

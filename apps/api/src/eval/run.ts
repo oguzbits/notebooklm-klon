@@ -1,6 +1,11 @@
 import { type ApiErrorCode, CHAT_EVENT } from '@nlm/shared';
 
-import { answerQuestion, type ChatPorts, prepareAnswer } from '../chat/answer';
+import {
+  answerQuestion,
+  type ChatPorts,
+  type OmittedStatement,
+  prepareAnswer,
+} from '../chat/answer';
 import { LIMITS } from '../config/limits';
 import type { EvalQuestion } from './dataset';
 import {
@@ -32,6 +37,8 @@ export interface QuestionResult {
   answer: string;
   /** Statements the model wrote without a valid citation, removed by the server. */
   droppedStatements: number;
+  /** The statements the server left out, with the reason: why the count above is not zero. */
+  omittedStatements: OmittedStatement[];
   /** Citations of passages the model was not shown, removed by the server. */
   strippedCitations: number;
   /** Share of the required facts that the answer states. */
@@ -82,8 +89,10 @@ export async function runQuestion(
 ): Promise<QuestionResult> {
   const now = options.now ?? Date.now;
   let retrieved: { id: string; text: string }[] = [];
+  const omittedStatements: OmittedStatement[] = [];
   const chatPorts: ChatPorts = {
     ...ports,
+    onOmitted: (omitted) => omittedStatements.push(omitted),
     selectedSourceIds: async () => scope.sourceIds,
     search: async (request) => {
       retrieved = await ports.search(request);
@@ -132,6 +141,7 @@ export async function runQuestion(
     statements,
     answer,
     droppedStatements,
+    omittedStatements,
     strippedCitations,
     factsInAnswer: scoreRequiredFacts(answer, question.requiredFacts),
     factsInCitedChunks: scoreRequiredFacts(citedText, question.requiredFacts),

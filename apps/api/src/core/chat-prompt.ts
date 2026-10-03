@@ -29,7 +29,9 @@ export const CHAT_SYSTEM_PROMPT =
   'same quantity because it covers another group, period or method, say so in its own statement ' +
   'and name the difference. ' +
   'If the context does not contain the answer, return an empty statements list: ' +
-  'the reader is told so, and a statement without a citation is removed anyway. You may mark the most important terms of a statement with **bold**; ' +
+  'the reader is told so, and a statement without a citation is removed anyway. A passage that ' +
+  'only fits the topic of the question but does not say what was asked is no answer; do not ' +
+  'build one from it. You may mark the most important terms of a statement with **bold**; ' +
   'use no other Markdown. After the statements, put at most three short follow-up questions the ' +
   'reader could ask next into followUps, written in the language of the answer and answerable ' +
   'from the context passages. A follow-up question is no statement and has no citation; leave ' +

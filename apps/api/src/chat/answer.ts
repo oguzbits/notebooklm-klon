@@ -31,6 +31,23 @@ export class NoSourcesSelectedError extends Error {
   }
 }
 
+/** Why a statement of the model did not reach the reader. */
+export const OMISSION_REASON = {
+  NOT_CITED: 'NOT_CITED',
+  UNSUPPORTED_NUMBER: 'UNSUPPORTED_NUMBER',
+  REPEATED: 'REPEATED',
+} as const;
+
+export type OmissionReason = (typeof OMISSION_REASON)[keyof typeof OMISSION_REASON];
+
+/** A statement the server left out. Only for the eval report: it carries content, so it is never logged. */
+export interface OmittedStatement {
+  text: string;
+  reason: OmissionReason;
+  /** For UNSUPPORTED_NUMBER: the numbers no cited passage contains. */
+  numbers?: string[];
+}
+
 export interface SearchRequest {
   userId: string;
   notebookId: string;
@@ -49,6 +66,8 @@ export interface ChatPorts {
   stream: (input: ChatInput) => AsyncIterable<string>;
   /** Called with an error that ended an answer. It is then also reported as an ERROR event. */
   onError: (error: unknown) => void;
+  /** Called with each statement the server leaves out, so an eval can show what and why. */
+  onOmitted?: (omitted: OmittedStatement) => void;
 }
 
 export interface PreparedAnswer {
@@ -135,7 +154,8 @@ class AnswerTally {
 
   constructor(
     private readonly context: ChatContext,
-    private readonly question: string
+    private readonly question: string,
+    private readonly onOmitted: (omitted: OmittedStatement) => void = () => {}
   ) {}
 
   /** The numbers of a statement that neither its cited passages nor the question contain. */
@@ -151,11 +171,25 @@ class AnswerTally {
       this.strippedCitations += result.strippedCitations;
       const [kept] = result.answer.statements;
       const cited = statement.chunkIds.filter((label) => this.context.idByLabel.has(label));
-      if (!kept || this.unsupportedNumbers(kept.text, cited).length > 0) {
+      if (!kept) {
         this.droppedStatements += 1;
+        this.onOmitted({ text: statement.text, reason: OMISSION_REASON.NOT_CITED });
         continue;
       }
-      if (this.kept.some((text) => repeatsStatement(text, kept.text))) continue;
+      const unsupported = this.unsupportedNumbers(kept.text, cited);
+      if (unsupported.length > 0) {
+        this.droppedStatements += 1;
+        this.onOmitted({
+          text: kept.text,
+          reason: OMISSION_REASON.UNSUPPORTED_NUMBER,
+          numbers: unsupported,
+        });
+        continue;
+      }
+      if (this.kept.some((text) => repeatsStatement(text, kept.text))) {
+        this.onOmitted({ text: kept.text, reason: OMISSION_REASON.REPEATED });
+        continue;
+      }
       this.kept.push(kept.text);
       this.statements += 1;
       yield { type: CHAT_EVENT.STATEMENT, text: kept.text, chunkIds: kept.chunkIds };
@@ -205,7 +239,7 @@ export async function* answerQuestion(
   ports: ChatPorts,
   signal?: AbortSignal
 ): AsyncGenerator<ChatEvent> {
-  const tally = new AnswerTally(prepared.context, prepared.question);
+  const tally = new AnswerTally(prepared.context, prepared.question, ports.onOmitted);
   let suggested: string[] = [];
 
   if (prepared.context.labels.length > 0) {

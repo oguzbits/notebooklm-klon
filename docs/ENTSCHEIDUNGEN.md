@@ -1561,3 +1561,20 @@ Vorteil blieb aus, weil der Auszug mit der Antwort oft nicht der beste seiner Qu
 nichts bei, die Vektorsuche reicht für deutsche Fragen an englische Quellen nicht. Der nächste Kandidat ist
 die Frage vorab in die Sprachen der Quellen zu übersetzen (ein kleiner Modellaufruf je Frage, Kosten
 entscheidet der Nutzer).
+
+## Eval: weggelassene Aussagen im Bericht, Satz gegen Themen-Treffer im Prompt
+
+**Entscheidung.** `ChatPorts` bekommt den optionalen Haken `onOmitted`. Der Antwortablauf meldet
+jede Aussage, die der Server weglässt, mit Text und Grund (`NOT_CITED`, `UNSUPPORTED_NUMBER` mit
+den Zahlen, `REPEATED`). Der Eval sammelt sie in `omittedStatements` und der Markdown-Bericht
+listet sie unter der Tabelle. Der DONE-Event und die Server-Logs bleiben unverändert (nur Zähler,
+kein Dokumentinhalt, Invariante 7); ein Bericht darf Inhalt zeigen.
+
+**Warum.** `nordlicht-budget` zeigte eine verworfene Aussage und 50 % Fakten, aber nicht, welche
+und warum. Ohne den Grund bleibt unklar, ob der Prompt, die Zahlenprüfung oder die
+Wiederholungserkennung eingreift.
+
+**Prompt.** Ein agnostischer Satz: Ein Auszug, der nur zum Thema der Frage passt, aber nicht sagt,
+was gefragt war, ist keine Antwort. Anlass: `nist-fines` ist unbeantwortbar, wurde aber aus einem
+verwandten Auszug beantwortet. Die Wirkung ist nicht gemessen; getestet wird nur der Vertrag, nicht
+der Wortlaut.
