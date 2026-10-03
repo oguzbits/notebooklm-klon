@@ -25,7 +25,7 @@ import { createLocalImportDeps } from '../ingestion/local-import-deps';
 import { log } from '../logger';
 import { createProviders } from '../providers';
 import { toLocalFile } from './corpus';
-import { EvalDatasetSchema } from './dataset';
+import { EvalDatasetSchema, questionSourceFiles } from './dataset';
 import { formatReport } from './report';
 import { type QuestionResult, runQuestion, summarize } from './run';
 
@@ -67,9 +67,7 @@ await db
 const notebook = await createNotebook(db, EVAL_USER_ID, 'Eval');
 
 try {
-  const fileNames = [
-    ...new Set(selected.flatMap((q) => q.expectedAnchors.map((a) => a.sourceFile))),
-  ];
+  const fileNames = [...new Set(selected.flatMap(questionSourceFiles))];
   log({ level: 'info', msg: 'eval: reading corpus', files: fileNames.length });
 
   // One file at a time: a file the models refuse (seen with the scanned NIST paper, which ends in
@@ -95,7 +93,7 @@ try {
     }
   }
   const questions = selected.filter((q) =>
-    q.expectedAnchors.every((anchor) => !unreadable.includes(anchor.sourceFile))
+    questionSourceFiles(q).every((file) => !unreadable.includes(file))
   );
   if (questions.length === 0) throw new Error('No corpus file could be read.');
 
@@ -129,7 +127,7 @@ try {
       level: 'info',
       msg: 'eval: question done',
       id: result.id,
-      hit: result.retrieval.hit,
+      hit: result.retrieval?.hit ?? null,
       failure: result.failure,
     });
     await sleep(pauseMs);

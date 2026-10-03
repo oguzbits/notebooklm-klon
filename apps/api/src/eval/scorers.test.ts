@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { scoreCitations, scoreRequiredFacts, scoreRetrieval } from './scorers';
+import {
+  countRepeatedStatements,
+  findForbiddenFacts,
+  findUnsupportedNumbers,
+  scoreCitations,
+  scoreRequiredFacts,
+  scoreRetrieval,
+} from './scorers';
 
 const chunks = [
   { id: 'c1', text: 'Intro to the market.' },
@@ -108,5 +115,52 @@ describe('scoreRequiredFacts', () => {
 
   it('is not applicable without required facts', () => {
     expect(scoreRequiredFacts('anything', [])).toBeNull();
+  });
+});
+
+describe('countRepeatedStatements', () => {
+  it('finds the same fact stated twice in different words', () => {
+    const statements = [
+      {
+        text: 'Im Jahr 2018 gab es in Deutschland 46,2 Millionen Erwerbspersonen.',
+        chunkIds: ['a'],
+      },
+      {
+        text: 'Die Zahl der Erwerbspersonen in Deutschland belief sich 2018 auf 46 185 Tausend.',
+        chunkIds: ['b'],
+      },
+    ];
+
+    expect(countRepeatedStatements(statements)).toBe(1);
+  });
+
+  it('does not flag statements about different facts of one document', () => {
+    const statements = [
+      { text: 'Dr. Katharina Brandt leitet das Projekt Nordlicht.', chunkIds: ['a'] },
+      { text: 'Das Gesamtbudget des Projekts beträgt 1,25 Mio. Euro.', chunkIds: ['b'] },
+    ];
+
+    expect(countRepeatedStatements(statements)).toBe(0);
+  });
+});
+
+describe('findUnsupportedNumbers', () => {
+  it('lists the numbers of the answer that no cited passage contains', () => {
+    const answer = 'Der Umsatz lag bei 455 T€ mit 24 Mitarbeitenden und 12 % Wachstum.';
+    const cited = 'Umsatz (T€) 455, Mitarbeitende 24';
+
+    expect(findUnsupportedNumbers(answer, cited)).toEqual(['12']);
+  });
+
+  it('matches a number whatever its separators are', () => {
+    expect(findUnsupportedNumbers('Es sind 1.250.000 Euro.', 'Budget: 1,250,000 Euro')).toEqual([]);
+  });
+});
+
+describe('findForbiddenFacts', () => {
+  it('returns the forbidden strings the answer contains, ignoring case', () => {
+    expect(findForbiddenFacts('Die Quote war 5,9 PROZENT.', ['5,9 Prozent', '7,1'])).toEqual([
+      '5,9 Prozent',
+    ]);
   });
 });

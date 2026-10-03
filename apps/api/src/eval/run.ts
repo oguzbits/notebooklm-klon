@@ -5,6 +5,9 @@ import { LIMITS } from '../config/limits';
 import type { EvalQuestion } from './dataset';
 import {
   type CitedStatement,
+  countRepeatedStatements,
+  findForbiddenFacts,
+  findUnsupportedNumbers,
   type RetrievalScore,
   scoreRequiredFacts,
   scoreRetrieval,
@@ -22,7 +25,9 @@ export interface EvalScope {
 export interface QuestionResult {
   id: string;
   language: EvalQuestion['language'];
-  retrieval: RetrievalScore;
+  answerable: boolean;
+  /** Not scored for a question the sources cannot answer: there is nothing to find. */
+  retrieval: RetrievalScore | null;
   /** The statements that reached the user: checked, with real chunk IDs. */
   statements: CitedStatement[];
   answer: string;
@@ -34,6 +39,18 @@ export interface QuestionResult {
   factsInAnswer: number | null;
   /** Share of the required facts that stand in the passages the answer cites. */
   factsInCitedChunks: number | null;
+  /**
+   * For an unanswerable question: the chat refused, meaning the server kept no statement (a refusal
+   * has no citation, so it is the one thing the server removes on purpose). Null otherwise.
+   */
+  abstained: boolean | null;
+  /** Pairs of kept statements that say the same thing. */
+  repeatedStatements: number;
+  /** Numbers of the answer that no cited passage contains. */
+  unsupportedNumbers: string[];
+  /** Forbidden strings of the question that the answer contains. */
+  forbiddenFacts: string[];
+  answerWords: number;
   failure: ApiErrorCode | null;
   firstStatementMs: number | null;
   totalMs: number;
@@ -45,6 +62,12 @@ export interface EvalSummary {
   meanHitRank: number | null;
   factsInAnswer: number | null;
   factsInCitedChunks: number | null;
+  /** Share of the unanswerable questions the chat refused. */
+  abstentionRate: number | null;
+  repeatedStatements: number;
+  unsupportedNumbers: number;
+  forbiddenFacts: number;
+  meanAnswerWords: number | null;
   droppedStatements: number;
   strippedCitations: number;
   failures: number;
@@ -102,17 +125,25 @@ export async function runQuestion(
   return {
     id: question.id,
     language: question.language,
-    retrieval: scoreRetrieval(
-      retrieved,
-      question.expectedAnchors.map((anchor) => anchor.text),
-      options.topK ?? LIMITS.CHAT_CONTEXT_CHUNKS
-    ),
+    answerable: question.answerable,
+    retrieval: question.answerable
+      ? scoreRetrieval(
+          retrieved,
+          question.expectedAnchors.map((anchor) => anchor.text),
+          options.topK ?? LIMITS.CHAT_CONTEXT_CHUNKS
+        )
+      : null,
     statements,
     answer,
     droppedStatements,
     strippedCitations,
     factsInAnswer: scoreRequiredFacts(answer, question.requiredFacts),
     factsInCitedChunks: scoreRequiredFacts(citedText, question.requiredFacts),
+    abstained: question.answerable ? null : failure === null && statements.length === 0,
+    repeatedStatements: countRepeatedStatements(statements),
+    unsupportedNumbers: findUnsupportedNumbers(answer, citedText),
+    forbiddenFacts: findForbiddenFacts(answer, question.forbiddenFacts),
+    answerWords: answer.split(/\s+/).filter(Boolean).length,
     failure,
     firstStatementMs,
     totalMs: now() - started,
@@ -125,6 +156,8 @@ function mean(values: (number | null)[]): number | null {
   return present.length === 0 ? null : present.reduce((a, b) => a + b, 0) / present.length;
 }
 
+const sum = (values: number[]) => values.reduce((a, b) => a + b, 0);
+
 function median(values: (number | null)[]): number | null {
   const sorted = values.filter((value): value is number => value !== null).sort((a, b) => a - b);
   const middle = Math.floor(sorted.length / 2);
@@ -136,10 +169,21 @@ function median(values: (number | null)[]): number | null {
 export function summarize(results: QuestionResult[]): EvalSummary {
   return {
     questions: results.length,
-    retrievalHitRate: mean(results.map((result) => (result.retrieval.hit ? 1 : 0))),
-    meanHitRank: mean(results.map((result) => result.retrieval.rank)),
+    retrievalHitRate: mean(
+      results.map((result) => (result.retrieval === null ? null : result.retrieval.hit ? 1 : 0))
+    ),
+    meanHitRank: mean(results.map((result) => result.retrieval?.rank ?? null)),
     factsInAnswer: mean(results.map((result) => result.factsInAnswer)),
     factsInCitedChunks: mean(results.map((result) => result.factsInCitedChunks)),
+    abstentionRate: mean(
+      results.map((result) => (result.abstained === null ? null : result.abstained ? 1 : 0))
+    ),
+    repeatedStatements: sum(results.map((result) => result.repeatedStatements)),
+    unsupportedNumbers: sum(results.map((result) => result.unsupportedNumbers.length)),
+    forbiddenFacts: sum(results.map((result) => result.forbiddenFacts.length)),
+    meanAnswerWords: mean(
+      results.filter((result) => result.answerable).map((result) => result.answerWords)
+    ),
     droppedStatements: results.reduce((sum, result) => sum + result.droppedStatements, 0),
     strippedCitations: results.reduce((sum, result) => sum + result.strippedCitations, 0),
     failures: results.filter((result) => result.failure !== null).length,

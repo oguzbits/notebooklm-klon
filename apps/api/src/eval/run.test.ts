@@ -10,8 +10,21 @@ const QUESTION: EvalQuestion = {
   id: 'nordlicht-lead',
   question: 'Wer leitet das Projekt Nordlicht?',
   language: 'de',
+  answerable: true,
   expectedAnchors: [{ sourceFile: 'a.docx', text: 'von Dr. Katharina Brandt geleitet' }],
   requiredFacts: ['Katharina Brandt'],
+  sourceFiles: [],
+  forbiddenFacts: [],
+};
+const UNANSWERABLE: EvalQuestion = {
+  ...QUESTION,
+  id: 'nordlicht-sponsor',
+  question: 'Wer ist der Sponsor von Projekt Nordlicht?',
+  answerable: false,
+  expectedAnchors: [],
+  requiredFacts: [],
+  sourceFiles: ['a.docx'],
+  forbiddenFacts: ['Meier'],
 };
 const CHUNKS = [
   { id: 'k1', text: 'Das Budget beträgt viel.' },
@@ -95,10 +108,62 @@ describe('runQuestion', () => {
   });
 });
 
+describe('runQuestion with a question the sources cannot answer', () => {
+  it('counts the refusal as abstention: the server keeps no statement without a citation', async () => {
+    const reply = JSON.stringify({
+      statements: [{ text: 'Dazu steht nichts in den Quellen.', chunkIds: [] }],
+      followUps: [],
+    });
+
+    const result = await runQuestion(UNANSWERABLE, SCOPE, ports(reply), { topK: 2, now });
+
+    expect(result.abstained).toBe(true);
+    expect(result.retrieval).toBeNull();
+    expect(result.droppedStatements).toBe(1);
+  });
+
+  it('flags an answer with a citation and the forbidden fact in it', async () => {
+    const reply = JSON.stringify({
+      statements: [{ text: 'Sponsor ist Herr Meier.', chunkIds: ['c2'] }],
+      followUps: [],
+    });
+
+    const result = await runQuestion(UNANSWERABLE, SCOPE, ports(reply), { topK: 2, now });
+
+    expect(result.abstained).toBe(false);
+    expect(result.forbiddenFacts).toEqual(['Meier']);
+  });
+
+  it('does not call a failed answer a refusal', async () => {
+    const result = await runQuestion(UNANSWERABLE, SCOPE, ports('', { fail: true }), {
+      topK: 2,
+      now,
+    });
+
+    expect(result.abstained).toBe(false);
+    expect(result.failure).toBe(API_ERROR.INTERNAL);
+  });
+});
+
+describe('runQuestion quality signals', () => {
+  it('reports numbers that no cited passage contains and the length of the answer', async () => {
+    const reply = JSON.stringify({
+      statements: [{ text: 'Katharina Brandt leitet es seit 2019.', chunkIds: ['c2'] }],
+      followUps: [],
+    });
+
+    const result = await runQuestion(QUESTION, SCOPE, ports(reply), { topK: 2, now });
+
+    expect(result.unsupportedNumbers).toEqual(['2019']);
+    expect(result.answerWords).toBe(6);
+  });
+});
+
 describe('summarize', () => {
   const base: QuestionResult = {
     id: 'a',
     language: 'de',
+    answerable: true,
     retrieval: { hit: true, rank: 1, anchorRecall: 1 },
     statements: [],
     answer: '',
@@ -106,6 +171,11 @@ describe('summarize', () => {
     strippedCitations: 0,
     factsInAnswer: 1,
     factsInCitedChunks: 1,
+    abstained: null,
+    repeatedStatements: 0,
+    unsupportedNumbers: [],
+    forbiddenFacts: [],
+    answerWords: 10,
     failure: null,
     firstStatementMs: 100,
     totalMs: 200,
@@ -136,6 +206,36 @@ describe('summarize', () => {
       strippedCitations: 1,
       failures: 0,
       medianFirstStatementMs: 200,
+    });
+  });
+
+  it('keeps unanswerable questions out of retrieval and length, and rates the refusals', () => {
+    const refused = {
+      ...base,
+      id: 'r',
+      answerable: false,
+      retrieval: null,
+      abstained: true,
+      answerWords: 0,
+    };
+    const answered = {
+      ...refused,
+      id: 's',
+      abstained: false,
+      repeatedStatements: 2,
+      unsupportedNumbers: ['1', '2'],
+      forbiddenFacts: ['x'],
+    };
+
+    const summary = summarize([base, refused, answered]);
+
+    expect(summary).toMatchObject({
+      retrievalHitRate: 1,
+      meanAnswerWords: 10,
+      abstentionRate: 0.5,
+      repeatedStatements: 2,
+      unsupportedNumbers: 2,
+      forbiddenFacts: 1,
     });
   });
 
