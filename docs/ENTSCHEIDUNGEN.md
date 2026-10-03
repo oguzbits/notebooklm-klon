@@ -1403,3 +1403,17 @@ etwas Unbelegtes behauptet. Jetzt soll das Modell in diesem Fall eine leere Auss
 belegte Antwort gefunden" kommt aus der Oberfläche und bleibt. Der Server ändert sich nicht: schreibt das Modell doch
 eine unzitierte Aussage, wird sie wie bisher verworfen. Nicht gemessen: ob Gemini die leere Liste zuverlässig liefert
 (die Eval-Fragen ohne Antwort zeigen es im nächsten Live-Lauf an `droppedStatements` bei `abstained`).
+
+## Studio-Ausgaben: Zahlen müssen im zitierten Abschnitt stehen
+
+Wie im Chat (`core/statement-check.ts`) wird ein Element einer Studio-Ausgabe verworfen und in
+`dropped` gezählt, wenn es eine Zahl nennt, die keiner seiner zitierten Abschnitte enthält
+(`core/studio-check.ts`, Parameter `claim` von `checked`). Geprüft werden Berichtsaussagen,
+Lernkarten (Vorder- und Rückseite), Quizfragen (Frage, richtige Option, Erklärung; falsche
+Optionen nicht, sie sind absichtlich falsch) und Tabellenzellen (die Zelle wird geleert, die
+Zeile bleibt). Der Prompt verlangt das schon; jetzt erzwingt es der Server.
+
+- Nicht geprüft: Mindmap-Beschriftungen (kurze Labels, "Phase 2" wäre ein Fehlalarm).
+- Risiko: eine Zahl, die der Abschnitt nur als Wort nennt ("zwei"), oder eine abgeleitete Zahl
+  ("4 Optionen" in einer Quizfrage) führt zum Verwerfen. Lieber ein Element zu wenig als eine
+  erfundene Zahl; nicht live gemessen, wie oft das vorkommt.

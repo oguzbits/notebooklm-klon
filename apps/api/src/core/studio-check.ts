@@ -1,23 +1,34 @@
 import type { DataTable, Flashcards, Mindmap, Quiz, Report } from '@nlm/shared';
 
 import type { ChatContext } from './chat-context';
+import { findUnsupportedNumbers } from './statement-check';
 
 /** Labels the model cited, as real chunk IDs. Labels that were never shown are left out. */
 const resolve = (labels: readonly string[], context: ChatContext): string[] => [
   ...new Set(labels.flatMap((label) => context.idByLabel.get(label) ?? [])),
 ];
 
+/** The text of the passages an item cites, to check what it claims against. */
+const citedText = (labels: readonly string[], context: ChatContext): string =>
+  labels.flatMap((label) => context.textByLabel.get(label) ?? []).join('\n');
+
 /**
  * Keeps what has a valid citation and counts the rest. This is the citation contract of the chat,
- * applied to every part of a generated output.
+ * applied to every part of a generated output. With `claim` (the text of an item that states
+ * facts), an item with a number that none of its cited passages says is dropped too, as in the chat.
  */
 export function checked<T extends { chunkIds: string[] }>(
   items: readonly T[],
-  context: ChatContext
+  context: ChatContext,
+  claim?: (item: T) => string
 ): { kept: T[]; dropped: number } {
   const kept = items.flatMap((item) => {
     const chunkIds = resolve(item.chunkIds, context);
-    return chunkIds.length > 0 ? [{ ...item, chunkIds }] : [];
+    if (chunkIds.length === 0) return [];
+    const unsupported =
+      claim !== undefined &&
+      findUnsupportedNumbers(claim(item), citedText(item.chunkIds, context)).length > 0;
+    return unsupported ? [] : [{ ...item, chunkIds }];
   });
   return { kept, dropped: items.length - kept.length };
 }
@@ -25,7 +36,7 @@ export function checked<T extends { chunkIds: string[] }>(
 export function checkReport(report: Report, context: ChatContext) {
   let dropped = 0;
   const sections = report.sections.flatMap((section) => {
-    const result = checked(section.statements, context);
+    const result = checked(section.statements, context, (statement) => statement.text);
     dropped += result.dropped;
     return result.kept.length > 0 ? [{ heading: section.heading, statements: result.kept }] : [];
   });
@@ -33,12 +44,20 @@ export function checkReport(report: Report, context: ChatContext) {
 }
 
 export function checkFlashcards(flashcards: Flashcards, context: ChatContext) {
-  const { kept, dropped } = checked(flashcards.cards, context);
+  const { kept, dropped } = checked(
+    flashcards.cards,
+    context,
+    (card) => `${card.front} ${card.back}`
+  );
   return { content: { cards: kept }, dropped, size: kept.length };
 }
 
+/** What a question states as fact: not the wrong options, which are false on purpose. */
+const quizClaim = (question: Quiz['questions'][number]): string =>
+  [question.question, question.options[question.correctIndex], question.explanation].join(' ');
+
 export function checkQuiz(quiz: Quiz, context: ChatContext) {
-  const { kept, dropped } = checked(quiz.questions, context);
+  const { kept, dropped } = checked(quiz.questions, context, quizClaim);
   return { content: { questions: kept }, dropped, size: kept.length };
 }
 
@@ -74,7 +93,7 @@ export function checkDataTable(table: DataTable, context: ChatContext) {
       return [];
     }
     const cells = row.cells.map((cell) => {
-      const [supported] = checked([cell], context).kept;
+      const [supported] = checked([cell], context, (value) => value.text).kept;
       return supported !== undefined && supported.text !== ''
         ? supported
         : { text: '', chunkIds: [] };
