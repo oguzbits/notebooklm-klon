@@ -1608,3 +1608,19 @@ nach dem Entfernen der Füllwörter der Frage gleicht, wird nicht doppelt gesuch
 das sind bei 15 Anfragen/Minute rechnerisch 7 Fragen/Minute, und etwa 0,5 s mehr bis zur ersten
 Aussage. Die Wirkung ist **nicht gemessen**: `pnpm eval:live` muss der Nutzer laufen lassen und
 besonders die drei genannten Fragen ansehen. Bringt es dort nichts, wird es zurückgenommen.
+
+## Wiederholungserkennung: andere Zahlen bedeuten andere Aussage
+
+**Anlass.** Der zweite `eval:live`-Lauf zeigte zwei Aussagen, die der Server als "wiederholt" wegließ, obwohl
+sie andere Fakten nannten (BM25 mit 42,9 % statt 65,2 %; 24 statt einer anderen Zahl Mitarbeitender). Die
+Prüfung in `core/statement-check.ts` unterschied bisher nur Jahre; kurze Zahlen zählten weder als Themenwort
+noch als Unterschied.
+
+**Entscheidung.** Nennen beide Aussagen Zahlen und sind die Zahlenmengen nicht gleich, ist es keine
+Wiederholung. Das gilt für alle Zahlen, nicht nur für Jahre. Nennt eine Aussage keine Zahl, bleibt die
+Wortprüfung wie zuvor.
+
+**Bewusst so.** Im Zweifel bleibt eine Aussage stehen: eine doppelte Aussage ist ein Schönheitsfehler, eine
+fehlende ein Verlust. Fußnotenziffern hinter einem Wort zählen als Zahl und können eine echte Wiederholung
+durchlassen (siehe BACKLOG). Die Wirkung ist noch nicht gemessen; der nächste `eval:live` zeigt, ob die
+beiden Aussagen jetzt ankommen.

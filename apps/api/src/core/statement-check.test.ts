@@ -16,6 +16,8 @@ const tableFigure = fc.integer({ min: 10_001, max: 99_999 }).filter((value) => v
 const lowercaseWord = fc.stringMatching(/^[a-zäöü]{5,12}$/);
 const topicWords = fc.uniqueArray(lowercaseWord, { minLength: 2, maxLength: 6 });
 const year = fc.integer({ min: 1500, max: 2099 });
+/** A figure below the length of a topic number and no year. */
+const shortFigure = fc.integer({ min: 10, max: 999 });
 
 describe('repeatsStatement', () => {
   it('finds the same fact stated twice in different words', () => {
@@ -71,6 +73,25 @@ describe('repeatsStatement', () => {
         expect(repeatsStatement(sentence(first), sentence(second))).toBe(false);
       })
     );
+  });
+
+  it('does not merge the same words for two different figures', () => {
+    fc.assert(
+      fc.property(topicWords, shortFigure, shortFigure, (words, first, second) => {
+        fc.pre(first !== second);
+        const sentence = (figure: number) => `${words.join(' ')} erreicht ${figure} Prozent`;
+        expect(repeatsStatement(sentence(first), sentence(second))).toBe(false);
+      })
+    );
+  });
+
+  it('keeps two measures of one method apart', () => {
+    expect(
+      repeatsStatement(
+        'BM25 erreicht eine Top-5-Genauigkeit von 42,9 %.',
+        'BM25 erreicht eine Top-20-Genauigkeit von 65,2 %.'
+      )
+    ).toBe(false);
   });
 });
 

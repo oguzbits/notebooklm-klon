@@ -10,7 +10,6 @@ const MIN_TOPIC_WORD_LENGTH = 5;
 const MIN_TOPIC_NUMBER_LENGTH = 4;
 const MIN_SHARED_TOPIC_WORDS = 2;
 const REPEAT_OVERLAP = 0.6;
-const YEAR = /\b(?:1[5-9]|20)\d\d\b/g;
 
 function topicWords(text: string): Set<string> {
   const words = normalize(text).match(/[\p{L}\p{N}]+/gu) ?? [];
@@ -23,25 +22,20 @@ function topicWords(text: string): Set<string> {
   );
 }
 
-const yearsOf = (text: string): string[] => normalize(text).match(YEAR) ?? [];
-
 /**
  * Whether two statements say the same thing in other words: they share at least two topic words
- * and most of the shorter one's. Two statements that name different years are about different
- * facts (the same measure for 2018 and 2019). A heuristic: it can miss a paraphrase, and it errs
- * on the side of keeping a statement, because dropping a different fact would be worse.
+ * and most of the shorter one's. Two statements that each name figures, and not the same ones, are
+ * about different facts (the same measure for 2018 and 2019, one method at two cut-offs). A
+ * heuristic: it can miss a paraphrase, and it errs on the side of keeping a statement, because
+ * dropping a different fact would be worse.
  */
 export function repeatsStatement(first: string, second: string): boolean {
-  const firstYears = yearsOf(first);
-  const secondYears = yearsOf(second);
-  if (
-    firstYears.length > 0 &&
-    secondYears.length > 0 &&
-    (firstYears.some((year) => !secondYears.includes(year)) ||
-      secondYears.some((year) => !firstYears.includes(year)))
-  ) {
-    return false;
-  }
+  const firstFigures = new Set(numbersOf(first));
+  const secondFigures = new Set(numbersOf(second));
+  const sameFigures =
+    firstFigures.size === secondFigures.size &&
+    [...firstFigures].every((figure) => secondFigures.has(figure));
+  if (firstFigures.size > 0 && secondFigures.size > 0 && !sameFigures) return false;
   const firstWords = topicWords(first);
   const secondWords = topicWords(second);
   const shared = [...firstWords].filter((word) => secondWords.has(word)).length;
