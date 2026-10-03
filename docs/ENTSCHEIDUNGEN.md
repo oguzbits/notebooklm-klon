@@ -1449,3 +1449,14 @@ Tausend" in der Antwort galt als nicht belegt. Die einzige Aussage wurde verworf
 - Gilt nur für neu gelesene Quellen. Bestehende Quellen bleiben, bis sie neu hochgeladen werden.
 - Nicht gemacht: Kopfzeile und Einheit je Chunk für Suche und Prompt (braucht eine Migration und ein
   neues Feld), Fußnoten und Seitenkopf aus der Markierung. Erst am Live-Eval messen.
+
+## Leser: derselbe Beleg scrollt beim zweiten Klick wieder hin
+
+- Fehler: Der Scroll im Leser hing an `[text, start, end]`. Ein zweiter Klick auf dieselbe Quellenangabe
+  hat dieselben Offsets, der Effekt lief nicht, und der Leser blieb dort, wohin der Nutzer inzwischen
+  gescrollt hatte.
+- Lösung: `ReaderTarget` trägt einen Zähler `opened`, den `openReader` bei jedem Klick erhöht (wie die
+  `id` bei `AskedQuestion`). Er geht als `scrollKey` bis `SourceText` und steht in den Effekt-Abhängigkeiten.
+  Ein Neu-Rendern ohne Klick scrollt nicht, weil der Zähler gleich bleibt.
+- Verworfen: die Identität des `highlight`-Objekts als Auslöser. `useReaderContent` baut es bei jedem
+  Render neu, der Leser würde bei jedem Re-Render scrollen.

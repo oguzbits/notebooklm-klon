@@ -50,10 +50,13 @@ export function SourceText({
   text,
   kind,
   highlight = null,
+  scrollKey,
 }: {
   text: string;
   kind?: SourceKind;
   highlight?: { start: number; end: number } | null;
+  /** Changes with each click on a citation, so the same passage is scrolled to again. */
+  scrollKey?: number;
 }) {
   const root = useRef<HTMLDivElement>(null);
   const start = highlight?.start ?? null;
@@ -79,7 +82,7 @@ export function SourceText({
 
   useEffect(() => {
     root.current?.querySelector('mark')?.scrollIntoView?.({ block: 'center' });
-  }, [text, start, end]);
+  }, [text, start, end, scrollKey]);
 
   return (
     <div ref={root} className="source-text">

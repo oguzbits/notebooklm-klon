@@ -24,7 +24,7 @@ export function useNotebookLayout() {
   const [asked, setAsked] = useState<AskedQuestion | null>(null);
 
   const openReader = useCallback((target: ReaderTarget) => {
-    setReading(target);
+    setReading((current) => ({ ...target, opened: (current?.opened ?? 0) + 1 }));
     setSourcesOpen(true);
     setColumn(COLUMN.SOURCES);
   }, []);

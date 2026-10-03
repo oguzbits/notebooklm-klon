@@ -1,6 +1,6 @@
 import { SOURCE_KIND } from '@nlm/shared';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { SourceText } from './source-text';
 
@@ -103,6 +103,29 @@ describe('SourceText', () => {
 
       rerender(<SourceText text="Kurz." highlight={{ start: 50, end: 60 }} />);
       expect(marks(container)).toEqual([]);
+    });
+  });
+
+  describe('scrolling to the cited passage', () => {
+    const text = 'Vorwort. Dr. Brandt leitet das Projekt. Ende.';
+    const highlight = { start: text.indexOf('Dr.'), end: text.indexOf(' Ende') };
+    const scrollIntoView = vi.fn();
+
+    afterEach(() => {
+      scrollIntoView.mockClear();
+      Reflect.deleteProperty(Element.prototype, 'scrollIntoView');
+    });
+
+    it('scrolls again when the same passage is opened again, but not when something else renders', () => {
+      Element.prototype.scrollIntoView = scrollIntoView;
+      const { rerender } = render(<SourceText text={text} highlight={highlight} scrollKey={1} />);
+      expect(scrollIntoView).toHaveBeenCalledTimes(1);
+
+      rerender(<SourceText text={text} highlight={{ ...highlight }} scrollKey={1} />);
+      expect(scrollIntoView).toHaveBeenCalledTimes(1);
+
+      rerender(<SourceText text={text} highlight={highlight} scrollKey={2} />);
+      expect(scrollIntoView).toHaveBeenCalledTimes(2);
     });
   });
 

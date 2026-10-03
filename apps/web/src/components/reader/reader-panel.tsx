@@ -77,10 +77,12 @@ function ReaderSource({
   notebookId,
   source,
   highlight,
+  scrollKey,
 }: {
   notebookId: string;
   source: SourceText;
   highlight: { start: number; end: number } | null;
+  scrollKey?: number;
 }) {
   return (
     <>
@@ -101,7 +103,12 @@ function ReaderSource({
       </header>
       <SourceOverviewCard notebookId={notebookId} sourceId={source.id} />
       <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-2 pl-0.5">
-        <SourceTextView text={source.text} kind={source.kind} highlight={highlight} />
+        <SourceTextView
+          text={source.text}
+          kind={source.kind}
+          highlight={highlight}
+          scrollKey={scrollKey}
+        />
       </div>
     </>
   );
@@ -116,7 +123,12 @@ export function ReaderPanel({ notebookId, target }: ReaderPanelProps) {
       {failed && <ReaderFailure content={content} />}
       {!failed && !source.data && <ReaderLoading />}
       {source.data && (
-        <ReaderSource notebookId={notebookId} source={source.data} highlight={highlight} />
+        <ReaderSource
+          notebookId={notebookId}
+          source={source.data}
+          highlight={highlight}
+          scrollKey={target.opened}
+        />
       )}
     </div>
   );
