@@ -10,12 +10,9 @@ import {
 import type { AppDeps } from '../app-deps';
 import type { AuthVariables } from '../auth/session';
 import { LIMITS } from '../config/limits';
-import { createWindowLimit, HOUR_MS } from '../core/window-limit';
 import { HTTP_STATUS } from '../http-status';
 import { log } from '../logger';
 import { json, unauthenticated } from './openapi';
-
-const DAY_MS = 24 * HOUR_MS;
 
 const searchRoute = createRoute({
   method: 'post',
@@ -27,7 +24,10 @@ const searchRoute = createRoute({
     [HTTP_STATUS.OK]: json(WebSearchResponseSchema, 'Pages that could be added as sources'),
     400: json(ApiErrorSchema, 'The request is invalid'),
     401: unauthenticated,
-    [HTTP_STATUS.TOO_MANY_REQUESTS]: json(ApiErrorSchema, 'Too many searches'),
+    [HTTP_STATUS.TOO_MANY_REQUESTS]: json(
+      ApiErrorSchema,
+      'The search service has used up its quota'
+    ),
     [HTTP_STATUS.SERVICE_UNAVAILABLE]: json(ApiErrorSchema, 'The web search is not set up'),
   },
 });
@@ -42,31 +42,17 @@ const capabilitiesRoute = createRoute({
 });
 
 /**
- * The web search for new sources. The search service has a small monthly quota that everybody
- * shares, so each user gets a few searches an hour and everybody together a few a day. What comes
- * back is only a list of pages: adding one goes through the normal URL import with its checks.
+ * The web search for new sources. There is no limit of our own: when the search service reports
+ * its quota used up, that is mapped to 429. What comes back is only a list of pages: adding one
+ * goes through the normal URL import with its checks.
  */
 export function webSearchRoutes(deps: AppDeps) {
   const app = new OpenAPIHono<{ Variables: AuthVariables }>();
-  const perUser = createWindowLimit({
-    max: LIMITS.WEB_SEARCHES_PER_USER_PER_HOUR,
-    windowMs: HOUR_MS,
-    now: Date.now,
-  });
-  const everybody = createWindowLimit({
-    max: LIMITS.WEB_SEARCHES_PER_DAY,
-    windowMs: DAY_MS,
-    now: Date.now,
-  });
 
   return app.openapi(searchRoute, async (c) => {
     const { webSearch } = deps;
     if (!webSearch)
       return c.json({ code: API_ERROR.WEB_SEARCH_UNAVAILABLE }, HTTP_STATUS.SERVICE_UNAVAILABLE);
-    const limited = { code: API_ERROR.WEB_SEARCH_LIMIT_REACHED };
-    if (!perUser.take(c.var.userId) || !everybody.take('all')) {
-      return c.json(limited, HTTP_STATUS.TOO_MANY_REQUESTS);
-    }
 
     const { query } = c.req.valid('json');
     const started = Date.now();

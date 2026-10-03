@@ -7,7 +7,6 @@ import {
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { createApp } from './app';
-import { LIMITS } from './config/limits';
 import { WebSearchError } from './search/tavily-search';
 import { BASE_URL, createHarness } from './testing/app-harness';
 
@@ -54,13 +53,11 @@ const post = (cookie: string, body: unknown) => ({
 });
 
 let alice: string;
-let bob: string;
 
 beforeEach(async () => {
   await available.pool.query('TRUNCATE "user" CASCADE');
   searched.length = 0;
   alice = await signUp(available, 'alice@example.test');
-  bob = await signUp(available, 'bob@example.test');
 });
 
 afterAll(async () => {
@@ -114,29 +111,6 @@ describe('POST /api/web-search', () => {
     expect(response.status).toBe(503);
     expect(ApiErrorSchema.parse(await response.json()).code).toBe(API_ERROR.WEB_SEARCH_UNAVAILABLE);
     await unavailable.pool.query('TRUNCATE "user" CASCADE');
-  });
-
-  it('gives each user a few searches an hour', async () => {
-    for (let i = 0; i < LIMITS.WEB_SEARCHES_PER_USER_PER_HOUR; i += 1) {
-      const response = await availableApp.request(
-        '/api/web-search',
-        post(alice, { query: `Frage ${i}` })
-      );
-      expect(response.status).toBe(200);
-    }
-
-    const refused = await availableApp.request(
-      '/api/web-search',
-      post(alice, { query: 'noch eine' })
-    );
-    const other = await availableApp.request('/api/web-search', post(bob, { query: 'Bob fragt' }));
-
-    expect(refused.status).toBe(429);
-    expect(ApiErrorSchema.parse(await refused.json()).code).toBe(
-      API_ERROR.WEB_SEARCH_LIMIT_REACHED
-    );
-    expect(other.status).toBe(200);
-    expect(searched).not.toContain('noch eine');
   });
 
   it('answers 429 when the search service says its quota is used up', async () => {

@@ -2,8 +2,8 @@ import { GUEST_LIMITS } from '@nlm/shared';
 
 /**
  * Numeric limits of the application. Model IDs are not here: they come from the environment.
- * Provider limits are handled by the rate limiter. There is no limit per user for chat, Studio or
- * sources; the guards are the page limit, the content hash and the limits for guests and web search.
+ * Provider limits are handled by the rate limiter. There is no limit per user for chat, Studio,
+ * sources or web search; the guards are the page limit, the content hash and the limits for guests.
  */
 export const LIMITS = {
   /** URL import: redirects followed before giving up. */
@@ -46,10 +46,6 @@ export const LIMITS = {
   GUESTS_ALIVE: 200,
   /** Guests of the live demo: days until the account and its data are deleted. */
   GUEST_LIFETIME_DAYS: GUEST_LIMITS.LIFETIME_DAYS,
-  /** Web search: searches one user may make per hour. */
-  WEB_SEARCHES_PER_USER_PER_HOUR: 10,
-  /** Web search: searches everybody together may make per day (the service gives 1000 credits a month). */
-  WEB_SEARCHES_PER_DAY: 30,
   /** Web search: longest wait for the search service before the request gives up. */
   WEB_SEARCH_TIMEOUT_MS: 10_000,
   /** Ingestion: chunks per embedding request. */
@@ -63,12 +59,12 @@ export const LIMITS = {
 } as const;
 
 /**
- * Provider rate limits per role, from the Google AI Studio dashboard (free tier, 2026-09-30). The
+ * Provider rate limits per role, from the Google AI Studio dashboard (paid tier, 2026-10-03). The
  * limits belong to the model behind a role, so changing a model ID in the environment can mean
  * changing the row here. Read by the rate limiter that every LLM and embedding call goes through.
  */
 export const PROVIDER_LIMITS = {
-  PARSE: { requestsPerMinute: 15, tokensPerMinute: 250_000 },
-  CHAT: { requestsPerMinute: 15, tokensPerMinute: 250_000 },
-  EMBED: { requestsPerMinute: 100, tokensPerMinute: 30_000 },
+  PARSE: { requestsPerMinute: 1_000, tokensPerMinute: 2_000_000 },
+  CHAT: { requestsPerMinute: 1_000, tokensPerMinute: 2_000_000 },
+  EMBED: { requestsPerMinute: 3_000, tokensPerMinute: 1_000_000 },
 } as const;
