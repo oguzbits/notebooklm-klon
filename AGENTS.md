@@ -87,6 +87,15 @@ The logs are long: [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md) is about 60 
   (`apps/api/src/testing`).
 - A test must be able to fail. For logic with branches, break the code by hand (flip a condition,
   change a limit) and check that a test dies; a surviving change is a missing test or dead code.
+  The reverse also holds: a test must add something. If you can delete it and no hand mutation
+  survives that did not survive before, delete it.
+- One behavior, one test, at the lowest layer that can show it. Do not repeat an assertion on a second
+  layer (unit, route, DB, e2e) or in a second file. Route tests keep auth and not-found; they do not
+  re-prove what the core or the DB tests already prove.
+- Not worth a test: determinism of a pure function, the wording of a prompt (only its contract:
+  which passages, which schema, injection defence), edge cases of a test double, a branch that only
+  mirrors the code under test, `it.each` rows that reach no new branch.
+- The number of tests in the DoD receipt is a report, never a goal.
 
 **Commands**
 

@@ -1305,3 +1305,13 @@ Menüs, Dialogen und allen fünf Ansichten (Quiz, Karteikarten, Tabelle, Mindmap
   Verlauf, "In Notiz speichern" vor "Kopieren", Reihenfolge der Studio-Kacheln), `ownership.test.ts` (baute dasselbe SQL
   nach, das der Code erzeugt; die Mandantentrennung beweisen die DB-Tests der Routen) und der Zähltest der Golden-Fragen.
   Die großen Dateien `chat-panel` und `studio-panel` prüfen sonst durchweg Verhalten und bleiben.
+- **Dritter Durchgang:** Entfernt sind die doppelten Mandanten-Tests in `notebook-source-repository.db.test.ts` (die
+  Route-Tests und der verbleibende Test dort decken sie), zwei Schema-Tests, die Quellen-Tests wiederholten, der
+  Determinismus-Test von `chunking`, zwei Prompt-Wortlaut-Tests in `chat-prompt.test.ts` (Zahlen nur wörtlich, drei
+  Folgefragen) und drei Randfall-Tests der Test-Doubles in `e2e/fakes.test.ts`. Das widerruft zum Teil den Eintrag vom
+  2026-10-02: Handmutation hatte genau diese Tests erzeugt, weil jeder überlebende Mutant als Lücke galt.
+  Nicht geprüft: e2e lokal (nicht gelaufen), `app.db`, `auth.db`, `s3-object-store.db` nur dem Titel nach.
+- **Ursachen und Regeln:** Die Regeln belohnten Menge (neue Funktion bringt Tests mit, Fehler beginnt mit Test, "muss
+  scheitern können", Auth je Route, SoC vor DRY, DoD meldet die Testzahl) und bremsten sie nirgends (kein Gegenstück
+  "ein Test muss etwas hinzufügen", keine Regel, welche Ebene welche Aussage trägt). AGENTS.md, Abschnitt "Tests":
+  vier neue Punkte (ein Verhalten, ein Test, tiefste Ebene; Löschprobe; nicht testenswert; Testzahl ist kein Ziel).
