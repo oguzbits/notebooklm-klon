@@ -75,8 +75,6 @@ the convention, not a gate.
 Refactor only on a trigger: third identical use, or a failing quality gate.
 UI changes are inspected in a browser (chrome-devtools MCP, set up per user and not in the repo, or
 Playwright) before they count as done.
-The logs are long: [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md) is about 60 KB, so search it
-(`rg`) and read only the section you need.
 
 **Tests**
 
@@ -119,7 +117,7 @@ red run before starting new work.
 **Dependencies may be added without asking.** Verify the current docs first (rule 12), keep the set
 small (YAGNI), and record why in the commit message.
 **Small decisions are yours.** Where the plan leaves something open, choose the simplest option
-that fits the plan and log it with the reason in [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md).
+that fits the plan and give the reason in the commit message.
 Ask the user only for things that change scope, cost or data protection.
 
 **Definition-of-Done receipt** (end of every feature; not for docs, config or fixes of a review):

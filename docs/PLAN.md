@@ -66,13 +66,13 @@ ein Nachbau ist. Dazu:
 
 **Stretch**
 
-- PPTX, Aufnahmen (MP3, WAV) und YouTube als Quelle (gebaut, siehe [ENTSCHEIDUNGEN.md](ENTSCHEIDUNGEN.md)).
+- PPTX, Aufnahmen (MP3, WAV) und YouTube als Quelle (gebaut).
 - Agentische Suche im Chat, nur wenn Zeit bleibt.
 
 **Bewusst nicht**
 
 - Audio- und Video-Overview, Infografik, Präsentation, Deep Research.
-- Später ergänzt (Runde 4): eine schnelle Websuche mit Tavily (ohne Deep Research) und ein Titelbild im S3-Speicher; siehe [ENTSCHEIDUNGEN.md](ENTSCHEIDUNGEN.md).
+- Später ergänzt (Runde 4): eine schnelle Websuche mit Tavily (ohne Deep Research) und ein Titelbild im S3-Speicher.
 - Sharing und Kollaboration, Drive-Anbindung. Eine eigene Handy-App entfällt; die Seite selbst hat ein Handy-Layout (Tabs).
 - Originaldateien speichern (nur extrahierter Text plus Metadaten).
 
@@ -104,10 +104,10 @@ React-Frontend und Node.js-Backend in einem Monorepo, ein Container, Postgres mi
 | Parsing          | PDF: Gemini 3.1 Flash-Lite (Spike entschieden, [Ergebnisse](SPIKE-ERGEBNISSE.md)). DOCX: mammoth. PPTX: fflate + XML (Folientext, Tabellen, Notizen). Audio: Gemini transkribiert wörtlich (inline, bis 10 MB). TXT/MD direkt. URL: Readability. DOCX und URL werden als Markdown gespeichert (Links, Fett, Tabellen), TXT bleibt Klartext. Fallback bei Recitation-Sperre: ein zweites Gemini-Modell (`PARSE_FALLBACK_MODEL`), kein liteparse | ParseBench (Tabellen / Inhaltstreue): Gemini 3.1 Flash-Lite 85,5 / 89,5, Docling 66,4 / 66,9, LiteParse 42,4 / 70,0        |
 | Embeddings       | Gemini Embedding 2 mit 768 Dimensionen, Fallback `gemini-embedding-001`                                                   | Limits bekannt (RPM 100, TPM 30K, RPD 1000), im Spike gleichauf mit 001 (17 gegen 16 von 18). Die Vektorräume beider Modelle sind inkompatibel                              |
 | Retrieval        | pgvector plus Volltextsuche, Fusion per RRF in SQL                                                                        | Hybrid fängt Eigennamen und Zahlen, die Vektorsuche verfehlt (im Spike ein Fehltreffer, der zu einer falschen Antwort führte)                                                               |
-| LLM-Schicht      | Eigener schlanker Gemini-Client statt Vercel AI SDK (siehe ENTSCHEIDUNGEN), Modell-IDs und Limits in der Config                                                                        | Chat: Gemini 3.5 Flash-Lite (Spike entschieden, GPT-6 Luna ungemessen). Studio: 3.x Flash, Fallback Flash-Lite  |
+| LLM-Schicht      | Eigener schlanker Gemini-Client statt Vercel AI SDK, Modell-IDs und Limits in der Config                                                                        | Chat: Gemini 3.5 Flash-Lite (Spike entschieden, GPT-6 Luna ungemessen). Studio: 3.x Flash, Fallback Flash-Lite  |
 | Zitate           | Strukturierte Ausgabe mit Chunk-Nummern, Server prüft, dass die zitierten Chunks im Kontext waren                         | Anthropic-Citations verworfen (Kosten, Anbieter-Bindung)                                                                   |
 | Tests, Qualität  | Vitest, Playwright-Nutzerreisen, Eval-Skript, ESLint, Prettier, GitHub Actions                                                   | Tests ohne echte API-Aufrufe                                                                                               |
-| Hosting          | Hetzner Cloud: Docker Compose mit Caddy, App, Postgres und SeaweedFS, Deployment per GitHub Actions ([DEPLOYMENT.md](DEPLOYMENT.md)); live seit 2026-10-02 | Läuft dauerhaft, kein Kaltstart. Render und Vercel verworfen (siehe ENTSCHEIDUNGEN)                                  |
+| Hosting          | Hetzner Cloud: Docker Compose mit Caddy, App, Postgres und SeaweedFS, Deployment per GitHub Actions ([DEPLOYMENT.md](DEPLOYMENT.md)); live seit 2026-10-02 | Läuft dauerhaft, kein Kaltstart. Render und Vercel verworfen                                  |
 
 **Abgrenzung zu notar-agent:** Übernommen werden Zod, Drizzle, pgvector und das Hybrid-Retrieval mit RRF. Neu bzw. geändert sind Auth, Queue (pg-boss statt Eigenbau), Parsing (Gemini statt liteparse plus mammoth für alles) und der Verzicht auf Supabase.
 
@@ -142,10 +142,10 @@ Die Limits gelten pro **Projekt**, nicht pro Key. Das Tageslimit wird um Mittern
 **Maßnahmen**
 
 - **Zwei Google-Projekte:** eines für Bauen und Testen (Free Tier), eines für das Live-Demo. So verbraucht dein Testen nie das Kontingent der Reviewer.
-- **Rate-Limiter im Worker** (eigener Sliding-Window-Limiter statt bottleneck, siehe ENTSCHEIDUNGEN), Limits aus der Config, Wiederholung mit Wartezeit bei 429.
+- **Rate-Limiter im Worker** (eigener Sliding-Window-Limiter statt bottleneck), Limits aus der Config, Wiederholung mit Wartezeit bei 429.
 - **Inhalts-Hash pro Datei**, damit dasselbe Dokument nie zweimal geparst oder eingebettet wird. Embeddings im Batch.
 - **Demo-Limits:** z. B. 3 Uploads pro Nutzer und Tag, höchstens 50 Seiten pro Quelle, verständliche Meldung bei erschöpftem Kontingent. Ein vorbefülltes Demo-Notebook verbraucht kein Kontingent.
-- **Kill-Switch** per Umgebungsvariable: nicht gebaut. Ein Limit pro Nutzer gibt es nicht (siehe ENTSCHEIDUNGEN); wer alles sperren will, stoppt den Container.
+- **Kill-Switch** per Umgebungsvariable: nicht gebaut. Ein Limit pro Nutzer gibt es nicht; wer alles sperren will, stoppt den Container.
 - **Hinweis im Demo:** keine sensiblen Dokumente hochladen. Für das Free Tier können Google-Bedingungen zur Datennutzung gelten, bitte einmal lesen.
 
 **Paid-Wechsel:** 5 Dollar Guthaben als Reserve, Wechsel nur per Umgebungsvariable und neuer Limit-Tabelle. Offen ist, ob du nach dem Verknüpfen von Billing die Free-Kontingente behältst (rechne nicht damit), ob das Guthaben hart begrenzt ist und ob es eine automatische Aufladung gibt, die du ausschalten solltest.
@@ -159,7 +159,7 @@ Das größte Risiko ist das Free-Tier-Kontingent im Live-Demo. Danach folgen Par
 - **Kontingent:** Laut AI-Studio-Dashboard (Free Tier, im Spike geprüft) haben Gemini 3.5 bis 3.8 Flash 5 Anfragen pro Minute und 20 pro Tag, die Flash-Lite-Modelle 15 pro Minute und 500 pro Tag (beide 250K Tokens pro Minute). Das macht Studio auf den großen Modellen knapp. Fallback ist Flash-Lite.
 - **Embeddings:** Gemini Embedding 2 hat 100 Anfragen pro Minute, 30K Tokens pro Minute und 1000 pro Tag (Dashboard). 30K Tokens pro Minute sind eng, Ingestion braucht Drosselung nach Tokens. Wie ein Batch gezählt wird und welche Limits `gemini-embedding-001` hat, ist nicht geprüft.
 - **Latenz:** GPT-6 Luna (im Spike nicht gemessen) hatte laut Artificial Analysis bei Max-Reasoning eine Zeit bis zum ersten Token von etwa 139 Sekunden (Gemini 3.5 Flash-Lite etwa 8,8 Sekunden). Bei niedriger Stufe nicht gemessen.
-- **Parsing per LLM** ist nicht deterministisch und kann auslassen. Gegenmittel: Stichprobentests; ein liteparse-Fallback wurde nicht gebaut (siehe ENTSCHEIDUNGEN).
+- **Parsing per LLM** ist nicht deterministisch und kann auslassen. Gegenmittel: Stichprobentests; ein liteparse-Fallback wurde nicht gebaut.
 - **ParseBench** stammt von LlamaIndex, deckt Enterprise-PDFs ab und enthält kein DOCX. Deshalb der eigene Spike.
 - **Datennutzung im Free Tier:** Bedingungen lesen, Hinweis im Demo.
 - **Hosting:** Läuft seit 2026-10-02 auf einem Hetzner-Server; Deploy mit Dump, Health-Prüfung und Rollback ist im Betrieb erprobt.

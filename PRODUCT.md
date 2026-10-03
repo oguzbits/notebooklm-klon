@@ -39,8 +39,7 @@ verifiability, not about a new look.
   rate limits, daily caps on web search (Tavily).
 - Optional features depend on configuration: web search needs a Tavily key, cover images need an
   S3-compatible store. The UI hides what the installation does not have.
-- Stack, layers and invariants: [AGENTS.md](AGENTS.md), [docs/PLAN.md](docs/PLAN.md),
-  decisions in [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md).
+- Stack, layers and invariants: [AGENTS.md](AGENTS.md), [docs/PLAN.md](docs/PLAN.md).
 
 ## Capabilities and Constraints
 

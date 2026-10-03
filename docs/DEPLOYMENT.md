@@ -1,7 +1,6 @@
 # Deployment und Betrieb
 
-Wie die App auf einem Hetzner-Server läuft, wie man sie dort einrichtet, aktualisiert und wiederherstellt. Die
-Begründung der Wahl steht in [ENTSCHEIDUNGEN.md](ENTSCHEIDUNGEN.md), Abschnitt „Deployment: Entscheidung und Stand“.
+Wie die App auf einem Hetzner-Server läuft, wie man sie dort einrichtet, aktualisiert und wiederherstellt.
 
 ## Überblick
 

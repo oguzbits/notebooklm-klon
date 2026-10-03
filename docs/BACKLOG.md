@@ -1,7 +1,7 @@
 # Stand und Backlog
 
 Aus dem Gesamtreview vom 2026-10-02 (vier lesende Prüfungen und ein Journey-Lauf auf der Live-Seite).
-Die erledigten Punkte stehen mit ihrer Begründung in [ENTSCHEIDUNGEN.md](ENTSCHEIDUNGEN.md) und in der
+Die erledigten Punkte stehen in der
 Git-Historie; hier steht nur, was offen ist oder bewusst nicht gebaut wird.
 
 ## Stand
@@ -53,7 +53,7 @@ Mit mehr Fragen erneut prüfen (`pnpm eval:live`).
 | Suche über alle Notebooks | Nicht gebaut.                                                                                                                                                                           |
 
 Bewusst nicht: EPUB, Google Docs und Slides (siehe [DESIGN-ABGLEICH.md](DESIGN-ABGLEICH.md)), Teilen, Audio- und Videoübersicht,
-Deep Research, Drive, Daumen-Bewertung, PDF-Export, Rückgängig beim Löschen (jedes Löschen fragt vorher, siehe ENTSCHEIDUNGEN).
+Deep Research, Drive, Daumen-Bewertung, PDF-Export, Rückgängig beim Löschen (jedes Löschen fragt vorher).
 
 ## Nicht gegen die aktuelle Doku geprüft
 

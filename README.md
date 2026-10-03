@@ -21,7 +21,7 @@ Nachbau von NotebookLM. Der Schwerpunkt liegt auf dem Weg von der Quelle zum nac
 - **Studio:** Bericht (Briefing, FAQ, Lernleitfaden, Blogbeitrag, eigene Anweisung), Karteikarten, Quiz, Mindmap und Datentabelle, mit denselben geprüften Zitaten.
 - **Notebook anpassen:** Titel, Zusammenfassung, Titelbild, kopieren, anpinnen.
 
-Nicht gebaut: Audio- und Videoübersicht, Präsentation und Infografik im Studio (Audio und Video gibt es nur als Quelle), agentische Suche, Deep Research, Drive-Anbindung, Bewertung von Antworten. Gründe: [docs/PLAN.md](docs/PLAN.md) und [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md).
+Nicht gebaut: Audio- und Videoübersicht, Präsentation und Infografik im Studio (Audio und Video gibt es nur als Quelle), agentische Suche, Deep Research, Drive-Anbindung, Bewertung von Antworten. Gründe: [docs/PLAN.md](docs/PLAN.md).
 
 ## Architektur
 
@@ -114,7 +114,7 @@ Das Modell sieht nur kurze Labels pro Anfrage. Der Server bildet sie auf echte A
 
 ## Was ich entschieden habe und warum
 
-Entscheidungen mit Zahlen: [Spike-Ergebnisse](docs/SPIKE-ERGEBNISSE.md) (PDF-Parsing, Einbettungen, Chat, Zitat-Format, Hybridsuche), [Entscheidungen](docs/ENTSCHEIDUNGEN.md) (Begründungen), [Plan](docs/PLAN.md) (Anforderungen, Stack, Risiken).
+Entscheidungen mit Zahlen: [Spike-Ergebnisse](docs/SPIKE-ERGEBNISSE.md) (PDF-Parsing, Einbettungen, Chat, Zitat-Format, Hybridsuche), [Plan](docs/PLAN.md) (Anforderungen, Stack, Risiken).
 
 ## Qualitätssicherung
 
@@ -125,7 +125,7 @@ Entscheidungen mit Zahlen: [Spike-Ergebnisse](docs/SPIKE-ERGEBNISSE.md) (PDF-Par
 - `pnpm eval:live`: 23 Golden Questions gegen die echten Modelle (Trefferquote, Fakten, verworfene Aussagen; dazu drei Fragen ohne Antwort in der Quelle für die Verweigerung, ein Quelltext mit eingebetteter Anweisung und rein rechnerische Auffälligkeiten wie wiederholte Aussagen). Kostet Kontingent, läuft von Hand und nicht in CI.
 - CI (GitHub Actions): Qualität, Unit-Tests, Datenbank-Tests, Browser-Test, Build, Semgrep.
 
-Weitere Regeln, die im Code geprüft sind: SSRF-Schutz beim Link-Import (nur http und https, DNS-Auflösung, keine privaten Adressen, nach jeder Weiterleitung erneut), Größen- und Seitenlimits, Ratenbegrenzung aller Modellaufrufe, Grenzen für Gäste und die Websuche, keine Dokumentinhalte in Logs.
+Weitere Regeln, die im Code geprüft sind: SSRF-Schutz beim Link-Import (nur http und https, DNS-Auflösung, keine privaten Adressen, nach jeder Weiterleitung erneut), Größen- und Seitenlimits, Ratenbegrenzung aller Modellaufrufe, Grenzen für Gäste, keine Dokumentinhalte in Logs.
 
 ## Lokal starten
 
@@ -170,4 +170,4 @@ Hetzner Cloud mit Docker Compose und Caddy (automatisches HTTPS). [deploy.yml](.
 
 ## Agentischer Workflow
 
-[AGENTS.md](AGENTS.md) (Regeln, Schichten, Invarianten, Definition of Done), Hooks unter `.claude/` (blockierte Befehle, Geheimnisschutz, Gate vor dem Beenden), Husky-Hooks und ein Thema pro Commit. Tests gehören zur Änderung und entstehen dort, wo der Vertrag klar ist, zuerst (Konvention, kein Gate); Entscheidungen stehen in [docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md).
+[AGENTS.md](AGENTS.md) (Regeln, Schichten, Invarianten, Definition of Done), Hooks unter `.claude/` (blockierte Befehle, Geheimnisschutz, Gate vor dem Beenden), Husky-Hooks und ein Thema pro Commit. Tests gehören zur Änderung und entstehen dort, wo der Vertrag klar ist, zuerst (Konvention, kein Gate).
