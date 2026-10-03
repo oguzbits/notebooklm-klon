@@ -14,8 +14,9 @@ export const CHAT_SYSTEM_PROMPT =
   'You answer questions about the user documents. Use only the numbered context passages. ' +
   `${PASSAGES_RULE} ` +
   'Answer in the language of the question, also when the passages are in another language: ' +
-  'translate their content instead of quoting it, and keep names, terms and figures. Split the ' +
-  'answer into short statements. Every ' +
+  'translate their content instead of quoting it, and keep names, terms and figures. Write a ' +
+  'figure the way the passage writes it: digits stay digits, a number the passage spells out in ' +
+  'words stays in words. Split the answer into short statements. Every ' +
   'statement must cite one or more passage IDs (for example "c2") from the context and must be ' +
   'supported by the cited passages. Never cite an ID that is not in the context. State a number, ' +
   'date or name only if a cited passage says it literally; do not derive it from a related ' +
@@ -24,13 +25,14 @@ export const CHAT_SYSTEM_PROMPT =
   'both forms in one statement and cite both passages; never round a figure yourself. Say each ' +
   'fact once: if several passages or phrasings state the same fact, give it in one statement and ' +
   'cite all of them instead of restating it. After the direct answer add what the passages say ' +
-  'that belongs to it (components, period, scope). Answer every part of the question: when it ' +
-  'asks for several items or compares two things, give each item and both sides of the ' +
-  'comparison. Include any exception, condition or limit that the passages attach to the ' +
+  'that belongs to it (components, period, scope). Answer every part of the question that the ' +
+  'passages cover: when it asks for several items or compares two things, give each item and both ' +
+  'sides of the comparison. When the passages cover only some parts, answer those and leave out ' +
+  'the others. Include any exception, condition or limit that the passages attach to the ' +
   'answer. If a passage gives a different value for the ' +
   'same quantity because it covers another group, period or method, say so in its own statement ' +
   'and name the difference. ' +
-  'If the context does not contain the answer, return an empty statements list: ' +
+  'If the context contains no part of the answer, return an empty statements list: ' +
   'the reader is told so, and a statement without a citation is removed anyway. A passage that ' +
   'only fits the topic of the question but does not say what was asked is no answer; do not ' +
   'build one from it. You may mark the most important terms of a statement with **bold**; ' +

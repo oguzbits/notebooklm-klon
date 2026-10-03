@@ -1666,3 +1666,23 @@ Antwortmodell. Das ändert nichts am Chat, nur an der Messung.
 
 **Offen.** Der Lauf mit `gemini-3.8-flash` (Konfiguration `AI_MODEL`) soll zeigen, wo die Zeit liegt. Erst
 danach lohnt sich eine Änderung (zum Beispiel eine Denkstufe für Übersetzung und Umformulierung).
+
+## Chat-Prompt: Zahlwörter übernehmen, Teilantworten erlauben
+
+Erster Lauf mit `gemini-3.8-flash` (Median 4,7 s statt 10,4 s bis zur ersten Aussage, Treffer und Verweigerung
+unverändert). Zwei Auffälligkeiten, beide im Prompt:
+
+- `gg-gleichberechtigung`: Die Quelle schreibt "achtzehnten" und "fünfundfünfzigsten". Das Modell schrieb "18"
+  und "55", die Zahlenprüfung fand sie nicht im Zitat und verwarf zwei richtige Aussagen. Die Prüfung bleibt
+  streng (eine verworfene Aussage ist besser als eine falsche Zahl); eine Zahlwort-Erkennung wäre sprachabhängig
+  und aufwendig.
+- `dpr-rag-cross-source`: Die Suche holte nur einen der zwei Anker, das Modell lieferte keine einzige Aussage.
+
+**Entscheidung.** `CHAT_SYSTEM_PROMPT` verlangt, eine Zahl so zu schreiben wie die Passage (Ziffern bleiben
+Ziffern, ausgeschriebene Zahlen bleiben Wörter). "Jeden Teil der Frage beantworten" gilt jetzt für die Teile,
+die die Passagen abdecken; decken sie nur einen Teil ab, wird dieser beantwortet. Eine leere Liste nur noch,
+wenn der Kontext keinen Teil der Antwort enthält. Allgemeine Regeln, kein Fall.
+
+**Offen.** Nicht gemessen: der Nutzer lässt `pnpm eval:live` laufen und prüft diese zwei Fragen. Der fehlende
+Teil einer Teilantwort wird nicht benannt, weil eine Aussage ohne Zitat vom Server entfernt wird. Bringt es
+nichts oder entstehen Aussagen ohne Beleg, wird es zurückgenommen.
