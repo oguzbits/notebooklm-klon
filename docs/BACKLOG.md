@@ -44,12 +44,13 @@ Mit mehr Fragen erneut prüfen (`pnpm eval:live`).
 
 ## Später
 
-| Thema                     | Anmerkung                                                                                                                                                                      |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| XLSX und CSV              | Der Studio-Kontext (`STUDIO_MAX_CHARS` 120 000) wird gleichmäßig auf die Quellen verteilt, der Anfang jeder Quelle bleibt. Große Tabellen würden abgeschnitten, vorher klären. |
-| HTML-Datei                | Geringer Nutzen.                                                                                                                                                               |
-| Tastaturkürzel            | Nicht gebaut.                                                                                                                                                                  |
-| Suche über alle Notebooks | Nicht gebaut.                                                                                                                                                                  |
+| Thema                     | Anmerkung                                                                                                                                                                               |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| XLSX und CSV              | Der Studio-Kontext (`STUDIO_MAX_CHARS` 120 000) wird gleichmäßig auf die Quellen verteilt, der Anfang jeder Quelle bleibt. Große Tabellen würden abgeschnitten, vorher klären.          |
+| HTML-Datei                | Geringer Nutzen.                                                                                                                                                                        |
+| Fußnotenziffern in Zahlen | Die Fußnotenziffer eines PDF steht im Text neben der Zahl (`Erwerbspersonen2`), der Zahlencheck liest sie als Teil der Zahl oder als eigene Zahl. Nicht gemessen, wie oft das vorkommt. |
+| Tastaturkürzel            | Nicht gebaut.                                                                                                                                                                           |
+| Suche über alle Notebooks | Nicht gebaut.                                                                                                                                                                           |
 
 Bewusst nicht: EPUB, Google Docs und Slides (siehe [DESIGN-ABGLEICH.md](DESIGN-ABGLEICH.md)), Teilen, Audio- und Videoübersicht,
 Deep Research, Drive, Daumen-Bewertung, PDF-Export, Rückgängig beim Löschen (jedes Löschen fragt vorher, siehe ENTSCHEIDUNGEN).

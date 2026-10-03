@@ -1436,3 +1436,16 @@ Tausend" in der Antwort galt als nicht belegt. Die einzige Aussage wurde verworf
   Zahlen, die sich nur durch angehängte Nullen unterscheiden, gelten jetzt als gleich, wenn vor den
   Nullen mindestens zwei Ziffern stehen. Kosten: `46.185.000` passt auch zu `4 618 500`, und `500`
   zu `50 0`; eine einzelne Ziffer mit Nullen (`50` für `5`) zählt weiter nicht.
+
+## Tabellen aus PDFs: Zeilen bleiben ganz
+
+- Ursache gemessen: Das Modell schrieb bei der Destatis-Tabelle eine Kopfzeile mit 9 Zellen und eine
+  Trennzeile mit 8. Nach GFM ist das keine Tabelle, der Leser zeigte sie als einen Absatz.
+  `toCanonicalText` schneidet oder füllt die Trennzeile jetzt auf die Zellenzahl der Kopfzeile auf
+  (Ausrichtung der vorhandenen Zellen bleibt). Der Text bleibt idempotent; die Offsets entstehen erst danach.
+- Der nächste Chunk beginnt am Zeilenanfang innerhalb der Überlappung, nicht mehr am Wortanfang.
+  Vorher stand ein Chunk als `950 | 42 993 | …` mitten in der Zeile. Ohne Zeilenumbruch in der
+  Überlappung bleibt es beim Wortanfang. Das Ende lag schon vorher an einer Zeile.
+- Gilt nur für neu gelesene Quellen. Bestehende Quellen bleiben, bis sie neu hochgeladen werden.
+- Nicht gemacht: Kopfzeile und Einheit je Chunk für Suche und Prompt (braucht eine Migration und ein
+  neues Feld), Fußnoten und Seitenkopf aus der Markierung. Erst am Live-Eval messen.

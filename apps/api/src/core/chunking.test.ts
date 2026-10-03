@@ -126,4 +126,16 @@ describe('chunkText', () => {
     }
     expect(chunks.at(-1)?.endOffset).toBe(text.length);
   });
+
+  it('starts the next chunk at the start of a line, so a table row is not cut in two', () => {
+    const rows = Array.from({ length: 60 }, (_, i) => `| ${2000 + i} | 82 902 | 46 185 | 1 468 |`);
+    const text = rows.join('\n');
+    const chunks = chunkText(text);
+
+    expect(chunks.length).toBeGreaterThan(1);
+    for (const chunk of chunks) {
+      expect(rows).toContain(chunk.text.split('\n')[0]);
+      expect(rows).toContain(chunk.text.split('\n').at(-1));
+    }
+  });
 });

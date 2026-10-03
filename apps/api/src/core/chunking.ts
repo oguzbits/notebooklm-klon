@@ -42,8 +42,14 @@ function findBreak(text: string, start: number, hardEnd: number): number {
   return hardEnd;
 }
 
-/** Moves a start forward past the word it falls in so a chunk never starts mid-word; the caller skips the spaces. */
-function snapToWordStart(text: string, from: number, limit: number): number {
+/**
+ * Moves a start forward to the start of the next line inside the overlap, so a chunk begins on a
+ * whole line (a table row); without a line break there, past the word it falls in so a chunk never
+ * starts mid-word. The caller skips the spaces.
+ */
+function snapToStart(text: string, from: number, limit: number): number {
+  const lineBreak = text.indexOf(LINE_BREAK, from);
+  if (lineBreak !== -1 && lineBreak < limit) return lineBreak + 1;
   if (isSpace(text, from - 1)) return from;
   let index = from;
   while (index < limit && !isSpace(text, index)) index += 1;
@@ -52,8 +58,9 @@ function snapToWordStart(text: string, from: number, limit: number): number {
 
 /**
  * Splits canonical text into overlapping chunks with offsets. Pure and deterministic. Prefers to
- * end a chunk at a paragraph, then a line, then a space; a single token longer than the limit is
- * cut hard. Whitespace at both ends of a chunk is trimmed out of the offsets.
+ * end a chunk at a paragraph, then a line, then a space, and to start the next at a line; a single
+ * token longer than the limit is cut hard. Whitespace at both ends of a chunk is trimmed out of
+ * the offsets.
  */
 export function chunkText(canonicalText: string): TextChunk[] {
   const chunks: TextChunk[] = [];
@@ -74,7 +81,7 @@ export function chunkText(canonicalText: string): TextChunk[] {
 
     if (end >= canonicalText.length) break;
     const overlapStart = end - CHUNKING.OVERLAP_CHARS;
-    const next = overlapStart > start ? snapToWordStart(canonicalText, overlapStart, end) : end;
+    const next = overlapStart > start ? snapToStart(canonicalText, overlapStart, end) : end;
     start = skipSpaces(canonicalText, next);
   }
 
