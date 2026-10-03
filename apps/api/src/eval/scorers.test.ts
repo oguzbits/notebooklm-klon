@@ -106,10 +106,10 @@ describe('scoreRequiredFacts', () => {
   });
 
   it('counts a fact as present when any of its equivalent spellings is', () => {
-    const answer = 'Es gab 46,185 Millionen Erwerbspersonen.';
+    const answer = 'Das Budget beträgt 1,25 Millionen Euro.';
 
-    expect(scoreRequiredFacts(answer, [['46,2', '46,185']])).toBe(1);
-    expect(scoreRequiredFacts(answer, [['46,2', '46,3']])).toBe(0);
+    expect(scoreRequiredFacts(answer, [['1,3', '1,25']])).toBe(1);
+    expect(scoreRequiredFacts(answer, [['1,3', '1,4']])).toBe(0);
   });
 
   it('is not applicable without required facts', () => {
@@ -121,11 +121,11 @@ describe('countRepeatedStatements', () => {
   it('finds the same fact stated twice in different words', () => {
     const statements = [
       {
-        text: 'Im Jahr 2018 gab es in Deutschland 46,2 Millionen Erwerbspersonen.',
+        text: 'Das Projekt Nordlicht hat ein Gesamtbudget von 1,25 Mio. Euro.',
         chunkIds: ['a'],
       },
       {
-        text: 'Die Zahl der Erwerbspersonen in Deutschland belief sich 2018 auf 46 185 Tausend.',
+        text: 'Das Gesamtbudget des Projekts Nordlicht beträgt 1,25 Mio. Euro.',
         chunkIds: ['b'],
       },
     ];

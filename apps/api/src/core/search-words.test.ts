@@ -4,12 +4,12 @@ import { searchWords } from './search-words';
 
 describe('searchWords', () => {
   it('returns the lower-cased words of the question in order', () => {
-    expect(searchWords('Wie hoch war die Erwerbslosenquote 2018?')).toEqual([
+    expect(searchWords('Wie hoch war die Fehlerquote 2018?')).toEqual([
       'wie',
       'hoch',
       'war',
       'die',
-      'erwerbslosenquote',
+      'fehlerquote',
       '2018',
     ]);
   });

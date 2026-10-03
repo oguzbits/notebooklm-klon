@@ -1460,3 +1460,20 @@ Tausend" in der Antwort galt als nicht belegt. Die einzige Aussage wurde verworf
   Ein Neu-Rendern ohne Klick scrollt nicht, weil der Zähler gleich bleibt.
 - Verworfen: die Identität des `highlight`-Objekts als Auslöser. `useReaderContent` baut es bei jedem
   Render neu, der Leser würde bei jedem Re-Render scrollen.
+
+## Tests: Eigenschaften statt Zahlen eines Dokuments
+
+- Anlass: Die Tests zu Zahlencheck, Chunking und Textbereinigung trugen die Zahlen eines Falls
+  (Erwerbspersonen, 46 185). Sie bewiesen, dass dieser Fall geht, nicht dass die Regel gilt.
+- Lösung: Property-Tests mit `fast-check` (neue devDependency in `apps/api`). Die Tests erzeugen
+  ihre Daten selbst und prüfen Eigenschaften: Zahlencheck ist unabhängig von der Tausendertrennung
+  und wird mit mehr Beleg nie strenger; gerundete und ausgeschriebene Zahl einer Tabellenzahl gelten
+  als gesagt, eine geänderte Ziffer nicht. Chunking: Offsets passen zum Text, keine Chunk-Grenze in
+  einem Wort, eine Tabellenzeile wird nie geteilt. Textbereinigung: idempotent, kein `\r`, keine
+  Steuerzeichen, keine Leerzeile-Ketten; Trennzeile einer Tabelle hat so viele Zellen wie die Kopfzeile.
+- Beispieltests bleiben nur, wo sie allgemein sind (Nordlicht-Paraphrase, `50` gegen `5 Personen`).
+  Testdaten in `scorers`, `retrieval.db` und `search-words` sind neutral (Budget, Nordlicht).
+- Geprüft per Hand-Mutation: 15 Änderungen am Code (Rundungsschwelle, Mindestziffern, NBSP,
+  gemeinsame Themenwörter, Jahresregel, Zeilenstart, Fensterhälfte u. a.) wurden alle von einem Test
+  erkannt. Eine überlebte zuerst (`MIN_SHARED_TOPIC_WORDS` 2 auf 1); dafür gibt es den Test
+  „nur ein Themenwort“.

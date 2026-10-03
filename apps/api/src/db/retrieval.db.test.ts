@@ -126,16 +126,16 @@ describe('searchChunks ranking', () => {
     const notebook = await insertNotebook(USER);
     const source = await insertSource(USER, notebook.id, 'a');
     await insertChunk(source.id, 0, 'nur Bedeutung', 0);
-    await insertChunk(source.id, 1, 'nur Stichwort Erwerbspersonen', 1);
-    await insertChunk(source.id, 2, 'beides Erwerbspersonen Erwerbspersonen Erwerbspersonen', 0);
+    await insertChunk(source.id, 1, 'nur Stichwort Budget', 1);
+    await insertChunk(source.id, 2, 'beides Budget Budget Budget', 0);
 
     const results = await search(
       { userId: USER, notebookId: notebook.id, sourceIds: [source.id] },
       0,
-      'Erwerbspersonen'
+      'Budget'
     );
 
-    expect(results[0]?.text).toBe('beides Erwerbspersonen Erwerbspersonen Erwerbspersonen');
+    expect(results[0]?.text).toBe('beides Budget Budget Budget');
     expect(results).toHaveLength(3);
   });
 
@@ -143,18 +143,18 @@ describe('searchChunks ranking', () => {
     const notebook = await insertNotebook(USER);
     const source = await insertSource(USER, notebook.id, 'a');
     await insertChunk(source.id, 0, 'ohne Bezug', 0);
-    await insertChunk(source.id, 1, 'Zahl der Erwerbspersonen 46,2 Millionen', 3);
-    await insertChunk(source.id, 2, 'Erwerbspersonen ohne Vektor');
+    await insertChunk(source.id, 1, 'Höhe des Budgets 1,25 Millionen', 3);
+    await insertChunk(source.id, 2, 'Budget ohne Vektor');
 
     const results = await search(
       { userId: USER, notebookId: notebook.id, sourceIds: [source.id] },
       0,
-      'Erwerbspersonen 2018'
+      'Budget 2018'
     );
 
     const texts = results.map((r) => r.text);
-    expect(texts).toContain('Zahl der Erwerbspersonen 46,2 Millionen');
-    expect(texts).toContain('Erwerbspersonen ohne Vektor');
+    expect(texts).toContain('Höhe des Budgets 1,25 Millionen');
+    expect(texts).toContain('Budget ohne Vektor');
   });
 
   it('respects the limit', async () => {

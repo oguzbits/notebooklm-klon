@@ -1,3 +1,4 @@
+import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
 import { CHUNKING, chunkText } from './chunking';
@@ -18,25 +19,6 @@ describe('chunkText', () => {
     ]);
   });
 
-  it('points every chunk back into the canonical text', () => {
-    const text = words(1200);
-    const chunks = chunkText(text);
-
-    expect(chunks.length).toBeGreaterThan(3);
-    for (const chunk of chunks) {
-      expect(text.slice(chunk.startOffset, chunk.endOffset)).toBe(chunk.text);
-    }
-  });
-
-  it('numbers chunks from zero and keeps them within the size limit', () => {
-    const chunks = chunkText(words(1200));
-
-    expect(chunks.map((chunk) => chunk.ordinal)).toEqual(chunks.map((_, index) => index));
-    for (const chunk of chunks) {
-      expect(chunk.text.length).toBeLessThanOrEqual(CHUNKING.MAX_CHARS);
-    }
-  });
-
   it('overlaps consecutive chunks and covers the whole text', () => {
     const text = words(1200);
     const chunks = chunkText(text);
@@ -48,17 +30,6 @@ describe('chunkText', () => {
       expect(chunk.startOffset).toBeLessThan(previous?.endOffset ?? 0);
       expect(chunk.startOffset).toBeGreaterThan(previous?.startOffset ?? 0);
     });
-  });
-
-  it('never cuts a word in half', () => {
-    const text = words(1200);
-
-    for (const chunk of chunkText(text)) {
-      const before = text[chunk.startOffset - 1];
-      const after = text[chunk.endOffset];
-      expect(before === undefined || before === ' ').toBe(true);
-      expect(after === undefined || after === ' ').toBe(true);
-    }
   });
 
   it('prefers a paragraph break over a later line break', () => {
@@ -127,15 +98,80 @@ describe('chunkText', () => {
     expect(chunks.at(-1)?.endOffset).toBe(text.length);
   });
 
-  it('starts the next chunk at the start of a line, so a table row is not cut in two', () => {
-    const rows = Array.from({ length: 60 }, (_, i) => `| ${2000 + i} | 82 902 | 46 185 | 1 468 |`);
-    const text = rows.join('\n');
-    const chunks = chunkText(text);
+  describe('for any text', () => {
+    const word = fc.stringMatching(/^[a-zäöü0-9|.,-]{1,30}$/);
+    const spacing = fc.constantFrom(' ', ' ', ' ', '\n', '\n\n');
+    const text = fc
+      .array(fc.tuple(word, spacing), { minLength: 1, maxLength: 900 })
+      .map((parts) => parts.map(([w, s]) => `${w}${s}`).join(''));
 
-    expect(chunks.length).toBeGreaterThan(1);
-    for (const chunk of chunks) {
-      expect(rows).toContain(chunk.text.split('\n')[0]);
-      expect(rows).toContain(chunk.text.split('\n').at(-1));
-    }
+    it('points every chunk back into the text, within the size limit and in order', () => {
+      fc.assert(
+        fc.property(text, (canonical) => {
+          const chunks = chunkText(canonical);
+
+          chunks.forEach((chunk, index) => {
+            expect(chunk.ordinal).toBe(index);
+            expect(canonical.slice(chunk.startOffset, chunk.endOffset)).toBe(chunk.text);
+            expect(chunk.text.length).toBeLessThanOrEqual(CHUNKING.MAX_CHARS);
+            expect(chunk.text).toBe(chunk.text.trim());
+            expect(chunk.text).not.toBe('');
+          });
+          chunks.slice(1).forEach((chunk, index) => {
+            expect(chunk.startOffset).toBeGreaterThan(chunks[index]?.startOffset ?? 0);
+            expect(chunk.endOffset).toBeGreaterThan(chunks[index]?.endOffset ?? 0);
+          });
+        })
+      );
+    });
+
+    it('leaves no character of the text out of every chunk', () => {
+      fc.assert(
+        fc.property(text, (canonical) => {
+          const chunks = chunkText(canonical);
+          const covered = new Set<number>();
+          for (const chunk of chunks) {
+            for (let index = chunk.startOffset; index < chunk.endOffset; index += 1) {
+              covered.add(index);
+            }
+          }
+
+          for (let index = 0; index < canonical.length; index += 1) {
+            if (!/\s/.test(canonical.charAt(index))) expect(covered.has(index)).toBe(true);
+          }
+        })
+      );
+    });
+
+    it('never starts or ends a chunk inside a word', () => {
+      fc.assert(
+        fc.property(text, (canonical) => {
+          for (const chunk of chunkText(canonical)) {
+            const before = canonical.charAt(chunk.startOffset - 1);
+            const after = canonical.charAt(chunk.endOffset);
+            expect(before === '' || /\s/.test(before)).toBe(true);
+            expect(after === '' || /\s/.test(after)).toBe(true);
+          }
+        })
+      );
+    });
+  });
+
+  it('starts and ends every chunk of a table at a whole row, so no row is cut in two', () => {
+    const row = fc
+      .array(fc.stringMatching(/^[a-z0-9]{1,12}$/), { minLength: 1, maxLength: 12 })
+      .map((cells) => `| ${cells.join(' | ')} |`);
+
+    fc.assert(
+      fc.property(fc.array(row, { minLength: 30, maxLength: 200 }), (rows) => {
+        const chunks = chunkText(rows.join('\n'));
+
+        for (const chunk of chunks) {
+          const lines = chunk.text.split('\n');
+          expect(rows).toContain(lines[0]);
+          expect(rows).toContain(lines.at(-1));
+        }
+      })
+    );
   });
 });

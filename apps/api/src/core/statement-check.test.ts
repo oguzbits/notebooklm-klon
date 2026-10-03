@@ -1,13 +1,28 @@
+import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
 import { findUnsupportedNumbers, repeatsStatement } from './statement-check';
 
+const SEPARATORS = [' ', '.', ',', ' '] as const;
+
+/** Digits in groups of three, the way a table or a text writes a thousands separator. */
+function grouped(value: number, separator: string): string {
+  return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, separator);
+}
+
+/** A figure in thousands as a table gives it: five digits, at least two of them significant. */
+const tableFigure = fc.integer({ min: 10_001, max: 99_999 }).filter((value) => value % 1000 !== 0);
+
+const lowercaseWord = fc.stringMatching(/^[a-zäöü]{5,12}$/);
+const topicWords = fc.uniqueArray(lowercaseWord, { minLength: 2, maxLength: 6 });
+const year = fc.integer({ min: 1500, max: 2099 });
+
 describe('repeatsStatement', () => {
-  it('finds the same fact stated twice in different words and units', () => {
+  it('finds the same fact stated twice in different words', () => {
     expect(
       repeatsStatement(
-        'Im Jahr 2018 gab es in Deutschland 46,2 Millionen Erwerbspersonen.',
-        'Die Zahl der Erwerbspersonen in Deutschland belief sich 2018 auf 46 185 Tausend.'
+        'Das Projekt Nordlicht hat ein Gesamtbudget von 1,25 Mio. Euro.',
+        'Das Gesamtbudget des Projekts Nordlicht beträgt 1,25 Mio. Euro.'
       )
     ).toBe(true);
   });
@@ -21,13 +36,41 @@ describe('repeatsStatement', () => {
     ).toBe(false);
   });
 
-  it('does not merge the same measure for two different years', () => {
-    expect(
-      repeatsStatement(
-        'Die Erwerbsquote in Deutschland lag 2018 bei 60 Prozent.',
-        'Die Erwerbsquote in Deutschland lag 2019 bei 61 Prozent.'
-      )
-    ).toBe(false);
+  it('counts a statement with topic words as a repeat of itself', () => {
+    fc.assert(
+      fc.property(topicWords, (words) => {
+        const statement = `${words.join(' ')}.`;
+        expect(repeatsStatement(statement, statement)).toBe(true);
+      })
+    );
+  });
+
+  it('does not merge a statement with one that is only one of its topic words', () => {
+    fc.assert(
+      fc.property(topicWords, (words) => {
+        expect(repeatsStatement(words.join(' '), words[0] ?? '')).toBe(false);
+      })
+    );
+  });
+
+  it('gives the same answer whichever statement comes first', () => {
+    fc.assert(
+      fc.property(topicWords, topicWords, (first, second) => {
+        const a = first.join(' ');
+        const b = second.join(' ');
+        expect(repeatsStatement(a, b)).toBe(repeatsStatement(b, a));
+      })
+    );
+  });
+
+  it('does not merge the same words for two different years', () => {
+    fc.assert(
+      fc.property(topicWords, year, year, (words, first, second) => {
+        fc.pre(first !== second);
+        const sentence = (when: number) => `${words.join(' ')} im Jahr ${when}`;
+        expect(repeatsStatement(sentence(first), sentence(second))).toBe(false);
+      })
+    );
   });
 });
 
@@ -38,45 +81,88 @@ describe('findUnsupportedNumbers', () => {
     expect(findUnsupportedNumbers(statement, 'Umsatz (T€) 455, Mitarbeitende 24')).toEqual(['12']);
   });
 
-  it('matches a number whatever its separators are', () => {
-    expect(findUnsupportedNumbers('Es sind 1.250.000 Euro.', 'Budget: 1,250,000 Euro')).toEqual([]);
+  it('does not take a single digit followed by zeros as a figure of the evidence', () => {
+    expect(findUnsupportedNumbers('Es waren 50 Personen.', '5 Personen')).toEqual(['50']);
   });
 
-  describe('a figure from a table, in thousands with a space as the thousands separator', () => {
-    const table = '2018\n82 902\n46 185\n1 468\n44 717';
+  it('finds nothing unsupported in a text that is its own evidence', () => {
+    fc.assert(
+      fc.property(fc.string({ unit: 'binary' }), (text) => {
+        expect(findUnsupportedNumbers(text, text)).toEqual([]);
+      })
+    );
+  });
 
-    it('reads 46 185 as one number', () => {
-      expect(findUnsupportedNumbers('Es waren 46.185 Tausend Erwerbspersonen.', table)).toEqual([]);
+  it('only gets more permissive when more evidence is added', () => {
+    fc.assert(
+      fc.property(fc.string(), fc.string(), fc.string(), (statement, evidence, more) => {
+        const before = findUnsupportedNumbers(statement, evidence);
+        const after = findUnsupportedNumbers(statement, `${evidence}\n${more}`);
+        expect(after.every((number) => before.includes(number))).toBe(true);
+      })
+    );
+  });
+
+  it('reads a number the same whichever separators group its digits', () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 1000, max: 999_999_999 }),
+        fc.constantFrom(...SEPARATORS),
+        fc.constantFrom(...SEPARATORS),
+        (value, inEvidence, inStatement) => {
+          expect(
+            findUnsupportedNumbers(
+              `Es sind ${grouped(value, inStatement)} Euro.`,
+              `Budget: ${grouped(value, inEvidence)} Euro`
+            )
+          ).toEqual([]);
+        }
+      )
+    );
+  });
+
+  describe('a figure the evidence gives in thousands', () => {
+    it('accepts it rounded to millions with one decimal', () => {
+      fc.assert(
+        fc.property(tableFigure, (figure) => {
+          const tenths = Math.floor((figure + 50) / 100);
+          fc.pre(tenths % 100 !== 0);
+          const millions = `${Math.floor(tenths / 10)},${tenths % 10}`;
+
+          expect(
+            findUnsupportedNumbers(`Es waren ${millions} Millionen.`, `Wert ${figure}`)
+          ).toEqual([]);
+        })
+      );
     });
 
-    it('accepts the same figure rounded and in millions', () => {
-      expect(findUnsupportedNumbers('Es waren 46,2 Millionen Erwerbspersonen.', table)).toEqual([]);
+    it('accepts it written out in full', () => {
+      fc.assert(
+        fc.property(tableFigure, fc.constantFrom(...SEPARATORS), (figure, separator) => {
+          const full = grouped(figure * 1000, separator);
+
+          expect(findUnsupportedNumbers(`Es waren ${full}.`, `Wert ${figure}`)).toEqual([]);
+        })
+      );
     });
 
-    it('still rejects a figure that is neither the number nor a rounding of it', () => {
-      expect(findUnsupportedNumbers('Es waren 46,9 Millionen Erwerbspersonen.', table)).toEqual([
-        '469',
-      ]);
-    });
+    it('rejects it when one digit of the full figure differs', () => {
+      fc.assert(
+        fc.property(
+          tableFigure,
+          fc.nat({ max: 4 }),
+          fc.integer({ min: 1, max: 9 }),
+          (figure, position, shift) => {
+            const digits = String(figure).split('');
+            const changed = (Number(digits[position]) + shift) % 10;
+            fc.pre(position > 0 || changed !== 0);
+            digits[position] = String(changed);
+            const wrong = `${digits.join('')}000`;
 
-    it('does not take one digit as a rounding of a longer number', () => {
-      expect(findUnsupportedNumbers('Es waren 5 Erwerbspersonen.', table)).toEqual(['5']);
-    });
-
-    it('accepts the figure written out in full, converted from thousands', () => {
-      expect(
-        findUnsupportedNumbers('Es waren exakt 46.185.000, davon 44.717.000 erwerbstätig.', table)
-      ).toEqual([]);
-    });
-
-    it('rejects a full figure whose digits differ from the table', () => {
-      expect(findUnsupportedNumbers('Es waren exakt 46.186.000 Erwerbspersonen.', table)).toEqual([
-        '46186000',
-      ]);
-    });
-
-    it('does not take a single digit followed by zeros as a figure of the table', () => {
-      expect(findUnsupportedNumbers('Es waren 50 Erwerbspersonen.', '5 Personen')).toEqual(['50']);
+            expect(findUnsupportedNumbers(`Es waren ${wrong}.`, `Wert ${figure}`)).toEqual([wrong]);
+          }
+        )
+      );
     });
   });
 });

@@ -1,3 +1,4 @@
+import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
 import { toCanonicalText } from './canonical-text';
@@ -27,27 +28,72 @@ describe('toCanonicalText', () => {
     expect(toCanonicalText('München')).toBe('München');
   });
 
-  it('is idempotent', () => {
-    const once = toCanonicalText('\r\n a  \r\n\r\n\r\n b\u0000 ');
+  describe('for any text', () => {
+    const MARKUP_CHARACTERS = [
+      'a',
+      'B',
+      '7',
+      '|',
+      ':',
+      '-',
+      ' ',
+      '\t',
+      '\r',
+      '\n',
+      '\0',
+      '\u0301',
+      '\ufeff',
+    ];
+    const markup = fc
+      .array(fc.constantFrom(...MARKUP_CHARACTERS), { maxLength: 400 })
+      .map((chars) => chars.join(''));
+    const anyText = fc.oneof(markup, fc.string({ unit: 'binary' }));
 
-    expect(toCanonicalText(once)).toBe(once);
-  });
+    it('is idempotent, also for text that looks like tables', () => {
+      fc.assert(
+        fc.property(anyText, (raw) => {
+          const once = toCanonicalText(raw);
 
-  describe('a Markdown table whose delimiter row has another number of cells than its header', () => {
-    const header = '| Bevölkerung |1 | Erwerbspersonen |2 |3 | Davon | | | |';
-    const row = '| 2018 | 82 902 | 46 185 | 1 468 | 44 717 | 90,6 | 9,4 |';
-
-    it('gives the delimiter row the cells of the header, so the table is one', () => {
-      const raw = `${header}\n| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n${row}`;
-
-      expect(toCanonicalText(raw)).toBe(
-        `${header}\n| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n${row}`
+          expect(toCanonicalText(once)).toBe(once);
+        })
       );
     });
 
-    it('keeps the alignment of the cells it has and cuts a delimiter row that is too long', () => {
-      expect(toCanonicalText('| a | b |\n| ---: | :---: | :--- |')).toBe(
-        '| a | b |\n| ---: | :---: |'
+    it('leaves no carriage return, control character, trailing space or run of blank lines', () => {
+      fc.assert(
+        fc.property(anyText, (raw) => {
+          const text = toCanonicalText(raw);
+
+          for (const unwanted of ['\r', '\0', '\ufeff', ' \n', '\t\n', '\n\n\n']) {
+            expect(text).not.toContain(unwanted);
+          }
+          expect(text).toBe(text.trim());
+          expect(text).toBe(text.normalize('NFC'));
+        })
+      );
+    });
+  });
+
+  describe('a Markdown table whose delimiter row has another number of cells than its header', () => {
+    const cell = fc.stringMatching(/^[A-Za-z0-9 ]{0,12}$/);
+    const alignment = fc.constantFrom(':---', '---:', ':---:', '---');
+    const row = (cells: string[]) => `| ${cells.join(' | ')} |`;
+
+    it('gives the delimiter row the cells of the header, keeping the alignment it has', () => {
+      fc.assert(
+        fc.property(
+          fc.array(cell, { minLength: 1, maxLength: 10 }),
+          fc.array(alignment, { minLength: 1, maxLength: 10 }),
+          fc.array(cell, { minLength: 1, maxLength: 10 }),
+          (header, alignments, body) => {
+            const text = toCanonicalText(`${row(header)}\n${row(alignments)}\n${row(body)}`);
+            const [, delimiter] = text.split('\n');
+            const cells = (delimiter ?? '').replace(/^\| | \|$/g, '').split(' | ');
+
+            expect(cells).toHaveLength(header.length);
+            expect(cells.slice(0, alignments.length)).toEqual(alignments.slice(0, header.length));
+          }
+        )
       );
     });
 
