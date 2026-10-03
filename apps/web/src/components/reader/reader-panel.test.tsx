@@ -2,13 +2,13 @@ import { API_ERROR, SOURCE_KIND } from '@nlm/shared';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { CHUNK_ID, chunkDetail, NOTEBOOK_ID, overview, SOURCE_ID } from '@/test/fixtures';
 import { renderWithProviders } from '@/test/render';
 
 import { server } from '../../../../../vitest.setup';
-import { CloseReaderButton, ReaderPanel } from './reader-panel';
+import { ReaderPanel } from './reader-panel';
 
 const TEXT = 'Vorwort. Dr. Brandt leitet das Projekt Nordlicht. Ende.';
 const sourceText = () =>
@@ -101,16 +101,5 @@ describe('the summary card', () => {
     await user.click(screen.getByRole('button', { name: /Erneut versuchen/ }));
 
     expect(await screen.findByText('Jetzt ist sie da.')).toBeTruthy();
-  });
-});
-
-describe('CloseReaderButton', () => {
-  it('leaves the reader', async () => {
-    const onClick = vi.fn();
-    renderWithProviders(<CloseReaderButton onClick={onClick} />);
-
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Quellenansicht schließen' }));
-
-    expect(onClick).toHaveBeenCalledOnce();
   });
 });

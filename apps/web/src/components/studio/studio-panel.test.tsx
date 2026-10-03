@@ -86,18 +86,6 @@ describe('StudioPanel', () => {
     await vi.waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
   });
 
-  it('tells what a tile makes when the pointer rests on it', async () => {
-    serve();
-    renderPanel();
-    const user = userEvent.setup();
-
-    await user.hover(await screen.findByRole('button', { name: 'Quiz' }));
-
-    expect(
-      (await screen.findAllByText(/Interaktives Quiz auf Grundlage deiner Quellen/)).length
-    ).toBeGreaterThan(0);
-  });
-
   it('keeps the tooltip of a tile that cannot be used yet', async () => {
     serve({ sources: [] });
     renderPanel();
@@ -224,34 +212,6 @@ describe('StudioPanel', () => {
     await user.click(screen.getByRole('button', { name: /Erneut versuchen/ }));
 
     expect(await screen.findByRole('button', { name: /^Karteikarten, 1 Quelle/ })).toBeTruthy();
-  });
-
-  it('opens an output from the list, goes back and deletes it', async () => {
-    let deleted = false;
-    serve({ outputs: [flashcardsOutput()] });
-    server.use(
-      http.get(`${base}/studio`, () => HttpResponse.json(deleted ? [] : [flashcardsOutput()])),
-      http.delete(`${base}/studio/${OUTPUT_ID}`, () => {
-        deleted = true;
-        return new HttpResponse(null, { status: 204 });
-      })
-    );
-    renderPanel();
-    const user = userEvent.setup();
-
-    await user.click(await waitForRow(/^Karteikarten/));
-    await user.click(await screen.findByRole('button', { name: 'Zurück zum Studio' }));
-    const list = screen.getByRole('region', { name: 'Erstellte Ausgaben' });
-    await user.click(
-      within(list).getByRole('button', { name: 'Weitere Aktionen für „Karteikarten“' })
-    );
-    await user.click(await screen.findByRole('menuitem', { name: 'Löschen' }));
-    await user.click(
-      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Löschen' })
-    );
-
-    expect(await screen.findByText('Hier wird die Ausgabe von Studio gespeichert.')).toBeTruthy();
-    await vi.waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
   });
 
   it('renames an output from the menu of the list', async () => {

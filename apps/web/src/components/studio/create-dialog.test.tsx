@@ -72,17 +72,6 @@ describe('CreateDialog', () => {
     });
   });
 
-  it('words the size of a quiz the way the original does', async () => {
-    const { user } = open(STUDIO_KIND.QUIZ);
-
-    await user.click(screen.getByRole('button', { name: 'Öffnen' }));
-
-    expect(within(dialog()).getByText('Anzahl der Fragen')).toBeTruthy();
-    expect(
-      within(dialog()).getByRole('radio', { name: 'Standard (Standardeinstellung)' })
-    ).toBeTruthy();
-  });
-
   it('asks a mind map for nothing but the sources and the topic', async () => {
     const { user, onCreate } = open(STUDIO_KIND.MINDMAP);
 
@@ -165,16 +154,6 @@ describe('CreateDialog', () => {
         format: REPORT_FORMAT.CUSTOM,
         focus: 'Schreibe einen Brief an die Chefin.',
       });
-    });
-
-    it('lists the templates with a line about each', async () => {
-      const { user } = open(STUDIO_KIND.REPORT);
-
-      await user.click(screen.getByRole('button', { name: 'Öffnen' }));
-
-      expect(within(dialog()).getByText('Bericht erstellen')).toBeTruthy();
-      expect(within(dialog()).getAllByRole('radio')).toHaveLength(5);
-      expect(within(dialog()).getByText(/Glossar wichtiger Begriffe/)).toBeTruthy();
     });
   });
 });

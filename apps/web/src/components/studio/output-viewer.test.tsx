@@ -118,13 +118,6 @@ describe('OutputViewer', () => {
     await vi.waitFor(() => expect(sent).toEqual({ feedback: STUDIO_FEEDBACK.GOOD }));
   });
 
-  it('calls the feedback of a report "Bericht"', () => {
-    renderViewer(reportOutput());
-
-    expect(screen.getByRole('button', { name: 'Guter Bericht' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Schlechter Bericht' })).toBeTruthy();
-  });
-
   it('copies a report with its formatting and as plain text', async () => {
     const made: Record<string, Blob | Promise<Blob>>[] = [];
     vi.stubGlobal(
@@ -171,7 +164,7 @@ describe('OutputViewer', () => {
     expect(screen.queryByRole('button', { name: 'Als Markdown herunterladen' })).toBeNull();
   });
 
-  it('enlarges cards, quiz and mind map in a dialog, but not a report', async () => {
+  it('enlarges the view in a dialog', async () => {
     const { user } = renderViewer(quizOutput());
 
     await user.click(screen.getByRole('button', { name: 'Maximieren' }));

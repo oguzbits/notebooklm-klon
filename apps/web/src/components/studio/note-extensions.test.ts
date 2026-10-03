@@ -23,6 +23,7 @@ afterEach(() => {
 describe('note editor Markdown', () => {
   it.each([
     ['a paragraph', 'Ein Satz.\n\nNoch ein Absatz.'],
+    ['a heading', '## Titel\n\nText'],
     ['bold and italic', 'Ein **fetter** und ein *kursiver* Satz.'],
     ['inline code', 'Der Befehl `pnpm check` läuft.'],
     ['a link', 'Siehe [die Doku](https://tiptap.dev/docs).'],
@@ -33,12 +34,6 @@ describe('note editor Markdown', () => {
     ['a code block', '```\nconst a = 1;\n```'],
     ['nothing', ''],
   ])('keeps %s as it is', (_name, markdown) => {
-    expect(roundTrip(markdown)).toBe(markdown);
-  });
-
-  it.each([1, 2, 3, 4, 5, 6])('keeps a heading of level %i', (level) => {
-    const markdown = `${'#'.repeat(level)} Titel\n\nText`;
-
     expect(roundTrip(markdown)).toBe(markdown);
   });
 

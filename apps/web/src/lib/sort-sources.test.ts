@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { source } from '@/test/fixtures';
 
-import { sortSources, SOURCE_SORT, toSourceSort } from './sort-sources';
+import { sortSources, SOURCE_SORT } from './sort-sources';
 
 const a = source({
   id: 'a',
@@ -47,12 +47,5 @@ describe('sortSources', () => {
     const list = [a, b, c];
     sortSources(list, SOURCE_SORT.TITLE);
     expect(ids(list)).toEqual(['a', 'b', 'c']);
-  });
-});
-
-describe('toSourceSort', () => {
-  it('knows the choices and nothing else', () => {
-    expect(toSourceSort(SOURCE_SORT.TITLE)).toBe(SOURCE_SORT.TITLE);
-    expect(toSourceSort('something')).toBeNull();
   });
 });

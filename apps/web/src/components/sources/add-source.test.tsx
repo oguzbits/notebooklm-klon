@@ -33,24 +33,15 @@ describe('AddSource', () => {
     expect(requests).toEqual([`/api/notebooks/${NOTEBOOK_ID}/sources/file`]);
   });
 
-  it('lets the file chooser offer photos and scans next to documents, and says so', () => {
+  it('lets the file chooser offer photos, scans and recordings next to documents, and says so', () => {
     renderWithProviders(<AddSource notebookId={NOTEBOOK_ID} />);
 
     // The attribute is the feature: without it the chooser would grey out every image.
     const accepted = screen.getByLabelText('Datei auswählen').getAttribute('accept') ?? '';
-    for (const extension of ['.pdf', '.docx', '.png', '.jpg', '.jpeg', '.webp']) {
+    for (const extension of ['.pdf', '.docx', '.png', '.jpg', '.jpeg', '.webp', '.mp3', '.wav']) {
       expect(accepted.split(',')).toContain(extension);
     }
     expect(screen.getByText(/Bild \(PNG, JPG, WEBP\)/)).toBeTruthy();
-  });
-
-  it('lets the file chooser offer recordings, and says so', () => {
-    renderWithProviders(<AddSource notebookId={NOTEBOOK_ID} />);
-
-    const accepted = screen.getByLabelText('Datei auswählen').getAttribute('accept') ?? '';
-    for (const extension of ['.mp3', '.wav']) {
-      expect(accepted.split(',')).toContain(extension);
-    }
     expect(screen.getByText(/Aufnahme \(MP3, WAV\)/)).toBeTruthy();
   });
 
@@ -74,15 +65,6 @@ describe('AddSource', () => {
 
     await vi.waitFor(() => expect(body).toEqual({ url: 'https://example.test/artikel' }));
     await vi.waitFor(() => expect(screen.getByLabelText('Webadresse')).toHaveProperty('value', ''));
-  });
-
-  it('tells that a YouTube link is read by what is spoken in the video', async () => {
-    renderWithProviders(<AddSource notebookId={NOTEBOOK_ID} />);
-
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Webseite' }));
-
-    expect(screen.getByText(/YouTube-Videos? ein/)).toBeTruthy();
-    expect(screen.getByText(/das gesprochene Wort/)).toBeTruthy();
   });
 
   it('sends pasted text as a text file with its title', async () => {

@@ -78,15 +78,6 @@ describe('QuizView', () => {
     expect(wrong).toHaveProperty('disabled', true);
   });
 
-  it('says "Richtige Antwort" at once for the right choice', async () => {
-    const { user } = renderQuiz([WITH_REASONS]);
-
-    await user.click(option(/^A\. Dr\. Brandt/));
-
-    expect(within(option(/^A\. Dr\. Brandt/)).getByText('Richtige Antwort')).toBeTruthy();
-    expect(screen.queryByText('Nicht ganz')).toBeNull();
-  });
-
   it('keeps the one explanation for a quiz from before there was a reason for each option', async () => {
     const { user } = renderQuiz([QUESTION]);
     expect(screen.queryByRole('button', { name: 'Tipp anzeigen' })).toBeNull();

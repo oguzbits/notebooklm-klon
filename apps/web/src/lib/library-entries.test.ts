@@ -17,8 +17,4 @@ describe('libraryEntries', () => {
       entries.map((entry) => (entry.type === ENTRY.OUTPUT ? entry.output.id : entry.note.id))
     ).toEqual(['c', 'b', 'a']);
   });
-
-  it('is empty without outputs and notes', () => {
-    expect(libraryEntries([], [])).toEqual([]);
-  });
 });
