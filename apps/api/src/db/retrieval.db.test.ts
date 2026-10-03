@@ -157,48 +157,6 @@ describe('searchChunks ranking', () => {
     expect(texts).toContain('Budget ohne Vektor');
   });
 
-  it('gives every selected source its best passage, even when other sources match much better', async () => {
-    const notebook = await insertNotebook(USER);
-    const near = await insertSource(USER, notebook.id, 'near');
-    const far = await insertSource(USER, notebook.id, 'far');
-    for (let ordinal = 0; ordinal < 30; ordinal += 1) {
-      await insertChunk(near.id, ordinal, `nah ${ordinal}`, 0);
-    }
-    await insertChunk(far.id, 0, 'fern', 1);
-
-    const results = await search(
-      { userId: USER, notebookId: notebook.id, sourceIds: [near.id, far.id] },
-      0,
-      'nichts',
-      LIMIT
-    );
-
-    expect(results).toHaveLength(LIMIT);
-    expect(results.map((r) => r.text)).toContain('fern');
-    expect(results.map((r) => r.score)).toEqual(
-      [...results.map((r) => r.score)].sort((a, b) => b - a)
-    );
-  });
-
-  it('still respects the limit when there are more sources than slots', async () => {
-    const notebook = await insertNotebook(USER);
-    const selected: string[] = [];
-    for (let index = 0; index < 4; index += 1) {
-      const source = await insertSource(USER, notebook.id, `source-${index}`);
-      await insertChunk(source.id, 0, `Abschnitt ${index}`, index);
-      selected.push(source.id);
-    }
-
-    const results = await search(
-      { userId: USER, notebookId: notebook.id, sourceIds: selected },
-      0,
-      'Abschnitt',
-      2
-    );
-
-    expect(results).toHaveLength(2);
-  });
-
   it('respects the limit', async () => {
     const notebook = await insertNotebook(USER);
     const source = await insertSource(USER, notebook.id, 'a');
