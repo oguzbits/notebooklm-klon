@@ -68,25 +68,33 @@ function roundedTo(digits: string, count: number): string {
   return String(head + up).replace(/0+$/, '');
 }
 
-/** Whether a figure is the evidence figure written shorter (46,2 Millionen for 46 185 Tausend). */
-function isRoundingOf(figure: string, evidence: string): boolean {
-  const count = figure.replace(/0+$/, '').length;
+const withoutTrailingZeros = (digits: string): string => digits.replace(/0+$/, '');
+
+/**
+ * Whether a figure is the evidence figure in other units: written shorter (46,2 Millionen for
+ * 46 185 Tausend) or in full (46.185.000 for 46 185 Tausend). The cost: 50 passes for a 5, but not
+ * a single digit followed by zeros.
+ */
+function isOtherUnitOf(figure: string, evidence: string): boolean {
+  const significant = withoutTrailingZeros(figure);
+  const count = significant.length;
+  if (count < MIN_ROUNDED_DIGITS) return false;
   return (
-    count >= MIN_ROUNDED_DIGITS &&
-    evidence.length > count &&
-    evidence.length <= MAX_ROUNDED_SOURCE_DIGITS &&
-    roundedTo(evidence, count) === figure.replace(/0+$/, '')
+    withoutTrailingZeros(evidence) === significant ||
+    (evidence.length > count &&
+      evidence.length <= MAX_ROUNDED_SOURCE_DIGITS &&
+      roundedTo(evidence, count) === significant)
   );
 }
 
 /**
  * The numbers of a statement that the evidence does not contain. The prompt allows a number only
  * if a cited passage says it, so one that is missing was derived or invented. A figure the passage
- * says in other units and rounded (46,2 Millionen for 46 185 Tausend) counts as said.
+ * says in other units, rounded or in full (46,2 Millionen, 46.185.000 for 46 185 Tausend), counts as said.
  */
 export function findUnsupportedNumbers(statement: string, evidence: string): string[] {
   const supported = numbersOf(evidence);
   return [...new Set(numbersOf(statement))].filter(
-    (number) => !supported.some((said) => said === number || isRoundingOf(number, said))
+    (number) => !supported.some((said) => said === number || isOtherUnitOf(number, said))
   );
 }

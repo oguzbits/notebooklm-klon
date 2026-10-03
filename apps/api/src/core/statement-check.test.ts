@@ -62,5 +62,21 @@ describe('findUnsupportedNumbers', () => {
     it('does not take one digit as a rounding of a longer number', () => {
       expect(findUnsupportedNumbers('Es waren 5 Erwerbspersonen.', table)).toEqual(['5']);
     });
+
+    it('accepts the figure written out in full, converted from thousands', () => {
+      expect(
+        findUnsupportedNumbers('Es waren exakt 46.185.000, davon 44.717.000 erwerbstätig.', table)
+      ).toEqual([]);
+    });
+
+    it('rejects a full figure whose digits differ from the table', () => {
+      expect(findUnsupportedNumbers('Es waren exakt 46.186.000 Erwerbspersonen.', table)).toEqual([
+        '46186000',
+      ]);
+    });
+
+    it('does not take a single digit followed by zeros as a figure of the table', () => {
+      expect(findUnsupportedNumbers('Es waren 50 Erwerbspersonen.', '5 Personen')).toEqual(['50']);
+    });
   });
 });

@@ -1432,3 +1432,7 @@ Tausend" in der Antwort galt als nicht belegt. Die einzige Aussage wurde verworf
 - Grenze: der Check kennt keine Einheiten. `46,2` würde auch zu `4,62` passen. Das ist bewusst
   nachsichtig; ein Fehlalarm, der eine richtige Antwort löscht, ist für Nutzende schlimmer.
 - Nicht live gemessen: ob das Modell bei dieser Frage danach immer eine Aussage liefert.
+- Ausgeschriebene Zahl: Eine Tabelle in Tausend sagt `46 185`, NotebookLM schreibt "exakt 46.185.000".
+  Zahlen, die sich nur durch angehängte Nullen unterscheiden, gelten jetzt als gleich, wenn vor den
+  Nullen mindestens zwei Ziffern stehen. Kosten: `46.185.000` passt auch zu `4 618 500`, und `500`
+  zu `50 0`; eine einzelne Ziffer mit Nullen (`50` für `5`) zählt weiter nicht.
