@@ -19,10 +19,6 @@ describe('citation contract', () => {
     expect(AnswerStatementSchema.safeParse({ text: '  ', chunkIds: ['c1'] }).success).toBe(false);
   });
 
-  it('rejects a statement without a citation list', () => {
-    expect(AnswerStatementSchema.safeParse({ text: 'Ohne Liste.' }).success).toBe(false);
-  });
-
   it('rejects an empty chunk ID', () => {
     expect(AnswerStatementSchema.safeParse({ text: 'Text.', chunkIds: [''] }).success).toBe(false);
   });

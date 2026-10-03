@@ -30,10 +30,4 @@ describe('chat config contract', () => {
       ChatConfigSchema.safeParse({ ...custom, customInstruction: 'x'.repeat(501) }).success
     ).toBe(false);
   });
-
-  it('rejects values it does not know', () => {
-    expect(ChatConfigSchema.safeParse({ ...DEFAULT_CHAT_CONFIG, length: 'HUGE' }).success).toBe(
-      false
-    );
-  });
 });

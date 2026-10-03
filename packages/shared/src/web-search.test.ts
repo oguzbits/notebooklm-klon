@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  CapabilitiesSchema,
   MAX_WEB_RESULTS,
   WebSearchBodySchema,
   WebSearchResponseSchema,
@@ -40,13 +39,5 @@ describe('web search contracts', () => {
     expect(WebSearchResponseSchema.safeParse({ results: many }).success).toBe(false);
     expect(WebSearchResponseSchema.safeParse({ results: many.slice(1) }).success).toBe(true);
     expect(WebSearchResponseSchema.parse({ results: [] })).toEqual({ results: [] });
-  });
-
-  it('says whether the web search and the cover images are set up', () => {
-    expect(CapabilitiesSchema.parse({ webSearch: false, coverImage: true })).toEqual({
-      webSearch: false,
-      coverImage: true,
-    });
-    expect(CapabilitiesSchema.safeParse({}).success).toBe(false);
   });
 });

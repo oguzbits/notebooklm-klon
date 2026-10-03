@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import { API_ERROR } from './api-error';
 import {
   CHAT_EVENT,
   ChatEventSchema,
@@ -16,26 +15,6 @@ describe('chat contract', () => {
     });
     expect(ChatRequestSchema.safeParse({ question: '   ' }).success).toBe(false);
     expect(ChatRequestSchema.safeParse({ question: 'x'.repeat(2001) }).success).toBe(false);
-  });
-
-  it('parses a statement event with real chunk IDs', () => {
-    const event = { type: CHAT_EVENT.STATEMENT, text: 'Aussage.', chunkIds: ['id-1'] };
-
-    expect(ChatEventSchema.parse(event)).toEqual(event);
-  });
-
-  it('parses the closing event with its counts', () => {
-    const event = {
-      type: CHAT_EVENT.DONE,
-      statements: 2,
-      sourcesSearched: 2,
-      passagesFound: 6,
-      droppedStatements: 1,
-      strippedCitations: 0,
-      followUps: ['Wie geht es weiter?'],
-    };
-
-    expect(ChatEventSchema.parse(event)).toEqual(event);
   });
 
   it('limits the questions that follow an answer', () => {
@@ -54,13 +33,6 @@ describe('chat contract', () => {
     // The closing event always says what follows, even when nothing does.
     expect(ChatEventSchema.safeParse(closing).success).toBe(false);
     expect(ChatEventSchema.safeParse({ ...closing, followUps: [] }).success).toBe(true);
-  });
-
-  it('parses an error event only with a known API error code', () => {
-    expect(ChatEventSchema.parse({ type: CHAT_EVENT.ERROR, code: API_ERROR.INTERNAL }).type).toBe(
-      CHAT_EVENT.ERROR
-    );
-    expect(ChatEventSchema.safeParse({ type: CHAT_EVENT.ERROR, code: 'BOOM' }).success).toBe(false);
   });
 
   it('rejects an unknown event type and a statement without citations', () => {

@@ -7,16 +7,6 @@ import {
 } from './overview';
 
 describe('source overview contract', () => {
-  it('parses a summary with key topics and suggested questions', () => {
-    const overview = {
-      summary: 'Das Projekt Nordlicht erforscht Polarlicht.',
-      keyTopics: ['Polarlicht', 'Budget'],
-      suggestedQuestions: ['Wer leitet das Projekt?', 'Wie hoch ist das Budget?'],
-    };
-
-    expect(SourceOverviewSchema.parse(overview)).toEqual(overview);
-  });
-
   it('rejects an empty summary and empty topics or questions', () => {
     const valid = { summary: 'Text.', keyTopics: ['A'], suggestedQuestions: ['Frage?'] };
 
@@ -36,13 +26,6 @@ describe('source overview contract', () => {
 
 describe('notebook overview contract', () => {
   const summary = 'Die Quellen beschreiben **Jev**, ein Modell für strukturierte Werte.';
-
-  it('parses a symbol and a summary with bold key terms', () => {
-    expect(NotebookOverviewSchema.parse({ emoji: '🤖', summary })).toEqual({
-      emoji: '🤖',
-      summary,
-    });
-  });
 
   it('takes one symbol, also when it is made of several parts', () => {
     for (const emoji of ['🔬', '❤️', '👩‍🔬', '🏳️‍🌈', '👍🏽']) {

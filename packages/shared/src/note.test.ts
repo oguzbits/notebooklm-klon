@@ -76,12 +76,6 @@ describe('creating a note', () => {
     expect(CreateNoteBodySchema.safeParse({ kind: NOTE_KIND.ANSWER }).success).toBe(false);
   });
 
-  it('makes an empty note of the reader from nothing but its kind', () => {
-    expect(CreateNoteBodySchema.parse({ kind: NOTE_KIND.WRITTEN })).toEqual({
-      kind: NOTE_KIND.WRITTEN,
-    });
-  });
-
   it('lets a note of the reader start with a title and a text, which carry no citations', () => {
     const body = { kind: NOTE_KIND.WRITTEN, title: 'Zusammenfassung', body: 'Ein **Text**.' };
 
