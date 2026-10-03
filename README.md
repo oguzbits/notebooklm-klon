@@ -15,7 +15,7 @@ Nachbau von NotebookLM. Der Schwerpunkt liegt auf dem Weg von der Quelle zum nac
 ## Was es kann
 
 - **Notebooks und Quellen:** PDF, DOCX, PPTX, Bilder, Aufnahmen (MP3, WAV), öffentliche YouTube-Videos (gesprochenes Wort), TXT, MD und Webseiten per Link, mit Status im Hintergrund. Die Auswahl der Quellen begrenzt auch die Suche. Websuche über Tavily ist optional.
-- **Chat** mit Streaming: Jede Aussage trägt nummerierte Chips, Hover zeigt die Textstelle, Klick öffnet den Quelltext mit hervorgehobenem Abschnitt. Der Verlauf bleibt pro Notebook erhalten.
+- **Chat** mit Streaming: Jede Aussage trägt nummerierte Chips, Hover zeigt die Textstelle, Klick öffnet den Quelltext mit hervorgehobenem Abschnitt. Der Verlauf bleibt pro Notebook erhalten und fließt in Folgefragen ein.
 - **Übersichten** pro Quelle und pro Notebook mit Vorschlagsfragen.
 - **Notizen** aus Antworten (Zitate bleiben erhalten) und eigene Notizen mit Editor, auf Wunsch als Quelle.
 - **Studio:** Bericht (Briefing, FAQ, Lernleitfaden, Blogbeitrag, eigene Anweisung), Karteikarten, Quiz, Mindmap und Datentabelle, mit denselben geprüften Zitaten.
