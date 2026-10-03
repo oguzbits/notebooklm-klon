@@ -1310,7 +1310,12 @@ Menüs, Dialogen und allen fünf Ansichten (Quiz, Karteikarten, Tabelle, Mindmap
   Determinismus-Test von `chunking`, zwei Prompt-Wortlaut-Tests in `chat-prompt.test.ts` (Zahlen nur wörtlich, drei
   Folgefragen) und drei Randfall-Tests der Test-Doubles in `e2e/fakes.test.ts`. Das widerruft zum Teil den Eintrag vom
   2026-10-02: Handmutation hatte genau diese Tests erzeugt, weil jeder überlebende Mutant als Lücke galt.
-  Nicht geprüft: e2e lokal (nicht gelaufen), `app.db`, `auth.db`, `s3-object-store.db` nur dem Titel nach.
+- **Vierter Durchgang:** Jetzt sind alle Testdateien gelesen (Unit, DB, e2e), nicht nur nach Titel. Entfernt sind
+  Tests, die Zod-Schemas in `packages/shared`, Wörter in Prompts, Duplikate zwischen Route-, Repository- und
+  Schema-Tests oder den Bau von Test-Doubles prüften; zwei e2e-Tests prüften Pixelgrößen (Tippfläche 44 px, Menü
+  innerhalb des Bildschirms) und verlieren diese Zeilen. Der e2e-Test zur privaten Adresse bleibt: er ist der einzige,
+  der den SSRF-Schutz durch den ganzen Stack zeigt. Nicht verifiziert: `pnpm e2e` lief lokal nicht, nur in CI.
+  (Früherer Stand zum Dritten Durchgang: e2e nicht gelaufen, `app.db`, `auth.db`, `s3-object-store.db` nur dem Titel nach; jetzt gelesen.)
 - **Ursachen und Regeln:** Die Regeln belohnten Menge (neue Funktion bringt Tests mit, Fehler beginnt mit Test, "muss
   scheitern können", Auth je Route, SoC vor DRY, DoD meldet die Testzahl) und bremsten sie nirgends (kein Gegenstück
   "ein Test muss etwas hinzufügen", keine Regel, welche Ebene welche Aussage trägt). AGENTS.md, Abschnitt "Tests":
