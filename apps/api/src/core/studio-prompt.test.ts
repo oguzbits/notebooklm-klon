@@ -338,47 +338,6 @@ describe('readStudioReply', () => {
       });
     });
 
-    it('empties a cell without a valid citation, and keeps the row so the columns line up', () => {
-      const { output, dropped } = read([
-        { cells: [cell('Brandt', 'c1'), cell('Erfunden', 'c8'), cell('1,25 Mio. Euro', 'c2')] },
-      ]);
-
-      expect(dropped).toBe(1);
-      expect(output).toMatchObject({
-        content: {
-          rows: [
-            {
-              cells: [{ text: 'Brandt' }, { text: '', chunkIds: [] }, { text: '1,25 Mio. Euro' }],
-            },
-          ],
-        },
-      });
-    });
-
-    it('drops a row that has no supported first cell, or nothing but its first cell', () => {
-      const { output, dropped } = read([
-        { cells: [cell('Erfunden', 'c8'), cell('Leitung', 'c1'), cell('Viel', 'c2')] },
-        { cells: [cell('Brandt', 'c1'), cell('Leer', 'c8'), cell('Auch leer')] },
-        { cells: [cell('Brandt', 'c1'), cell('Leitung', 'c1'), cell('Viel', 'c2')] },
-      ]);
-
-      expect(dropped).toBe(2);
-      expect(output).toMatchObject({
-        content: {
-          rows: [{ cells: [{ text: 'Brandt' }, { text: 'Leitung' }, { text: 'Viel' }] }],
-        },
-      });
-    });
-
-    it('drops a row with the wrong number of cells', () => {
-      const { output } = read([
-        { cells: [cell('Brandt', 'c1'), cell('Leitung', 'c1')] },
-        { cells: [cell('Brandt', 'c1'), cell('Leitung', 'c1'), cell('Viel', 'c2')] },
-      ]);
-
-      expect(output.kind === STUDIO_KIND.DATA_TABLE && output.content.rows).toHaveLength(1);
-    });
-
     it('throws when no row is supported by the passages', () => {
       expect(() => read([{ cells: [cell('A', 'c8'), cell('B', 'c8'), cell('C', 'c8')] }])).toThrow(
         EmptyStudioOutputError

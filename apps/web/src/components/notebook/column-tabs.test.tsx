@@ -66,10 +66,4 @@ describe('ColumnTabs', () => {
     await userEvent.keyboard('{Home}');
     expect(tab('Quellen').getAttribute('aria-selected')).toBe('true');
   });
-
-  it('is 44px high for a finger (the class is the feature)', () => {
-    render(<Harness />);
-
-    expect(tab('Chat').className).toContain('min-h-11');
-  });
 });

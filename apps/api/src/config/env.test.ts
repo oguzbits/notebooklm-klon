@@ -103,10 +103,6 @@ describe('parseDatabaseEnv', () => {
   it('needs only DATABASE_URL', () => {
     expect(parseDatabaseEnv({ DATABASE_URL })).toEqual({ DATABASE_URL });
   });
-
-  it('fails without DATABASE_URL', () => {
-    expect(() => parseDatabaseEnv({})).toThrow(/DATABASE_URL/);
-  });
 });
 
 describe('parseTestDatabaseEnv', () => {

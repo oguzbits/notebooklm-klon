@@ -1290,3 +1290,14 @@ Menüs, Dialogen und allen fünf Ansichten (Quiz, Karteikarten, Tabelle, Mindmap
 - **Tests für Optik gestrichen:** Die e2e-Tests, die nur Pixelmaße und Abschneiden messen (Leisten der Dialoge in sechs
   Breiten, Wörter der Berichtsvorlagen, Ideen im Textfeld, 40-px-Tippflächen), sind entfernt. Sie testeten Kleinigkeiten
   und kosteten e2e-Laufzeit. Es bleiben Tests für Verhalten (zum Beispiel das Menü ungelesener Ausgaben per Touch).
+
+## 2026-10-03 (Testbestand ausgedünnt)
+
+- **Anlass:** Prüfung aller Tests auf Redundanz, Markup-Kleinkram und Tests, die nicht scheitern können.
+- **Entfernt:** Tests, die nur CSS-Klassen oder Pixelmaße prüfen (Skeletons, Spaltenreiter, Panel, Notebook-Übersicht,
+  Typ-Symbol), Tests, die dieselbe Logik auf zwei Ebenen prüfen (Datentabelle in `studio-prompt.test.ts`, gedeckt durch
+  `studio-check.test.ts`), Parameterläufe ohne neuen Zweig (Titel-Umbenennen: Enter, Escape, leerer Titel), die
+  SVG-Attribut-Schreibweise der Mindmap, drei Schema-Tests in `packages/shared`, die nur Zod nachtesten, und die
+  doppelte DATABASE_URL-Prüfung. Die beiden Bewertungs-Tests des Studio-Rahmens sind einer.
+- **Bewusst behalten:** Verhalten pro Route (Auth, nicht gefunden), DB- und e2e-Tests (laufen nur in CI, nicht lokal
+  prüfbar), Tests, die einen Zweig allein abdecken.

@@ -40,9 +40,4 @@ describe('mindmapPictureSvg', async () => {
     expect(svg).toContain('#111111');
     expect(svg).toContain('#222222');
   });
-
-  it('writes the attributes the way SVG spells them', () => {
-    expect(svg).toContain('dominant-baseline="central"');
-    expect(svg).toContain('stroke-width="1.5"');
-  });
 });

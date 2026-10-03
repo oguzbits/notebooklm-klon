@@ -41,62 +41,6 @@ describe('NotebookTitle', () => {
     expect(screen.getByRole('heading', { level: 1 })).toBeTruthy();
   });
 
-  it('renames on Enter', async () => {
-    let sent: unknown;
-    server.use(
-      http.patch(url, async ({ request }) => {
-        sent = await request.json();
-        return HttpResponse.json(notebook({ id: NOTEBOOK_ID, title: 'Mit Enter' }));
-      }),
-      http.get('*/api/notebooks', () => HttpResponse.json([]))
-    );
-    renderTitle();
-    const user = userEvent.setup();
-
-    await user.clear(field());
-    await user.type(field(), 'Mit Enter{Enter}');
-
-    await vi.waitFor(() => expect(sent).toEqual({ title: 'Mit Enter' }));
-  });
-
-  it('takes the change back on Escape and sends nothing', async () => {
-    let called = false;
-    server.use(
-      http.patch(url, () => {
-        called = true;
-        return HttpResponse.json(notebook());
-      })
-    );
-    renderTitle();
-    const user = userEvent.setup();
-
-    await user.clear(field());
-    await user.type(field(), 'Halb fertig{Escape}');
-
-    expect(field()).toHaveProperty('value', 'Alt');
-    expect(called).toBe(false);
-  });
-
-  it('does not send an empty or an unchanged title', async () => {
-    let called = false;
-    server.use(
-      http.patch(url, () => {
-        called = true;
-        return HttpResponse.json(notebook());
-      })
-    );
-    renderTitle();
-    const user = userEvent.setup();
-
-    await user.clear(field());
-    await user.tab();
-    expect(field()).toHaveProperty('value', 'Alt');
-    await user.click(field());
-    await user.tab();
-
-    expect(called).toBe(false);
-  });
-
   it('shows what went wrong and puts the old title back', async () => {
     server.use(
       http.patch(url, () => HttpResponse.json({ code: API_ERROR.INTERNAL }, { status: 500 }))

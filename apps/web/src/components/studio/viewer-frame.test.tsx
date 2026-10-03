@@ -101,17 +101,11 @@ describe('ViewerFrame', () => {
     expect(screen.queryByRole('button', { name: /Quellen ansehen/ })).toBeNull();
   });
 
-  it('rates the output and takes the rating back with a second click', async () => {
-    const { onFeedback, user } = renderFrame();
+  it('rates the output, marks the rating that was given and clears it when it is pressed again', async () => {
+    const { onFeedback, user } = renderFrame({ feedback: STUDIO_FEEDBACK.GOOD });
 
-    await user.click(screen.getByRole('button', { name: 'Guter Bericht' }));
-    expect(onFeedback).toHaveBeenLastCalledWith(STUDIO_FEEDBACK.GOOD);
     await user.click(screen.getByRole('button', { name: 'Schlechter Bericht' }));
     expect(onFeedback).toHaveBeenLastCalledWith(STUDIO_FEEDBACK.BAD);
-  });
-
-  it('marks the rating that was given and clears it when it is pressed again', async () => {
-    const { onFeedback, user } = renderFrame({ feedback: STUDIO_FEEDBACK.GOOD });
 
     const good = screen.getByRole('button', { name: 'Guter Bericht' });
     expect(good).toHaveProperty('ariaPressed', 'true');
