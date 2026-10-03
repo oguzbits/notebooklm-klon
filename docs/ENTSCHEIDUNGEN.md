@@ -1495,8 +1495,8 @@ Tausend" in der Antwort galt als nicht belegt. Die einzige Aussage wurde verworf
   46.185.000)“ und zwei Quellen, danach die Teilzahlen (Erwerbstätige, Erwerbslose), ein Hinweis auf
   die abweichende Mikrozensus-Zahl und eine Folgefrage. Unsere Regel „nie runden, nur eine Zahl“
   hätte die Zahl aus dem ersten Satz (46,2) verdrängt.
-- Lösung: Der Prompt verlangt, Kernzahl (Text) und genauen Wert (Tabelle) in einer Aussage zu nennen
-  und beide Passagen zu zitieren. Danach folgen die zugehörigen Angaben der Passagen. Eine
+- Lösung: Der Prompt ist allgemein gehalten, ohne Zahlen oder Begriffe des Falls. Er verlangt, eine
+  gerundete und eine genaue Angabe derselben Zahl in einer Aussage zu nennen und beide Passagen zu zitieren. Danach folgen die zugehörigen Angaben der Passagen. Eine
   abweichende Zahl für dieselbe Größe (andere Gruppe, andere Methode) steht in einer eigenen Aussage
   mit dem Unterschied. Der Zahlencheck trägt das ohne Änderung: `46,2` steht im Satz, `46.185.000` folgt
   aus `46 185`.
