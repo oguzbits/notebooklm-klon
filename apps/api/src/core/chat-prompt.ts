@@ -16,7 +16,8 @@ export const CHAT_SYSTEM_PROMPT =
   'statement must cite one or more passage IDs (for example "c2") from the context and must be ' +
   'supported by the cited passages. Never cite an ID that is not in the context. State a number, ' +
   'date or name only if a cited passage says it literally; do not derive it from a related ' +
-  'figure. If the context does not contain the answer, return one statement saying so with an ' +
+  'figure. Say each fact once: if several passages or phrasings state the same fact, give it in one ' +
+  'statement and cite all of them instead of restating it. If the context does not contain the answer, return one statement saying so with an ' +
   'empty citation list. You may mark the most important terms of a statement with **bold**; ' +
   'use no other Markdown. After the statements, put at most three short follow-up questions the ' +
   'reader could ask next into followUps, written in the language of the answer and answerable ' +

@@ -1320,3 +1320,11 @@ Menüs, Dialogen und allen fünf Ansichten (Quiz, Karteikarten, Tabelle, Mindmap
   scheitern können", Auth je Route, SoC vor DRY, DoD meldet die Testzahl) und bremsten sie nirgends (kein Gegenstück
   "ein Test muss etwas hinzufügen", keine Regel, welche Ebene welche Aussage trägt). AGENTS.md, Abschnitt "Tests":
   vier neue Punkte (ein Verhalten, ein Test, tiefste Ebene; Löschprobe; nicht testenswert; Testzahl ist kein Ziel).
+
+## 2026-10-03 (Chat-Antwort wiederholte dieselbe Tatsache)
+
+Auf "Wie viele Erwerbspersonen gab es 2018?" kam derselbe Wert zweimal, in zwei Sätzen mit anderer Rundung (46,2
+Millionen, dann 46 185 Tausend), weil die Quelle ihn zweimal nennt. Beide Zitate waren gültig, die Antwort war aber
+unnötig lang. Der Chat-Prompt verlangt jetzt, jede Tatsache nur einmal zu nennen und alle belegenden Abschnitte in
+einem Satz zu zitieren. Kein Test: nur der Wortlaut des Prompts ändert sich, der Vertrag (Zitate, Schema) nicht. Nicht
+verifiziert: ob das Modell die Regel auf der Live-Seite einhält; das zeigt erst ein Versuch nach dem Deploy.
