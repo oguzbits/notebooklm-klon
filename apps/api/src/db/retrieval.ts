@@ -65,7 +65,7 @@ function scopedChunks(params: SearchParams) {
     sql`, `
   );
   return sql`
-    SELECT c.id, c.embedding, c.search_vector
+    SELECT c.id, c.source_id, c.embedding, c.search_vector
     FROM chunks c
     JOIN sources s ON s.id = c.source_id AND s.user_id = ${params.userId}
     JOIN notebook_sources ns ON ns.source_id = s.id AND ns.notebook_id = ${params.notebookId}
@@ -73,14 +73,23 @@ function scopedChunks(params: SearchParams) {
     WHERE c.source_id IN (${sourceIdList})`;
 }
 
+/**
+ * The nearest vectors, plus the nearest one of every source: with several sources in a notebook, a
+ * source in another language than the question (a German question about an English paper) ranks
+ * behind all the others, yet it can hold the answer. The rank stays the one among all chunks.
+ */
 function vectorRanked(queryEmbedding: number[]) {
   const vector = `[${queryEmbedding.join(',')}]`;
   return sql`
-    SELECT id, row_number() OVER (ORDER BY embedding <=> ${vector}::vector, id) AS rank
-    FROM scoped
-    WHERE embedding IS NOT NULL
-    ORDER BY embedding <=> ${vector}::vector, id
-    LIMIT ${CANDIDATES_PER_RANKER}`;
+    SELECT id, rank FROM (
+      SELECT id,
+        row_number() OVER (ORDER BY embedding <=> ${vector}::vector, id) AS rank,
+        row_number() OVER (PARTITION BY source_id ORDER BY embedding <=> ${vector}::vector, id) AS source_rank
+      FROM scoped
+      WHERE embedding IS NOT NULL
+    ) nearest
+    WHERE rank <= ${CANDIDATES_PER_RANKER} OR source_rank = 1
+    ORDER BY rank`;
 }
 
 function textRanked(queryText: string) {
@@ -111,6 +120,8 @@ function textRanked(queryText: string) {
  * Scope is enforced in SQL: the chunk's source must belong to the user, the notebook must belong to
  * the user and contain the source, and the source must be among the selected ones. The scan over
  * the scoped chunks is exact, which is fine at this scale and never skips a chunk to an ANN index.
+ * Every selected source that has a vector gets its best passage into the result first, the rest of
+ * the slots go by score, so a source in another language than the question is not crowded out.
  */
 export async function searchChunks(db: Database, params: SearchParams): Promise<RetrievedChunk[]> {
   if (params.sourceIds.length === 0) return [];
@@ -125,12 +136,20 @@ export async function searchChunks(db: Database, params: SearchParams): Promise<
         UNION ALL
         SELECT id, ${TEXT_WEIGHT}::numeric / (${RRF_K} + rank) AS part FROM text_ranked) ranked
       GROUP BY id
+    ),
+    picked AS (
+      SELECT id, source_id, ordinal, text, start_offset, end_offset, score
+      FROM (
+        SELECT c.id, c.source_id, c.ordinal, c.text, c.start_offset, c.end_offset,
+          fused.score::float8 AS score,
+          row_number() OVER (PARTITION BY c.source_id ORDER BY fused.score DESC, c.id) AS source_rank
+        FROM fused
+        JOIN chunks c ON c.id = fused.id
+      ) ranked
+      ORDER BY (source_rank = 1) DESC, score DESC, id
+      LIMIT ${params.limit}
     )
-    SELECT c.id, c.source_id, c.ordinal, c.text, c.start_offset, c.end_offset, fused.score::float8 AS score
-    FROM fused
-    JOIN chunks c ON c.id = fused.id
-    ORDER BY fused.score DESC, c.id
-    LIMIT ${params.limit}
+  SELECT * FROM picked ORDER BY score DESC, id
   `);
 
   return result.rows.map(toRetrievedChunk);

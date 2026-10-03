@@ -1541,3 +1541,25 @@ Tausend" in der Antwort galt als nicht belegt. Die einzige Aussage wurde verworf
 
 **Offen:** Wirkung der Änderungen messen (Nutzer führt `pnpm eval:live` aus). Danach entscheiden, ob
 zusammengehörende Aussagen im Strom zusammengeführt werden müssen (neues Ereignis im Vertrag).
+
+## Retrieval: jede gewählte Quelle bekommt ihren besten Auszug
+
+**Anlass:** Der zweite Live-Lauf (`reports/eval-live-2026-10-03T15-37-14.745Z.md`) zeigte, dass deutsche
+Fragen an das englische DPR-Paper in einem Notizbuch mit mehreren Quellen nicht gefunden werden (Rang 11,
+fehlender Treffer, falsche Antwort). Die Textsuche trägt über Sprachgrenzen nichts bei; die Vektorsuche
+des englischen Papers liegt hinter den deutschen Quellen. Mehr Auszüge (8 auf 12) reichten nicht.
+
+- **Entscheidung:** Die Vektor-Kandidaten enthalten zusätzlich den nächsten Auszug jeder gewählten Quelle.
+  Bei der Auswahl der `limit` Auszüge kommt je Quelle der beste verschmolzene Auszug zuerst, die übrigen
+  Plätze gehen nach Punktzahl; das Ergebnis bleibt nach Punktzahl sortiert. Ein Notizbuch mit mehr Quellen
+  als Plätzen liefert weiterhin genau `limit` Auszüge. Alles in einer SQL-Abfrage in
+  `apps/api/src/db/retrieval.ts`, der Geltungsbereich (Nutzer, Notizbuch, gewählte Quellen) bleibt in SQL.
+- **Abwägung:** Bei Fragen, die nur eine Quelle betreffen, gehen bis zu (Quellen minus eins) Plätze an
+  weniger passende Auszüge anderer Quellen. Bei zwölf Plätzen und wenigen Quellen ist das tragbar; die
+  Antwort darf Auszüge ohne Bezug ignorieren.
+- **Nicht gemessen:** Die Wirkung zeigt erst `pnpm eval:live`. Getestet ist der Vertrag (jede Quelle ist
+  vertreten, das Limit gilt, die Reihenfolge bleibt).
+- **Offen:** Knappe Einzelaussagen (der Prompt-Zusatz wirkte kaum; als Nächstes ein stärkeres Chatmodell
+  über die Konfiguration probieren, Kosten entscheidet der Nutzer). Im Fall `dpr-rag-cross-source`
+  verweigerte das Modell mit zitierten "keine Information"-Aussagen statt mit leerer Liste. NIST-Scan
+  (RECITATION) unverändert.
