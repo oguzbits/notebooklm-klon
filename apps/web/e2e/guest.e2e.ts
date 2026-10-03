@@ -25,5 +25,8 @@ test('a guest tries the example notebook with one click, asks a question and lea
   await page.getByRole('button', { name: 'Konto' }).click();
   await expect(page.getByText('Gast-Zugang')).toBeVisible();
   await page.getByRole('menuitem', { name: 'Abmelden' }).click();
+  // A guest is warned first: there is no password to come back with.
+  await expect(page.getByRole('alertdialog', { name: 'Als Gast abmelden?' })).toBeVisible();
+  await page.getByRole('button', { name: 'Abmelden' }).click();
   await expect(page).toHaveURL(/\/anmelden$/);
 });

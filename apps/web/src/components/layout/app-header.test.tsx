@@ -43,6 +43,46 @@ describe('AppHeader', () => {
     await vi.waitFor(() => expect(signedOut).toBe(true));
   });
 
+  describe('signing out as a guest', () => {
+    const GUEST = { id: 'g1', name: 'Gast', email: 'guest@example.test', isAnonymous: true };
+    let signedOut: boolean;
+
+    async function openMenuAndSignOut() {
+      signedOut = false;
+      server.use(
+        http.get('*/api/auth/get-session', () => HttpResponse.json({ user: GUEST })),
+        http.post('*/api/auth/sign-out', () => {
+          signedOut = true;
+          return HttpResponse.json({ success: true });
+        })
+      );
+      renderHeader();
+      const user = userEvent.setup();
+      await user.click(await screen.findByRole('button', { name: 'Konto' }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Abmelden' }));
+      return user;
+    }
+
+    it('warns that the data is out of reach afterwards and signs out only after the confirmation', async () => {
+      const user = await openMenuAndSignOut();
+
+      expect(await screen.findByText(/kommst du nicht mehr an deine Notebooks/)).toBeTruthy();
+      expect(signedOut).toBe(false);
+
+      await user.click(screen.getByRole('button', { name: 'Abmelden' }));
+
+      await vi.waitFor(() => expect(signedOut).toBe(true));
+    });
+
+    it('stays signed in when the guest cancels', async () => {
+      const user = await openMenuAndSignOut();
+
+      await user.click(await screen.findByRole('button', { name: 'Abbrechen' }));
+
+      expect(signedOut).toBe(false);
+    });
+  });
+
   describe('deleting the account', () => {
     async function openDialog() {
       server.use(http.get('*/api/auth/get-session', () => HttpResponse.json({ user: USER })));

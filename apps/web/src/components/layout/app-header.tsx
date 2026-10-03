@@ -6,6 +6,7 @@ import { Link } from 'react-router';
 import { DeleteAccountDialog } from '@/components/auth/delete-account-dialog';
 import { Logo } from '@/components/brand/logo';
 import { SettingsMenu } from '@/components/layout/settings-menu';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,17 +16,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useSession, useSignOut } from '@/hooks/use-session';
+import { describeError } from '@/lib/messages';
 import { ROUTES } from '@/lib/routes';
+
+const GUEST_SIGN_OUT_WARNING =
+  'Ein Gast-Zugang hat kein Passwort. Nach dem Abmelden kommst du nicht mehr an deine Notebooks und Quellen heran; beim nächsten Mal startest du mit einem neuen Beispiel.';
 
 /** The bar on top of every page: the mark, an optional title and actions, and the account menu. */
 export function AppHeader({ title, actions }: { title?: ReactNode; actions?: ReactNode }) {
-  const session = useSession();
-  const signOut = useSignOut();
-  const [deleting, setDeleting] = useState(false);
-  const isGuest = session.data?.isAnonymous === true;
-  // A guest has no email address of their own, only a placeholder.
-  const email = isGuest ? '' : (session.data?.email ?? '');
-
   return (
     <header className="flex h-16 shrink-0 items-center justify-between gap-3 pr-3 pl-4 sm:pr-4 sm:pl-5">
       <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -44,39 +42,67 @@ export function AppHeader({ title, actions }: { title?: ReactNode; actions?: Rea
       <div className="flex shrink-0 items-center gap-2">
         {actions}
         <SettingsMenu />
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            aria-label="Konto"
-            className="veil inline-flex size-10 items-center justify-center rounded-full bg-secondary text-base font-title text-foreground"
-          >
-            {isGuest ? 'G' : email.charAt(0).toUpperCase() || '?'}
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {isGuest ? (
-              <DropdownMenuLabel>
-                <span className="block">Gast-Zugang</span>
-                <span className="block font-normal text-muted-foreground">
-                  Deine Daten werden nach {GUEST_LIMITS.LIFETIME_DAYS} Tagen gelöscht.
-                </span>
-              </DropdownMenuLabel>
-            ) : (
-              <DropdownMenuLabel>{email}</DropdownMenuLabel>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem disabled={signOut.isPending} onSelect={() => signOut.mutate()}>
-              <LogOut aria-hidden />
-              Abmelden
-            </DropdownMenuItem>
-            {!isGuest && (
-              <DropdownMenuItem onSelect={() => setDeleting(true)}>
-                <Trash2 aria-hidden />
-                Konto löschen
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <DeleteAccountDialog open={deleting} onOpenChange={setDeleting} />
+        <AccountMenu />
       </div>
     </header>
+  );
+}
+
+function AccountMenu() {
+  const session = useSession();
+  const signOut = useSignOut();
+  const [deleting, setDeleting] = useState(false);
+  const [confirmingSignOut, setConfirmingSignOut] = useState(false);
+  const isGuest = session.data?.isAnonymous === true;
+  // A guest has no email address of their own, only a placeholder.
+  const email = isGuest ? '' : (session.data?.email ?? '');
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          aria-label="Konto"
+          className="veil inline-flex size-10 items-center justify-center rounded-full bg-secondary text-base font-title text-foreground"
+        >
+          {isGuest ? 'G' : email.charAt(0).toUpperCase() || '?'}
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {isGuest ? (
+            <DropdownMenuLabel>
+              <span className="block">Gast-Zugang</span>
+              <span className="block font-normal text-muted-foreground">
+                Deine Daten werden nach {GUEST_LIMITS.LIFETIME_DAYS} Tagen gelöscht.
+              </span>
+            </DropdownMenuLabel>
+          ) : (
+            <DropdownMenuLabel>{email}</DropdownMenuLabel>
+          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            disabled={signOut.isPending}
+            onSelect={() => (isGuest ? setConfirmingSignOut(true) : signOut.mutate())}
+          >
+            <LogOut aria-hidden />
+            Abmelden
+          </DropdownMenuItem>
+          {!isGuest && (
+            <DropdownMenuItem onSelect={() => setDeleting(true)}>
+              <Trash2 aria-hidden />
+              Konto löschen
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <DeleteAccountDialog open={deleting} onOpenChange={setDeleting} />
+      <ConfirmDialog
+        open={confirmingSignOut}
+        onOpenChange={setConfirmingSignOut}
+        title="Als Gast abmelden?"
+        description={signOut.isError ? describeError(signOut.error) : GUEST_SIGN_OUT_WARNING}
+        confirmLabel="Abmelden"
+        pending={signOut.isPending}
+        onConfirm={() => signOut.mutate()}
+      />
+    </>
   );
 }
