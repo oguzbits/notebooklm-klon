@@ -1519,3 +1519,25 @@ Tausend" in der Antwort galt als nicht belegt. Die einzige Aussage wurde verworf
   OCR, ein Anker wäre fragil.
 - Offen: Antworten und Ränge am Live-Eval messen, `requiredFacts` mit Schreibvarianten nachziehen,
   wenn eine korrekte Antwort sie verfehlt.
+
+## Eval-Auswertung 2026-10-03: Vollständigkeit, zwölf Auszüge, schärfere Golden-Fakten
+
+**Anlass:** Der Live-Lauf über 30 Fragen (`reports/eval-live-2026-10-03T15-23-47.205Z.md`) zeigte vier Schwächen.
+
+- **Zu knappe Antworten:** Einzelne Sätze ließen den Vergleichspartner (DPR gegen ORQA), die Ausnahme
+  (Entzug der Staatsangehörigkeit) oder den zweiten erfragten Wert (Umsatz und Mitarbeitende) weg, obwohl der
+  Auszug im Kontext stand. Der Prompt verlangt jetzt allgemein: jeden Teil der Frage beantworten, bei
+  Vergleichen beide Seiten nennen, Ausnahmen, Bedingungen und Grenzen der Auszüge mitliefern. Keine Wörter
+  eines Falls. Der Wortlaut selbst wird nicht getestet; ob es wirkt, zeigt der nächste `pnpm eval:live`.
+- **Frage und Quelle in verschiedenen Sprachen:** Zwei deutsche Fragen an das englische DPR-Paper fanden den
+  Anker nicht (leere Antwort), eine nur auf Rang 7 von 8. Die Textsuche kann über Sprachgrenzen nichts
+  beitragen, die Vektorsuche allein trägt dünn. `CHAT_CONTEXT_CHUNKS` steigt von 8 auf 12: mehr Spielraum für
+  den Treffer, rund 50 % mehr Kontext je Frage, das passt in Limit und Kosten. Nicht gewählt: die Frage vorab
+  übersetzen (ein zusätzlicher Modellaufruf je Frage, ohne Messung nicht zu rechtfertigen).
+- **Golden-Fakten:** `destatis-erwerbspersonen` kennt jetzt auch "46,185" (genau, so antwortet das Modell
+  mit Tausend-Tabelle). `rag-halluzinationen` verlangte nur das Wort "Halluzination" und bestand auch ohne die
+  Einschränkung; jetzt muss die Antwort sagen, dass RAG sie nicht verhindert.
+- **NIST-Scan (RECITATION):** unverändert, siehe oben: eine bekannte Grenze des Modells, kein Fehler im Code.
+
+**Offen:** Wirkung der Änderungen messen (Nutzer führt `pnpm eval:live` aus). Danach entscheiden, ob
+zusammengehörende Aussagen im Strom zusammengeführt werden müssen (neues Ereignis im Vertrag).

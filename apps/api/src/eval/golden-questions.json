@@ -85,7 +85,7 @@
         "text": "Zahl der Erwerbspersonen erreicht mit 46,2 Millionen für 2018 einen neuen Höchststand"
       }
     ],
-    "requiredFacts": [["46,2", "46 185"]]
+    "requiredFacts": [["46,2", "46 185", "46,185"]]
   },
   {
     "id": "destatis-erwerbslosenquote",
@@ -373,7 +373,15 @@
         "text": "RAG does not prevent hallucinations in LLMs."
       }
     ],
-    "requiredFacts": [["halluzin", "hallucinat"]]
+    "requiredFacts": [
+      [
+        "verhindert nicht",
+        "verhindert keine",
+        "nicht verhindern",
+        "nicht verhindert",
+        "does not prevent"
+      ]
+    ]
   },
   {
     "id": "gg-wahlhuerde",

@@ -22,7 +22,10 @@ export const CHAT_SYSTEM_PROMPT =
   'both forms in one statement and cite both passages; never round a figure yourself. Say each ' +
   'fact once: if several passages or phrasings state the same fact, give it in one statement and ' +
   'cite all of them instead of restating it. After the direct answer add what the passages say ' +
-  'that belongs to it (components, period, scope). If a passage gives a different value for the ' +
+  'that belongs to it (components, period, scope). Answer every part of the question: when it ' +
+  'asks for several items or compares two things, give each item and both sides of the ' +
+  'comparison. Include any exception, condition or limit that the passages attach to the ' +
+  'answer. If a passage gives a different value for the ' +
   'same quantity because it covers another group, period or method, say so in its own statement ' +
   'and name the difference. ' +
   'If the context does not contain the answer, return an empty statements list: ' +

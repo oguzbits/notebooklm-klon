@@ -19,7 +19,7 @@ export const LIMITS = {
   SOURCES_PER_USER_PER_WINDOW: 10,
   QUOTA_WINDOW_HOURS: 24,
   /** Chat: passages handed to the model per question. */
-  CHAT_CONTEXT_CHUNKS: 8,
+  CHAT_CONTEXT_CHUNKS: 12,
   /** Chat: earlier exchanges handed to the model so that a short follow-up question has a subject. */
   CHAT_HISTORY_TURNS: 3,
   /** Chat: characters of an earlier answer that go into the history; the rest is cut. */
