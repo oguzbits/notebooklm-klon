@@ -4,6 +4,11 @@ import { createGeminiPdfParser } from './ai/gemini-pdf-parser';
 import { RateLimiter, systemClock } from './ai/rate-limiter';
 import type { Env } from './config/env';
 import { LIMITS, PROVIDER_LIMITS } from './config/limits';
+import {
+  parseTranslations,
+  TRANSLATE_JSON_SCHEMA,
+  TRANSLATE_SYSTEM_PROMPT,
+} from './core/query-variants';
 import { log } from './logger';
 import { createParseSource } from './parsing/parse-source';
 
@@ -38,10 +43,24 @@ export function createProviders(
     onUsage: (usage) => log({ level: 'info', msg: 'chat usage', ...usage }),
   });
 
+  const stream = (input: ChatInput) => chat.stream(input);
+  const translateQuery = async (text: string): Promise<string[]> => {
+    let reply = '';
+    for await (const piece of stream({
+      system: TRANSLATE_SYSTEM_PROMPT,
+      user: text,
+      schema: TRANSLATE_JSON_SCHEMA,
+    })) {
+      reply += piece;
+    }
+    return parseTranslations(reply);
+  };
+
   return {
     parse: createParseSource(documentParser),
     embedDocuments: (texts: string[]) => embedder.embedDocuments(texts),
     embedQuery: (text: string) => embedder.embedQuery(text),
-    stream: (input: ChatInput) => chat.stream(input),
+    translateQuery,
+    stream,
   };
 }

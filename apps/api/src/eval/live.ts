@@ -109,6 +109,7 @@ try {
   }
   const ports = {
     embedQuery: providers.embedQuery,
+    translateQuery: providers.translateQuery,
     search: (request: Parameters<typeof searchChunks>[1]) => searchChunks(db, request),
     stream: providers.stream,
     onError: (error: unknown) =>

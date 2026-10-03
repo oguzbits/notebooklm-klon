@@ -36,6 +36,7 @@ const CHUNKS = [
 function ports(reply: string, options: { fail?: boolean } = {}): EvalPorts {
   return {
     embedQuery: async () => [1],
+    translateQuery: async () => [],
     search: async () => CHUNKS,
     stream: async function* (_input: ChatInput) {
       yield reply;

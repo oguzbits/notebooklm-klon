@@ -19,5 +19,5 @@ export interface AppDeps {
   /** Holds the cover images. Null: not set up, and cover images are not offered. */
   objectStore: ObjectStore | null;
   /** The provider side of the chat: the rest of the chat ports comes from the database. */
-  chat: Pick<ChatPorts, 'embedQuery' | 'stream' | 'onError'>;
+  chat: Pick<ChatPorts, 'embedQuery' | 'translateQuery' | 'stream' | 'onError'>;
 }

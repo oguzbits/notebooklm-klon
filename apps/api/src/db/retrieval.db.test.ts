@@ -50,7 +50,7 @@ const search = (
 ) =>
   searchChunks(db, {
     ...scope,
-    queryEmbedding: axisVector(queryAxis, EMBEDDING_DIMENSIONS),
+    queryEmbeddings: [axisVector(queryAxis, EMBEDDING_DIMENSIONS)],
     queryText,
     limit,
   });
@@ -155,6 +155,29 @@ describe('searchChunks ranking', () => {
     const texts = results.map((r) => r.text);
     expect(texts).toContain('Höhe des Budgets 1,25 Millionen');
     expect(texts).toContain('Budget ohne Vektor');
+  });
+
+  it('finds a chunk by the vector of any version of the question', async () => {
+    const notebook = await insertNotebook(USER);
+    const source = await insertSource(USER, notebook.id, 'a');
+    await insertChunk(source.id, 0, 'ohne Bezug', 0);
+    await insertChunk(source.id, 1, 'ganz woanders', 2);
+    await insertChunk(source.id, 2, 'passt zur ersten Fassung', 3);
+    await insertChunk(source.id, 3, 'passt zur zweiten Fassung', 1);
+
+    const results = await searchChunks(db, {
+      userId: USER,
+      notebookId: notebook.id,
+      sourceIds: [source.id],
+      queryEmbeddings: [axisVector(3, EMBEDDING_DIMENSIONS), axisVector(1, EMBEDDING_DIMENSIONS)],
+      queryText: '?',
+      limit: 2,
+    });
+
+    expect(results.map((r) => r.text).sort()).toEqual([
+      'passt zur ersten Fassung',
+      'passt zur zweiten Fassung',
+    ]);
   });
 
   it('respects the limit', async () => {

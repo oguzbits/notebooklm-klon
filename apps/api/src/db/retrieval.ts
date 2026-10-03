@@ -21,7 +21,9 @@ export interface SearchParams {
   notebookId: string;
   /** The sources the user selected in this notebook. */
   sourceIds: string[];
-  queryEmbedding: number[];
+  /** One vector per version of the question (for example German and English); each ranks on its own. */
+  queryEmbeddings: number[][];
+  /** The words of all versions of the question. */
   queryText: string;
   limit: number;
 }
@@ -73,6 +75,8 @@ function scopedChunks(params: SearchParams) {
     WHERE c.source_id IN (${sourceIdList})`;
 }
 
+const vectorRankedName = (index: number) => sql.raw(`vector_ranked_${index}`);
+
 function vectorRanked(queryEmbedding: number[]) {
   const vector = `[${queryEmbedding.join(',')}]`;
   return sql`
@@ -115,13 +119,28 @@ function textRanked(queryText: string) {
 export async function searchChunks(db: Database, params: SearchParams): Promise<RetrievedChunk[]> {
   if (params.sourceIds.length === 0) return [];
 
+  // Each version of the question is its own ranking; a chunk that several versions find adds up.
+  const vectorCtes = sql.join(
+    params.queryEmbeddings.map(
+      (embedding, index) => sql`${vectorRankedName(index)} AS (${vectorRanked(embedding)})`
+    ),
+    sql`, `
+  );
+  const vectorParts = sql.join(
+    params.queryEmbeddings.map(
+      (_embedding, index) =>
+        sql`SELECT id, 1.0 / (${RRF_K} + rank) AS part FROM ${vectorRankedName(index)}`
+    ),
+    sql` UNION ALL `
+  );
+
   const result = await db.execute<ChunkRow>(sql`
     WITH scoped AS (${scopedChunks(params)}),
-    vector_ranked AS (${vectorRanked(params.queryEmbedding)}),
+    ${vectorCtes},
     text_ranked AS (${textRanked(params.queryText)}),
     fused AS (
       SELECT id, sum(part) AS score
-      FROM (SELECT id, 1.0 / (${RRF_K} + rank) AS part FROM vector_ranked
+      FROM (${vectorParts}
         UNION ALL
         SELECT id, ${TEXT_WEIGHT}::numeric / (${RRF_K} + rank) AS part FROM text_ranked) ranked
       GROUP BY id

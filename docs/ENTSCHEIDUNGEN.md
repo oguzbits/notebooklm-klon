@@ -1578,3 +1578,33 @@ Wiederholungserkennung eingreift.
 was gefragt war, ist keine Antwort. Anlass: `nist-fines` ist unbeantwortbar, wurde aber aus einem
 verwandten Auszug beantwortet. Die Wirkung ist nicht gemessen; getestet wird nur der Vertrag, nicht
 der Wortlaut.
+
+## Retrieval: die Frage wird vorab auf Deutsch und Englisch gesucht
+
+**Anlass.** Der Eval zeigte Fragen, deren Antwort in einer Quelle in der anderen Sprache steht
+(dpr-top5-de, dpr-rag-cross-source, rag-halluzinationen). Der Textsucher findet über Sprachen
+hinweg nichts (andere Wörter), und der Vektor der Frage liegt dem Absatz in der anderen Sprache
+weiter entfernt als einem gleichsprachigen Fremdtreffer.
+
+**Entscheidung.** `prepareAnswer` lässt die (bei Folgefragen schon umformulierte) Frage einmal vom
+Chat-Modell ins Deutsche und Englische bringen (`core/query-variants.ts`, ein JSON-Aufruf, ca.
+100 Tokens). Jede Fassung bekommt einen eigenen Vektor und ein eigenes Ranking in `searchChunks`
+(RRF, Gewicht 1 je Fassung); der Textsucher bekommt die Wörter aller Fassungen. Eine Fassung, die
+nach dem Entfernen der Füllwörter der Frage gleicht, wird nicht doppelt gesucht.
+
+**Bewusst so.**
+
+- Eigener Port `translateQuery` statt des Umformulier-Aufrufs zu erweitern: die `stream`-Fakes
+  bleiben unberührt, und die Übersetzung gilt auch für Fragen ohne Verlauf.
+- Dasselbe Chat-Modell und derselbe Limiter, keine neue Umgebungsvariable: ein Deploy kann daran
+  nicht scheitern.
+- Immer an, keine Spracherkennung: eine Heuristik wäre die nächste Fehlerquelle, die Kosten sind
+  ein kurzer Aufruf.
+- Fail fast: scheitert die Übersetzung, scheitert die Frage mit dem üblichen Fehler. Eine Suche in
+  nur einer Sprache würde still Treffer der anderen Sprache verpassen.
+- Der Offline-Server (E2E) und die Testharnesse übersetzen nicht (`translateQuery` gibt `[]`).
+
+**Kosten und offen.** Eine Frage braucht jetzt zwei Chat-Modell-Aufrufe (drei mit Umformulierung),
+das sind bei 15 Anfragen/Minute rechnerisch 7 Fragen/Minute, und etwa 0,5 s mehr bis zur ersten
+Aussage. Die Wirkung ist **nicht gemessen**: `pnpm eval:live` muss der Nutzer laufen lassen und
+besonders die drei genannten Fragen ansehen. Bringt es dort nichts, wird es zurückgenommen.

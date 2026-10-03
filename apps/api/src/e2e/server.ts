@@ -150,6 +150,8 @@ const app = createApp({
   objectStore,
   chat: {
     embedQuery: async (text) => hashEmbedding(text, EMBEDDING_DIMENSIONS),
+    // The offline server has no model to translate with: it searches the question as it is.
+    translateQuery: async () => [],
     stream,
     onError: (error) =>
       log({

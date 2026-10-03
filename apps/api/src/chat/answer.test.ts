@@ -57,6 +57,7 @@ function fakePorts(overrides: Partial<ChatPorts> = {}) {
   const calls = {
     search: [] as unknown[],
     embedded: [] as string[],
+    translated: [] as string[],
     modelInput: undefined as { system: string; user: string } | undefined,
     errors: [] as unknown[],
   };
@@ -65,6 +66,10 @@ function fakePorts(overrides: Partial<ChatPorts> = {}) {
     embedQuery: async (text) => {
       calls.embedded.push(text);
       return [0.1, 0.2];
+    },
+    translateQuery: async (text) => {
+      calls.translated.push(text);
+      return [];
     },
     search: async (params) => {
       calls.search.push(params);
@@ -101,11 +106,52 @@ describe('prepareAnswer', () => {
         userId: 'user-a',
         notebookId: 'notebook-1',
         sourceIds: ['s1', 's2'],
-        queryEmbedding: [0.1, 0.2],
+        queryEmbeddings: [[0.1, 0.2]],
         queryText: 'Wer leitet das Projekt?',
         limit: LIMITS.CHAT_CONTEXT_CHUNKS,
       },
     ]);
+  });
+
+  it('searches the question in both languages: a vector for each version, the words of all', async () => {
+    const { ports, calls } = fakePorts({
+      translateQuery: async (text) => [text, 'Who leads the project?'],
+      embedQuery: async (text) => [text.length],
+    });
+
+    await prepareAnswer(INPUT, ports);
+
+    expect(calls.search).toMatchObject([
+      {
+        queryEmbeddings: [['Wer leitet das Projekt?'.length], ['Who leads the project?'.length]],
+        queryText: 'Wer leitet das Projekt? Who leads the project?',
+      },
+    ]);
+  });
+
+  it('translates the rewritten query of a follow-up, not the bare follow-up', async () => {
+    const { ports, calls } = fakePorts({
+      stream: async function* () {
+        yield '{"query":"Wer leitet das Projekt Nordlicht 2019?"}';
+      },
+    });
+    const history = [{ question: 'Wer leitet Nordlicht?', answer: 'Dr. Brandt.' }];
+
+    await prepareAnswer({ ...INPUT, question: 'Und 2019?', history }, ports);
+
+    expect(calls.translated).toEqual(['Wer leitet das Projekt Nordlicht 2019?']);
+  });
+
+  it('fails instead of searching in one language when the translation fails', async () => {
+    const { ports, calls } = fakePorts({
+      translateQuery: async () => {
+        throw new GeminiError(429, 'quota');
+      },
+    });
+
+    await expect(prepareAnswer(INPUT, ports)).rejects.toThrow(GeminiError);
+
+    expect(calls.search).toEqual([]);
   });
 
   it('sends the model the system prompt of the notebook config', async () => {

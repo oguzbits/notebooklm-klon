@@ -93,6 +93,7 @@ const app = createApp({
   objectStore,
   chat: {
     embedQuery: providers.embedQuery,
+    translateQuery: providers.translateQuery,
     stream: providers.stream,
     onError: (error) =>
       log({

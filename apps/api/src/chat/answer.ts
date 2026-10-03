@@ -19,6 +19,7 @@ import {
 } from '../core/chat-history';
 import { ANSWER_JSON_SCHEMA, buildUserMessage, chatSystemPrompt } from '../core/chat-prompt';
 import { cleanFollowUps } from '../core/follow-ups';
+import { queryVariants } from '../core/query-variants';
 import { findUnsupportedNumbers, repeatsStatement } from '../core/statement-check';
 import { StatementStream } from '../core/statement-stream';
 import { HTTP_STATUS } from '../http-status';
@@ -52,7 +53,9 @@ export interface SearchRequest {
   userId: string;
   notebookId: string;
   sourceIds: string[];
-  queryEmbedding: number[];
+  /** One vector per version of the question; each ranks on its own and the rankings are fused. */
+  queryEmbeddings: number[][];
+  /** The words of all versions of the question. */
   queryText: string;
   limit: number;
 }
@@ -62,6 +65,8 @@ export interface ChatPorts {
   /** Ready sources the user has selected in this notebook. */
   selectedSourceIds: (userId: string, notebookId: string) => Promise<string[]>;
   embedQuery: (text: string) => Promise<number[]>;
+  /** The question in the other languages of the documents (German and English), for the search. */
+  translateQuery: (text: string) => Promise<string[]>;
   search: (request: SearchRequest) => Promise<{ id: string; text: string }[]>;
   stream: (input: ChatInput) => AsyncIterable<string>;
   /** Called with an error that ended an answer. It is then also reported as an ERROR event. */
@@ -122,13 +127,17 @@ export async function prepareAnswer(
   // Searched after the sources check: a notebook without a source never calls the model.
   const query =
     history.length === 0 ? input.question : await rewriteQuery(input.question, history, ports);
-  const queryEmbedding = await ports.embedQuery(query);
+  // A passage in another language than the question shares no words and few vectors with it, so
+  // the search also asks in the other language. A failed translation throws: a search in one
+  // language would silently miss what the documents say in the other.
+  const versions = queryVariants(query, await ports.translateQuery(query));
+  const queryEmbeddings = await Promise.all(versions.map((version) => ports.embedQuery(version)));
   const chunks = await ports.search({
     userId: input.userId,
     notebookId: input.notebookId,
     sourceIds,
-    queryEmbedding,
-    queryText: query,
+    queryEmbeddings,
+    queryText: versions.join(' '),
     limit: LIMITS.CHAT_CONTEXT_CHUNKS,
   });
   return {

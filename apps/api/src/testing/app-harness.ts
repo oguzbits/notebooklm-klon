@@ -71,6 +71,7 @@ export function createHarness(options: HarnessOptions = {}) {
     objectStore: options.objectStore ?? null,
     chat: {
       embedQuery: options.embedQuery ?? (async () => axisVector(0, EMBEDDING_DIMENSIONS)),
+      translateQuery: async () => [],
       stream:
         options.model ??
         async function* (input) {
