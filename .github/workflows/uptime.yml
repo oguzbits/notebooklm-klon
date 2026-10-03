@@ -1,0 +1,20 @@
+name: Uptime
+
+# A red run is the alert: GitHub mails the person who last changed this file. The public repository
+# has no Actions minute limit. GitHub may delay a scheduled run by several minutes.
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  health:
+    name: Live app answers /health
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: curl --fail --silent --show-error --max-time 20 --retry 3 --retry-delay 10 --retry-all-errors "https://$DEPLOY_HOST/health"

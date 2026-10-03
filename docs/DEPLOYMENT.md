@@ -55,8 +55,9 @@ Was nur du tun kannst, ist hier fett.
 
 4. **Erster Deploy:** Actions > Deploy > Run workflow. Danach läuft er nach jedem grünen CI-Lauf auf `main`.
 5. **Demo-Notebook anlegen** (einmalig, siehe unten).
-6. **Uptime-Check** auf `https://<Hostname>/health` einrichten (zum Beispiel UptimeRobot, kostenlos). Dann Live-Link,
-   Demo-Zugang und Loom-Link in die [README](../README.md) eintragen.
+6. **Uptime-Check:** der Workflow `Uptime` ruft alle 15 Minuten `https://<Hostname>/health` auf; ein roter Lauf
+   ist der Alarm (GitHub mailt). Optional zusätzlich UptimeRobot. Dann Live-Link, Demo-Zugang und Loom-Link in
+   die [README](../README.md) eintragen.
 
 ### Demo-Notebook anlegen
 

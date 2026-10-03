@@ -28,6 +28,8 @@ jobs:
           require-lockfile: true
       - run: pnpm format:check
       - run: pnpm check
+      # Production dependencies only: the open moderate finding is a dev-server issue in drizzle-kit.
+      - run: pnpm audit --prod --audit-level=high
 
   test:
     name: Tests (offline, no real API calls)
