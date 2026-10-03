@@ -7,14 +7,12 @@ import { EmptyStudioOutputError } from './core/studio-prompt';
 import { mapError } from './error-mapping';
 import { HTTP_STATUS } from './http-status';
 import { IMPORT_ERROR, ImportError } from './import/fetch-url';
-import { QuotaExceededError } from './ingestion/ingest';
 import { UnreadablePdfError } from './parsing/pdf-pages';
 import { WebSearchError } from './search/tavily-search';
 
 describe('mapError', () => {
   it('maps every domain error to one status and code', () => {
     const cases = [
-      [new QuotaExceededError(), HTTP_STATUS.TOO_MANY_REQUESTS, API_ERROR.UPLOAD_LIMIT_REACHED],
       [
         new GeminiError(HTTP_STATUS.TOO_MANY_REQUESTS, 'x'),
         HTTP_STATUS.TOO_MANY_REQUESTS,

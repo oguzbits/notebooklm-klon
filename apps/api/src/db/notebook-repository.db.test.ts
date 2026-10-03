@@ -10,7 +10,6 @@ import {
   updateNotebook,
 } from './notebook-repository';
 import {
-  countSourcesSince,
   linkSource,
   listNotebookSources,
   renameSource,
@@ -337,20 +336,6 @@ describe('duplicateNotebook', () => {
     expect(await duplicateNotebook(db, USER, theirs.id)).toBeNull();
     expect(await duplicateNotebook(db, USER, 'kein-uuid')).toBeNull();
     expect(await listNotebooks(db, USER)).toEqual([]);
-  });
-});
-
-describe('countSourcesSince', () => {
-  it("counts the user's own sources created within the window", async () => {
-    await addSource(USER, 'a');
-    await addSource(USER, 'b');
-    await addSource(OTHER, 'c');
-    const old = await addSource(USER, 'old');
-    await pool.query("UPDATE sources SET created_at = now() - interval '3 days' WHERE id = $1", [
-      old.id,
-    ]);
-
-    expect(await countSourcesSince(db, USER, 24)).toBe(2);
   });
 });
 

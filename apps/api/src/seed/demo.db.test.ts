@@ -27,7 +27,7 @@ let notebookModelCalls: ChatInput[] = [];
 const deps = {
   importDeps: {
     ports: {
-      sources: createSourceStorage(db, { enforceQuota: false }),
+      sources: createSourceStorage(db),
       uploads: createUploadStorage(db),
       parse: async (_kind: unknown, bytes: Uint8Array) => ({
         text: new TextDecoder().decode(bytes),

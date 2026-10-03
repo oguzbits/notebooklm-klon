@@ -54,7 +54,7 @@ export function createHarness(options: HarnessOptions = {}) {
     auth,
     db,
     ingest: {
-      sources: createSourceStorage(db, { enforceQuota: true }),
+      sources: createSourceStorage(db),
       uploads: createUploadStorage(db),
       queue: {
         enqueue: async (sourceId) => {

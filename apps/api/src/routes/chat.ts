@@ -8,7 +8,6 @@ import { answerQuestion, type ChatPorts, prepareAnswer } from '../chat/answer';
 import { AnswerRecorder } from '../chat/answer-recorder';
 import { LIMITS } from '../config/limits';
 import { historyTurns } from '../core/chat-history';
-import { createWindowLimit, HOUR_MS } from '../core/window-limit';
 import { getChatConfig } from '../db/chat-config-repository';
 import { findNotebook } from '../db/notebook-repository';
 import { selectedReadySourceIds } from '../db/notebook-source-repository';
@@ -37,12 +36,6 @@ async function earlierTurns(deps: AppDeps, userId: string, notebookId: string) {
 export function chatRoutes(deps: AppDeps) {
   const app = new Hono<{ Variables: AuthVariables }>();
 
-  const perUser = createWindowLimit({
-    max: LIMITS.CHAT_QUESTIONS_PER_USER_PER_HOUR,
-    windowMs: HOUR_MS,
-    now: Date.now,
-  });
-
   const ports: ChatPorts = {
     ...deps.chat,
     selectedSourceIds: (userId, notebookId) => selectedReadySourceIds(deps.db, userId, notebookId),
@@ -63,11 +56,6 @@ export function chatRoutes(deps: AppDeps) {
     const config = await getChatConfig(deps.db, userId, notebookId);
     // Read before the new question is saved, so the history holds only what came before it.
     const history = await earlierTurns(deps, userId, notebookId);
-    // Counted before the search: the search already calls the embedding and, for a follow-up, the
-    // model. A question rejected above never gets here.
-    if (!perUser.take(userId)) {
-      return c.json(error(API_ERROR.CHAT_LIMIT_REACHED), HTTP_STATUS.TOO_MANY_REQUESTS);
-    }
 
     const prepared = await prepareAnswer(
       {

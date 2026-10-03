@@ -13,7 +13,6 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { GeminiError } from './ai/gemini-error';
 import { createApp } from './app';
-import { LIMITS } from './config/limits';
 import { BASE_URL, createHarness } from './testing/app-harness';
 
 const PASSWORD = 'ein-sicheres-passwort';
@@ -162,38 +161,6 @@ describe('POST /api/notebooks/:id/chat', () => {
     expect(rewrite?.user).not.toMatch(/Question: Und seit wann\?/);
     expect(answer?.user).toContain('Question: Und seit wann?');
     expect(answer?.user).toContain('<history>');
-  });
-
-  it('gives each user a number of questions an hour and refuses the next before the model', async () => {
-    const notebook = await createNotebook(alice);
-    await addText(alice, notebook, 'a.txt', 'Dr. Brandt leitet das Projekt Nordlicht.');
-    await harness.runJobs();
-    const ask = (cookie: string, nb: string) =>
-      app.request(`/api/notebooks/${nb}/chat`, post(cookie, { question: 'Wer leitet es?' }));
-
-    for (let i = 0; i < LIMITS.CHAT_QUESTIONS_PER_USER_PER_HOUR; i += 1) {
-      const answered = await ask(alice, notebook);
-      expect(answered.status).toBe(200);
-      // Read to the end: an answer nobody reads is still saved in the background, which would run into the next test.
-      await answered.text();
-    }
-    const calls = harness.modelInputs.length;
-    const refused = await ask(alice, notebook);
-
-    expect(refused.status).toBe(429);
-    expect(ApiErrorSchema.parse(await refused.json()).code).toBe(API_ERROR.CHAT_LIMIT_REACHED);
-    expect(harness.modelInputs).toHaveLength(calls);
-    const history = await app.request(`/api/notebooks/${notebook}/messages`, {
-      headers: { cookie: alice },
-    });
-    expect(
-      ChatMessageListSchema.parse(await history.json()).filter((m) => m.role === CHAT_ROLE.USER)
-    ).toHaveLength(LIMITS.CHAT_QUESTIONS_PER_USER_PER_HOUR);
-
-    const bobsNotebook = await createNotebook(bob);
-    await addText(bob, bobsNotebook, 'b.txt', 'Bobs Text.');
-    await harness.runJobs();
-    expect((await ask(bob, bobsNotebook)).status).toBe(200);
   });
 
   it('streams the answer with real chunk IDs of a source of the user', async () => {

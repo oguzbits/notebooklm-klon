@@ -1,29 +1,23 @@
 import { SOURCE_FAILURE, SOURCE_STATUS } from '@nlm/shared';
-import { and, eq, inArray, lt, sql } from 'drizzle-orm';
+import { and, eq, inArray, lt } from 'drizzle-orm';
 
-import { LIMITS } from '../config/limits';
-import { type IngestPorts, QuotaExceededError } from '../ingestion/ingest';
+import type { IngestPorts } from '../ingestion/ingest';
 import type { SubmitPorts } from '../ingestion/submit';
 import type { Database } from './client';
-import { countSourcesSince } from './notebook-source-repository';
 import { chunks, sources, sourceUploads } from './schema';
 
 type NewSource = Parameters<IngestPorts['sources']['findOrCreate']>[0];
 
-async function findOrCreateSource(db: Database, input: NewSource, enforceQuota: boolean) {
-  // One transaction per user at a time, so two uploads at once can neither both slip under the
-  // quota nor both insert the same content.
+async function findOrCreateSource(db: Database, input: NewSource) {
+  // The unique index on (user, content hash) decides when the same content arrives twice at once:
+  // the second insert waits for the first and then finds its row.
   return db.transaction(async (tx) => {
-    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${input.userId}))`);
     const [created] = await tx
       .insert(sources)
       .values(input)
       .onConflictDoNothing({ target: [sources.userId, sources.contentHash] })
       .returning({ id: sources.id, status: sources.status });
-    if (created) {
-      if (enforceQuota && (await isOverQuota(tx, input.userId))) throw new QuotaExceededError();
-      return { ...created, created: true };
-    }
+    if (created) return { ...created, created: true };
     const [existing] = await tx
       .select({ id: sources.id, status: sources.status })
       .from(sources)
@@ -33,16 +27,10 @@ async function findOrCreateSource(db: Database, input: NewSource, enforceQuota: 
   });
 }
 
-/**
- * PostgreSQL implementation of the storage half of the ingestion pipeline. With `enforceQuota` a
- * new source counts against the user's quota: that is for the API, not for the seed and eval scripts.
- */
-export function createSourceStorage(
-  db: Database,
-  options: { enforceQuota: boolean }
-): IngestPorts['sources'] {
+/** PostgreSQL implementation of the storage half of the ingestion pipeline. */
+export function createSourceStorage(db: Database): IngestPorts['sources'] {
   return {
-    findOrCreate: (input) => findOrCreateSource(db, input, options.enforceQuota),
+    findOrCreate: (input) => findOrCreateSource(db, input),
 
     async markProcessing(sourceId) {
       await db
@@ -84,11 +72,6 @@ export function createSourceStorage(
         .where(eq(sources.id, sourceId));
     },
   };
-}
-
-async function isOverQuota(tx: Pick<Database, 'select'>, userId: string): Promise<boolean> {
-  const used = await countSourcesSince(tx, userId, LIMITS.QUOTA_WINDOW_HOURS);
-  return used > LIMITS.SOURCES_PER_USER_PER_WINDOW;
 }
 
 /**

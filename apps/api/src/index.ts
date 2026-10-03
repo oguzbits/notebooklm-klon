@@ -58,7 +58,7 @@ const queue = await createJobQueue(env.DATABASE_URL, {
 const providers = createProviders(env);
 
 const ingest: SubmitPorts = {
-  sources: createSourceStorage(db, { enforceQuota: true }),
+  sources: createSourceStorage(db),
   uploads: createUploadStorage(db),
   queue,
   parse: providers.parse,

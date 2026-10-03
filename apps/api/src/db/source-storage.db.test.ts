@@ -8,14 +8,12 @@ import {
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { LIMITS } from '../config/limits';
-import { QuotaExceededError } from '../ingestion/ingest';
 import { chunks, sources } from './schema';
 import { createSourceStorage, createUploadStorage, failInterruptedSources } from './source-storage';
 import { axisVector, createTestDb, ensureUsers } from './testing/test-db';
 
 const { db, pool } = createTestDb();
-const storage = createSourceStorage(db, { enforceQuota: false });
+const storage = createSourceStorage(db);
 const uploads = createUploadStorage(db);
 const USER = 'user-a';
 
@@ -162,60 +160,6 @@ describe('source storage', () => {
     const [row] = await db.select().from(sources).where(eq(sources.id, id));
     expect(row?.status).toBe(SOURCE_STATUS.PENDING);
     expect(await db.select().from(chunks).where(eq(chunks.sourceId, id))).toHaveLength(0);
-  });
-});
-
-describe('source quota', () => {
-  const limited = createSourceStorage(db, { enforceQuota: true });
-  const LIMIT = LIMITS.SOURCES_PER_USER_PER_WINDOW;
-  const fill = async (userId: string, count: number) => {
-    for (let index = 0; index < count; index += 1) {
-      await limited.findOrCreate(newSource(`${userId}-${index}`, userId));
-    }
-  };
-
-  it('lets a user add sources until the limit is reached', async () => {
-    await fill(USER, LIMIT - 1);
-
-    await expect(limited.findOrCreate(newSource('last'))).resolves.toMatchObject({ created: true });
-  });
-
-  it('refuses the next new source once the limit is reached and stores nothing', async () => {
-    await fill(USER, LIMIT);
-
-    await expect(limited.findOrCreate(newSource('one-too-many'))).rejects.toBeInstanceOf(
-      QuotaExceededError
-    );
-    expect(await pool.query('SELECT 1 FROM sources WHERE user_id = $1', [USER])).toHaveProperty(
-      'rowCount',
-      LIMIT
-    );
-  });
-
-  it('still returns known content when the limit is reached', async () => {
-    await fill(USER, LIMIT);
-
-    await expect(limited.findOrCreate(newSource(`${USER}-0`))).resolves.toMatchObject({
-      created: false,
-    });
-  });
-
-  it("does not count another user's sources", async () => {
-    await fill('user-b', LIMIT);
-
-    await expect(limited.findOrCreate(newSource())).resolves.toMatchObject({ created: true });
-  });
-
-  it('lets only as many through as fit when requests arrive at once', async () => {
-    await fill(USER, LIMIT - 1);
-    // Open several connections first: on one warm connection the requests would run one by one.
-    await Promise.all([1, 2, 3, 4, 5].map(() => pool.query('SELECT pg_sleep(0.05)')));
-
-    const results = await Promise.allSettled(
-      [1, 2, 3, 4, 5].map((index) => limited.findOrCreate(newSource(`race-${index}`)))
-    );
-
-    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
   });
 });
 

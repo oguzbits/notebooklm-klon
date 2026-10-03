@@ -13,7 +13,6 @@ export const API_ERROR = {
   NO_SOURCES_SELECTED: 'NO_SOURCES_SELECTED',
   CHAT_LIMIT_REACHED: 'CHAT_LIMIT_REACHED',
   INVALID_URL: 'INVALID_URL',
-  UPLOAD_LIMIT_REACHED: 'UPLOAD_LIMIT_REACHED',
   /** The Studio could not support any part of its output with the sources. */
   STUDIO_EMPTY: 'STUDIO_EMPTY',
   /** No guest can be started now: no example to copy, or too many guests at the moment. */

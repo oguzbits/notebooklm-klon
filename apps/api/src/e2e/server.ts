@@ -75,7 +75,7 @@ const auth = createAuth(db, {
 });
 
 const ingest: SubmitPorts = {
-  sources: createSourceStorage(db, { enforceQuota: true }),
+  sources: createSourceStorage(db),
   uploads: createUploadStorage(db),
   // No job queue: the job runs right after the request, in this process.
   queue: {

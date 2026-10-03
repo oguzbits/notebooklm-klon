@@ -14,7 +14,6 @@ import {
   IngestError,
   type IngestPorts,
   processSource,
-  QuotaExceededError,
   registerSource,
 } from './ingest';
 
@@ -127,19 +126,6 @@ describe('registerSource', () => {
 
     expect(again).toEqual({ sourceId: 's1', action: SUBMIT_ACTION.RETRY });
     expect(rows).toHaveLength(1);
-  });
-});
-
-describe('registerSource quota', () => {
-  it('lets the quota error of the storage through and creates nothing', async () => {
-    const { ports, rows } = fakePorts();
-    ports.sources.findOrCreate = async () => {
-      throw new QuotaExceededError();
-    };
-
-    await expect(registerSource(input, ports)).rejects.toBeInstanceOf(QuotaExceededError);
-
-    expect(rows).toHaveLength(0);
   });
 });
 

@@ -20,8 +20,6 @@ export const ERROR_MESSAGE: Record<ApiErrorCode, string> = {
   [API_ERROR.CHAT_LIMIT_REACHED]:
     'Im Moment sind keine Antworten mehr möglich. Bitte versuche es später noch einmal.',
   [API_ERROR.INVALID_URL]: 'Diese Adresse kann nicht geladen werden. Prüfe den Link.',
-  [API_ERROR.UPLOAD_LIMIT_REACHED]:
-    'Du hast in den letzten 24 Stunden schon die erlaubte Zahl neuer Quellen hinzugefügt.',
   [API_ERROR.STUDIO_EMPTY]:
     'Aus den ausgewählten Quellen ließ sich dazu nichts Belegbares erstellen. Wähle mehr oder andere Quellen.',
   [API_ERROR.GUEST_UNAVAILABLE]:

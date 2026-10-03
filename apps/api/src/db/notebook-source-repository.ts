@@ -1,12 +1,10 @@
 import { SOURCE_FAILURE, SOURCE_STATUS, type SourceFailure, type SourceSummary } from '@nlm/shared';
-import { and, asc, count, eq, gte, sql } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 
 import type { Database } from './client';
 import { ownedNotebookSource } from './ownership';
 import { notebooks, notebookSources, sources } from './schema';
 import { UUID } from './uuid';
-
-const MS_PER_HOUR = 3_600_000;
 
 /** What asking to read a failed source again led to. */
 export const RESTART = {
@@ -219,18 +217,4 @@ export async function restartFailedSource(
     .innerJoin(sources, eq(sources.id, notebookSources.sourceId))
     .where(and(ownedNotebookSource(notebookId, userId), eq(sources.id, sourceId)));
   return owned ? RESTART.NOT_RETRYABLE : RESTART.MISSING;
-}
-
-/** Sources the user created within the last `hours`, for the upload quota. */
-export async function countSourcesSince(
-  db: Pick<Database, 'select'>,
-  userId: string,
-  hours: number
-): Promise<number> {
-  const since = new Date(Date.now() - hours * MS_PER_HOUR);
-  const [row] = await db
-    .select({ total: count() })
-    .from(sources)
-    .where(and(eq(sources.userId, userId), gte(sources.createdAt, since)));
-  return row?.total ?? 0;
 }

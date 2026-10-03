@@ -33,14 +33,6 @@ export class IngestError extends Error {
   }
 }
 
-/** The user has added as many new sources as the quota allows for now. */
-export class QuotaExceededError extends Error {
-  constructor() {
-    super('The quota for new sources is used up.');
-    this.name = 'QuotaExceededError';
-  }
-}
-
 export interface ParsedDocument {
   text: string;
   pageCount: number | null;
@@ -53,10 +45,7 @@ export interface StoredChunk extends TextChunk {
 /** Everything the pipeline needs from the outside: storage, parsing and embedding. */
 export interface IngestPorts {
   sources: {
-    /**
-     * Makes the source for this content, or returns the one the user already has (created: false).
-     * Throws QuotaExceededError when a new source would go over the quota.
-     */
+    /** Makes the source for this content, or returns the one the user already has (created: false). */
     findOrCreate: (input: {
       userId: string;
       contentHash: string;

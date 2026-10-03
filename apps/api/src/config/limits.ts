@@ -2,7 +2,8 @@ import { GUEST_LIMITS } from '@nlm/shared';
 
 /**
  * Numeric limits of the application. Model IDs are not here: they come from the environment.
- * Free-tier provider limits are handled by the rate limiter, these are our own guard rails.
+ * Provider limits are handled by the rate limiter. There is no limit per user for chat, Studio or
+ * sources; the guards are the page limit, the content hash and the limits for guests and web search.
  */
 export const LIMITS = {
   /** URL import: redirects followed before giving up. */
@@ -15,9 +16,6 @@ export const LIMITS = {
   UPLOAD_MAX_BYTES: 10 * 1024 * 1024,
   /** Upload: most pages a PDF may have (each page costs provider quota). */
   UPLOAD_MAX_PDF_PAGES: 50,
-  /** Quota: new sources one user may add within the window below. Re-uploading known content is free. */
-  SOURCES_PER_USER_PER_WINDOW: 10,
-  QUOTA_WINDOW_HOURS: 24,
   /** Chat: passages handed to the model per question. */
   CHAT_CONTEXT_CHUNKS: 12,
   /** Chat: earlier exchanges handed to the model so that a short follow-up question has a subject. */
@@ -48,10 +46,6 @@ export const LIMITS = {
   GUESTS_ALIVE: 200,
   /** Guests of the live demo: days until the account and its data are deleted. */
   GUEST_LIFETIME_DAYS: GUEST_LIMITS.LIFETIME_DAYS,
-  /** Chat: questions one user may ask per hour. The model quota is shared, so one user must not use it up. */
-  CHAT_QUESTIONS_PER_USER_PER_HOUR: 30,
-  /** Studio: outputs one user may make per hour (each reads up to STUDIO_MAX_CHARS). */
-  STUDIO_OUTPUTS_PER_USER_PER_HOUR: 20,
   /** Web search: searches one user may make per hour. */
   WEB_SEARCHES_PER_USER_PER_HOUR: 10,
   /** Web search: searches everybody together may make per day (the service gives 1000 credits a month). */

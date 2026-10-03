@@ -426,29 +426,6 @@ describe('file upload', () => {
     expect(response.status).toBe(404);
     expect(harness.enqueued).toEqual([]);
   });
-
-  it('stops new sources when the quota is used up but still recognizes known content', async () => {
-    const notebook = await createNotebook(alice);
-    for (let index = 0; index < LIMITS.SOURCES_PER_USER_PER_WINDOW; index += 1) {
-      await app.request(
-        `/api/notebooks/${notebook}/sources/file`,
-        upload(alice, `n${index}.txt`, `Inhalt ${index}`)
-      );
-    }
-
-    const fresh = await app.request(
-      `/api/notebooks/${notebook}/sources/file`,
-      upload(alice, 'neu.txt', 'ganz neu')
-    );
-    const known = await app.request(
-      `/api/notebooks/${notebook}/sources/file`,
-      upload(alice, 'x.txt', 'Inhalt 0')
-    );
-
-    expect(fresh.status).toBe(429);
-    expect(ApiErrorSchema.parse(await fresh.json()).code).toBe(API_ERROR.UPLOAD_LIMIT_REACHED);
-    expect(known.status).toBe(202);
-  });
 });
 
 describe('URL import', () => {

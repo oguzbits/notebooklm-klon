@@ -13,7 +13,7 @@ export function createLocalImportDeps(
 ): LocalImportDeps {
   return {
     ports: {
-      sources: createSourceStorage(db, { enforceQuota: false }),
+      sources: createSourceStorage(db),
       uploads: createUploadStorage(db),
       parse: providers.parse,
       embed: providers.embedDocuments,

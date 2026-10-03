@@ -6,7 +6,6 @@ import { NoSourcesSelectedError } from './chat/answer';
 import { EmptyStudioOutputError } from './core/studio-prompt';
 import { HTTP_STATUS } from './http-status';
 import { ImportError } from './import/fetch-url';
-import { QuotaExceededError } from './ingestion/ingest';
 import { UnreadablePdfError } from './parsing/pdf-pages';
 import { WebSearchError } from './search/tavily-search';
 
@@ -21,12 +20,6 @@ type Mapped = { status: ContentfulStatusCode; body: ApiError };
  * status, so the chat stream reports its failures as events instead.
  */
 export function mapError(error: Error): Mapped | null {
-  if (error instanceof QuotaExceededError) {
-    return {
-      status: HTTP_STATUS.TOO_MANY_REQUESTS,
-      body: errorBody(API_ERROR.UPLOAD_LIMIT_REACHED),
-    };
-  }
   if (error instanceof ImportError) {
     return { status: HTTP_STATUS.BAD_REQUEST, body: errorBody(API_ERROR.INVALID_URL, error.code) };
   }
