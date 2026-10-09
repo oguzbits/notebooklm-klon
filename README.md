@@ -8,7 +8,6 @@ Nachbau von NotebookLM. Der Schwerpunkt liegt auf dem Weg von der Quelle zum nac
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Live-Demo   | https://128-140-11-37.sslip.io                                                                                                                                   |
 | Demo-Zugang | Auf der Anmeldeseite **„Demo ausprobieren“**: ein Gastkonto mit einer eigenen Kopie des Demo-Notebooks, ohne E-Mail und Passwort. Es wird nach 7 Tagen gelöscht. |
-| Video       | [Fünf kurze Clips auf Google Drive](https://drive.google.com/drive/folders/1NYfELgTGQY0Y7AduA0j_-293LNfDruur?usp=sharing)                                        |
 
 ## Was es kann
 
