@@ -194,7 +194,7 @@ export function ChatSettingsDialog({ notebookId, open, onOpenChange }: ChatSetti
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[864px]">
         <DialogHeader>
           <DialogTitle>Chat konfigurieren</DialogTitle>
           <DialogDescription>
