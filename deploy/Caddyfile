@@ -11,6 +11,14 @@
 		Permissions-Policy "camera=(), microphone=(), geolocation=()"
 	}
 
+	# One JSON line per request on stdout, so it lands in the journal like the other logs. The ID that
+	# the app puts in the response header X-Request-Id is part of it (resp_headers). Cookie and
+	# Authorization are redacted by Caddy.
+	log {
+		output stdout
+		format json
+	}
+
 	# Files and pages are compressed. The API is not: the chat answer is a stream that must reach the
 	# browser piece by piece, and a compressing encoder would hold it back.
 	@compressible not path /api/*

@@ -77,14 +77,16 @@ Kontingent) und kann wiederholt werden. Das `POSTGRES_PASSWORD` steht in `/srv/n
 Alle Befehle auf dem Server als `deploy`, im Verzeichnis `/srv/nlm`. Kurzform:
 `dc() { docker compose -f docker-compose.prod.yml --env-file server.env "$@"; }`
 
-| Aufgabe                | Befehl                                                                 |
-| ---------------------- | ---------------------------------------------------------------------- |
-| Zustand ansehen        | `dc ps` und `curl -s https://<Hostname>/health`                        |
-| Logs der App           | `dc logs -f --tail 100 app`                                            |
-| Speicher und CPU       | `docker stats --no-stream`                                             |
-| Neue Version ausrollen | Merge auf `main` (nach grünem CI) oder Actions > Deploy > Run workflow |
-| Alte Version ausrollen | Actions > Deploy > Run workflow mit dem älteren Branch oder Tag        |
-| Neu starten            | `dc restart app`                                                       |
+| Aufgabe                | Befehl                                                                        |
+| ---------------------- | ----------------------------------------------------------------------------- |
+| Zustand ansehen        | `dc ps` und `curl -s https://<Hostname>/health`                               |
+| Logs der App           | `dc logs -f --tail 100 app`                                                   |
+| Logs vor dem Deploy    | `journalctl CONTAINER_NAME=nlm-app-1 --since '3 days ago'` (Name aus `dc ps`) |
+| Fehler zu einer ID     | `journalctl --since '3 days ago' \| grep <Referenz>`                          |
+| Speicher und CPU       | `docker stats --no-stream`                                                    |
+| Neue Version ausrollen | Merge auf `main` (nach grünem CI) oder Actions > Deploy > Run workflow        |
+| Alte Version ausrollen | Actions > Deploy > Run workflow mit dem älteren Branch oder Tag               |
+| Neu starten            | `dc restart app`                                                              |
 
 Speichergrenzen in [docker-compose.prod.yml](../deploy/docker-compose.prod.yml): App 1,5 GB, Postgres 1 GB (`shared_buffers`
 256 MB), SeaweedFS 512 MB, Caddy 256 MB. Das sind Schätzwerte, keine Messung: ob sie passen, zeigt `docker stats`, und ein
@@ -93,8 +95,11 @@ Version festgelegt (Postgres `0.8.7-pg18`, Node mit Digest im [Dockerfile](../Do
 ein bewusster Schritt, kein Nachziehen beim nächsten Deploy.
 
 Zu beobachten nach dem ersten Lauf: ob 4 GB RAM reichen (`docker stats`, Swap mit `free -h`). Die Logs enthalten nach
-Regel 7 in [AGENTS.md](../AGENTS.md) nur IDs, Längen, Dauer und Token-Zahlen, keine Dokumentinhalte. Docker rotiert sie
-(je 10 MB, 3 Dateien).
+Regel 7 in [AGENTS.md](../AGENTS.md) nur IDs, Längen, Dauer und Token-Zahlen, keine Dokumentinhalte. Sie stehen im Journal des Servers
+(`journald`-Treiber, 30 Tage, höchstens 500 MB, eingerichtet in [bootstrap.sh](../deploy/bootstrap.sh)) und überleben darum
+jeden Deploy. Auf einem Server, der vor dieser Änderung eingerichtet wurde, gilt das erst, nachdem der Block „Container logs
+live in the journal“ aus dem Skript einmal als root ausgeführt wurde. Jede Anfrage trägt eine ID (`X-Request-Id`, steht in
+Caddys Zugriffslog und in jeder Logzeile der App); eine Fehlermeldung im Browser nennt die ersten acht Zeichen als „Referenz“.
 
 ### Backup und Wiederherstellung
 
