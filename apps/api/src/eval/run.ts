@@ -1,4 +1,4 @@
-import { type ApiErrorCode, CHAT_EVENT } from '@nlm/shared';
+import { API_ERROR, type ApiErrorCode, CHAT_EVENT } from '@nlm/shared';
 
 import {
   answerQuestion,
@@ -116,15 +116,23 @@ export async function runQuestion(
   };
 
   const started = now();
-  const prepared = await prepareAnswer({ ...scope, question: question.question }, chatPorts);
+  let failure: ApiErrorCode | null = null;
+  // A failure before the answer (translation, embedding, search) ends this question, not the run:
+  // the question counts as failed, like a failure of the stream, and the report shows it.
+  const prepared = await prepareAnswer({ ...scope, question: question.question }, chatPorts).catch(
+    (error: unknown) => {
+      ports.onError(error);
+      failure = API_ERROR.INTERNAL;
+      return null;
+    }
+  );
   const prepareMs = now() - started;
   const statements: CitedStatement[] = [];
   let droppedStatements = 0;
   let strippedCitations = 0;
-  let failure: ApiErrorCode | null = null;
   let firstStatementMs: number | null = null;
 
-  for await (const event of answerQuestion(prepared, chatPorts)) {
+  for await (const event of prepared ? answerQuestion(prepared, chatPorts) : []) {
     if (event.type === CHAT_EVENT.STATEMENT) {
       firstStatementMs ??= now() - started;
       statements.push({ text: event.text, chunkIds: event.chunkIds });

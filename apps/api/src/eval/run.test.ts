@@ -121,6 +121,23 @@ describe('runQuestion', () => {
     expect(result.failure).toBe(API_ERROR.INTERNAL);
     expect(result.statements).toHaveLength(1);
   });
+
+  it('records a failure before the answer, such as a timeout of the translation, instead of ending the run', async () => {
+    const seen: unknown[] = [];
+    const failing: EvalPorts = {
+      ...ports(''),
+      translateQuery: async () => {
+        throw new DOMException('The operation was aborted due to timeout', 'TimeoutError');
+      },
+      onError: (error) => seen.push(error),
+    };
+
+    const result = await runQuestion(QUESTION, SCOPE, failing, { topK: 2, now });
+
+    expect(result.failure).toBe(API_ERROR.INTERNAL);
+    expect(result.statements).toEqual([]);
+    expect(seen).toHaveLength(1);
+  });
 });
 
 describe('runQuestion with a question the sources cannot answer', () => {
