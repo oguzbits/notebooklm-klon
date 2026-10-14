@@ -24,6 +24,7 @@ import { submitSource } from '../ingestion/submit';
 import { log } from '../logger';
 import { pageTitle } from '../parsing/parse-web';
 import { countPdfPages } from '../parsing/pdf-pages';
+import type { UsageGuard } from '../usage/usage-guard';
 import { json, notebookParams } from './openapi';
 
 // Room for the multipart framing around a file that is exactly at the limit.
@@ -202,7 +203,7 @@ async function fetchAsSource(deps: AppDeps, url: string) {
 }
 
 /** Adding sources: a file upload and a URL import. Both end in the same ingestion job. */
-export function sourceRoutes(deps: AppDeps) {
+export function sourceRoutes(deps: AppDeps, guard: UsageGuard) {
   const app = new OpenAPIHono<{ Variables: AuthVariables & RequestIdVariables }>();
 
   // Multipart upload, not described in OpenAPI: the schema language has no good file type.
@@ -219,6 +220,7 @@ export function sourceRoutes(deps: AppDeps) {
         return c.json(error(API_ERROR.NOT_FOUND), HTTP_STATUS.NOT_FOUND);
       }
 
+      await guard.assertBudget();
       const form = await c.req.parseBody();
       const file = form.file;
       if (!(file instanceof File)) {
@@ -251,6 +253,7 @@ export function sourceRoutes(deps: AppDeps) {
     if (!(await findNotebook(deps.db, userId, notebookId))) {
       return c.json(error(API_ERROR.NOT_FOUND), HTTP_STATUS.NOT_FOUND);
     }
+    await guard.assertBudget();
     const video = youtubeVideoUrl(url);
     if (video !== null)
       return c.json(await addVideo(deps, userId, notebookId, video), HTTP_STATUS.ACCEPTED);

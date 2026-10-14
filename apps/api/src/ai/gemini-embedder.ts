@@ -83,9 +83,9 @@ export function createGeminiEmbedder(config: GeminiEmbedderConfig) {
   return {
     embedDocuments: (texts: string[], userId: string) =>
       embed(texts.map(documentText), userId, USAGE_PURPOSE.EMBED),
-    /** A question is counted as part of the chat, the passages of a new source as embedding. */
+    /** A question is counted as preparing the question, the passages of a new source as embedding. */
     async embedQuery(text: string, userId: string): Promise<number[]> {
-      const [vector] = await embed([queryText(text)], userId, USAGE_PURPOSE.CHAT);
+      const [vector] = await embed([queryText(text)], userId, USAGE_PURPOSE.QUESTION_PREP);
       if (!vector) throw new Error('no embedding returned');
       return vector;
     },

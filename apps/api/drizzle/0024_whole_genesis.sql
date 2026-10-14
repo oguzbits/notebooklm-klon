@@ -1,0 +1,2 @@
+ALTER TYPE "public"."usage_purpose" ADD VALUE 'QUESTION_PREPARATION' BEFORE 'STUDIO_OUTPUT';--> statement-breakpoint
+CREATE INDEX "usage_events_created_idx" ON "usage_events" USING btree ("created_at");

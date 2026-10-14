@@ -54,7 +54,7 @@ export function createProviders(
       system: TRANSLATE_SYSTEM_PROMPT,
       user: text,
       schema: TRANSLATE_JSON_SCHEMA,
-      usage: { userId, purpose: USAGE_PURPOSE.CHAT },
+      usage: { userId, purpose: USAGE_PURPOSE.QUESTION_PREP },
     })) {
       reply += piece;
     }

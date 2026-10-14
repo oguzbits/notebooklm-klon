@@ -22,7 +22,9 @@ import { overviewRoutes } from './routes/overview';
 import { readerRoutes } from './routes/reader';
 import { sourceRoutes } from './routes/sources';
 import { studioRoutes } from './routes/studio';
+import { usageRoutes } from './routes/usage';
 import { capabilityRoutes, webSearchRoutes } from './routes/web-search';
+import { createUsageGuard } from './usage/usage-guard';
 
 export function createApp(deps: AppDeps) {
   const app = new OpenAPIHono<{ Variables: AuthVariables & RequestIdVariables }>({
@@ -76,21 +78,26 @@ export function createApp(deps: AppDeps) {
   app.use('/api/notebooks/*', requireUser(deps.auth));
   app.use('/api/web-search', requireUser(deps.auth));
   app.use('/api/capabilities', requireUser(deps.auth));
+  app.use('/api/usage', requireUser(deps.auth));
+
+  // One guard for the whole app: it knows which requests are running.
+  const usage = createUsageGuard(deps.db);
 
   return app
     .route('/api/web-search', webSearchRoutes(deps))
     .route('/api/capabilities', capabilityRoutes(deps))
+    .route('/api/usage', usageRoutes(usage))
     .route('/api/notebooks', notebookRoutes(deps))
-    .route('/api/notebooks', notebookSourceRoutes(deps))
+    .route('/api/notebooks', notebookSourceRoutes(deps, usage))
     .route('/api/notebooks', coverRoutes(deps))
-    .route('/api/notebooks', sourceRoutes(deps))
-    .route('/api/notebooks', chatRoutes(deps))
+    .route('/api/notebooks', sourceRoutes(deps, usage))
+    .route('/api/notebooks', chatRoutes(deps, usage))
     .route('/api/notebooks', readerRoutes(deps))
-    .route('/api/notebooks', overviewRoutes(deps))
-    .route('/api/notebooks', notebookOverviewRoutes(deps))
+    .route('/api/notebooks', overviewRoutes(deps, usage))
+    .route('/api/notebooks', notebookOverviewRoutes(deps, usage))
     .route('/api/notebooks', noteRoutes(deps))
     .route('/api/notebooks', chatConfigRoutes(deps))
-    .route('/api/notebooks', studioRoutes(deps));
+    .route('/api/notebooks', studioRoutes(deps, usage));
 }
 
 export type AppType = ReturnType<typeof createApp>;

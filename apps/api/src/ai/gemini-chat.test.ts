@@ -14,6 +14,7 @@ const KEY = 'test-key-not-real';
 const SCOPE = { userId: 'reader', purpose: USAGE_PURPOSE.CHAT };
 const MAX_OUTPUT_TOKENS = {
   [USAGE_PURPOSE.CHAT]: 111,
+  [USAGE_PURPOSE.QUESTION_PREP]: 55,
   [USAGE_PURPOSE.STUDIO]: 222,
   [USAGE_PURPOSE.OVERVIEW]: 333,
 };

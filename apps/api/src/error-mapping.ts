@@ -4,6 +4,11 @@ import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { GeminiError } from './ai/gemini-error';
 import { NoSourcesSelectedError } from './chat/answer';
 import { EmptyStudioOutputError } from './core/studio-prompt';
+import {
+  DailyBudgetReachedError,
+  RequestInProgressError,
+  UsageLimitReachedError,
+} from './core/usage-limit';
 import { HTTP_STATUS } from './http-status';
 import { ImportError } from './import/fetch-url';
 import { UnreadablePdfError } from './parsing/pdf-pages';
@@ -20,6 +25,26 @@ export const errorBody = (
 });
 
 type Mapped = { status: ContentfulStatusCode; body: ApiError };
+
+/** The refusals of the usage limits: the personal limit, the budget of the demo, a request in progress. */
+function mapUsageError(error: Error): Mapped | null {
+  if (error instanceof UsageLimitReachedError) {
+    return {
+      status: HTTP_STATUS.TOO_MANY_REQUESTS,
+      body: errorBody(API_ERROR.USAGE_LIMIT_REACHED, error.releaseAt.toISOString()),
+    };
+  }
+  if (error instanceof DailyBudgetReachedError) {
+    return {
+      status: HTTP_STATUS.TOO_MANY_REQUESTS,
+      body: errorBody(API_ERROR.DAILY_BUDGET_REACHED),
+    };
+  }
+  if (error instanceof RequestInProgressError) {
+    return { status: HTTP_STATUS.CONFLICT, body: errorBody(API_ERROR.REQUEST_IN_PROGRESS) };
+  }
+  return null;
+}
 
 /**
  * The one place that turns a domain error into a status and an API code. Null for everything else:
@@ -39,6 +64,8 @@ export function mapError(error: Error): Mapped | null {
       body: errorBody(API_ERROR.WEB_SEARCH_LIMIT_REACHED),
     };
   }
+  const usage = mapUsageError(error);
+  if (usage) return usage;
   if (error instanceof NoSourcesSelectedError) {
     return { status: HTTP_STATUS.CONFLICT, body: errorBody(API_ERROR.NO_SOURCES_SELECTED) };
   }

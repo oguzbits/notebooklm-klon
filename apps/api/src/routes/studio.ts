@@ -6,6 +6,7 @@ import {
   StudioOutputListSchema,
   StudioOutputSchema,
   StudioUpdateBodySchema,
+  USAGE_PURPOSE,
 } from '@nlm/shared';
 
 import type { AppDeps } from '../app-deps';
@@ -22,6 +23,7 @@ import {
 } from '../db/studio-repository';
 import { HTTP_STATUS } from '../http-status';
 import { generateStudioOutput } from '../studio/generate';
+import type { UsageGuard } from '../usage/usage-guard';
 import { json, notebookParams, notFound, unauthenticated } from './openapi';
 
 const listRoute = createRoute({
@@ -47,7 +49,10 @@ const createStudioRoute = createRoute({
     400: json(ApiErrorSchema, 'The request is invalid'),
     401: unauthenticated,
     [HTTP_STATUS.NOT_FOUND]: notFound,
-    [HTTP_STATUS.TOO_MANY_REQUESTS]: json(ApiErrorSchema, 'Too many outputs in the last hour'),
+    [HTTP_STATUS.TOO_MANY_REQUESTS]: json(
+      ApiErrorSchema,
+      'The limit of outputs per day is reached, or one is running already'
+    ),
     [HTTP_STATUS.CONFLICT]: json(ApiErrorSchema, 'No source is selected and ready'),
     [HTTP_STATUS.UNPROCESSABLE_ENTITY]: json(
       ApiErrorSchema,
@@ -101,7 +106,7 @@ function studioPorts(deps: AppDeps) {
 }
 
 /** The Studio: reports, flashcards, quizzes and mind maps made from the selected sources. */
-export function studioRoutes(deps: AppDeps) {
+export function studioRoutes(deps: AppDeps, guard: UsageGuard) {
   const app = new OpenAPIHono<{ Variables: AuthVariables }>();
   const missing = { code: API_ERROR.NOT_FOUND };
   const ports = studioPorts(deps);
@@ -116,10 +121,11 @@ export function studioRoutes(deps: AppDeps) {
     })
     .openapi(createStudioRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
+      const slot = await guard.enter(c.var.userId, USAGE_PURPOSE.STUDIO);
       const output = await generateStudioOutput(
         { userId: c.var.userId, notebookId, body: c.req.valid('json') },
         ports
-      );
+      ).finally(slot.release);
       return output ? c.json(output, HTTP_STATUS.CREATED) : c.json(missing, HTTP_STATUS.NOT_FOUND);
     })
     .openapi(updateRoute, async (c) => {

@@ -21,6 +21,7 @@ import {
 } from '../db/notebook-source-repository';
 import { HTTP_STATUS } from '../http-status';
 import { restartSource } from '../ingestion/submit';
+import type { UsageGuard } from '../usage/usage-guard';
 import { invalid, json, notebookParams, notFound, sourceParams, unauthenticated } from './openapi';
 
 const listSourcesRoute = createRoute({
@@ -114,8 +115,21 @@ const removeRoute = createRoute({
   },
 });
 
+/** Reads a failed source again, unless the budget of the demo is used up. */
+async function retrySource(
+  deps: AppDeps,
+  guard: UsageGuard,
+  userId: string,
+  ids: { notebookId: string; sourceId: string }
+) {
+  await guard.assertBudget();
+  const result = await restartFailedSource(deps.db, userId, ids.notebookId, ids.sourceId);
+  if (result === RESTART.STARTED) await restartSource(ids.sourceId, deps.ingest);
+  return result;
+}
+
 /** The sources of a notebook: list them, choose which answers may use, rename one, read a failed one again, take one out. */
-export function notebookSourceRoutes(deps: AppDeps) {
+export function notebookSourceRoutes(deps: AppDeps, guard: UsageGuard) {
   const app = new OpenAPIHono<{ Variables: AuthVariables }>();
 
   return app
@@ -159,11 +173,8 @@ export function notebookSourceRoutes(deps: AppDeps) {
     })
     .openapi(retryRoute, async (c) => {
       const { notebookId, sourceId } = c.req.valid('param');
-      const result = await restartFailedSource(deps.db, c.var.userId, notebookId, sourceId);
-      if (result === RESTART.STARTED) {
-        await restartSource(sourceId, deps.ingest);
-        return c.body(null, HTTP_STATUS.ACCEPTED);
-      }
+      const result = await retrySource(deps, guard, c.var.userId, { notebookId, sourceId });
+      if (result === RESTART.STARTED) return c.body(null, HTTP_STATUS.ACCEPTED);
       return result === RESTART.MISSING
         ? c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND)
         : c.json({ code: API_ERROR.SOURCE_NOT_RETRYABLE }, HTTP_STATUS.CONFLICT);

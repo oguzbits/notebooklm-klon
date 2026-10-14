@@ -42,6 +42,18 @@ export const LIMITS = {
   STUDIO_MAX_CHARS: 120_000,
   /** Usage events (one per model call) are kept this many days. */
   USAGE_RETENTION_DAYS: 30,
+  /** Usage: the window the limits of a user count in. Sliding, not reset at midnight. */
+  USAGE_WINDOW_MS: 24 * 60 * 60 * 1000,
+  /** Usage: questions a user may ask within the window (NotebookLM's free plan is said to allow 50). */
+  CHAT_QUESTIONS_PER_WINDOW: 50,
+  /** Usage: Studio outputs a user may make within the window. Each reads up to 30k tokens of sources. */
+  STUDIO_OUTPUTS_PER_WINDOW: 10,
+  /**
+   * Usage: tokens all users together may use within the window. The credit at the provider is fixed
+   * and ends with errors for everybody, so this stops a day that runs away (also many accounts made
+   * by one person). A user who uses both limits up costs about a million, so this is about ten of them.
+   */
+  DAILY_TOKEN_BUDGET: 10_000_000,
   /** Guests of the live demo: most that may be started within one hour, for everybody together. */
   GUESTS_PER_HOUR: 20,
   /** Guests of the live demo: most that may exist at the same time. */
@@ -67,6 +79,8 @@ export const LIMITS = {
  */
 export const MAX_OUTPUT_TOKENS = {
   [USAGE_PURPOSE.CHAT]: 8_192,
+  /** A rewritten query or a list of translations: a line or two. */
+  [USAGE_PURPOSE.QUESTION_PREP]: 2_048,
   [USAGE_PURPOSE.STUDIO]: 16_384,
   [USAGE_PURPOSE.OVERVIEW]: 4_096,
   /** A transcript is as long as the document or the recording it comes from. */

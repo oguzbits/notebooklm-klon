@@ -1,4 +1,4 @@
-import { type USAGE_PURPOSE, USAGE_ROLE, type UsageEvent } from '@nlm/shared';
+import { type USAGE_PURPOSE, USAGE_ROLE, type UsageEvent, type UsagePurpose } from '@nlm/shared';
 import { z } from 'zod';
 
 import { requestGemini } from './gemini-http';
@@ -46,8 +46,7 @@ export interface GeminiChatConfig {
 }
 
 /** The purposes that go through the chat model. */
-type ChatPurpose =
-  typeof USAGE_PURPOSE.CHAT | typeof USAGE_PURPOSE.STUDIO | typeof USAGE_PURPOSE.OVERVIEW;
+type ChatPurpose = Exclude<UsagePurpose, typeof USAGE_PURPOSE.READ | typeof USAGE_PURPOSE.EMBED>;
 
 export interface ChatInput {
   system: string;

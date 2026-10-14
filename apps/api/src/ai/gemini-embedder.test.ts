@@ -37,7 +37,7 @@ function makeEmbedder(
 }
 
 describe('createGeminiEmbedder', () => {
-  it('records the counts of the provider: documents under embedding, a question under chat', async () => {
+  it('records the counts of the provider: documents under embedding, a question under question preparation', async () => {
     const recorded: UsageEvent[] = [];
     server.use(
       http.post(ENDPOINT, () =>
@@ -55,7 +55,7 @@ describe('createGeminiEmbedder', () => {
     const base = { userId: USER, role: USAGE_ROLE.EMBED, outputTokens: 0, estimated: false };
     expect(recorded).toEqual([
       { ...base, purpose: USAGE_PURPOSE.EMBED, inputTokens: 42 },
-      { ...base, purpose: USAGE_PURPOSE.CHAT, inputTokens: 42 },
+      { ...base, purpose: USAGE_PURPOSE.QUESTION_PREP, inputTokens: 42 },
     ]);
   });
 

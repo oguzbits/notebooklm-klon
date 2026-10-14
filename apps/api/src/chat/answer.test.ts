@@ -192,7 +192,7 @@ describe('prepareAnswer', () => {
     expect(prepared.question).toBe('Und 2019?');
   });
 
-  it('counts every model call of an answer under the asking user as chat', async () => {
+  it('counts every model call of an answer under the asking user, the answer itself as chat', async () => {
     const owners: string[] = [];
     const usages: unknown[] = [];
     const { ports } = fakePorts({
@@ -219,7 +219,7 @@ describe('prepareAnswer', () => {
 
     expect(owners).toEqual([INPUT.userId, INPUT.userId]);
     expect(usages).toEqual([
-      { userId: INPUT.userId, purpose: USAGE_PURPOSE.CHAT },
+      { userId: INPUT.userId, purpose: USAGE_PURPOSE.QUESTION_PREP },
       { userId: INPUT.userId, purpose: USAGE_PURPOSE.CHAT },
     ]);
   });

@@ -27,6 +27,12 @@ export const API_ERROR = {
   COVER_INVALID: 'COVER_INVALID',
   /** The source did not fail, or its original file is no longer kept: it cannot be read again. */
   SOURCE_NOT_RETRYABLE: 'SOURCE_NOT_RETRYABLE',
+  /** The user used up a limit of the day (questions or Studio outputs); `detail` is when it frees up. */
+  USAGE_LIMIT_REACHED: 'USAGE_LIMIT_REACHED',
+  /** The daily budget of the whole demo is used up. */
+  DAILY_BUDGET_REACHED: 'DAILY_BUDGET_REACHED',
+  /** The user already has a request of this kind running. */
+  REQUEST_IN_PROGRESS: 'REQUEST_IN_PROGRESS',
   INTERNAL: 'INTERNAL',
 } as const;
 

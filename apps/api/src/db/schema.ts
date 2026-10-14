@@ -252,5 +252,9 @@ export const usageEvents = pgTable(
     estimated: boolean('estimated').notNull(),
     createdAt: createdAt(),
   },
-  (table) => [index('usage_events_user_idx').on(table.userId, table.createdAt)]
+  (table) => [
+    index('usage_events_user_idx').on(table.userId, table.createdAt),
+    // The budget of the demo adds up all users inside the window.
+    index('usage_events_created_idx').on(table.createdAt),
+  ]
 );

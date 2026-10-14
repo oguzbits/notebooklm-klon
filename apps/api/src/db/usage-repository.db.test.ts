@@ -5,7 +5,13 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { user } from './auth-schema';
 import { usageEvents } from './schema';
 import { createTestDb } from './testing/test-db';
-import { deleteUsageBefore, recordUsage, summarizeUsage } from './usage-repository';
+import {
+  deleteUsageBefore,
+  recordUsage,
+  summarizeUsage,
+  tokensSince,
+  usageTimesSince,
+} from './usage-repository';
 
 const { db, pool } = createTestDb();
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -85,5 +91,40 @@ describe('summarizeUsage', () => {
       estimatedCalls: 1,
     });
     expect(rows).toContainEqual(expect.objectContaining({ userId: 'other', calls: 1 }));
+  });
+});
+
+describe('usageTimesSince', () => {
+  it('lists the times of one purpose of one user inside the window, and nothing else', async () => {
+    await db.insert(user).values({ id: 'other', name: 'other', email: 'other@example.test' });
+    const recent = new Date(Date.now() - 1000);
+    await db.insert(usageEvents).values({ ...event, createdAt: recent });
+    await db.insert(usageEvents).values({ ...event, userId: 'other' });
+    await db.insert(usageEvents).values({ ...event, purpose: USAGE_PURPOSE.STUDIO });
+    await db.insert(usageEvents).values({ ...event, createdAt: new Date(Date.now() - 3 * DAY_MS) });
+
+    const times = await usageTimesSince(
+      db,
+      'reader',
+      USAGE_PURPOSE.CHAT,
+      new Date(Date.now() - DAY_MS)
+    );
+
+    expect(times).toEqual([recent]);
+  });
+});
+
+describe('tokensSince', () => {
+  it('adds the input and output tokens of all users inside the window', async () => {
+    await db.insert(user).values({ id: 'other', name: 'other', email: 'other@example.test' });
+    await recordUsage(db, event);
+    await recordUsage(db, { ...event, userId: 'other', inputTokens: 10, outputTokens: 5 });
+    await db.insert(usageEvents).values({ ...event, createdAt: new Date(Date.now() - 3 * DAY_MS) });
+
+    expect(await tokensSince(db, new Date(Date.now() - DAY_MS))).toBe(1200 + 300 + 15);
+  });
+
+  it('is 0 when nothing was used', async () => {
+    expect(await tokensSince(db, new Date(Date.now() - DAY_MS))).toBe(0);
   });
 });

@@ -105,7 +105,7 @@ async function rewriteQuery(
     system: REWRITE_SYSTEM_PROMPT,
     user: buildRewriteMessage(history, question),
     schema: REWRITE_JSON_SCHEMA,
-    usage: { userId, purpose: USAGE_PURPOSE.CHAT },
+    usage: { userId, purpose: USAGE_PURPOSE.QUESTION_PREP },
   })) {
     reply += piece;
   }
