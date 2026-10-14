@@ -2,10 +2,11 @@
 # renews the certificate by itself (ports 80 and 443 must be open).
 {$SITE_ADDRESS} {
 	# Scripts, fonts and images come only from this origin. style-src needs 'unsafe-inline' because
-	# React sets style attributes (mind map, columns); there is no inline script.
+	# React sets style attributes (mind map, columns); there is no inline script. connect-src also allows
+	# the one Sentry ingest host of our organization (EU), so the browser can report errors.
 	header {
 		Strict-Transport-Security "max-age=31536000"
-		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://o4512256171048960.ingest.de.sentry.io; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 		X-Content-Type-Options nosniff
 		Referrer-Policy strict-origin-when-cross-origin
 		Permissions-Policy "camera=(), microphone=(), geolocation=()"
