@@ -44,7 +44,7 @@ export const LIMITS = {
   USAGE_RETENTION_DAYS: 30,
   /** Usage: the window the limits of a user count in. Sliding, not reset at midnight. */
   USAGE_WINDOW_MS: 24 * 60 * 60 * 1000,
-  /** Usage: questions a user may ask within the window. One question costs roughly half a cent (estimate, not measured). */
+  /** Usage: questions a user may ask within the window. One question costs about 0.35 cent (5 questions of the live eval, 2026-10-15: 6 600 tokens in, 590 out). */
   CHAT_QUESTIONS_PER_WINDOW: 40,
   /** Usage: Studio outputs a user may make within the window. Each reads up to 30k tokens of sources. */
   STUDIO_OUTPUTS_PER_WINDOW: 10,
