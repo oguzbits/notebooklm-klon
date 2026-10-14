@@ -2,6 +2,7 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import { API_ERROR, HealthSchema } from '@nlm/shared';
 import { sql } from 'drizzle-orm';
 import { HTTPException } from 'hono/http-exception';
+import { requestId, type RequestIdVariables } from 'hono/request-id';
 
 import type { AppDeps } from './app-deps';
 import { type AuthVariables, requireUser } from './auth/session';
@@ -23,13 +24,13 @@ import { studioRoutes } from './routes/studio';
 import { capabilityRoutes, webSearchRoutes } from './routes/web-search';
 
 export function createApp(deps: AppDeps) {
-  const app = new OpenAPIHono<{ Variables: AuthVariables }>({
+  const app = new OpenAPIHono<{ Variables: AuthVariables & RequestIdVariables }>({
     // A request that fails validation is always the same shape of error, whatever the route.
     defaultHook: (result, c) => {
       if (!result.success) {
         const field = result.error.issues[0]?.path.join('.');
         return c.json(
-          errorBody(API_ERROR.INVALID_REQUEST, field || undefined),
+          errorBody(API_ERROR.INVALID_REQUEST, field || undefined, c.get('requestId')),
           HTTP_STATUS.BAD_REQUEST
         );
       }
@@ -37,9 +38,13 @@ export function createApp(deps: AppDeps) {
     },
   });
 
+  // One ID per request: a proxy may send it, otherwise it is made here. It is in the response header,
+  // in the body of an error and in every log line about the request.
+  app.use(requestId());
+
   app.onError((error, c) => {
     const mapped = mapError(error);
-    if (mapped) return c.json(mapped.body, mapped.status);
+    if (mapped) return c.json({ ...mapped.body, requestId: c.get('requestId') }, mapped.status);
     if (error instanceof HTTPException) return error.getResponse();
     // Log the kind of error and the route, never the message: it could carry document content.
     log({
@@ -47,8 +52,12 @@ export function createApp(deps: AppDeps) {
       msg: 'unhandled error',
       name: error.name,
       path: new URL(c.req.url).pathname,
+      requestId: c.get('requestId'),
     });
-    return c.json(errorBody(API_ERROR.INTERNAL), HTTP_STATUS.INTERNAL_SERVER_ERROR);
+    return c.json(
+      errorBody(API_ERROR.INTERNAL, undefined, c.get('requestId')),
+      HTTP_STATUS.INTERNAL_SERVER_ERROR
+    );
   });
 
   // The container is only healthy while the database answers: a failure throws and becomes a 500.

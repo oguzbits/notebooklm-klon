@@ -113,11 +113,11 @@ export function createUploadStorage(db: Database): SubmitPorts['uploads'] {
 
     async load(sourceId) {
       const [row] = await db
-        .select({ bytes: sourceUploads.bytes, kind: sources.kind })
+        .select({ bytes: sourceUploads.bytes, kind: sources.kind, userId: sources.userId })
         .from(sourceUploads)
         .innerJoin(sources, eq(sources.id, sourceUploads.sourceId))
         .where(eq(sourceUploads.sourceId, sourceId));
-      return row ? { kind: row.kind, bytes: new Uint8Array(row.bytes) } : null;
+      return row ? { kind: row.kind, bytes: new Uint8Array(row.bytes), userId: row.userId } : null;
     },
 
     async remove(sourceId) {

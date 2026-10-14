@@ -221,7 +221,7 @@ describe('studio routes', () => {
     );
 
     expect(response.status).toBe(409);
-    expect(await response.json()).toEqual({ code: API_ERROR.NO_SOURCES_SELECTED });
+    expect(await response.json()).toMatchObject({ code: API_ERROR.NO_SOURCES_SELECTED });
     expect(modelInputs).toEqual([]);
   });
 
@@ -238,7 +238,7 @@ describe('studio routes', () => {
     );
 
     expect(response.status).toBe(422);
-    expect(await response.json()).toEqual({ code: API_ERROR.STUDIO_EMPTY });
+    expect(await response.json()).toMatchObject({ code: API_ERROR.STUDIO_EMPTY });
     const list = await app.request(`/api/notebooks/${notebook}/studio`, {
       headers: { cookie: alice },
     });

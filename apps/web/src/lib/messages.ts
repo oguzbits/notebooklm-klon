@@ -62,9 +62,13 @@ export const AUTH_MESSAGE: Record<AuthFailure, string> = {
   [AUTH_FAILURE.UNKNOWN]: 'Das hat nicht geklappt. Bitte versuche es noch einmal.',
 };
 
+const REFERENCE_LENGTH = 8;
+
 /** The German text for any error a request can end in. */
 export function describeError(error: unknown): string {
-  return error instanceof ApiRequestError
-    ? ERROR_MESSAGE[error.code]
-    : ERROR_MESSAGE[API_ERROR.INTERNAL];
+  if (!(error instanceof ApiRequestError)) return ERROR_MESSAGE[API_ERROR.INTERNAL];
+  const message = ERROR_MESSAGE[error.code];
+  // Only an unexpected error needs a reference: the others explain themselves.
+  if (error.code !== API_ERROR.INTERNAL || !error.requestId) return message;
+  return `${message} Referenz: ${error.requestId.slice(0, REFERENCE_LENGTH)}`;
 }

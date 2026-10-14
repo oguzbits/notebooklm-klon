@@ -18,6 +18,7 @@ import { createApp } from './app';
 import { LIMITS } from './config/limits';
 import { type FetchDeps, PDF_CONTENT_TYPE } from './import/fetch-url';
 import { BASE_URL, createHarness } from './testing/app-harness';
+import { captureLog } from './testing/log-capture';
 
 const PASSWORD = 'ein-sicheres-passwort';
 const PUBLIC_ADDRESS = '93.184.216.34';
@@ -48,9 +49,14 @@ async function signUp(email: string): Promise<string> {
     .join('; ');
 }
 
-const json = (cookie: string, body: unknown, method = 'POST') => ({
+const json = (
+  cookie: string,
+  body: unknown,
+  method = 'POST',
+  headers: Record<string, string> = {}
+) => ({
   method,
-  headers: { cookie, 'content-type': 'application/json' },
+  headers: { cookie, 'content-type': 'application/json', ...headers },
   body: JSON.stringify(body),
 });
 
@@ -866,5 +872,117 @@ describe('reading a failed source again', () => {
     expect((await retry(alice, bobsBook, source)).status).toBe(404);
     expect((await retry('', bobsBook, source)).status).toBe(401);
     expect(harness.enqueued).toEqual([]);
+  });
+});
+
+describe('request ID', () => {
+  const header = async (id?: string) =>
+    (
+      await app.request('/health', id ? { headers: { 'x-request-id': id } } : undefined)
+    ).headers.get('x-request-id');
+
+  it('answers every request with an ID', async () => {
+    expect(await header()).toMatch(/^[\w-]{8,}$/);
+  });
+
+  it('keeps an ID the proxy sent', async () => {
+    expect(await header('proxy-id_1=')).toBe('proxy-id_1=');
+  });
+
+  it('replaces an ID that is too long or has other characters than letters, digits, - _ =', async () => {
+    for (const bad of ['a'.repeat(256), 'ein id;<b>']) {
+      const id = await header(bad);
+      expect(id).not.toBe(bad);
+      expect(id).toMatch(/^[\w-]{8,}$/);
+    }
+  });
+
+  it('puts the ID into the body of a request refused as invalid', async () => {
+    const response = await app.request(
+      '/api/notebooks',
+      json(alice, { title: '' }, 'POST', { 'x-request-id': 'ref-42' })
+    );
+
+    expect(response.status).toBe(400);
+    expect(ApiErrorSchema.parse(await response.json()).requestId).toBe('ref-42');
+  });
+});
+
+describe('upload refusals in the log', () => {
+  const NAME_MARKER = 'GEHEIM-DATEINAME';
+  const refusals = [
+    {
+      name: 'wrong type',
+      file: () => ['bild.png', 'x'] as const,
+      status: 415,
+      reason: API_ERROR.UNSUPPORTED_FILE,
+      bytes: 1,
+    },
+    {
+      name: 'too large',
+      file: () => ['gross.txt', new Uint8Array(LIMITS.UPLOAD_MAX_BYTES + 1).fill(97)] as const,
+      status: 413,
+      reason: API_ERROR.FILE_TOO_LARGE,
+      bytes: LIMITS.UPLOAD_MAX_BYTES + 1,
+    },
+  ];
+
+  it.each(refusals)(
+    'logs the reason, size and request ID of a $name file, never its name',
+    async ({ file, status, reason, bytes }) => {
+      const notebook = await createNotebook(alice);
+      const [name, content] = file();
+      const capture = captureLog();
+
+      const response = await app.request(
+        `/api/notebooks/${notebook}/sources/file`,
+        upload(alice, `${NAME_MARKER}-${name}`, content)
+      );
+      capture.restore();
+
+      expect(response.status).toBe(status);
+      const entry = capture.lines().find((line) => line.msg === 'upload refused');
+      expect(entry).toMatchObject({
+        level: 'warn',
+        reason,
+        status,
+        bytes,
+        requestId: response.headers.get('x-request-id'),
+      });
+      expect(capture.text()).not.toContain(NAME_MARKER);
+    }
+  );
+
+  it('logs the kind of a PDF that has too many pages', async () => {
+    const notebook = await createNotebook(alice);
+    const capture = captureLog();
+
+    await app.request(
+      `/api/notebooks/${notebook}/sources/file`,
+      upload(alice, 'riesig.pdf', await pdf(LIMITS.UPLOAD_MAX_PDF_PAGES + 1))
+    );
+    capture.restore();
+
+    expect(capture.lines().find((line) => line.msg === 'upload refused')).toMatchObject({
+      reason: API_ERROR.TOO_MANY_PAGES,
+      kind: SOURCE_KIND.PDF,
+    });
+  });
+
+  it('logs a request without a file', async () => {
+    const notebook = await createNotebook(alice);
+    const capture = captureLog();
+
+    await app.request(`/api/notebooks/${notebook}/sources/file`, {
+      method: 'POST',
+      headers: { cookie: alice },
+      body: new FormData(),
+    });
+    capture.restore();
+
+    expect(capture.lines().find((line) => line.msg === 'upload refused')).toMatchObject({
+      reason: API_ERROR.INVALID_REQUEST,
+      status: 400,
+    });
   });
 });

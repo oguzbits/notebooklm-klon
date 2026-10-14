@@ -17,7 +17,18 @@ export const INGEST_ERROR = {
   EMPTY_TEXT: 'EMPTY_TEXT_ERROR',
   PARSE_FAILED: 'PARSE_FAILED_ERROR',
   EMBED_FAILED: 'EMBED_FAILED_ERROR',
+  STORE_FAILED: 'STORE_FAILED_ERROR',
 } as const;
+
+/** The step of the pipeline a failure belongs to, for the logs. */
+export const INGEST_STAGE = {
+  PARSE: 'PARSE_STAGE',
+  CHUNK: 'CHUNK_STAGE',
+  EMBED: 'EMBED_STAGE',
+  STORE: 'STORE_STAGE',
+} as const;
+
+export type IngestStage = (typeof INGEST_STAGE)[keyof typeof INGEST_STAGE];
 
 export type IngestErrorCode = (typeof INGEST_ERROR)[keyof typeof INGEST_ERROR];
 
@@ -25,6 +36,7 @@ export type IngestErrorCode = (typeof INGEST_ERROR)[keyof typeof INGEST_ERROR];
 export class IngestError extends Error {
   constructor(
     readonly code: IngestErrorCode,
+    readonly stage: IngestStage,
     message: string,
     cause?: unknown
   ) {
@@ -97,13 +109,14 @@ export async function registerSource(
 interface Problem {
   failure: SourceFailure;
   code: IngestErrorCode;
+  stage: IngestStage;
   message: string;
   cause?: unknown;
 }
 
 async function fail(ports: IngestPorts, sourceId: string, problem: Problem): Promise<never> {
   await ports.sources.markFailed(sourceId, problem.failure);
-  throw new IngestError(problem.code, problem.message, problem.cause);
+  throw new IngestError(problem.code, problem.stage, problem.message, problem.cause);
 }
 
 async function embedAll(ports: IngestPorts, chunks: TextChunk[]): Promise<number[][]> {
@@ -142,6 +155,7 @@ export async function processSource(
     return fail(ports, sourceId, {
       failure: SOURCE_FAILURE.PARSE_FAILED,
       code: INGEST_ERROR.PARSE_FAILED,
+      stage: INGEST_STAGE.PARSE,
       message: 'The document could not be read.',
       cause: error,
     });
@@ -153,6 +167,7 @@ export async function processSource(
     return fail(ports, sourceId, {
       failure: SOURCE_FAILURE.EMPTY_TEXT,
       code: INGEST_ERROR.EMPTY_TEXT,
+      stage: INGEST_STAGE.CHUNK,
       message: 'The document has no text.',
     });
   }
@@ -164,14 +179,25 @@ export async function processSource(
     return fail(ports, sourceId, {
       failure: SOURCE_FAILURE.EMBED_FAILED,
       code: INGEST_ERROR.EMBED_FAILED,
+      stage: INGEST_STAGE.EMBED,
       message: 'The text could not be indexed.',
       cause: error,
     });
   }
 
-  await ports.sources.markReady(sourceId, {
-    canonicalText,
-    pageCount: parsed.pageCount,
-    chunks: chunks.map((chunk, index) => ({ ...chunk, embedding: vectors[index] ?? [] })),
-  });
+  try {
+    await ports.sources.markReady(sourceId, {
+      canonicalText,
+      pageCount: parsed.pageCount,
+      chunks: chunks.map((chunk, index) => ({ ...chunk, embedding: vectors[index] ?? [] })),
+    });
+  } catch (error) {
+    // Not marked FAILED: the database may be gone. The sweep for interrupted sources deals with it.
+    throw new IngestError(
+      INGEST_ERROR.STORE_FAILED,
+      INGEST_STAGE.STORE,
+      'The result could not be saved.',
+      error
+    );
+  }
 }

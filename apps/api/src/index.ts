@@ -13,7 +13,6 @@ import {
   failInterruptedSources,
 } from './db/source-storage';
 import { systemDeps } from './import/system-deps';
-import { IngestError } from './ingestion/ingest';
 import { runIngestJob, type SubmitPorts } from './ingestion/submit';
 import { createJobQueue } from './jobs/queue';
 import { errorName, log } from './logger';
@@ -67,19 +66,16 @@ const ingest: SubmitPorts = {
 
 await queue.work(async (payload) => {
   const started = Date.now();
-  try {
-    await runIngestJob(payload, ingest);
-  } catch (error) {
-    // Name and code only: the message of a provider or parser error could carry document content.
+  // The failure carries IDs, size, step and error name only: the message of a provider or parser
+  // error could carry document content.
+  await runIngestJob(payload, ingest, (failure) =>
     log({
       level: 'error',
       msg: 'ingestion job failed',
-      name: errorName(error),
-      code: error instanceof IngestError ? error.code : undefined,
+      ...failure,
       durationMs: Date.now() - started,
-    });
-    throw error;
-  }
+    })
+  );
   log({ level: 'info', msg: 'ingestion job done', durationMs: Date.now() - started });
 });
 

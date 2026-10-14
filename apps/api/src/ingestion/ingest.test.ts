@@ -11,6 +11,7 @@ import { LIMITS } from '../config/limits';
 import { hashContent } from '../core/content-hash';
 import {
   INGEST_ERROR,
+  INGEST_STAGE,
   IngestError,
   type IngestPorts,
   processSource,
@@ -192,7 +193,7 @@ describe('processSource', () => {
 
     await expect(
       processSource({ sourceId: 's1', kind: SOURCE_KIND.TXT, bytes: BYTES }, ports)
-    ).rejects.toMatchObject({ code: INGEST_ERROR.EMPTY_TEXT });
+    ).rejects.toMatchObject({ code: INGEST_ERROR.EMPTY_TEXT, stage: INGEST_STAGE.CHUNK });
 
     expect(rows[0]?.status).toBe(SOURCE_STATUS.FAILED);
     expect(calls.failed).toEqual([SOURCE_FAILURE.EMPTY_TEXT]);
@@ -215,6 +216,7 @@ describe('processSource', () => {
 
     expect(error).toBeInstanceOf(IngestError);
     expect((error as IngestError).code).toBe(INGEST_ERROR.PARSE_FAILED);
+    expect((error as IngestError).stage).toBe(INGEST_STAGE.PARSE);
     expect((error as IngestError).cause).toBe(cause);
     expect(calls.failed).toEqual([SOURCE_FAILURE.PARSE_FAILED]);
   });
@@ -229,7 +231,7 @@ describe('processSource', () => {
 
     await expect(
       processSource({ sourceId: 's1', kind: SOURCE_KIND.TXT, bytes: BYTES }, ports)
-    ).rejects.toMatchObject({ code: INGEST_ERROR.EMBED_FAILED });
+    ).rejects.toMatchObject({ code: INGEST_ERROR.EMBED_FAILED, stage: INGEST_STAGE.EMBED });
     expect(calls.failed).toEqual([SOURCE_FAILURE.EMBED_FAILED]);
     expect(calls.ready).toEqual([]);
   });
@@ -251,5 +253,26 @@ describe('processSource', () => {
     await expect(
       processSource({ sourceId: 's1', kind: SOURCE_KIND.TXT, bytes: BYTES }, ports)
     ).rejects.toMatchObject({ code: INGEST_ERROR.EMBED_FAILED });
+  });
+
+  it('names the store stage when saving the result fails, and leaves the status for the sweep', async () => {
+    const cause = new Error('connection lost');
+    const { ports, calls } = fakePorts();
+    ports.sources.markReady = async () => {
+      throw cause;
+    };
+    await registerSource(input, ports);
+
+    const error = await processSource(
+      { sourceId: 's1', kind: SOURCE_KIND.TXT, bytes: BYTES },
+      ports
+    ).catch((caught: unknown) => caught);
+
+    expect(error).toMatchObject({
+      code: INGEST_ERROR.STORE_FAILED,
+      stage: INGEST_STAGE.STORE,
+      cause,
+    });
+    expect(calls.failed).toEqual([]);
   });
 });

@@ -36,6 +36,8 @@ export const ApiErrorSchema = z.object({
   code: ApiErrorCodeSchema,
   /** Optional hint, for example the name of the field that was rejected. Never user content. */
   detail: z.string().optional(),
+  /** The ID of the request (header `X-Request-Id`), so a reported error can be found in the logs. */
+  requestId: z.string().optional(),
 });
 
 export type ApiErrorCode = z.infer<typeof ApiErrorCodeSchema>;

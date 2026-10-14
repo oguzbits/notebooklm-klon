@@ -82,7 +82,7 @@ try {
     log({
       level: 'info',
       msg: 'studio eval: output',
-      kind: body.kind,
+      studioKind: body.kind,
       seconds: Math.round((performance.now() - started) / 100) / 10,
       replyChars: reply.length,
       dropped,

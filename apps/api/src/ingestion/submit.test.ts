@@ -8,6 +8,7 @@ import {
 } from '@nlm/shared';
 import { describe, expect, it } from 'vitest';
 
+import { INGEST_ERROR, INGEST_STAGE } from './ingest';
 import { restartSource, runIngestJob, type SubmitPorts, submitSource } from './submit';
 
 const USER = 'user-a';
@@ -22,7 +23,7 @@ const input = {
 
 function fakePorts(overrides: Partial<SubmitPorts> = {}) {
   const log = {
-    uploads: new Map<string, { kind: SourceKind; bytes: Uint8Array }>(),
+    uploads: new Map<string, { kind: SourceKind; bytes: Uint8Array; userId: string }>(),
     enqueued: [] as string[],
     failed: [] as string[],
     processed: [] as string[],
@@ -54,7 +55,7 @@ function fakePorts(overrides: Partial<SubmitPorts> = {}) {
     embed: async (texts) => texts.map(() => new Array<number>(EMBEDDING_DIMENSIONS).fill(0.1)),
     uploads: {
       put: async (id, bytes) => {
-        log.uploads.set(id, { kind: SOURCE_KIND.TXT, bytes });
+        log.uploads.set(id, { kind: SOURCE_KIND.TXT, bytes, userId: USER });
       },
       load: async (id) => log.uploads.get(id) ?? null,
       remove: async (id) => {
@@ -78,7 +79,7 @@ describe('submitSource', () => {
     const result = await submitSource(input, ports);
 
     expect(result).toEqual({ sourceId: 's1', action: SUBMIT_ACTION.CREATED });
-    expect(log.uploads.get('s1')).toEqual({ kind: SOURCE_KIND.TXT, bytes: BYTES });
+    expect(log.uploads.get('s1')).toEqual({ kind: SOURCE_KIND.TXT, bytes: BYTES, userId: USER });
     expect(log.enqueued).toEqual(['s1']);
   });
 
@@ -147,6 +148,45 @@ describe('runIngestJob', () => {
     expect(log.uploads.get('s1')?.bytes).toEqual(BYTES);
   });
 
+  it('reports where a job failed, with IDs and sizes only, never the content or the message', async () => {
+    const MARKER = 'GEHEIMER-INHALT';
+    const { ports } = fakePorts({
+      parse: async () => {
+        throw new TypeError(`kaputt: ${MARKER}`);
+      },
+    });
+    await submitSource(input, ports);
+    const failures: unknown[] = [];
+
+    await expect(
+      runIngestJob({ sourceId: 's1' }, ports, (f) => failures.push(f))
+    ).rejects.toThrow();
+
+    expect(failures).toEqual([
+      {
+        sourceId: 's1',
+        userId: USER,
+        kind: SOURCE_KIND.TXT,
+        bytes: BYTES.length,
+        stage: INGEST_STAGE.PARSE,
+        errorName: 'IngestError',
+        code: INGEST_ERROR.PARSE_FAILED,
+      },
+    ]);
+    expect(JSON.stringify(failures)).not.toContain(MARKER);
+  });
+
+  it('reports a failure without a stage when the job broke before processing', async () => {
+    const { ports } = fakePorts();
+    const failures: unknown[] = [];
+
+    await expect(
+      runIngestJob({ sourceId: 'gone' }, ports, (f) => failures.push(f))
+    ).rejects.toThrow();
+
+    expect(failures).toEqual([{ sourceId: 'gone', errorName: 'Error' }]);
+  });
+
   it('fails when the upload is missing instead of pretending to succeed', async () => {
     const { ports } = fakePorts();
 
@@ -181,7 +221,7 @@ describe('restartSource', () => {
         },
       },
     });
-    log.uploads.set('s1', { kind: SOURCE_KIND.TXT, bytes: BYTES });
+    log.uploads.set('s1', { kind: SOURCE_KIND.TXT, bytes: BYTES, userId: USER });
 
     await expect(restartSource('s1', ports)).rejects.toThrow('queue down');
 

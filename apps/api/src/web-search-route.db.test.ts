@@ -9,6 +9,7 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from './app';
 import { WebSearchError } from './search/tavily-search';
 import { BASE_URL, createHarness } from './testing/app-harness';
+import { captureLog } from './testing/log-capture';
 
 const PASSWORD = 'correct-horse-battery';
 const RESULT = {
@@ -144,9 +145,17 @@ describe('POST /api/web-search', () => {
     const brokenApp = createApp(broken.deps);
     const cookie = await signUp(broken, 'emil@example.test');
 
+    const capture = captureLog();
+
     const response = await brokenApp.request('/api/web-search', post(cookie, { query: 'RAG' }));
+    capture.restore();
 
     expect(response.status).toBe(500);
+    expect(capture.lines().find((line) => line.msg === 'unhandled error')).toMatchObject({
+      requestId: response.headers.get('x-request-id'),
+    });
+    const body = ApiErrorSchema.parse(await response.json());
+    expect(body.requestId).toBe(response.headers.get('x-request-id'));
     await broken.pool.end();
   });
 });

@@ -1,13 +1,23 @@
 import { SOURCE_FAILURE, type SourceKind, SUBMIT_ACTION, type SubmitAction } from '@nlm/shared';
 import { z } from 'zod';
 
-import { type IngestPorts, processSource, type RegisterInput, registerSource } from './ingest';
+import { errorName } from '../logger';
+import {
+  IngestError,
+  type IngestPorts,
+  type IngestStage,
+  processSource,
+  type RegisterInput,
+  registerSource,
+} from './ingest';
 
 export interface SubmitPorts extends IngestPorts {
   /** The raw bytes of an upload, kept until its source is ready, so a failed source can be read again. */
   uploads: {
     put: (sourceId: string, bytes: Uint8Array) => Promise<void>;
-    load: (sourceId: string) => Promise<{ kind: SourceKind; bytes: Uint8Array } | null>;
+    load: (
+      sourceId: string
+    ) => Promise<{ kind: SourceKind; bytes: Uint8Array; userId: string } | null>;
     remove: (sourceId: string) => Promise<void>;
   };
   queue: { enqueue: (sourceId: string) => Promise<void> };
@@ -39,15 +49,48 @@ export async function submitSource(
 }
 
 /**
+ * What a failed job tells the logs: IDs, the size, the step and the name of the error. Never the
+ * message, which could quote the document. Fields are missing when the job broke before they were known.
+ */
+export interface JobFailure {
+  sourceId?: string;
+  userId?: string;
+  kind?: SourceKind;
+  bytes?: number;
+  stage?: IngestStage;
+  errorName: string;
+  code?: string;
+}
+
+/**
  * The work behind one queued job. The upload is deleted only once the source is ready: after a
  * failure the bytes stay, so the source can be read again without uploading it a second time.
+ * A failure is reported to `onFailure` and then thrown.
  */
-export async function runIngestJob(payload: unknown, ports: SubmitPorts): Promise<void> {
-  const { sourceId } = JobPayloadSchema.parse(payload);
-  const upload = await ports.uploads.load(sourceId);
-  if (!upload) throw new Error(`No upload stored for source ${sourceId}.`);
-  await processSource({ sourceId, kind: upload.kind, bytes: upload.bytes }, ports);
-  await ports.uploads.remove(sourceId);
+export async function runIngestJob(
+  payload: unknown,
+  ports: SubmitPorts,
+  onFailure?: (failure: JobFailure) => void
+): Promise<void> {
+  const known: Omit<JobFailure, 'errorName'> = {};
+  try {
+    const { sourceId } = JobPayloadSchema.parse(payload);
+    known.sourceId = sourceId;
+    const upload = await ports.uploads.load(sourceId);
+    if (!upload) throw new Error(`No upload stored for source ${sourceId}.`);
+    Object.assign(known, { userId: upload.userId, kind: upload.kind, bytes: upload.bytes.length });
+    await processSource({ sourceId, kind: upload.kind, bytes: upload.bytes }, ports);
+    await ports.uploads.remove(sourceId);
+  } catch (error) {
+    const ingest = error instanceof IngestError ? error : null;
+    onFailure?.({
+      ...known,
+      stage: ingest?.stage,
+      code: ingest?.code,
+      errorName: errorName(error),
+    });
+    throw error;
+  }
 }
 
 /** Queues a source whose status is already PENDING again. The kept upload stays if that fails. */

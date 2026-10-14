@@ -10,19 +10,24 @@ export const api = hc<AppType>('');
 export class ApiRequestError extends Error {
   readonly code: ApiErrorCode;
   readonly status: number;
+  /** The ID of the failed request, to report it. Set when the API sent one. */
+  readonly requestId: string | undefined;
 
-  constructor(code: ApiErrorCode, status: number) {
+  constructor(code: ApiErrorCode, status: number, requestId?: string) {
     super(code);
     this.name = 'ApiRequestError';
     this.code = code;
     this.status = status;
+    this.requestId = requestId;
   }
 }
 
 /** Turns a failed response into an ApiRequestError. A body without a known code counts as INTERNAL. */
 export async function toRequestError(response: Response): Promise<ApiRequestError> {
   const body = ApiErrorSchema.safeParse(await response.json().catch(() => null));
-  return new ApiRequestError(body.success ? body.data.code : API_ERROR.INTERNAL, response.status);
+  return body.success
+    ? new ApiRequestError(body.data.code, response.status, body.data.requestId)
+    : new ApiRequestError(API_ERROR.INTERNAL, response.status);
 }
 
 /** Reads a JSON response and checks it against the shared schema, or throws the API's error. */

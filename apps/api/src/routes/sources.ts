@@ -7,7 +7,9 @@ import {
   SubmitSourceResultSchema,
   UrlSourceBodySchema,
 } from '@nlm/shared';
+import type { Context } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
+import type { RequestIdVariables } from 'hono/request-id';
 
 import type { AppDeps } from '../app-deps';
 import type { AuthVariables } from '../auth/session';
@@ -19,6 +21,7 @@ import { linkSource } from '../db/notebook-source-repository';
 import { HTTP_STATUS } from '../http-status';
 import { fetchPublicUrl, PDF_CONTENT_TYPE } from '../import/fetch-url';
 import { submitSource } from '../ingestion/submit';
+import { log } from '../logger';
 import { pageTitle } from '../parsing/parse-web';
 import { countPdfPages } from '../parsing/pdf-pages';
 import { json, notebookParams } from './openapi';
@@ -45,6 +48,40 @@ const urlRoute = createRoute({
     429: json(ApiErrorSchema, 'The quota for new sources is used up'),
   },
 });
+
+type RequestContext = Context<{ Variables: AuthVariables & RequestIdVariables }>;
+
+/**
+ * Says why content was refused, so a report of a failed upload can be followed. The log gets the
+ * reason, the size and the kind, never the file name or any content.
+ */
+function logRefusal(
+  c: RequestContext,
+  refusal: { status: number; code: string; kind?: SourceKind },
+  bytes?: number
+): void {
+  log({
+    level: 'warn',
+    msg: 'upload refused',
+    reason: refusal.code,
+    status: refusal.status,
+    kind: refusal.kind,
+    bytes,
+    userId: c.var.userId,
+    requestId: c.var.requestId,
+  });
+}
+
+/** The body limit was hit before the file could be read: its size is only known from the header. */
+function refuseTooLarge(c: RequestContext) {
+  const size = Number(c.req.header('content-length'));
+  logRefusal(
+    c,
+    { status: HTTP_STATUS.PAYLOAD_TOO_LARGE, code: API_ERROR.FILE_TOO_LARGE },
+    Number.isFinite(size) ? size : undefined
+  );
+  return c.json(error(API_ERROR.FILE_TOO_LARGE), HTTP_STATUS.PAYLOAD_TOO_LARGE);
+}
 
 /** Adds the content to the user's sources (once) and to the notebook, then queues it. */
 async function addToNotebook(
@@ -78,6 +115,8 @@ type Refusal<Status> = {
   ok: false;
   status: Status;
   code: (typeof API_ERROR)[keyof typeof API_ERROR];
+  /** What is known about the content that was refused, for the log. */
+  kind?: SourceKind;
 };
 type Parsed = { ok: true; kind: SourceKind; bytes: Uint8Array };
 /** What the bytes alone can be refused for; the size of a file is checked before. */
@@ -100,7 +139,7 @@ const TOO_MANY: Checked = {
 /** Why a PDF is refused: too many pages. An unreadable one throws UnreadablePdfError (415). */
 async function pdfRefusal(bytes: Uint8Array): Promise<Checked | null> {
   const pages = await countPdfPages(bytes);
-  return pages > LIMITS.UPLOAD_MAX_PDF_PAGES ? TOO_MANY : null;
+  return pages > LIMITS.UPLOAD_MAX_PDF_PAGES ? { ...TOO_MANY, kind: SOURCE_KIND.PDF } : null;
 }
 
 /** Looks at a file before anything is stored: kind, and for a PDF its pages. */
@@ -164,14 +203,14 @@ async function fetchAsSource(deps: AppDeps, url: string) {
 
 /** Adding sources: a file upload and a URL import. Both end in the same ingestion job. */
 export function sourceRoutes(deps: AppDeps) {
-  const app = new OpenAPIHono<{ Variables: AuthVariables }>();
+  const app = new OpenAPIHono<{ Variables: AuthVariables & RequestIdVariables }>();
 
   // Multipart upload, not described in OpenAPI: the schema language has no good file type.
   app.post(
     '/:notebookId/sources/file',
     bodyLimit({
       maxSize: LIMITS.UPLOAD_MAX_BYTES + MULTIPART_OVERHEAD_BYTES,
-      onError: (c) => c.json(error(API_ERROR.FILE_TOO_LARGE), HTTP_STATUS.PAYLOAD_TOO_LARGE),
+      onError: refuseTooLarge,
     }),
     async (c) => {
       const { userId } = c.var;
@@ -182,10 +221,15 @@ export function sourceRoutes(deps: AppDeps) {
 
       const form = await c.req.parseBody();
       const file = form.file;
-      if (!(file instanceof File))
+      if (!(file instanceof File)) {
+        logRefusal(c, { status: HTTP_STATUS.BAD_REQUEST, code: API_ERROR.INVALID_REQUEST });
         return c.json(error(API_ERROR.INVALID_REQUEST), HTTP_STATUS.BAD_REQUEST);
+      }
       const upload = await checkUpload(file);
-      if (!upload.ok) return c.json(error(upload.code), upload.status);
+      if (!upload.ok) {
+        logRefusal(c, upload, file.size);
+        return c.json(error(upload.code), upload.status);
+      }
       const { kind, bytes } = upload;
 
       const result = await addToNotebook(deps, {
@@ -212,7 +256,10 @@ export function sourceRoutes(deps: AppDeps) {
       return c.json(await addVideo(deps, userId, notebookId, video), HTTP_STATUS.ACCEPTED);
 
     const page = await fetchAsSource(deps, url);
-    if (!page.ok) return c.json(error(page.code), page.status);
+    if (!page.ok) {
+      logRefusal(c, page);
+      return c.json(error(page.code), page.status);
+    }
     const { ok: _ok, ...input } = page;
     const result = await addToNotebook(deps, { userId, notebookId, ...input });
     return c.json(result, HTTP_STATUS.ACCEPTED);

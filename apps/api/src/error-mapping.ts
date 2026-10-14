@@ -9,8 +9,15 @@ import { ImportError } from './import/fetch-url';
 import { UnreadablePdfError } from './parsing/pdf-pages';
 import { WebSearchError } from './search/tavily-search';
 
-export const errorBody = (code: ApiError['code'], detail?: string): ApiError =>
-  detail === undefined ? { code } : { code, detail };
+export const errorBody = (
+  code: ApiError['code'],
+  detail?: string,
+  requestId?: string
+): ApiError => ({
+  code,
+  ...(detail === undefined ? {} : { detail }),
+  ...(requestId === undefined ? {} : { requestId }),
+});
 
 type Mapped = { status: ContentfulStatusCode; body: ApiError };
 

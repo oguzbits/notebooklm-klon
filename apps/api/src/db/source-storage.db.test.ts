@@ -225,7 +225,7 @@ describe('upload storage', () => {
 
     await uploads.put(id, bytes);
 
-    expect(await uploads.load(id)).toEqual({ kind: SOURCE_KIND.PDF, bytes });
+    expect(await uploads.load(id)).toEqual({ kind: SOURCE_KIND.PDF, bytes, userId: USER });
     await uploads.remove(id);
     expect(await uploads.load(id)).toBeNull();
   });
