@@ -101,10 +101,10 @@ export async function runQuestion(
     ...ports,
     onOmitted: (omitted) => omittedStatements.push(omitted),
     selectedSourceIds: async () => scope.sourceIds,
-    translateQuery: async (text) => {
+    translateQuery: async (text, userId) => {
       const translating = now();
       try {
-        return await ports.translateQuery(text);
+        return await ports.translateQuery(text, userId);
       } finally {
         translateMs += now() - translating;
       }

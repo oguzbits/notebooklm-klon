@@ -1,3 +1,4 @@
+import { USAGE_PURPOSE, USAGE_ROLE, type UsageEvent } from '@nlm/shared';
 import { z } from 'zod';
 
 import { LIMITS } from '../config/limits';
@@ -10,6 +11,7 @@ const FINISH_RECITATION = 'RECITATION';
 // Measured in the model spike: about 20 bytes of PDF per input token, plus the prompt.
 const BYTES_PER_TOKEN = 15;
 const PROMPT_TOKENS = 500;
+const CHARS_PER_TOKEN = 3;
 // Audio costs 32 tokens per second. An MP3 has about 16 kB per second, a WAV far more, so 125 bytes
 // per token over-estimates a little, which is the safe side for the rate limiter.
 const AUDIO_BYTES_PER_TOKEN = 125;
@@ -82,7 +84,44 @@ const ResponseSchema = z.object({
       })
     )
     .optional(),
+  usageMetadata: z
+    .object({
+      promptTokenCount: z.number().optional(),
+      candidatesTokenCount: z.number().optional(),
+      // Billed as output, but counted apart from the candidates.
+      thoughtsTokenCount: z.number().optional(),
+    })
+    .optional(),
 });
+
+/** The bytes as an inline part, with the tokens they are expected to cost. */
+const inline = (bytes: Uint8Array, mimeType: string, reading: Reading): Input => ({
+  part: { inlineData: { mimeType, data: Buffer.from(bytes).toString('base64') } },
+  tokens: Math.ceil(bytes.length / reading.bytesPerToken) + PROMPT_TOKENS,
+});
+
+type Response = z.infer<typeof ResponseSchema>;
+
+/** What one call cost: the counts of the provider, or an estimate from the input and the text. */
+function usageEvent(
+  userId: string,
+  response: Response,
+  candidate: NonNullable<Response['candidates']>[number] | undefined,
+  estimatedInputTokens: number
+): UsageEvent {
+  const usage = response.usageMetadata;
+  const text = (candidate?.content?.parts ?? []).map((part) => part.text ?? '').join('');
+  return {
+    userId,
+    purpose: USAGE_PURPOSE.READ,
+    role: USAGE_ROLE.PARSE,
+    inputTokens: usage?.promptTokenCount ?? estimatedInputTokens,
+    outputTokens: usage
+      ? (usage.candidatesTokenCount ?? 0) + (usage.thoughtsTokenCount ?? 0)
+      : Math.ceil(text.length / CHARS_PER_TOKEN),
+    estimated: usage === undefined,
+  };
+}
 
 export interface GeminiPdfParserConfig {
   apiKey: string;
@@ -94,6 +133,10 @@ export interface GeminiPdfParserConfig {
    */
   fallbackModel?: string | undefined;
   limiter: RateLimiter;
+  /** Longest transcript per call, sent with every request. */
+  maxOutputTokens: number;
+  /** Stores what a call cost. Awaited, so a failure to count is a failure of the call. */
+  record: (event: UsageEvent) => Promise<void>;
   /** Longest wait for one model call. Defaults to the limit in the config. */
   timeoutMs?: number | undefined;
   sleep: (ms: number) => Promise<void>;
@@ -104,7 +147,7 @@ export interface GeminiPdfParserConfig {
  * blocked as recitation, filtered) is an error: partial text would silently lose content.
  */
 export function createGeminiPdfParser(config: GeminiPdfParserConfig) {
-  async function transcribe(model: string, input: Input, reading: Reading) {
+  async function transcribe(model: string, input: Input, reading: Reading, userId: string) {
     const json = await config.limiter.schedule(input.tokens, () =>
       postGemini(
         config,
@@ -115,21 +158,24 @@ export function createGeminiPdfParser(config: GeminiPdfParserConfig) {
               parts: [input.part, { text: reading.prompt }],
             },
           ],
-          generationConfig: { temperature: 0 },
+          generationConfig: { temperature: 0, maxOutputTokens: config.maxOutputTokens },
         },
         AbortSignal.timeout(config.timeoutMs ?? reading.timeoutMs)
       )
     );
-    const [candidate] = ResponseSchema.parse(json).candidates ?? [];
+    const response = ResponseSchema.parse(json);
+    const [candidate] = response.candidates ?? [];
+    // Counted before the answer is judged: a refused or cut-off read was billed all the same.
+    await config.record(usageEvent(userId, response, candidate, input.tokens));
     if (!candidate) throw new Error('The model returned no candidate.');
     return candidate;
   }
 
-  async function read(input: Input, reading: Reading): Promise<ParsedDocument> {
-    let candidate = await transcribe(config.model, input, reading);
+  async function read(input: Input, reading: Reading, userId: string): Promise<ParsedDocument> {
+    let candidate = await transcribe(config.model, input, reading, userId);
     let fallbackTried = false;
     if (candidate.finishReason === FINISH_RECITATION && config.fallbackModel) {
-      candidate = await transcribe(config.fallbackModel, input, reading);
+      candidate = await transcribe(config.fallbackModel, input, reading, userId);
       fallbackTried = true;
     }
     if (candidate.finishReason !== FINISH_STOP) {
@@ -142,25 +188,22 @@ export function createGeminiPdfParser(config: GeminiPdfParserConfig) {
     return { text, pageCount: null };
   }
 
-  const inline = (bytes: Uint8Array, mimeType: string, reading: Reading): Input => ({
-    part: { inlineData: { mimeType, data: Buffer.from(bytes).toString('base64') } },
-    tokens: Math.ceil(bytes.length / reading.bytesPerToken) + PROMPT_TOKENS,
-  });
-
   return {
-    parse: (bytes: Uint8Array) => read(inline(bytes, PDF_MIME_TYPE, PDF_READING), PDF_READING),
-    parseImage: (bytes: Uint8Array, mimeType: string) =>
-      read(inline(bytes, mimeType, IMAGE_READING), IMAGE_READING),
-    parseAudio: (bytes: Uint8Array, mimeType: string) =>
-      read(inline(bytes, mimeType, AUDIO_READING), AUDIO_READING),
+    parse: (bytes: Uint8Array, userId: string) =>
+      read(inline(bytes, PDF_MIME_TYPE, PDF_READING), PDF_READING, userId),
+    parseImage: (bytes: Uint8Array, mimeType: string, userId: string) =>
+      read(inline(bytes, mimeType, IMAGE_READING), IMAGE_READING, userId),
+    parseAudio: (bytes: Uint8Array, mimeType: string, userId: string) =>
+      read(inline(bytes, mimeType, AUDIO_READING), AUDIO_READING, userId),
     /** A public YouTube link: Gemini fetches and watches the video, our server never does. */
-    parseVideoUrl: (url: string) =>
+    parseVideoUrl: (url: string, userId: string) =>
       read(
         {
           part: { fileData: { fileUri: url } },
           tokens: LIMITS.VIDEO_ESTIMATED_TOKENS + PROMPT_TOKENS,
         },
-        VIDEO_READING
+        VIDEO_READING,
+        userId
       ),
   };
 }

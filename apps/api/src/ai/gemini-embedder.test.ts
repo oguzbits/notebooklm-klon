@@ -1,4 +1,4 @@
-import { EMBEDDING_DIMENSIONS } from '@nlm/shared';
+import { EMBEDDING_DIMENSIONS, USAGE_PURPOSE, USAGE_ROLE, type UsageEvent } from '@nlm/shared';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 
@@ -16,7 +16,11 @@ const values = (first: number) => [
   ...Array.from({ length: EMBEDDING_DIMENSIONS - 1 }, () => 0),
 ];
 
-function makeEmbedder(overrides: { sleeps?: number[]; limiter?: RateLimiter } = {}) {
+const USER = 'reader';
+
+function makeEmbedder(
+  overrides: { sleeps?: number[]; limiter?: RateLimiter; recorded?: UsageEvent[] } = {}
+) {
   const sleeps = overrides.sleeps ?? [];
   return createGeminiEmbedder({
     apiKey: KEY,
@@ -26,10 +30,48 @@ function makeEmbedder(overrides: { sleeps?: number[]; limiter?: RateLimiter } = 
     sleep: async (ms) => {
       sleeps.push(ms);
     },
+    record: async (event) => {
+      overrides.recorded?.push(event);
+    },
   });
 }
 
 describe('createGeminiEmbedder', () => {
+  it('records the counts of the provider: documents under embedding, a question under chat', async () => {
+    const recorded: UsageEvent[] = [];
+    server.use(
+      http.post(ENDPOINT, () =>
+        HttpResponse.json({
+          embeddings: [{ values: values(1) }],
+          usageMetadata: { promptTokenCount: 42 },
+        })
+      )
+    );
+    const embedder = makeEmbedder({ recorded });
+
+    await embedder.embedDocuments(['Text'], USER);
+    await embedder.embedQuery('Frage', USER);
+
+    const base = { userId: USER, role: USAGE_ROLE.EMBED, outputTokens: 0, estimated: false };
+    expect(recorded).toEqual([
+      { ...base, purpose: USAGE_PURPOSE.EMBED, inputTokens: 42 },
+      { ...base, purpose: USAGE_PURPOSE.CHAT, inputTokens: 42 },
+    ]);
+  });
+
+  it('records an estimate, marked as such, when the provider reports no count', async () => {
+    const recorded: UsageEvent[] = [];
+    server.use(
+      http.post(ENDPOINT, () => HttpResponse.json({ embeddings: [{ values: values(1) }] }))
+    );
+
+    await makeEmbedder({ recorded }).embedDocuments(['x'.repeat(30)], USER);
+
+    expect(recorded).toHaveLength(1);
+    expect(recorded[0]).toMatchObject({ estimated: true });
+    expect(recorded[0]?.inputTokens).toBeGreaterThan(0);
+  });
+
   it('sends all documents in one request with the document format and returns normalized vectors in order', async () => {
     let seen: { headers: Headers; body: { requests: Record<string, unknown>[] } } | undefined;
     server.use(
@@ -39,7 +81,7 @@ describe('createGeminiEmbedder', () => {
       })
     );
 
-    const vectors = await makeEmbedder().embedDocuments(['Erster Text', 'Zweiter Text']);
+    const vectors = await makeEmbedder().embedDocuments(['Erster Text', 'Zweiter Text'], USER);
 
     expect(seen?.headers.get('x-goog-api-key')).toBe(KEY);
     expect(seen?.body.requests).toEqual([
@@ -71,7 +113,7 @@ describe('createGeminiEmbedder', () => {
       })
     );
 
-    const vector = await makeEmbedder().embedQuery('Wer leitet das Projekt?');
+    const vector = await makeEmbedder().embedQuery('Wer leitet das Projekt?', USER);
 
     expect(sentText).toBe('task: search result | query: Wer leitet das Projekt?');
     expect(vector).toHaveLength(EMBEDDING_DIMENSIONS);
@@ -82,7 +124,7 @@ describe('createGeminiEmbedder', () => {
       http.post(ENDPOINT, () => HttpResponse.json({ embeddings: [{ values: values(1) }] }))
     );
 
-    await expect(makeEmbedder().embedDocuments(['a', 'b'])).rejects.toThrow(
+    await expect(makeEmbedder().embedDocuments(['a', 'b'], USER)).rejects.toThrow(
       /expected 2 embeddings/
     );
   });
@@ -92,7 +134,7 @@ describe('createGeminiEmbedder', () => {
       http.post(ENDPOINT, () => HttpResponse.json({ embeddings: [{ values: [1, 2, 3] }] }))
     );
 
-    await expect(makeEmbedder().embedDocuments(['a'])).rejects.toThrow(/dimensions/);
+    await expect(makeEmbedder().embedDocuments(['a'], USER)).rejects.toThrow(/dimensions/);
   });
 
   it('waits and tries again after a 429, then succeeds', async () => {
@@ -110,7 +152,7 @@ describe('createGeminiEmbedder', () => {
     );
     const sleeps: number[] = [];
 
-    await makeEmbedder({ sleeps }).embedDocuments(['a']);
+    await makeEmbedder({ sleeps }).embedDocuments(['a'], USER);
 
     expect(calls).toBe(2);
     expect(sleeps).toEqual([7000]);
@@ -122,7 +164,7 @@ describe('createGeminiEmbedder', () => {
     );
 
     const error = await makeEmbedder()
-      .embedDocuments(['a'])
+      .embedDocuments(['a'], USER)
       .catch((caught: unknown) => caught);
 
     expect(error).toBeInstanceOf(GeminiError);
@@ -138,7 +180,7 @@ describe('createGeminiEmbedder', () => {
       })
     );
 
-    await expect(makeEmbedder().embedDocuments(['a'])).rejects.toMatchObject({ status: 400 });
+    await expect(makeEmbedder().embedDocuments(['a'], USER)).rejects.toMatchObject({ status: 400 });
     expect(calls).toBe(1);
   });
 
@@ -154,7 +196,7 @@ describe('createGeminiEmbedder', () => {
       return original(tokens, task);
     };
 
-    await makeEmbedder({ limiter }).embedDocuments(['x'.repeat(300)]);
+    await makeEmbedder({ limiter }).embedDocuments(['x'.repeat(300)], USER);
 
     expect(scheduled).toHaveLength(1);
     expect(scheduled[0]).toBeGreaterThanOrEqual(100);
@@ -168,7 +210,7 @@ describe('createGeminiEmbedder', () => {
     );
 
     const error = await makeEmbedder()
-      .embedDocuments(['geheimer Dokumenttext'])
+      .embedDocuments(['geheimer Dokumenttext'], USER)
       .catch((caught: unknown) => caught);
 
     expect((error as Error).message).not.toContain(KEY);

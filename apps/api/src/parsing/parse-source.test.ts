@@ -7,6 +7,7 @@ import { createParseSource } from './parse-source';
 
 const encode = (text: string) => new TextEncoder().encode(text);
 const VIDEO_URL = 'https://www.youtube.com/watch?v=jNQXAC9IVRw';
+const USER = 'reader';
 const NO_TEXT = { text: '', pageCount: null };
 
 /** A provider whose parts do nothing unless the test gives them something to do. */
@@ -24,8 +25,8 @@ describe('createParseSource', () => {
       provider({ parse: async () => ({ text: 'pdf', pageCount: 1 }) })
     );
 
-    expect((await parse(SOURCE_KIND.TXT, encode('Notiz'))).text).toBe('Notiz');
-    expect((await parse(SOURCE_KIND.MD, encode('# Titel'))).text).toBe('# Titel');
+    expect((await parse(SOURCE_KIND.TXT, encode('Notiz'), USER)).text).toBe('Notiz');
+    expect((await parse(SOURCE_KIND.MD, encode('# Titel'), USER)).text).toBe('# Titel');
   });
 
   it('hands PDF bytes to the PDF parser', async () => {
@@ -40,7 +41,10 @@ describe('createParseSource', () => {
     );
     const bytes = encode('%PDF');
 
-    expect(await parse(SOURCE_KIND.PDF, bytes)).toEqual({ text: 'aus dem PDF', pageCount: 4 });
+    expect(await parse(SOURCE_KIND.PDF, bytes, USER)).toEqual({
+      text: 'aus dem PDF',
+      pageCount: 4,
+    });
     expect(received).toBe(bytes);
   });
 
@@ -58,9 +62,9 @@ describe('createParseSource', () => {
       ),
     });
 
-    expect((await parse(SOURCE_KIND.PPTX, slides)).text).toContain('Folientext');
+    expect((await parse(SOURCE_KIND.PPTX, slides, USER)).text).toContain('Folientext');
     await expect(
-      parse(SOURCE_KIND.PPTX, zipSync({ 'word/document.xml': strToU8('<w/>') }))
+      parse(SOURCE_KIND.PPTX, zipSync({ 'word/document.xml': strToU8('<w/>') }), USER)
     ).rejects.toThrow();
   });
 
@@ -69,7 +73,11 @@ describe('createParseSource', () => {
       provider({ parse: async () => ({ text: '', pageCount: null }) })
     );
 
-    const { text } = await parse(SOURCE_KIND.URL, encode('<html><body><p>Seite</p></body></html>'));
+    const { text } = await parse(
+      SOURCE_KIND.URL,
+      encode('<html><body><p>Seite</p></body></html>'),
+      USER
+    );
 
     expect(text).toContain('Seite');
   });
@@ -86,14 +94,17 @@ describe('createParseSource', () => {
     );
     const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
-    expect(await parse(SOURCE_KIND.IMAGE, png)).toEqual({ text: 'Text im Bild', pageCount: null });
+    expect(await parse(SOURCE_KIND.IMAGE, png, USER)).toEqual({
+      text: 'Text im Bild',
+      pageCount: null,
+    });
     expect(received).toEqual({ bytes: png, mimeType: 'image/png' });
   });
 
   it('fails when the bytes of an image source are not an image, instead of guessing a type', async () => {
     const parse = createParseSource(provider({}));
 
-    await expect(parse(SOURCE_KIND.IMAGE, encode('<html>'))).rejects.toThrow(/not an image/);
+    await expect(parse(SOURCE_KIND.IMAGE, encode('<html>'), USER)).rejects.toThrow(/not an image/);
   });
 
   it('hands a recording to the audio reader with the type its first bytes name', async () => {
@@ -108,7 +119,7 @@ describe('createParseSource', () => {
     );
     const mp3 = new Uint8Array([0x49, 0x44, 0x33, 4, 0]);
 
-    expect(await parse(SOURCE_KIND.AUDIO, mp3)).toEqual({
+    expect(await parse(SOURCE_KIND.AUDIO, mp3, USER)).toEqual({
       text: 'Gesprochener Text',
       pageCount: null,
     });
@@ -118,7 +129,7 @@ describe('createParseSource', () => {
   it('fails when the bytes of an audio source are not audio, instead of guessing a type', async () => {
     const parse = createParseSource(provider({}));
 
-    await expect(parse(SOURCE_KIND.AUDIO, encode('<html>'))).rejects.toThrow(/not audio/);
+    await expect(parse(SOURCE_KIND.AUDIO, encode('<html>'), USER)).rejects.toThrow(/not audio/);
   });
 
   it('hands the link of a YouTube source to the video reader', async () => {
@@ -132,7 +143,7 @@ describe('createParseSource', () => {
       })
     );
 
-    expect(await parse(SOURCE_KIND.YOUTUBE, encode(VIDEO_URL))).toEqual({
+    expect(await parse(SOURCE_KIND.YOUTUBE, encode(VIDEO_URL), USER)).toEqual({
       text: 'Gesprochener Text',
       pageCount: null,
     });
@@ -150,7 +161,7 @@ describe('createParseSource', () => {
       })
     );
 
-    await parse(SOURCE_KIND.YOUTUBE, encode('https://youtu.be/jNQXAC9IVRw?t=5'));
+    await parse(SOURCE_KIND.YOUTUBE, encode('https://youtu.be/jNQXAC9IVRw?t=5'), USER);
 
     expect(received).toBe(VIDEO_URL);
   });
@@ -166,9 +177,9 @@ describe('createParseSource', () => {
       })
     );
 
-    await expect(parse(SOURCE_KIND.YOUTUBE, encode('https://example.com/video'))).rejects.toThrow(
-      /not a YouTube/
-    );
+    await expect(
+      parse(SOURCE_KIND.YOUTUBE, encode('https://example.com/video'), USER)
+    ).rejects.toThrow(/not a YouTube/);
     expect(calls).toBe(0);
   });
 });

@@ -14,6 +14,7 @@ import {
   STUDIO_DIFFICULTY,
   STUDIO_KIND,
   STUDIO_SIZE,
+  USAGE_PURPOSE,
 } from '@nlm/shared';
 
 import { parseEnv } from '../config/env';
@@ -25,6 +26,7 @@ import { createDb } from '../db/client';
 import { runMigrations } from '../db/migrate';
 import { createNotebook, deleteNotebook } from '../db/notebook-repository';
 import { loadStudioChunks } from '../db/studio-repository';
+import { recordUsage } from '../db/usage-repository';
 import { importLocalFiles } from '../ingestion/local-import';
 import { createLocalImportDeps } from '../ingestion/local-import-deps';
 import { log } from '../logger';
@@ -45,7 +47,7 @@ const REQUESTS: CreateStudioBody[] = [
 const env = parseEnv(process.env);
 await runMigrations(env.DATABASE_URL);
 const { db, pool } = createDb(env.DATABASE_URL);
-const providers = createProviders(env);
+const providers = createProviders(env, (event) => recordUsage(db, event));
 
 await db
   .insert(user)
@@ -75,6 +77,7 @@ try {
       system: request.system,
       user: request.user,
       schema: request.schema,
+      usage: { userId: EVAL_USER_ID, purpose: USAGE_PURPOSE.STUDIO },
     })) {
       reply += piece;
     }

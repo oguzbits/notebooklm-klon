@@ -80,7 +80,10 @@ export async function runIngestJob(
     const upload = await ports.uploads.load(sourceId);
     if (!upload) throw new Error(`No upload stored for source ${sourceId}.`);
     Object.assign(known, { userId: upload.userId, kind: upload.kind, bytes: upload.bytes.length });
-    await processSource({ sourceId, kind: upload.kind, bytes: upload.bytes }, ports);
+    await processSource(
+      { sourceId, userId: upload.userId, kind: upload.kind, bytes: upload.bytes },
+      ports
+    );
     await ports.uploads.remove(sourceId);
   } catch (error) {
     const ingest = error instanceof IngestError ? error : null;

@@ -20,6 +20,7 @@ import { runMigrations } from '../db/migrate';
 import { createNotebook, deleteNotebook } from '../db/notebook-repository';
 import { selectedReadySourceIds } from '../db/notebook-source-repository';
 import { searchChunks } from '../db/retrieval';
+import { recordUsage } from '../db/usage-repository';
 import { importLocalFiles } from '../ingestion/local-import';
 import { createLocalImportDeps } from '../ingestion/local-import-deps';
 import { log } from '../logger';
@@ -58,7 +59,7 @@ if (selected.length === 0) throw new Error('No golden question matches --ids.');
 
 await runMigrations(env.DATABASE_URL);
 const { db, pool } = createDb(env.DATABASE_URL);
-const providers = createProviders(env);
+const providers = createProviders(env, (event) => recordUsage(db, event));
 
 await db
   .insert(user)

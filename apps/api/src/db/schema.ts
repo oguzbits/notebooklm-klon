@@ -5,6 +5,8 @@ import {
   SOURCE_KIND,
   SOURCE_STATUS,
   STUDIO_KIND,
+  USAGE_PURPOSE,
+  USAGE_ROLE,
 } from '@nlm/shared';
 import { type SQL, sql } from 'drizzle-orm';
 import {
@@ -41,6 +43,8 @@ export const sourceStatus = pgEnum('source_status', SOURCE_STATUS);
 export const chatRole = pgEnum('chat_role', CHAT_ROLE);
 export const studioKind = pgEnum('studio_kind', STUDIO_KIND);
 export const noteKind = pgEnum('note_kind', NOTE_KIND);
+export const usagePurpose = pgEnum('usage_purpose', USAGE_PURPOSE);
+export const usageRole = pgEnum('usage_role', USAGE_ROLE);
 
 // user_id is the Better Auth user id. Deleting a user deletes their notebooks and sources. Every
 // query still filters by user_id: the foreign key is integrity, not authorization (see AGENTS.md).
@@ -230,4 +234,23 @@ export const studioOutputs = pgTable(
     createdAt: createdAt(),
   },
   (table) => [index('studio_outputs_notebook_idx').on(table.notebookId, table.createdAt)]
+);
+
+// One row per model call: whose, what for, which role and how many tokens, never content. estimated
+// is true where the provider reported no count. Rows older than the retention are deleted.
+export const usageEvents = pgTable(
+  'usage_events',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    purpose: usagePurpose('purpose').notNull(),
+    role: usageRole('role').notNull(),
+    inputTokens: integer('input_tokens').notNull(),
+    outputTokens: integer('output_tokens').notNull(),
+    estimated: boolean('estimated').notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [index('usage_events_user_idx').on(table.userId, table.createdAt)]
 );

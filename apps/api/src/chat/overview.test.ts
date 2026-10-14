@@ -1,4 +1,4 @@
-import type { SourceOverview } from '@nlm/shared';
+import { type SourceOverview, USAGE_PURPOSE } from '@nlm/shared';
 import { describe, expect, it } from 'vitest';
 
 import type { ChatInput } from '../ai/gemini-chat';
@@ -48,6 +48,10 @@ describe('getOrCreateOverview', () => {
     expect(saved).toEqual([OVERVIEW]);
     expect(modelInputs).toHaveLength(1);
     expect(modelInputs[0]?.user).toContain('Dr. Brandt leitet Nordlicht.');
+    expect(modelInputs[0]?.usage).toEqual({
+      userId: INPUT.userId,
+      purpose: USAGE_PURPOSE.OVERVIEW,
+    });
   });
 
   it('returns null when the source is not available to the user', async () => {

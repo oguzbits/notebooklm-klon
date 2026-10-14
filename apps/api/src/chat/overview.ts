@@ -1,4 +1,4 @@
-import type { SourceOverview } from '@nlm/shared';
+import { type SourceOverview, USAGE_PURPOSE } from '@nlm/shared';
 
 import type { ChatInput } from '../ai/gemini-chat';
 import {
@@ -37,6 +37,7 @@ export async function getOrCreateOverview(
     system: OVERVIEW_SYSTEM_PROMPT,
     user: buildOverviewMessage(source.title, source.text),
     schema: OVERVIEW_JSON_SCHEMA,
+    usage: { userId: input.userId, purpose: USAGE_PURPOSE.OVERVIEW },
   })) {
     reply += piece;
   }

@@ -16,6 +16,7 @@ import { user } from '../db/auth-schema';
 import { createDb } from '../db/client';
 import { runMigrations } from '../db/migrate';
 import { createNotebook, deleteNotebook } from '../db/notebook-repository';
+import { recordUsage } from '../db/usage-repository';
 import { importLocalFiles } from '../ingestion/local-import';
 import { createLocalImportDeps } from '../ingestion/local-import-deps';
 import { log } from '../logger';
@@ -29,7 +30,7 @@ const BOLD_TERM = /\*\*[^*]+\*\*/g;
 const env = parseEnv(process.env);
 await runMigrations(env.DATABASE_URL);
 const { db, pool } = createDb(env.DATABASE_URL);
-const providers = createProviders(env);
+const providers = createProviders(env, (event) => recordUsage(db, event));
 
 await db
   .insert(user)

@@ -1,4 +1,4 @@
-import type { NotebookOverview } from '@nlm/shared';
+import { type NotebookOverview, USAGE_PURPOSE } from '@nlm/shared';
 import { describe, expect, it } from 'vitest';
 
 import type { ChatInput } from '../ai/gemini-chat';
@@ -73,6 +73,10 @@ describe('getOrCreateNotebookOverview', () => {
     expect(modelInputs).toHaveLength(1);
     expect(modelInputs[0]?.system).toBe(NOTEBOOK_OVERVIEW_SYSTEM_PROMPT);
     expect(modelInputs[0]?.schema).toBe(NOTEBOOK_OVERVIEW_JSON_SCHEMA);
+    expect(modelInputs[0]?.usage).toEqual({
+      userId: INPUT.userId,
+      purpose: USAGE_PURPOSE.OVERVIEW,
+    });
     expect(modelInputs[0]?.user).toContain('projekt.pdf');
     expect(modelInputs[0]?.user).toContain('Dr. Brandt leitet Nordlicht.');
   });

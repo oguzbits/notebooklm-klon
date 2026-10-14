@@ -1,4 +1,4 @@
-import type { NotebookOverview } from '@nlm/shared';
+import { type NotebookOverview, USAGE_PURPOSE } from '@nlm/shared';
 
 import type { ChatInput } from '../ai/gemini-chat';
 import {
@@ -64,6 +64,7 @@ export async function getOrCreateNotebookOverview(
     system: NOTEBOOK_OVERVIEW_SYSTEM_PROMPT,
     user: buildNotebookOverviewMessage(found.sources),
     schema: NOTEBOOK_OVERVIEW_JSON_SCHEMA,
+    usage: { userId: input.userId, purpose: USAGE_PURPOSE.OVERVIEW },
   })) {
     reply += piece;
   }

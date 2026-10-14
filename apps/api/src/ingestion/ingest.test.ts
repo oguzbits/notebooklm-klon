@@ -131,11 +131,36 @@ describe('registerSource', () => {
 });
 
 describe('processSource', () => {
+  it('hands the owner of the source to the parser and the embedder, who count the call under them', async () => {
+    const owners: string[] = [];
+    const { ports } = fakePorts({
+      parse: async (_kind, _bytes, userId) => {
+        owners.push(userId);
+        return { text: 'Ein Satz.', pageCount: 1 };
+      },
+      embed: async (texts, userId) => {
+        owners.push(userId);
+        return texts.map((_, i) => vector(i + 1));
+      },
+    });
+    await registerSource(input, ports);
+
+    await processSource(
+      { sourceId: 's1', userId: 'owner', kind: SOURCE_KIND.TXT, bytes: BYTES },
+      ports
+    );
+
+    expect(owners).toEqual(['owner', 'owner']);
+  });
+
   it('parses, chunks, embeds and stores the source as READY', async () => {
     const { ports, calls, rows } = fakePorts();
     await registerSource(input, ports);
 
-    await processSource({ sourceId: 's1', kind: SOURCE_KIND.TXT, bytes: BYTES }, ports);
+    await processSource(
+      { sourceId: 's1', userId: 'u1', kind: SOURCE_KIND.TXT, bytes: BYTES },
+      ports
+    );
 
     expect(rows[0]?.status).toBe(SOURCE_STATUS.READY);
     expect(calls.ready).toHaveLength(1);
@@ -164,7 +189,10 @@ describe('processSource', () => {
     });
     await registerSource(input, ports);
 
-    await processSource({ sourceId: 's1', kind: SOURCE_KIND.TXT, bytes: BYTES }, ports);
+    await processSource(
+      { sourceId: 's1', userId: 'u1', kind: SOURCE_KIND.TXT, bytes: BYTES },
+      ports
+    );
 
     expect(statusWhileParsing).toBe(SOURCE_STATUS.PROCESSING);
   });
@@ -174,7 +202,10 @@ describe('processSource', () => {
     const { ports, calls } = fakePorts({ parse: async () => ({ text, pageCount: null }) });
     await registerSource(input, ports);
 
-    await processSource({ sourceId: 's1', kind: SOURCE_KIND.TXT, bytes: BYTES }, ports);
+    await processSource(
+      { sourceId: 's1', userId: 'u1', kind: SOURCE_KIND.TXT, bytes: BYTES },
+      ports
+    );
 
     const flat = calls.embed.flat();
     expect(calls.embed.length).toBeGreaterThan(0);
@@ -192,7 +223,7 @@ describe('processSource', () => {
     await registerSource(input, ports);
 
     await expect(
-      processSource({ sourceId: 's1', kind: SOURCE_KIND.TXT, bytes: BYTES }, ports)
+      processSource({ sourceId: 's1', userId: 'u1', kind: SOURCE_KIND.TXT, bytes: BYTES }, ports)
     ).rejects.toMatchObject({ code: INGEST_ERROR.EMPTY_TEXT, stage: INGEST_STAGE.CHUNK });
 
     expect(rows[0]?.status).toBe(SOURCE_STATUS.FAILED);
@@ -210,7 +241,7 @@ describe('processSource', () => {
     await registerSource(input, ports);
 
     const error = await processSource(
-      { sourceId: 's1', kind: SOURCE_KIND.PDF, bytes: BYTES },
+      { sourceId: 's1', userId: 'u1', kind: SOURCE_KIND.PDF, bytes: BYTES },
       ports
     ).catch((caught: unknown) => caught);
 
@@ -230,7 +261,7 @@ describe('processSource', () => {
     await registerSource(input, ports);
 
     await expect(
-      processSource({ sourceId: 's1', kind: SOURCE_KIND.TXT, bytes: BYTES }, ports)
+      processSource({ sourceId: 's1', userId: 'u1', kind: SOURCE_KIND.TXT, bytes: BYTES }, ports)
     ).rejects.toMatchObject({ code: INGEST_ERROR.EMBED_FAILED, stage: INGEST_STAGE.EMBED });
     expect(calls.failed).toEqual([SOURCE_FAILURE.EMBED_FAILED]);
     expect(calls.ready).toEqual([]);
@@ -241,7 +272,7 @@ describe('processSource', () => {
     await registerSource(input, ports);
 
     await expect(
-      processSource({ sourceId: 's1', kind: SOURCE_KIND.TXT, bytes: BYTES }, ports)
+      processSource({ sourceId: 's1', userId: 'u1', kind: SOURCE_KIND.TXT, bytes: BYTES }, ports)
     ).rejects.toMatchObject({ code: INGEST_ERROR.EMBED_FAILED });
     expect(calls.ready).toEqual([]);
   });
@@ -251,7 +282,7 @@ describe('processSource', () => {
     await registerSource(input, ports);
 
     await expect(
-      processSource({ sourceId: 's1', kind: SOURCE_KIND.TXT, bytes: BYTES }, ports)
+      processSource({ sourceId: 's1', userId: 'u1', kind: SOURCE_KIND.TXT, bytes: BYTES }, ports)
     ).rejects.toMatchObject({ code: INGEST_ERROR.EMBED_FAILED });
   });
 
@@ -264,7 +295,7 @@ describe('processSource', () => {
     await registerSource(input, ports);
 
     const error = await processSource(
-      { sourceId: 's1', kind: SOURCE_KIND.TXT, bytes: BYTES },
+      { sourceId: 's1', userId: 'u1', kind: SOURCE_KIND.TXT, bytes: BYTES },
       ports
     ).catch((caught: unknown) => caught);
 

@@ -1,3 +1,4 @@
+import { USAGE_PURPOSE, USAGE_ROLE, type UsageEvent } from '@nlm/shared';
 import { delay, http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 
@@ -10,8 +11,15 @@ const MODEL = 'test-chat-model';
 const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:streamGenerateContent`;
 const KEY = 'test-key-not-real';
 
+const SCOPE = { userId: 'reader', purpose: USAGE_PURPOSE.CHAT };
+const MAX_OUTPUT_TOKENS = {
+  [USAGE_PURPOSE.CHAT]: 111,
+  [USAGE_PURPOSE.STUDIO]: 222,
+  [USAGE_PURPOSE.OVERVIEW]: 333,
+};
+
 const chat = (
-  onUsage?: (usage: { promptTokens: number; outputTokens: number }) => void,
+  recorded: UsageEvent[] = [],
   overrides: { sleep?: (ms: number) => Promise<void>; timeoutMs?: number } = {}
 ) =>
   createGeminiChat({
@@ -20,7 +28,10 @@ const chat = (
     limiter: new RateLimiter({ requestsPerMinute: 1000, tokensPerMinute: 1_000_000 }),
     sleep: overrides.sleep ?? (async () => undefined),
     timeoutMs: overrides.timeoutMs,
-    onUsage,
+    maxOutputTokens: MAX_OUTPUT_TOKENS,
+    record: async (event) => {
+      recorded.push(event);
+    },
   });
 
 const event = (data: unknown) => `data: ${JSON.stringify(data)}\r\n\r\n`;
@@ -64,7 +75,7 @@ describe('createGeminiChat', () => {
     );
 
     const pieces = await collect(
-      chat().stream({ system: 'SYSTEM', user: 'FRAGE', schema: { type: 'object' } })
+      chat().stream({ system: 'SYSTEM', user: 'FRAGE', schema: { type: 'object' }, usage: SCOPE })
     );
 
     expect(pieces).toEqual(['{"statements":', '[]}']);
@@ -83,44 +94,100 @@ describe('createGeminiChat', () => {
     const body = part('Hallo ') + part('Welt', 'STOP');
     server.use(http.post(ENDPOINT, () => sse(body, [7, 30, 55])));
 
-    expect((await collect(chat().stream({ system: 's', user: 'u', schema: {} }))).join('')).toBe(
-      'Hallo Welt'
-    );
+    expect(
+      (await collect(chat().stream({ system: 's', user: 'u', schema: {}, usage: SCOPE }))).join('')
+    ).toBe('Hallo Welt');
   });
 
-  it('reports the token counts of the answer', async () => {
-    let usage: { promptTokens: number; outputTokens: number } | undefined;
+  it('records the counts of the provider for the user and purpose, thinking counted as output', async () => {
+    const recorded: UsageEvent[] = [];
     server.use(
       http.post(ENDPOINT, () =>
         sse(
           part('x') +
             event({
               candidates: [{ content: { parts: [{ text: 'y' }] }, finishReason: 'STOP' }],
-              usageMetadata: { promptTokenCount: 120, candidatesTokenCount: 15 },
+              usageMetadata: {
+                promptTokenCount: 120,
+                candidatesTokenCount: 15,
+                thoughtsTokenCount: 40,
+              },
             })
         )
       )
     );
 
-    await collect(chat((u) => (usage = u)).stream({ system: 's', user: 'u', schema: {} }));
+    await collect(chat(recorded).stream({ system: 's', user: 'u', schema: {}, usage: SCOPE }));
 
-    expect(usage).toEqual({ promptTokens: 120, outputTokens: 15 });
+    expect(recorded).toEqual([
+      { ...SCOPE, role: USAGE_ROLE.CHAT, inputTokens: 120, outputTokens: 55, estimated: false },
+    ]);
+  });
+
+  it('records an estimate, marked as such, when the provider reports no counts', async () => {
+    const recorded: UsageEvent[] = [];
+    server.use(http.post(ENDPOINT, () => sse(part('x'.repeat(30), 'STOP'))));
+
+    await collect(
+      chat(recorded).stream({
+        system: 'a'.repeat(30),
+        user: 'b'.repeat(30),
+        schema: {},
+        usage: SCOPE,
+      })
+    );
+
+    expect(recorded).toEqual([
+      { ...SCOPE, role: USAGE_ROLE.CHAT, inputTokens: 20, outputTokens: 10, estimated: true },
+    ]);
+  });
+
+  it('still records a call whose answer was cut off, because the tokens were spent', async () => {
+    const recorded: UsageEvent[] = [];
+    server.use(http.post(ENDPOINT, () => sse(part('halb', 'MAX_TOKENS'))));
+
+    await expect(
+      collect(chat(recorded).stream({ system: 's', user: 'u', schema: {}, usage: SCOPE }))
+    ).rejects.toThrow();
+
+    expect(recorded).toHaveLength(1);
+  });
+
+  it('caps the length of the answer with the limit of the purpose', async () => {
+    let seen: { generationConfig?: { maxOutputTokens?: number } } | undefined;
+    server.use(
+      http.post(ENDPOINT, async ({ request }) => {
+        seen = (await request.json()) as typeof seen;
+        return sse(part('x', 'STOP'));
+      })
+    );
+
+    await collect(
+      chat().stream({
+        system: 's',
+        user: 'u',
+        schema: {},
+        usage: { userId: 'reader', purpose: USAGE_PURPOSE.STUDIO },
+      })
+    );
+
+    expect(seen?.generationConfig?.maxOutputTokens).toBe(MAX_OUTPUT_TOKENS[USAGE_PURPOSE.STUDIO]);
   });
 
   it('fails instead of ending quietly when the model stops with anything but STOP', async () => {
     server.use(http.post(ENDPOINT, () => sse(part('halb', 'MAX_TOKENS'))));
 
-    await expect(collect(chat().stream({ system: 's', user: 'u', schema: {} }))).rejects.toThrow(
-      'MAX_TOKENS'
-    );
+    await expect(
+      collect(chat().stream({ system: 's', user: 'u', schema: {}, usage: SCOPE }))
+    ).rejects.toThrow('MAX_TOKENS');
   });
 
   it('fails when the stream ends without a normal finish', async () => {
     server.use(http.post(ENDPOINT, () => sse(part('abgeschnitten'))));
 
-    await expect(collect(chat().stream({ system: 's', user: 'u', schema: {} }))).rejects.toThrow(
-      /finish/i
-    );
+    await expect(
+      collect(chat().stream({ system: 's', user: 'u', schema: {}, usage: SCOPE }))
+    ).rejects.toThrow(/finish/i);
   });
 
   it('names the finish reason when an event has no text parts', async () => {
@@ -130,17 +197,17 @@ describe('createGeminiChat', () => {
       )
     );
 
-    await expect(collect(chat().stream({ system: 's', user: 'u', schema: {} }))).rejects.toThrow(
-      /MAX_TOKENS/
-    );
+    await expect(
+      collect(chat().stream({ system: 's', user: 'u', schema: {}, usage: SCOPE }))
+    ).rejects.toThrow(/MAX_TOKENS/);
   });
 
   it('fails when the prompt was blocked and no candidate came back', async () => {
     server.use(http.post(ENDPOINT, () => sse(event({ promptFeedback: { blockReason: 'OTHER' } }))));
 
-    await expect(collect(chat().stream({ system: 's', user: 'u', schema: {} }))).rejects.toThrow(
-      /OTHER/
-    );
+    await expect(
+      collect(chat().stream({ system: 's', user: 'u', schema: {}, usage: SCOPE }))
+    ).rejects.toThrow(/OTHER/);
   });
 
   it('reports the status of a failed call', async () => {
@@ -151,7 +218,7 @@ describe('createGeminiChat', () => {
     );
 
     await expect(
-      collect(chat().stream({ system: 's', user: 'u', schema: {} }))
+      collect(chat().stream({ system: 's', user: 'u', schema: {}, usage: SCOPE }))
     ).rejects.toBeInstanceOf(GeminiError);
   });
 
@@ -166,9 +233,9 @@ describe('createGeminiChat', () => {
       })
     );
 
-    expect((await collect(chat().stream({ system: 's', user: 'u', schema: {} }))).join('')).toBe(
-      'ok'
-    );
+    expect(
+      (await collect(chat().stream({ system: 's', user: 'u', schema: {}, usage: SCOPE }))).join('')
+    ).toBe('ok');
     expect(calls).toBe(2);
   });
 
@@ -176,7 +243,9 @@ describe('createGeminiChat', () => {
     server.use(http.post(ENDPOINT, async () => delay('infinite')));
     const stalled = chat(undefined, { timeoutMs: 50 });
 
-    await expect(collect(stalled.stream({ system: 's', user: 'u', schema: {} }))).rejects.toThrow();
+    await expect(
+      collect(stalled.stream({ system: 's', user: 'u', schema: {}, usage: SCOPE }))
+    ).rejects.toThrow();
   });
 
   it('does not wait for a retry-after beyond the cap but reports the status', async () => {
@@ -195,9 +264,9 @@ describe('createGeminiChat', () => {
       },
     });
 
-    const error = await collect(waiting.stream({ system: 's', user: 'u', schema: {} })).catch(
-      (caught: unknown) => caught
-    );
+    const error = await collect(
+      waiting.stream({ system: 's', user: 'u', schema: {}, usage: SCOPE })
+    ).catch((caught: unknown) => caught);
 
     expect(error).toBeInstanceOf(GeminiError);
     expect((error as GeminiError).status).toBe(429);
@@ -211,7 +280,7 @@ describe('createGeminiChat', () => {
     const reader = new AbortController();
     const waiting = chat(undefined, { sleep: () => new Promise(() => undefined) });
     const pending = collect(
-      waiting.stream({ system: 's', user: 'u', schema: {}, signal: reader.signal })
+      waiting.stream({ system: 's', user: 'u', schema: {}, usage: SCOPE, signal: reader.signal })
     );
 
     setTimeout(() => reader.abort(), 50);

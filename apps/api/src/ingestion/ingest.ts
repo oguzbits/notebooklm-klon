@@ -72,8 +72,9 @@ export interface IngestPorts {
     ) => Promise<void>;
     markFailed: (sourceId: string, failure: SourceFailure) => Promise<void>;
   };
-  parse: (kind: SourceKind, bytes: Uint8Array) => Promise<ParsedDocument>;
-  embed: (texts: string[]) => Promise<number[][]>;
+  /** `userId` is whose quota the model call is counted under. */
+  parse: (kind: SourceKind, bytes: Uint8Array, userId: string) => Promise<ParsedDocument>;
+  embed: (texts: string[], userId: string) => Promise<number[][]>;
 }
 
 export interface RegisterInput {
@@ -119,11 +120,18 @@ async function fail(ports: IngestPorts, sourceId: string, problem: Problem): Pro
   throw new IngestError(problem.code, problem.stage, problem.message, problem.cause);
 }
 
-async function embedAll(ports: IngestPorts, chunks: TextChunk[]): Promise<number[][]> {
+async function embedAll(
+  ports: IngestPorts,
+  chunks: TextChunk[],
+  userId: string
+): Promise<number[][]> {
   const vectors: number[][] = [];
   for (let start = 0; start < chunks.length; start += LIMITS.EMBED_BATCH_SIZE) {
     const batch = chunks.slice(start, start + LIMITS.EMBED_BATCH_SIZE);
-    const embedded = await ports.embed(batch.map((chunk) => chunk.text));
+    const embedded = await ports.embed(
+      batch.map((chunk) => chunk.text),
+      userId
+    );
     if (embedded.length !== batch.length) {
       throw new Error(`expected ${batch.length} embeddings, got ${embedded.length}`);
     }
@@ -142,7 +150,7 @@ async function embedAll(ports: IngestPorts, chunks: TextChunk[]): Promise<number
  * source FAILED with a code the UI can explain and is then thrown, so the caller still sees it.
  */
 export async function processSource(
-  input: { sourceId: string; kind: SourceKind; bytes: Uint8Array },
+  input: { sourceId: string; userId: string; kind: SourceKind; bytes: Uint8Array },
   ports: IngestPorts
 ): Promise<void> {
   const { sourceId } = input;
@@ -150,7 +158,7 @@ export async function processSource(
 
   let parsed: ParsedDocument;
   try {
-    parsed = await ports.parse(input.kind, input.bytes);
+    parsed = await ports.parse(input.kind, input.bytes, input.userId);
   } catch (error) {
     return fail(ports, sourceId, {
       failure: SOURCE_FAILURE.PARSE_FAILED,
@@ -174,7 +182,7 @@ export async function processSource(
 
   let vectors: number[][];
   try {
-    vectors = await embedAll(ports, chunks);
+    vectors = await embedAll(ports, chunks, input.userId);
   } catch (error) {
     return fail(ports, sourceId, {
       failure: SOURCE_FAILURE.EMBED_FAILED,

@@ -1,4 +1,10 @@
-import { EMBEDDING_DIMENSIONS } from '@nlm/shared';
+import {
+  EMBEDDING_DIMENSIONS,
+  USAGE_PURPOSE,
+  USAGE_ROLE,
+  type UsageEvent,
+  type UsagePurpose,
+} from '@nlm/shared';
 import { z } from 'zod';
 
 import { postGemini } from './gemini-http';
@@ -11,7 +17,10 @@ const CHARS_PER_TOKEN = 3;
 const documentText = (text: string) => `title: none | text: ${text}`;
 const queryText = (text: string) => `task: search result | query: ${text}`;
 
-const ResponseSchema = z.object({ embeddings: z.array(z.object({ values: z.array(z.number()) })) });
+const ResponseSchema = z.object({
+  embeddings: z.array(z.object({ values: z.array(z.number()) })),
+  usageMetadata: z.object({ promptTokenCount: z.number().optional() }).optional(),
+});
 
 export interface GeminiEmbedderConfig {
   apiKey: string;
@@ -19,6 +28,8 @@ export interface GeminiEmbedderConfig {
   model: string;
   limiter: RateLimiter;
   sleep: (ms: number) => Promise<void>;
+  /** Stores what a call cost. Awaited, so a failure to count is a failure of the call. */
+  record: (event: UsageEvent) => Promise<void>;
   /** Longest wait for one attempt, answer body included. */
   timeoutMs?: number | undefined;
 }
@@ -30,7 +41,11 @@ function normalize(vector: number[]): number[] {
 
 /** Embeddings through the Gemini API: one request per call, all texts in one batch. */
 export function createGeminiEmbedder(config: GeminiEmbedderConfig) {
-  async function embed(texts: string[]): Promise<number[][]> {
+  async function embed(
+    texts: string[],
+    userId: string,
+    purpose: UsagePurpose
+  ): Promise<number[][]> {
     const estimatedTokens = texts.reduce(
       (sum, text) => sum + Math.ceil(text.length / CHARS_PER_TOKEN),
       0
@@ -44,7 +59,16 @@ export function createGeminiEmbedder(config: GeminiEmbedderConfig) {
         })),
       })
     );
-    const { embeddings } = ResponseSchema.parse(json);
+    const { embeddings, usageMetadata } = ResponseSchema.parse(json);
+    const reported = usageMetadata?.promptTokenCount;
+    await config.record({
+      userId,
+      purpose,
+      role: USAGE_ROLE.EMBED,
+      inputTokens: reported ?? estimatedTokens,
+      outputTokens: 0,
+      estimated: reported === undefined,
+    });
     if (embeddings.length !== texts.length) {
       throw new Error(`expected ${texts.length} embeddings, got ${embeddings.length}`);
     }
@@ -57,9 +81,11 @@ export function createGeminiEmbedder(config: GeminiEmbedderConfig) {
   }
 
   return {
-    embedDocuments: (texts: string[]) => embed(texts.map(documentText)),
-    async embedQuery(text: string): Promise<number[]> {
-      const [vector] = await embed([queryText(text)]);
+    embedDocuments: (texts: string[], userId: string) =>
+      embed(texts.map(documentText), userId, USAGE_PURPOSE.EMBED),
+    /** A question is counted as part of the chat, the passages of a new source as embedding. */
+    async embedQuery(text: string, userId: string): Promise<number[]> {
+      const [vector] = await embed([queryText(text)], userId, USAGE_PURPOSE.CHAT);
       if (!vector) throw new Error('no embedding returned');
       return vector;
     },

@@ -1,4 +1,10 @@
-import type { ChatConfig, CreateStudioBody, NewStudioOutput, StudioOutput } from '@nlm/shared';
+import {
+  type ChatConfig,
+  type CreateStudioBody,
+  type NewStudioOutput,
+  type StudioOutput,
+  USAGE_PURPOSE,
+} from '@nlm/shared';
 
 import type { ChatInput } from '../ai/gemini-chat';
 import { NoSourcesSelectedError } from '../chat/answer';
@@ -60,6 +66,7 @@ export async function generateStudioOutput(
     system: request.system,
     user: request.user,
     schema: request.schema,
+    usage: { userId: input.userId, purpose: USAGE_PURPOSE.STUDIO },
   })) {
     reply += piece;
   }

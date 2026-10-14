@@ -1,4 +1,4 @@
-import { GUEST_LIMITS } from '@nlm/shared';
+import { GUEST_LIMITS, USAGE_PURPOSE } from '@nlm/shared';
 
 /**
  * Numeric limits of the application. Model IDs are not here: they come from the environment.
@@ -40,6 +40,8 @@ export const LIMITS = {
   RETRY_MAX_WAIT_MS: 30_000,
   /** Studio: characters of source text handed to the model per output (about 30k tokens). */
   STUDIO_MAX_CHARS: 120_000,
+  /** Usage events (one per model call) are kept this many days. */
+  USAGE_RETENTION_DAYS: 30,
   /** Guests of the live demo: most that may be started within one hour, for everybody together. */
   GUESTS_PER_HOUR: 20,
   /** Guests of the live demo: most that may exist at the same time. */
@@ -56,6 +58,19 @@ export const LIMITS = {
   SHUTDOWN_SERVER_WAIT_MS: 10_000,
   /** Shutdown: how long a running ingestion job may finish. Keep the compose stop_grace_period above both. */
   SHUTDOWN_JOB_WAIT_MS: 60_000,
+} as const;
+
+/**
+ * Longest answer a model may produce per call, by purpose. Without it one call can cost any
+ * multiple of the average. Provisional: set from the model's own limit and generous, to be tightened
+ * once `pnpm report:usage` shows what each purpose really needs.
+ */
+export const MAX_OUTPUT_TOKENS = {
+  [USAGE_PURPOSE.CHAT]: 8_192,
+  [USAGE_PURPOSE.STUDIO]: 16_384,
+  [USAGE_PURPOSE.OVERVIEW]: 4_096,
+  /** A transcript is as long as the document or the recording it comes from. */
+  [USAGE_PURPOSE.READ]: 65_536,
 } as const;
 
 /**

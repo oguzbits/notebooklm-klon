@@ -138,6 +138,18 @@ export {
   StudioUpdateBodySchema,
 } from './studio';
 export {
+  USAGE_PURPOSE,
+  USAGE_ROLE,
+  type UsageEvent,
+  UsageEventSchema,
+  type UsagePurpose,
+  UsagePurposeSchema,
+  type UsageRole,
+  UsageRoleSchema,
+  type UsageScope,
+  UsageScopeSchema,
+} from './usage';
+export {
   type Capabilities,
   CapabilitiesSchema,
   MAX_WEB_RESULTS,

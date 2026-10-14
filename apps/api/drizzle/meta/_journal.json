@@ -162,6 +162,13 @@
       "when": 1790968976967,
       "tag": "0022_glamorous_azazel",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792009969987,
+      "tag": "0023_young_madame_masque",
+      "breakpoints": true
     }
   ]
 }

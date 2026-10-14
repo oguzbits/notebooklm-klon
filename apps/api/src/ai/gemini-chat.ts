@@ -1,3 +1,4 @@
+import { type USAGE_PURPOSE, USAGE_ROLE, type UsageEvent } from '@nlm/shared';
 import { z } from 'zod';
 
 import { requestGemini } from './gemini-http';
@@ -24,6 +25,8 @@ const EventSchema = z.object({
     .object({
       promptTokenCount: z.number().optional(),
       candidatesTokenCount: z.number().optional(),
+      // Billed as output, but counted apart from the candidates.
+      thoughtsTokenCount: z.number().optional(),
     })
     .optional(),
 });
@@ -36,15 +39,23 @@ export interface GeminiChatConfig {
   sleep: (ms: number) => Promise<void>;
   /** Longest wait for one attempt, answer body included. */
   timeoutMs?: number | undefined;
-  /** Receives the token counts of a finished answer, for the logs. */
-  onUsage?: (usage: { promptTokens: number; outputTokens: number }) => void;
+  /** Longest answer per purpose, sent with every request. */
+  maxOutputTokens: Record<ChatPurpose, number>;
+  /** Stores what a call cost. Awaited, so a failure to count is a failure of the call. */
+  record: (event: UsageEvent) => Promise<void>;
 }
+
+/** The purposes that go through the chat model. */
+type ChatPurpose =
+  typeof USAGE_PURPOSE.CHAT | typeof USAGE_PURPOSE.STUDIO | typeof USAGE_PURPOSE.OVERVIEW;
 
 export interface ChatInput {
   system: string;
   user: string;
   /** JSON Schema of the answer the model must produce. */
   schema: Record<string, unknown>;
+  /** Whose call this is and what it is for: the cost is counted under it. */
+  usage: { userId: string; purpose: ChatPurpose };
   /** Ends the request and the stream, e.g. when the reader leaves. */
   signal?: AbortSignal;
 }
@@ -67,12 +78,13 @@ async function* lines(body: ReadableStream<Uint8Array>): AsyncGenerator<string> 
 }
 
 /** The request for one answer: the instruction, the question, and the shape the answer must have. */
-function requestBody(input: ChatInput) {
+function requestBody(input: ChatInput, maxOutputTokens: number) {
   return {
     systemInstruction: { parts: [{ text: input.system }] },
     contents: [{ role: 'user', parts: [{ text: input.user }] }],
     generationConfig: {
       temperature: 0,
+      maxOutputTokens,
       responseMimeType: 'application/json',
       responseJsonSchema: input.schema,
     },
@@ -93,7 +105,7 @@ function isNormalFinish(reason: string): true {
 function usageOf(metadata: NonNullable<Event['usageMetadata']>): Usage {
   return {
     promptTokens: metadata.promptTokenCount ?? 0,
-    outputTokens: metadata.candidatesTokenCount ?? 0,
+    outputTokens: (metadata.candidatesTokenCount ?? 0) + (metadata.thoughtsTokenCount ?? 0),
   };
 }
 
@@ -111,6 +123,7 @@ class StreamReport {
   private finished = false;
   private blocked: string | undefined;
   private usage: Usage | undefined;
+  private chars = 0;
 
   /** Takes one event and returns the text it carries (possibly none). */
   read(event: Event): string {
@@ -119,16 +132,27 @@ class StreamReport {
     if (candidate?.finishReason !== undefined)
       this.finished = isNormalFinish(candidate.finishReason);
     if (event.usageMetadata) this.usage = usageOf(event.usageMetadata);
-    return textOf(candidate);
+    const text = textOf(candidate);
+    this.chars += text.length;
+    return text;
   }
 
-  /** Call when the stream is over: the counts of the last event, or the reason there is no answer. */
-  conclude(): Usage | undefined {
+  /** The counts of the last event, or none when the provider reported none. */
+  get reported(): Usage | undefined {
+    return this.usage;
+  }
+
+  /** How much text the stream carried, for an estimate where no counts came. */
+  get textChars(): number {
+    return this.chars;
+  }
+
+  /** Call when the stream is over: it throws the reason there is no answer. */
+  conclude(): void {
     if (this.blocked !== undefined && !this.finished) {
       throw new Error(`The prompt was blocked: ${this.blocked}.`);
     }
     if (!this.finished) throw new Error('The stream ended without a normal finish.');
-    return this.usage;
   }
 }
 
@@ -148,7 +172,7 @@ export function createGeminiChat(config: GeminiChatConfig) {
           requestGemini(
             config,
             `models/${config.model}:streamGenerateContent?alt=sse`,
-            requestBody(input),
+            requestBody(input, config.maxOutputTokens[input.usage.purpose]),
             input.signal
           ),
         input.signal
@@ -156,14 +180,25 @@ export function createGeminiChat(config: GeminiChatConfig) {
       if (!response.body) throw new Error('The model returned no stream.');
 
       const report = new StreamReport();
-      for await (const line of lines(response.body)) {
-        if (!line.startsWith(DATA_PREFIX)) continue;
-        const text = report.read(EventSchema.parse(JSON.parse(line.slice(DATA_PREFIX.length))));
-        if (text !== '') yield text;
+      try {
+        for await (const line of lines(response.body)) {
+          if (!line.startsWith(DATA_PREFIX)) continue;
+          const text = report.read(EventSchema.parse(JSON.parse(line.slice(DATA_PREFIX.length))));
+          if (text !== '') yield text;
+        }
+        report.conclude();
+      } finally {
+        // Counted on every way out: a cut-off or abandoned answer cost tokens too. The counts
+        // arrive cumulatively in several events, so the last ones are the total.
+        const usage = report.reported;
+        await config.record({
+          ...input.usage,
+          role: USAGE_ROLE.CHAT,
+          inputTokens: usage?.promptTokens ?? estimatedTokens,
+          outputTokens: usage?.outputTokens ?? Math.ceil(report.textChars / CHARS_PER_TOKEN),
+          estimated: usage === undefined,
+        });
       }
-      // The counts arrive cumulatively in several events; report the last ones once.
-      const usage = report.conclude();
-      if (usage) config.onUsage?.(usage);
     },
   };
 }

@@ -16,6 +16,7 @@ import { parseEnv } from '../config/env';
 import { user } from '../db/auth-schema';
 import { createDb } from '../db/client';
 import { runMigrations } from '../db/migrate';
+import { recordUsage } from '../db/usage-repository';
 import { toLocalFile } from '../eval/corpus';
 import { createLocalImportDeps } from '../ingestion/local-import-deps';
 import { log } from '../logger';
@@ -33,7 +34,7 @@ if (!email || !password) {
 await runMigrations(env.DATABASE_URL);
 const { db, pool } = createDb(env.DATABASE_URL);
 const auth = createAuth(db, { secret: env.BETTER_AUTH_SECRET, baseURL: env.BETTER_AUTH_URL });
-const providers = createProviders(env);
+const providers = createProviders(env, (event) => recordUsage(db, event));
 
 try {
   const files = readdirSync(DEMO_DIR)

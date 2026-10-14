@@ -12,6 +12,7 @@ import {
   StudioOutputListSchema,
   StudioOutputSchema,
   SubmitSourceResultSchema,
+  USAGE_PURPOSE,
 } from '@nlm/shared';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
@@ -96,6 +97,23 @@ describe('studio routes', () => {
   it('need a session', async () => {
     expect((await app.request('/api/notebooks/x/studio')).status).toBe(401);
     expect((await app.request('/api/notebooks/x/chat-config')).status).toBe(401);
+  });
+
+  it('counts the model call under the signed-in user as Studio', async () => {
+    const notebook = await createNotebook(alice, 'Dr. Brandt leitet das Projekt.');
+
+    await app.request(
+      `/api/notebooks/${notebook}/studio`,
+      send('POST', alice, { kind: STUDIO_KIND.FLASHCARDS })
+    );
+
+    const owner = await harness.pool.query('SELECT id FROM "user" WHERE email = $1', [
+      'alice@example.test',
+    ]);
+    expect(modelInputs[0]?.usage).toEqual({
+      userId: owner.rows[0].id,
+      purpose: USAGE_PURPOSE.STUDIO,
+    });
   });
 
   it('makes flashcards from the selected sources, with checked citations, and saves them', async () => {

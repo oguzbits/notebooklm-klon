@@ -13,6 +13,7 @@ import {
   createUploadStorage,
   failInterruptedSources,
 } from './db/source-storage';
+import { deleteUsageBefore, recordUsage } from './db/usage-repository';
 import { systemDeps } from './import/system-deps';
 import { runIngestJob, type SubmitPorts } from './ingestion/submit';
 import { createJobQueue } from './jobs/queue';
@@ -66,7 +67,7 @@ const queue = await createJobQueue(env.DATABASE_URL, {
 });
 
 // Every provider call goes through the limiter of its role.
-const providers = createProviders(env);
+const providers = createProviders(env, (event) => recordUsage(db, event));
 
 const ingest: SubmitPorts = {
   sources: createSourceStorage(db),
@@ -139,13 +140,25 @@ async function sweepInterruptedSources() {
   );
   if (count > 0) log({ level: 'warn', msg: 'interrupted sources failed', count });
 }
+// Usage events only serve the report and the limits; older ones are deleted.
+async function removeOldUsage() {
+  await deleteUsageBefore(db, new Date(Date.now() - LIMITS.USAGE_RETENTION_DAYS * DAY_MS));
+}
 await removeExpiredGuests();
 await sweepInterruptedSources();
+await removeOldUsage();
 setInterval(() => {
   removeExpiredGuests().catch((error: unknown) =>
     log({
       level: 'error',
       msg: 'guest cleanup failed',
+      name: errorName(error),
+    })
+  );
+  removeOldUsage().catch((error: unknown) =>
+    log({
+      level: 'error',
+      msg: 'usage cleanup failed',
       name: errorName(error),
     })
   );

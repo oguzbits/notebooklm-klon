@@ -4,6 +4,7 @@ import {
   CHAT_STYLE,
   type ChatEvent,
   DEFAULT_CHAT_CONFIG,
+  USAGE_PURPOSE,
 } from '@nlm/shared';
 import { describe, expect, it } from 'vitest';
 
@@ -189,6 +190,38 @@ describe('prepareAnswer', () => {
     expect(calls.search).toMatchObject([{ queryText: 'Wer leitet das Projekt Nordlicht 2019?' }]);
     // The model still answers the question as the user wrote it.
     expect(prepared.question).toBe('Und 2019?');
+  });
+
+  it('counts every model call of an answer under the asking user as chat', async () => {
+    const owners: string[] = [];
+    const usages: unknown[] = [];
+    const { ports } = fakePorts({
+      embedQuery: async (_text, userId) => {
+        owners.push(userId);
+        return [0.1];
+      },
+      translateQuery: async (_text, userId) => {
+        owners.push(userId);
+        return [];
+      },
+      stream: async function* (input) {
+        usages.push(input.usage);
+        // The first call rewrites the follow-up, the second answers.
+        yield usages.length === 1 ? '{"query":"Nordlicht 2019?"}' : json();
+      },
+    });
+    const history = [{ question: 'Wer leitet Nordlicht?', answer: 'Dr. Brandt.' }];
+
+    const prepared = await prepareAnswer({ ...INPUT, question: 'Und 2019?', history }, ports);
+    for await (const _event of answerQuestion(prepared, ports)) {
+      // Only the calls to the model matter here.
+    }
+
+    expect(owners).toEqual([INPUT.userId, INPUT.userId]);
+    expect(usages).toEqual([
+      { userId: INPUT.userId, purpose: USAGE_PURPOSE.CHAT },
+      { userId: INPUT.userId, purpose: USAGE_PURPOSE.CHAT },
+    ]);
   });
 
   it('asks the model nothing before the search when there is no history', async () => {

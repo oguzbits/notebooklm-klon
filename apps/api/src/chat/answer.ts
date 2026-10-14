@@ -4,6 +4,7 @@ import {
   type ChatConfig,
   type ChatEvent,
   DEFAULT_CHAT_CONFIG,
+  USAGE_PURPOSE,
 } from '@nlm/shared';
 
 import type { ChatInput } from '../ai/gemini-chat';
@@ -64,9 +65,10 @@ export interface SearchRequest {
 export interface ChatPorts {
   /** Ready sources the user has selected in this notebook. */
   selectedSourceIds: (userId: string, notebookId: string) => Promise<string[]>;
-  embedQuery: (text: string) => Promise<number[]>;
+  /** `userId` is whose quota the model call is counted under. */
+  embedQuery: (text: string, userId: string) => Promise<number[]>;
   /** The question in the other languages of the documents (German and English), for the search. */
-  translateQuery: (text: string) => Promise<string[]>;
+  translateQuery: (text: string, userId: string) => Promise<string[]>;
   search: (request: SearchRequest) => Promise<{ id: string; text: string }[]>;
   stream: (input: ChatInput) => AsyncIterable<string>;
   /** Called with an error that ended an answer. It is then also reported as an ERROR event. */
@@ -76,6 +78,8 @@ export interface ChatPorts {
 }
 
 export interface PreparedAnswer {
+  /** Whose question it is: the cost of the answer is counted under them. */
+  userId: string;
   question: string;
   /** How many sources the question was searched in (the selected, ready ones). */
   sourcesSearched: number;
@@ -93,6 +97,7 @@ export interface PreparedAnswer {
 async function rewriteQuery(
   question: string,
   history: readonly HistoryTurn[],
+  userId: string,
   ports: ChatPorts
 ): Promise<string> {
   let reply = '';
@@ -100,6 +105,7 @@ async function rewriteQuery(
     system: REWRITE_SYSTEM_PROMPT,
     user: buildRewriteMessage(history, question),
     schema: REWRITE_JSON_SCHEMA,
+    usage: { userId, purpose: USAGE_PURPOSE.CHAT },
   })) {
     reply += piece;
   }
@@ -126,12 +132,16 @@ export async function prepareAnswer(
   const history = input.history ?? [];
   // Searched after the sources check: a notebook without a source never calls the model.
   const query =
-    history.length === 0 ? input.question : await rewriteQuery(input.question, history, ports);
+    history.length === 0
+      ? input.question
+      : await rewriteQuery(input.question, history, input.userId, ports);
   // A passage in another language than the question shares no words and few vectors with it, so
   // the search also asks in the other language. A failed translation throws: a search in one
   // language would silently miss what the documents say in the other.
-  const versions = queryVariants(query, await ports.translateQuery(query));
-  const queryEmbeddings = await Promise.all(versions.map((version) => ports.embedQuery(version)));
+  const versions = queryVariants(query, await ports.translateQuery(query, input.userId));
+  const queryEmbeddings = await Promise.all(
+    versions.map((version) => ports.embedQuery(version, input.userId))
+  );
   const chunks = await ports.search({
     userId: input.userId,
     notebookId: input.notebookId,
@@ -141,6 +151,7 @@ export async function prepareAnswer(
     limit: LIMITS.CHAT_CONTEXT_CHUNKS,
   });
   return {
+    userId: input.userId,
     question: input.question,
     sourcesSearched: sourceIds.length,
     context: buildChatContext(chunks),
@@ -218,6 +229,7 @@ async function* streamStatements(
     system: chatSystemPrompt(prepared.config, prepared.history.length > 0),
     user: buildUserMessage(prepared.context, prepared.question, prepared.history),
     schema: ANSWER_JSON_SCHEMA,
+    usage: { userId: prepared.userId, purpose: USAGE_PURPOSE.CHAT },
     signal,
   };
   for await (const piece of ports.stream(input)) {
