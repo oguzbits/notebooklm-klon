@@ -90,7 +90,11 @@ export function CitationChip({ notebookId, chunkId, number, onOpen }: CitationCh
           {number}
         </button>
       </HoverCardTrigger>
-      <HoverCardContent className="flex max-h-[420px] w-[420px] max-w-[90vw] flex-col">
+      <HoverCardContent
+        align="start"
+        alignOffset={-11}
+        className="flex max-h-[420px] w-[420px] max-w-[90vw] flex-col"
+      >
         <PassagePreview chunk={chunk} onShow={show} />
       </HoverCardContent>
     </HoverCard>
