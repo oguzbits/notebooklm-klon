@@ -33,6 +33,8 @@ export function scrubEvent(event: ErrorEvent): ErrorEvent {
     release: event.release,
     environment: event.environment,
     sdk: event.sdk,
+    // The IDs the build put into the bundles: Sentry finds the source map of a frame with them.
+    debug_meta: event.debug_meta,
     exception: event.exception && { values: event.exception.values?.map(scrubException) },
   };
 }

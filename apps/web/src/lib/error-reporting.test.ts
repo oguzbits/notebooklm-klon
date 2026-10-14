@@ -38,6 +38,9 @@ describe('scrubEvent', () => {
       level: 'error',
       release: 'sha-1',
       message: MARKER,
+      debug_meta: {
+        images: [{ type: 'sourcemap', code_file: '/assets/index.js', debug_id: 'abc-123' }],
+      },
       user: { ip_address: '1.2.3.4' },
       request: { url: `https://example.test/notebooks/${MARKER}`, headers: { cookie: MARKER } },
       breadcrumbs: [{ category: 'ui.click', message: MARKER }],
@@ -63,5 +66,9 @@ describe('scrubEvent', () => {
       stacktrace: { frames: [{ filename: '/assets/index.js', function: 'f', lineno: 1 }] },
     });
     expect(scrubbed).toMatchObject({ event_id: 'e1', release: 'sha-1' });
+    // Without these IDs Sentry cannot find the source map, and a frame shows minified code.
+    expect(scrubbed.debug_meta?.images).toEqual([
+      { type: 'sourcemap', code_file: '/assets/index.js', debug_id: 'abc-123' },
+    ]);
   });
 });
