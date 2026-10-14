@@ -19,6 +19,7 @@ export default defineConfig({
         },
       },
       { test: { name: 'hooks', root: './.claude/hooks', environment: 'node', setupFiles } },
+      { test: { name: 'scripts', root: './scripts', environment: 'node', setupFiles } },
       {
         // Shares the Vite config of the app, so the "@" alias resolves in tests too.
         extends: './apps/web/vite.config.ts',

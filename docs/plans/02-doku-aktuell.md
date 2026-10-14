@@ -2,7 +2,7 @@
 
 ## Ist
 
-- `docs/PLAN.md` ist veraltet. Beispiel für den Fehlertyp: `docs/BACKLOG.md` nennt „1179 Tests“, `pnpm test` meldet am 2026-10-14 1151.
+- `docs/PLAN.md` ist veraltet. Beispiel für den Fehlertyp: `docs/BACKLOG.md` nannte eine Testzahl, die von der Ausgabe von `pnpm test` abwich.
 - Zahlen, Stände und Befehle stehen mehrfach und werden einzeln gepflegt.
 
 ## Regeln
@@ -23,8 +23,8 @@
 
 - Link auf nicht vorhandene Datei wird gemeldet.
 - `pnpm gibt-es-nicht` in Backticks wird gemeldet.
-- Absoluter Pfad `/Users/...` wird gemeldet.
-- „1179 Tests“ wird gemeldet; „Tests laufen offline“ nicht.
+- Absoluter Rechnerpfad unter dem Home-Verzeichnis wird gemeldet.
+- Eine Zahl vor „Tests“ wird gemeldet; „Tests laufen offline“ nicht.
 - Ausnahme: Zeilen im Codeblock mit Kommentar `<!-- audit-docs: ignore -->` (nur wenn nötig).
 
 ## Welcher Test wird rot

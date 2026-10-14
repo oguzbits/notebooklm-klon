@@ -10,7 +10,7 @@ Alle Befunde der Stufen „Hoch“ (H1 bis H7) sind behoben. Von den mittleren s
 offen sind M4, M6 (Titellänge, Zip-Bombe) und M10. Die Funktionslücken aus dem Review
 (neu einlesen, Export, Konto löschen, Stopp-Button) und die Dateitypen PDF-Link, Bilder, Audio, PPTX und YouTube sind gebaut.
 
-Gates auf dem letzten Stand: `pnpm check`, `pnpm test` (1179 Tests), `pnpm test:db` und `pnpm e2e` (24 Tests) grün.
+Gates auf dem letzten Stand: `pnpm check`, `pnpm test`, `pnpm test:db` und `pnpm e2e` grün.
 Nicht geprüft: Screenreader auf echten Geräten, echte Mobilgeräte, Semgrep lokal (läuft im CI).
 
 ## Entscheidungen des Nutzers
