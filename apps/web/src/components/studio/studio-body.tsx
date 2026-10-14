@@ -47,6 +47,7 @@ export function StudioBody({
       library={library}
       sources={sources}
       create={studio.create}
+      limit={studio.limit}
       remove={studio.remove}
       removeNote={studio.removeNote}
       addNote={studio.addNote}

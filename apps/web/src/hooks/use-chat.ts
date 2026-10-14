@@ -2,6 +2,7 @@ import { type AnswerStatement, API_ERROR, CHAT_EVENT, ChatMessageListSchema } fr
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 
+import { useRefreshUsage } from '@/hooks/use-usage';
 import { api, ApiRequestError, expectOk, readJson } from '@/lib/api';
 import { streamChat } from '@/lib/chat-stream';
 import { queryKeys } from '@/lib/query-keys';
@@ -39,6 +40,7 @@ export function useAskQuestion(notebookId: string) {
   const running = useRef<AbortController | null>(null);
   const stopped = useRef(false);
   const reload = () => client.invalidateQueries({ queryKey: queryKeys.messages(notebookId) });
+  const refreshUsage = useRefreshUsage();
 
   useEffect(() => () => running.current?.abort(), [notebookId]);
 
@@ -66,6 +68,8 @@ export function useAskQuestion(notebookId: string) {
       }
     },
     onSettled: async (_data, error) => {
+      // Every try counts, or is refused because the limit is reached: the note under the field follows.
+      void refreshUsage();
       // A rejected question (409, 429) was not saved: nothing to load, the error stays visible.
       const saved = !(error instanceof ApiRequestError) || error.status === 200;
       if (saved) await reload();

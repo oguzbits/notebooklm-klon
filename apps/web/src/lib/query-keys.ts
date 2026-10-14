@@ -2,6 +2,7 @@
 export const queryKeys = {
   session: ['session'] as const,
   capabilities: ['capabilities'] as const,
+  usage: ['usage'] as const,
   notebooks: ['notebooks'] as const,
   sources: (notebookId: string) => ['notebooks', notebookId, 'sources'] as const,
   messages: (notebookId: string) => ['notebooks', notebookId, 'messages'] as const,

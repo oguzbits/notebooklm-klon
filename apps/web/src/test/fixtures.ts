@@ -12,6 +12,7 @@ import {
   STUDIO_KIND,
   type StudioOutput,
   type StudioRequest,
+  type UsageStatus,
   type WrittenNote,
 } from '@nlm/shared';
 
@@ -199,3 +200,18 @@ export const dataTableOutput = (): StudioOutput => ({
     ],
   },
 });
+
+/** What `GET /api/usage` answers; the counts default to a reader who has hardly used anything. */
+export function usageStatus(
+  overrides: {
+    chat?: Partial<UsageStatus['chat']>;
+    studio?: Partial<UsageStatus['studio']>;
+    budgetReached?: boolean;
+  } = {}
+): UsageStatus {
+  return {
+    chat: { used: 1, limit: 40, releaseAt: null, ...overrides.chat },
+    studio: { used: 1, limit: 10, releaseAt: null, ...overrides.studio },
+    budgetReached: overrides.budgetReached ?? false,
+  };
+}

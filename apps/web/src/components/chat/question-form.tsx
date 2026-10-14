@@ -4,6 +4,7 @@ import { type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from 
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import type { LimitNote } from '@/lib/usage-note';
 
 /** Safari reports a key that belongs to a composition with this code, after the composition has ended. */
 const IME_KEY_CODE = 229;
@@ -87,6 +88,7 @@ export function QuestionForm({
   canAsk,
   pending,
   hint,
+  limit,
   onAsk,
   onStop,
 }: {
@@ -95,6 +97,8 @@ export function QuestionForm({
   pending: boolean;
   /** Why nothing can be asked yet, or null. */
   hint: string | null;
+  /** The limit of questions: locks the field when it is reached, and says how much is left. */
+  limit: LimitNote;
   onAsk: (question: string) => void;
   /** Ends the answer that is being written. */
   onStop: () => void;
@@ -124,6 +128,7 @@ export function QuestionForm({
             onChange={(event) => setQuestion(event.target.value)}
             ref={field}
             readOnly={pending}
+            disabled={limit.locked}
             onKeyDown={submitOnEnter}
             className="text-read max-h-40 min-h-0 flex-1 resize-none self-center rounded-none border-0 bg-transparent px-0 py-0.5 shadow-none focus-visible:border-0 focus-visible:outline-0"
           />
@@ -131,6 +136,11 @@ export function QuestionForm({
           <SendOrStop pending={pending} canSend={canSend} onStop={onStop} />
         </div>
         <p className="py-3 text-center text-small text-muted-foreground">
+          {limit.note && (
+            <span role="status" className="text-warning">
+              {limit.note}{' '}
+            </span>
+          )}
           {hint ? `${hint} ` : ''}
           Antworten können Fehler enthalten. Prüfe wichtige Angaben an der Quelle.
         </p>

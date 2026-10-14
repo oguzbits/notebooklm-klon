@@ -9,6 +9,7 @@ import {
   useUpdateStudioOutput,
 } from '@/hooks/use-studio';
 import type { useStudioLibrary } from '@/hooks/use-studio-library';
+import { useStudioLimit } from '@/hooks/use-usage';
 import { ENTRY, type LibraryEntry, type OpenEntry } from '@/lib/library-entries';
 
 /** The questions the list can ask: delete this note or output, and what this output should be called. */
@@ -54,6 +55,7 @@ export function useStudioActions(
   expand: () => void
 ) {
   const create = useCreateStudioOutput(notebookId);
+  const limit = useStudioLimit();
   const remove = useDeleteStudioOutput(notebookId);
   const update = useUpdateStudioOutput(notebookId);
   const removeNote = useDeleteNote(notebookId);
@@ -83,6 +85,7 @@ export function useStudioActions(
   return {
     ...questions,
     create,
+    limit,
     remove,
     update,
     removeNote,

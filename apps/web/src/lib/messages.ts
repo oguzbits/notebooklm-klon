@@ -32,6 +32,11 @@ export const ERROR_MESSAGE: Record<ApiErrorCode, string> = {
     'Das Bild muss ein PNG, JPEG oder WebP sein und darf höchstens 2 MB groß sein.',
   [API_ERROR.SOURCE_NOT_RETRYABLE]:
     'Diese Quelle kann nicht noch einmal gelesen werden. Entferne sie und füge sie neu hinzu.',
+  [API_ERROR.USAGE_LIMIT_REACHED]: 'Das Limit ist erreicht. Bitte versuche es später noch einmal.',
+  [API_ERROR.DAILY_BUDGET_REACHED]:
+    'Heute ist das Kontingent der Demo aufgebraucht. Morgen geht es weiter.',
+  [API_ERROR.REQUEST_IN_PROGRESS]:
+    'Es läuft schon eine Anfrage von dir. Warte, bis sie fertig ist.',
   [API_ERROR.INTERNAL]: 'Etwas ist schiefgelaufen. Bitte versuche es noch einmal.',
 };
 

@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import type { useCreateWrittenNote, useDeleteNote, useNotes } from '@/hooks/use-notes';
 import type { useCreateStudioOutput, useDeleteStudioOutput } from '@/hooks/use-studio';
 import type { useStudioLibrary } from '@/hooks/use-studio-library';
+import type { LimitNote } from '@/lib/usage-note';
 
 type Library = ReturnType<typeof useStudioLibrary>;
 type Create = ReturnType<typeof useCreateStudioOutput>;
@@ -82,6 +83,7 @@ interface StudioHomeProps {
   library: Library;
   sources: { usable: SourceSummary[]; loaded: boolean };
   create: Create;
+  limit: LimitNote;
   remove: Remove;
   removeNote: RemoveNote;
   addNote: AddNote;
@@ -94,11 +96,13 @@ interface StudioHomeProps {
 function CreateSection({
   sources,
   create,
+  limit,
   blocked,
   onCreate,
 }: {
   sources: StudioHomeProps['sources'];
   create: Create;
+  limit: LimitNote;
   blocked: boolean;
   onCreate: (body: CreateStudioBody) => void;
 }) {
@@ -122,11 +126,16 @@ function CreateSection({
           Wähle mindestens eine fertig gelesene Quelle aus, um etwas zu erstellen.
         </p>
       )}
+      {limit.note && (
+        <p role="status" className="text-small text-warning">
+          {limit.note}
+        </p>
+      )}
       {create.isError && (
         <RetryAlert
           error={create.error}
           onRetry={variables && (() => onCreate(variables))}
-          disabled={create.isPending}
+          disabled={blocked}
         />
       )}
     </>
@@ -161,6 +170,7 @@ export function StudioHome({
   library,
   sources,
   create,
+  limit,
   remove,
   removeNote,
   addNote,
@@ -169,7 +179,7 @@ export function StudioHome({
 }: StudioHomeProps) {
   const { outputs, notes, entries } = library;
   const noteBlocked = addNote.isPending || notes.isPending;
-  const blocked = sources.usable.length === 0 || create.isPending;
+  const blocked = sources.usable.length === 0 || create.isPending || limit.locked;
 
   return (
     <div className="relative h-full min-h-0">
@@ -177,6 +187,7 @@ export function StudioHome({
         <CreateSection
           sources={sources}
           create={create}
+          limit={limit}
           blocked={blocked}
           onCreate={actions.onCreate}
         />

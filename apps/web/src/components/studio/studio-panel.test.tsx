@@ -22,6 +22,7 @@ import {
   OUTPUT_ID,
   quizOutput,
   source,
+  usageStatus,
   writtenNote,
 } from '@/test/fixtures';
 import { renderWithProviders } from '@/test/render';
@@ -178,6 +179,22 @@ describe('StudioPanel', () => {
 
     await waitForRow(/^Quiz/);
     expect(body).toEqual({ kind: STUDIO_KIND.REPORT, format: REPORT_FORMAT.FAQ });
+  });
+
+  it('locks the tiles at the limit of outputs and says when it works again', async () => {
+    const releaseAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    serve();
+    server.use(
+      http.get('*/api/usage', () =>
+        HttpResponse.json(usageStatus({ studio: { used: 10, releaseAt } }))
+      )
+    );
+    renderPanel();
+
+    expect(
+      await screen.findByText(/Das Limit ist erreicht\. Ab .* Uhr geht es wieder\./)
+    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Mindmap' })).toHaveProperty('disabled', true);
   });
 
   it('cannot make anything without a ready, selected source', async () => {

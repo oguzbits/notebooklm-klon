@@ -4,6 +4,7 @@ import { useAskQuestion, useChatHistory } from '@/hooks/use-chat';
 import { type IncomingQuestion, useIncomingQuestion } from '@/hooks/use-incoming-question';
 import { useSuggestedQuestions } from '@/hooks/use-overview';
 import { useSources } from '@/hooks/use-sources';
+import { useChatLimit } from '@/hooks/use-usage';
 
 const NO_SOURCE_HINT =
   'Wähle links mindestens eine fertig gelesene Quelle aus, um Fragen zu stellen.';
@@ -19,6 +20,7 @@ export function useChatSession(notebookId: string, incoming: IncomingQuestion | 
   const sources = useSources(notebookId);
   const ask = useAskQuestion(notebookId);
   const suggestions = useSuggestedQuestions(notebookId, sources.data ?? []);
+  const limit = useChatLimit();
 
   const list = sources.data ?? [];
   const usable = list.filter(
@@ -37,7 +39,8 @@ export function useChatSession(notebookId: string, incoming: IncomingQuestion | 
     usable,
     // With a source that is read, the overview of the notebook leads the chat.
     hasReady: list.some((source) => source.status === SOURCE_STATUS.READY),
-    canAsk: usable > 0 && !ask.isPending,
+    canAsk: usable > 0 && !ask.isPending && !limit.locked,
+    limit,
     hint:
       sources.isSuccess && usable === 0
         ? `${dropped ? NOT_ASKED_HINT : ''}${NO_SOURCE_HINT}`

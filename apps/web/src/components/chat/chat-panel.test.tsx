@@ -27,6 +27,7 @@ import {
   question,
   source,
   SOURCE_ID,
+  usageStatus,
 } from '@/test/fixtures';
 import { renderWithProviders } from '@/test/render';
 
@@ -212,6 +213,50 @@ describe('ChatPanel', () => {
 
     expect(await screen.findByText(/mindestens eine fertig gelesene Quelle/)).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Frage senden' })).toHaveProperty('disabled', true);
+  });
+
+  describe('the limit of questions', () => {
+    const usage = (status: ReturnType<typeof usageStatus>) =>
+      http.get('*/api/usage', () => HttpResponse.json(status));
+
+    it('says nothing while the limit is far away', async () => {
+      server.use(sources(), history([]), usage(usageStatus({ chat: { used: 5 } })));
+      renderChat();
+
+      await screen.findByRole('textbox', { name: 'Deine Frage' });
+      expect(screen.queryByText(/Noch \d+ Frage/)).toBeNull();
+    });
+
+    it('says calmly how many questions are left from three quarters on', async () => {
+      server.use(sources(), history([]), usage(usageStatus({ chat: { used: 30 } })));
+      renderChat();
+
+      expect(await screen.findByText('Noch 10 Fragen heute.')).toBeTruthy();
+      expect(screen.getByRole('textbox', { name: 'Deine Frage' })).toHaveProperty(
+        'disabled',
+        false
+      );
+    });
+
+    it('locks the field at the limit and names the time it works again', async () => {
+      const releaseAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+      server.use(sources(), history([]), usage(usageStatus({ chat: { used: 40, releaseAt } })));
+      renderChat();
+
+      expect(
+        await screen.findByText(/Das Limit ist erreicht\. Ab .* Uhr geht es wieder\./)
+      ).toBeTruthy();
+      expect(screen.getByRole('textbox', { name: 'Deine Frage' })).toHaveProperty('disabled', true);
+      expect(screen.getByRole('button', { name: 'Frage senden' })).toHaveProperty('disabled', true);
+    });
+
+    it('locks the field for everybody when the budget of the demo is used up', async () => {
+      server.use(sources(), history([]), usage(usageStatus({ budgetReached: true })));
+      renderChat();
+
+      expect(await screen.findByText(/Kontingent der Demo aufgebraucht/)).toBeTruthy();
+      expect(screen.getByRole('textbox', { name: 'Deine Frage' })).toHaveProperty('disabled', true);
+    });
   });
 
   it('streams the answer, blocks a second question meanwhile and loads the saved answer after', async () => {

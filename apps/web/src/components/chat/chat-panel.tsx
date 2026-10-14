@@ -66,6 +66,7 @@ export const ChatPanel = memo(function ChatPanel({
         canAsk={chat.canAsk}
         pending={ask.isPending}
         hint={chat.hint}
+        limit={chat.limit}
         onAsk={ask.mutate}
         onStop={ask.stop}
       />

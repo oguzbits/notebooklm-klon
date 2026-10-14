@@ -17,8 +17,8 @@ export function StudioRail({
   sources: SourceSummary[];
   studio: ReturnType<typeof useStudioActions>;
 }) {
-  // Nothing can be made now: no usable source, or something is being made.
-  const blocked = sources.length === 0 || studio.create.isPending;
+  // Nothing can be made now: no usable source, something is being made, or the limit is reached.
+  const blocked = sources.length === 0 || studio.create.isPending || studio.limit.locked;
   return (
     <>
       {TILE_ORDER.map((kind) => (

@@ -7,6 +7,7 @@ import {
 } from '@nlm/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { useRefreshUsage } from '@/hooks/use-usage';
 import { api, expectOk, readJson } from '@/lib/api';
 import { queryKeys } from '@/lib/query-keys';
 
@@ -24,6 +25,7 @@ export function useStudioOutputs(notebookId: string) {
 /** Makes an output from the selected sources. Takes a few seconds, so callers show it as pending. */
 export function useCreateStudioOutput(notebookId: string) {
   const client = useQueryClient();
+  const refreshUsage = useRefreshUsage();
   return useMutation({
     mutationFn: async (body: CreateStudioBody) =>
       readJson(
@@ -34,6 +36,8 @@ export function useCreateStudioOutput(notebookId: string) {
         StudioOutputSchema
       ),
     onSuccess: () => client.invalidateQueries({ queryKey: queryKeys.studio(notebookId) }),
+    // Made or refused: either way the count of the limit has changed.
+    onSettled: () => refreshUsage(),
   });
 }
 
