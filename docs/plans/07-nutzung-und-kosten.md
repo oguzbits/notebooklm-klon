@@ -10,10 +10,10 @@ Messdaten gibt.
 
 Schritt 4 bis 6 sind gebaut (die Höhen stehen in `config/limits.ts` und sind **Annahmen**, bis es echte Messdaten gibt):
 
-- **Grenze je Nutzer** in einem gleitenden Fenster von 24 Stunden, gezählt aus `usage_events`: 50 Fragen im Chat (`CHAT_QUESTIONS_PER_WINDOW`), 10 Studio-Ausgaben (`STUDIO_OUTPUTS_PER_WINDOW`). Eine Frage
+- **Grenze je Nutzer** in einem gleitenden Fenster von 24 Stunden, gezählt aus `usage_events`: 20 Fragen im Chat (`CHAT_QUESTIONS_PER_WINDOW`), 5 Studio-Ausgaben (`STUDIO_OUTPUTS_PER_WINDOW`). Eine Frage
   ist ein Ereignis mit Zweck `CHAT`; Umformulieren, Übersetzen und Einbetten der Frage laufen unter `QUESTION_PREPARATION` und zählen nicht mit. Chat leeren setzt die Grenze nicht zurück.
-- **Notbremse** für alle: 10 Millionen Tokens am Tag (`DAILY_TOKEN_BUDGET`). Ist sie erreicht, sind Chat, Studio, neue Übersichten und das Lesen von Quellen gesperrt („Heute ist das Kontingent der Demo
-  aufgebraucht“); eine schon gespeicherte Übersicht wird weiter gezeigt. Die Höhe hängt am festen Guthaben bei Google und ist nicht aus Preisen abgeleitet.
+- **Notbremse** für alle: 1 Million Tokens am Tag (`DAILY_TOKEN_BUDGET`). Ist sie erreicht, sind Chat, Studio, neue Übersichten und das Lesen von Quellen gesperrt („Heute ist das Kontingent der Demo
+  aufgebraucht“); eine schon gespeicherte Übersicht wird weiter gezeigt. Die Höhe folgt aus einem Restguthaben von etwa 4 € (Stand 2026-10-15) und den Preisen von gemini-3.5-flash-lite (0,30 USD je Million Eingabe-Tokens, 2,50 USD je Million Ausgabe-Tokens inklusive Thinking; Quelle: ai.google.dev/gemini-api/docs/pricing, Stand 2026-10-14, per Agent abgerufen und noch nicht von Hand geprüft). Eine Frage kostet danach grob 0,5 Cent, eine Studio-Ausgabe 2 Cent; beides geschätzt, nicht gemessen.
 - **Ein laufender Aufruf je Nutzer** für Chat und Studio (HTTP 409 `REQUEST_IN_PROGRESS`). Der Merker liegt im Speicher des Prozesses und stimmt nur, solange ein Container läuft.
 - `GET /api/usage` liefert `{chat, studio, budgetReached}`; die Oberfläche zeigt ab 75 % (`USAGE_WARNING_RATIO`) „Noch N Fragen heute.“, sperrt am Limit das Eingabefeld und die Studio-Kacheln und
   nennt die Uhrzeit, ab der es wieder geht.
