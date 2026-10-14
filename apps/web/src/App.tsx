@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Route, Routes } from 'react-router';
 
 import { AuthPage } from '@/components/auth/auth-page';
+import { PageNotFound } from '@/components/layout/page-not-found';
 import { ProtectedLayout } from '@/components/layout/protected-layout';
 import { LegacyNotebookRedirect } from '@/components/notebook/legacy-notebook-redirect';
 import { NotebookListPage } from '@/components/notebooks/notebook-list-page';
@@ -29,6 +30,7 @@ export function App() {
             </Suspense>
           }
         />
+        <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>
   );

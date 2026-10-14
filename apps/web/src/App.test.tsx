@@ -31,4 +31,11 @@ describe('App', () => {
       'Forschung'
     );
   });
+
+  it('tells a signed-in user that an unknown address does not exist', async () => {
+    server.use(http.get('*/api/auth/get-session', () => HttpResponse.json({ user: USER })));
+    renderWithProviders(<App />, '/notebooks/gibt-es-nicht');
+
+    expect(await screen.findByRole('heading', { name: 'Seite nicht gefunden' })).toBeDefined();
+  });
 });
