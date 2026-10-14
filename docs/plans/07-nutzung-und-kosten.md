@@ -10,9 +10,9 @@ Messdaten gibt.
 
 Schritt 4 bis 6 sind gebaut (die Höhen stehen in `config/limits.ts` und sind **Annahmen**, bis es echte Messdaten gibt):
 
-- **Grenze je Nutzer** in einem gleitenden Fenster von 24 Stunden, gezählt aus `usage_events`: 20 Fragen im Chat (`CHAT_QUESTIONS_PER_WINDOW`), 5 Studio-Ausgaben (`STUDIO_OUTPUTS_PER_WINDOW`). Eine Frage
+- **Grenze je Nutzer** in einem gleitenden Fenster von 24 Stunden, gezählt aus `usage_events`: 40 Fragen im Chat (`CHAT_QUESTIONS_PER_WINDOW`), 10 Studio-Ausgaben (`STUDIO_OUTPUTS_PER_WINDOW`). Eine Frage
   ist ein Ereignis mit Zweck `CHAT`; Umformulieren, Übersetzen und Einbetten der Frage laufen unter `QUESTION_PREPARATION` und zählen nicht mit. Chat leeren setzt die Grenze nicht zurück.
-- **Notbremse** für alle: 1 Million Tokens am Tag (`DAILY_TOKEN_BUDGET`). Ist sie erreicht, sind Chat, Studio, neue Übersichten und das Lesen von Quellen gesperrt („Heute ist das Kontingent der Demo
+- **Notbremse** für alle: 2 Millionen Tokens am Tag (`DAILY_TOKEN_BUDGET`). Ist sie erreicht, sind Chat, Studio, neue Übersichten und das Lesen von Quellen gesperrt („Heute ist das Kontingent der Demo
   aufgebraucht“); eine schon gespeicherte Übersicht wird weiter gezeigt. Die Höhe folgt aus einem Restguthaben von etwa 4 € (Stand 2026-10-15) und den Preisen von gemini-3.5-flash-lite (0,30 USD je Million Eingabe-Tokens, 2,50 USD je Million Ausgabe-Tokens inklusive Thinking; Quelle: ai.google.dev/gemini-api/docs/pricing, Stand 2026-10-14, per Agent abgerufen und noch nicht von Hand geprüft). Eine Frage kostet danach grob 0,5 Cent, eine Studio-Ausgabe 2 Cent; beides geschätzt, nicht gemessen.
 - **Ein laufender Aufruf je Nutzer** für Chat und Studio (HTTP 409 `REQUEST_IN_PROGRESS`). Der Merker liegt im Speicher des Prozesses und stimmt nur, solange ein Container läuft.
 - `GET /api/usage` liefert `{chat, studio, budgetReached}`; die Oberfläche zeigt ab 75 % (`USAGE_WARNING_RATIO`) „Noch N Fragen heute.“, sperrt am Limit das Eingabefeld und die Studio-Kacheln und
@@ -147,3 +147,5 @@ Wie andere es machen (Quellen sind Drittseiten und die offizielle Doku von OpenA
 - Die Live-Evals (`pnpm eval:live`, `eval:studio`, `eval:overview`) lesen `EVAL_GEMINI_API_KEY` (`parseEvalEnv`), nie `GEMINI_API_KEY`; es gibt keinen Rückfall. So verbraucht ein Eval nie das bezahlte Guthaben des Betriebsschlüssels. Der Schlüssel kann aus einem Konto mit Free Tier stammen.
 - Free-Tier-Werte aus der AI-Studio-Konsole, Stand 2026-09-29 (aus der Git-Historie, Commits `64b48c7`, `e3bafc6`): Flash 5 Anfragen/Min und 20 pro Tag, Flash-Lite 15 Anfragen/Min und 500 pro Tag, je 250K Tokens/Min. Nur ein Verlauf, nicht gegen die offizielle Seite zu Rate Limits neu geprüft; Werte für `gemini-embedding-2` fehlen. Vor einem Lauf in der Konsole nachsehen (Regel 12).
 - Im Free Tier sind Anfragen und Eingaben für Google nutzbar (Training); die Evals senden nur öffentliche Texte.
+
+Höhen seit 2026-10-15: 40 Fragen, 10 Studio-Ausgaben, 2 Mio. Tokens am Tag. Grund: Die Seite ist eine Demo für Bewerbungen mit sehr wenigen Besuchern; ein Besucher, der alles ausprobiert, soll nicht an ein Limit stoßen, und zwei Besucher am selben Tag sollen ins Budget passen. Das Tagesbudget bleibt die eigentliche Sicherung des Guthabens (schlimmster Fall etwa 1,2 USD am Tag, geschätzt).

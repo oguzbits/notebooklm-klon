@@ -45,16 +45,17 @@ export const LIMITS = {
   /** Usage: the window the limits of a user count in. Sliding, not reset at midnight. */
   USAGE_WINDOW_MS: 24 * 60 * 60 * 1000,
   /** Usage: questions a user may ask within the window. One question costs roughly half a cent (estimate, not measured). */
-  CHAT_QUESTIONS_PER_WINDOW: 20,
+  CHAT_QUESTIONS_PER_WINDOW: 40,
   /** Usage: Studio outputs a user may make within the window. Each reads up to 30k tokens of sources. */
-  STUDIO_OUTPUTS_PER_WINDOW: 5,
+  STUDIO_OUTPUTS_PER_WINDOW: 10,
   /**
    * Usage: tokens all users together may use within the window. The credit at the provider is fixed
    * and ends with errors for everybody, so this stops a day that runs away (also many accounts made
-   * by one person). A user who uses both limits up costs about 350 000 tokens, so this is about three of them.
-   * With a credit of a few euros, 1M tokens is roughly 0.6 USD, so the credit lasts a week at the worst.
+   * by one person). A user who uses both limits up costs about 700 000 tokens, so this is about three of them.
+   * The site is a demo with very few visitors, so the limits are generous and this is the real guard.
+   * With a credit of a few euros, 2M tokens is roughly 1.2 USD (estimate), so the credit lasts a few days at the worst.
    */
-  DAILY_TOKEN_BUDGET: 1_000_000,
+  DAILY_TOKEN_BUDGET: 2_000_000,
   /** Guests of the live demo: most that may be started within one hour, for everybody together. */
   GUESTS_PER_HOUR: 20,
   /** Guests of the live demo: most that may exist at the same time. */
