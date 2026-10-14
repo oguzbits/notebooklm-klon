@@ -42,7 +42,15 @@ Ein gemeldeter Fehler lässt sich mit einer ID bis zur Ursache verfolgen, ohne D
 - Request-ID-Prüfung entfernen: Test „ungültige ID ersetzt“.
 - Dateinamen ins Log schreiben: Test „kein Inhalt im Log“.
 
+## Stand (2026-10-14)
+
+Gebaut: Schritte 1 bis 4 (Job-Fehlerlog, Upload-Ablehnung, Request-ID, Journal und Caddy-Zugriffslog). Beim Job-Fehler ist die `sourceId` auch dann im Log, wenn der Upload fehlt;
+es fehlen dann `userId`, Art und Größe. Ohne `sourceId` bleibt nur eine fehlerhafte Job-Nutzlast.
+
 ## Offen
 
-- SSH lesend auf den Server, um vorhandene Logs der gemeldeten Zeit zu prüfen (nur mit deiner Freigabe).
-- Sentry ja/nein.
+- **Sentry (EU, Frankfurt): entschieden, kommt.** Der Nutzer will eine Lösung, wie Unternehmen sie nutzen. Vor dem Einbau gegen die aktuelle Doku prüfen: SDK für Node (Hono) und React,
+  EU-Region, `sendDefaultPii` aus, Bodys und Fehlertexte entfernen (Invariante 7: Fehlermeldungen können Dokumentinhalt zitieren, also nur Name und Stapel senden), `requestId` als Tag,
+  Release aus dem Git-Hash, Source Maps für das Web. Der Nutzer legt Projekte und DSN an; der Schlüssel steht nur in der Umgebung (`SENTRY_DSN` optional, ohne Wert passiert nichts).
+- Die Journal-Einrichtung auf dem bestehenden Server (einmal als root) und das Lesen der vorhandenen Logs der gemeldeten Zeit brauchen SSH-Zugriff; nur mit Freigabe des Nutzers.
+- Ob zusätzlich ein Log-Dienst (Sammeln und Suchen über Server hinweg) gewünscht ist, ist offen. Journal und Sentry decken Einzelserver und Fehler ab.

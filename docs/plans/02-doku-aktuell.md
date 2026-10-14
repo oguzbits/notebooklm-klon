@@ -68,7 +68,7 @@ Zusätzlich: Dokumente teilen sich nach Zweck. **Kontext** (Ziel, Schichten) än
 
 - Prüfmodus der Erzeugung entfernen: Test „Tabelle weicht ab“. Zuordnung ignorieren: Test „Änderung ohne Doku“. Prüfung des Datums entfernen: Test „älterer Stand“.
 
-### Offen
+### Entschieden (2026-10-14)
 
-- Reichen die Schichten 1 bis 3, oder soll Schicht 4 zusätzlich nächtlich im CI laufen (Kosten für den Agenten)?
-- Welche Zuordnungen in `docs-map.json` stehen am Anfang (Vorschlag oben)?
+Die Schichten 1 bis 3 genügen. Schicht 4 (Abgleich) läuft von Hand am Ende einer Funktion, nicht nächtlich im CI. Die Zuordnungen in `docs-map.json` am Anfang: `config/limits.ts`,
+`config/env.ts`, `db/schema.ts`, `packages/shared/src/**` an PLAN.md; `deploy/**` an DEPLOYMENT.md.

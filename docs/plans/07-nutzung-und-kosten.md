@@ -20,7 +20,34 @@
 Der Verbrauch jedes Nutzers ist sichtbar, und kein einzelner Nutzer kann Budget oder gemeinsames Kontingent aufbrauchen, ohne dass es auffällt oder gebremst wird.
 Reihenfolge: erst messen, dann entscheiden, dann begrenzen.
 
-## Fragen, die zuerst beantwortet werden müssen (Entscheidungen des Nutzers)
+## Entscheidungen (2026-10-14)
+
+Vom Nutzer: Das Limit kommt wieder. Alle Nutzer werden gleich behandelt, Gäste wie Konten. Jeder darf sich anmelden. Gezählt werden Tokens. Es gibt ein stündliches Limit und eine unauffällige
+Anzeige als Ring, der sich mit dem Verbrauch füllt und ab 75 % die Warnfarbe (gelb) zeigt. Keine Sonderbegrenzung für teure Wege. Der Verbrauch liegt in der Datenbank. Die Höhe des Limits
+folgt aus der Messung (Schritt 2): Es soll zwischen „normal“ und „exzessiv“ liegen. Das Guthaben bei Google ist fest.
+
+Von mir ergänzt, gilt, solange der Nutzer nicht widerspricht:
+
+- **Ein Topf für alles.** Chat, Studio, Übersicht und das Lesen von Quellen zählen in dasselbe Stundenkontingent (Ausgabe-Tokens höher gewichtet als Eingabe, wenn die Preisseite
+  das Verhältnis belegt; sonst 1:1). Embeddings zählen nicht, solange ihr Preis vernachlässigbar ist (vor dem Eintragen prüfen).
+- **Gleitendes Fenster von einer Stunde.** Der Ring zeigt Verbrauch der letzten 60 Minuten geteilt durch das Limit. „Wieder frei in n Minuten“ ist der Zeitpunkt, an dem das älteste
+  Ereignis das Fenster verlässt. Bei 100 % wird der Ring rot (Fehlerfarbe), Senden ist gesperrt, der Hinweis nennt die Wartezeit.
+- **Gesamtgrenze pro Tag als Notbremse.** Das Guthaben ist fest und endet ohne Vorwarnung mit Fehlern bei allen. Darum zusätzlich eine Obergrenze für alle zusammen am Tag
+  (Wert aus Messung und Guthaben). Ist sie erreicht, sagt die Oberfläche das ehrlich („Heute ist das Kontingent der Demo aufgebraucht“), statt Fehler zu zeigen.
+- **Keine bestätigte E-Mail-Adresse zunächst.** Wer mehrere Konten anlegt, umgeht das Limit je Konto; die Tagesgrenze für alle fängt das ab. Neu bewerten, wenn die Messung Missbrauch zeigt.
+- **Gleichzeitigkeit:** Dafür gibt es bei NotebookLM keine veröffentlichte Zahl (nicht gefunden). Vorschlag: höchstens eine laufende Antwort je Nutzer und höchstens eine Studio-Erzeugung
+  zugleich; die Oberfläche sperrt „Senden“ ohnehin, solange geantwortet wird.
+- **Wortwahl in der Oberfläche:** Nicht „Token“ (Regel 10 in [AGENTS.md](../../AGENTS.md)), sondern „Nutzung“ und „Stundenkontingent“.
+- **Speicherung:** Tabelle `usage_events` mit Nutzer, Zweck, Tokens, Zeit; Ereignisse älter als 30 Tage werden gelöscht. Der Ring liest `GET /api/usage` (Verbrauch, Limit, Freigabezeitpunkt).
+
+Wie andere es machen (Quellen sind Drittseiten und die offizielle Doku von OpenAI; Zahlen ändern sich, vor Übernahme prüfen):
+
+- **Claude (App):** Fenster von fünf Stunden, das mit der ersten Nachricht beginnt, dazu ein Wochenlimit; Anthropic nennt nur Vielfache, keine festen Zahlen; der Verbrauch steht auf einer Seite in den Einstellungen als Balken.
+- **NotebookLM:** feste Zählung je Tag (Free laut Drittquellen 50 Chat-Anfragen, Pro 500) und Grenzen für Notizbücher und Quellen; nicht offiziell bestätigt.
+- **OpenAI API:** Grenzen je Minute (Anfragen und Tokens) nach Stufe; jede Antwort trägt Header mit Rest und Rücksetzzeit (`x-ratelimit-remaining-tokens`, `x-ratelimit-reset-tokens`), ein 429 trägt `Retry-After`.
+- Gemeinsam ist: ein gleitendes oder festes Fenster, ein sichtbarer Rest und eine Zeit bis zur Freigabe. Unser Ring plus „frei in n Minuten“ entspricht dem.
+
+## Fragen, die zuerst beantwortet werden müssen (Entscheidungen des Nutzers; oben beantwortet, der Rest ist Vorschlag)
 
 **Budget und Risiko**
 
