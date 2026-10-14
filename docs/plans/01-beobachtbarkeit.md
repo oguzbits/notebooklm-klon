@@ -59,7 +59,7 @@ es fehlen dann `userId`, Art und Größe. Ohne `sourceId` bleibt nur eine fehler
 
 ## Offen
 
-- **Sentry-Schlüssel eintragen** (Nutzer): `SENTRY_DSN` des Projekts `notebooklm-hono` in `/srv/nlm/server.env` (oder in `.env.local` vor `provision.sh`), `SENTRY_WEB_DSN` des Projekts `notebooklm-react` als GitHub-Secret (die DSN steht später ohnehin im öffentlichen Bundle). Ohne die Werte sendet nichts.
+- **Sentry-Schlüssel:** Erledigt. `SENTRY_DSN` (Projekt `notebooklm-hono`) ist auf dem Server gesetzt und funktioniert (Nutzer bestätigt 2026-10-15). `SENTRY_WEB_DSN` (Projekt `notebooklm-react`) ist als GitHub-Secret gesetzt; sie steht ohnehin im öffentlichen Bundle.
 - **Source Maps für das Web: gebaut.** Der Deploy-Build lädt sie mit `@sentry/vite-plugin` zu Sentry (Organisation `oguz-gd`, Projekt `notebooklm-react`, Release = Commit) und löscht sie danach, der Server liefert sie nie aus. Das Token `SENTRY_AUTH_TOKEN` (Organization Token, GitHub-Secret) ist ein Build-Secret von Docker und steht weder im Image noch in einer Schicht. Ein fehlgeschlagener Upload warnt nur und stoppt den Deploy nicht; dann zeigen Fehler minifizierte Stellen. Ohne Token (lokal, CI) entstehen keine Maps. Das Plugin braucht das Programm `@sentry/cli`, dessen Installationsskript in `pnpm-workspace.yaml` erlaubt ist.
 - Das Lesen vorhandener Logs der gemeldeten Zeit auf dem Server braucht SSH-Zugriff; nur mit Freigabe des Nutzers.
 - Log-Dienst für dauerhafte, durchsuchbare Logs: Entscheidung offen. Kandidaten sind Grafana Cloud Free und eine selbst betriebene Variante (Loki); vor dem Einbau Limits gegen die offizielle Seite prüfen.
