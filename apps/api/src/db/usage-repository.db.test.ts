@@ -5,7 +5,7 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { user } from './auth-schema';
 import { usageEvents } from './schema';
 import { createTestDb } from './testing/test-db';
-import { deleteUsageBefore, recordUsage } from './usage-repository';
+import { deleteUsageBefore, recordUsage, summarizeUsage } from './usage-repository';
 
 const { db, pool } = createTestDb();
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -61,5 +61,29 @@ describe('deleteUsageBefore', () => {
     const rows = await db.select().from(usageEvents);
     expect(rows).toHaveLength(1);
     expect(Date.now() - rows[0]!.createdAt.getTime()).toBeLessThan(DAY_MS);
+  });
+});
+
+describe('summarizeUsage', () => {
+  it('adds up the calls and tokens per user and purpose since the start of the period', async () => {
+    await db.insert(user).values({ id: 'other', name: 'other', email: 'other@example.test' });
+    await recordUsage(db, event);
+    await recordUsage(db, { ...event, inputTokens: 800, outputTokens: 100, estimated: true });
+    await recordUsage(db, { ...event, purpose: USAGE_PURPOSE.STUDIO });
+    await recordUsage(db, { ...event, userId: 'other' });
+    await db.insert(usageEvents).values({ ...event, createdAt: new Date(Date.now() - 3 * DAY_MS) });
+
+    const rows = await summarizeUsage(db, new Date(Date.now() - DAY_MS));
+
+    expect(rows).toHaveLength(3);
+    expect(rows).toContainEqual({
+      userId: 'reader',
+      purpose: USAGE_PURPOSE.CHAT,
+      calls: 2,
+      inputTokens: 2000,
+      outputTokens: 400,
+      estimatedCalls: 1,
+    });
+    expect(rows).toContainEqual(expect.objectContaining({ userId: 'other', calls: 1 }));
   });
 });

@@ -120,6 +120,7 @@ Entscheidungen mit Zahlen: [Spike-Ergebnisse](docs/SPIKE-ERGEBNISSE.md) (PDF-Par
 - `pnpm test:db`: Tests gegen Postgres mit pgvector (`pnpm db:up`), darunter alle Zugriffsregeln: jede Abfrage filtert nach Nutzer, Notebook und gewählten Quellen.
 - `pnpm e2e`: Playwright-Nutzerreisen gegen den Offline-Server (echte App und Datenbank, gefälschte Modelle).
 - `pnpm eval:live`: 23 Golden Questions gegen die echten Modelle (Trefferquote, Fakten, verworfene Aussagen; dazu drei Fragen ohne Antwort in der Quelle für die Verweigerung, ein Quelltext mit eingebetteter Anweisung und rein rechnerische Auffälligkeiten wie wiederholte Aussagen). Kostet Kontingent, läuft von Hand und nicht in CI.
+- `pnpm report:usage [--days 7]`: was die Modellaufrufe verbrauchen, je Zweck (durchschnittliche Tokens je Aufruf) und je Nutzer. Liest nur die Tabelle `usage_events`, kostet nichts.
 - CI (GitHub Actions): Qualität, Unit-Tests, Datenbank-Tests, Browser-Test, Build, Semgrep.
 
 Weitere Regeln, die im Code geprüft sind: SSRF-Schutz beim Link-Import (nur http und https, DNS-Auflösung, keine privaten Adressen, nach jeder Weiterleitung erneut), Größen- und Seitenlimits, Ratenbegrenzung aller Modellaufrufe, Grenzen für Gäste, keine Dokumentinhalte in Logs.

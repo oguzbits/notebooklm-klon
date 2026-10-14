@@ -41,7 +41,17 @@ export const UsageEventSchema = UsageScopeSchema.extend({
   estimated: z.boolean(),
 });
 
+/** What one user used for one purpose in a period: the input of the usage report. */
+export const UsageSummarySchema = UsageScopeSchema.extend({
+  calls: z.number().int().nonnegative(),
+  inputTokens: z.number().int().nonnegative(),
+  outputTokens: z.number().int().nonnegative(),
+  /** Calls whose counts are the server's own estimate, not the provider's. */
+  estimatedCalls: z.number().int().nonnegative(),
+});
+
 export type UsagePurpose = z.infer<typeof UsagePurposeSchema>;
 export type UsageRole = z.infer<typeof UsageRoleSchema>;
 export type UsageScope = z.infer<typeof UsageScopeSchema>;
 export type UsageEvent = z.infer<typeof UsageEventSchema>;
+export type UsageSummary = z.infer<typeof UsageSummarySchema>;

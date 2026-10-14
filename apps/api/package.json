@@ -11,6 +11,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file-if-exists=../../.env.local src/db/migrate-cli.ts",
     "dev:offline": "tsx src/e2e/server.ts",
+    "report:usage": "tsx --env-file-if-exists=../../.env.local src/eval/usage-report.ts",
     "eval:live": "tsx --env-file-if-exists=../../.env.local src/eval/live.ts",
     "eval:overview": "tsx --env-file-if-exists=../../.env.local src/eval/overview-live.ts",
     "eval:studio": "tsx --env-file-if-exists=../../.env.local src/eval/studio-live.ts",

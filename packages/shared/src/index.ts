@@ -148,6 +148,8 @@ export {
   UsageRoleSchema,
   type UsageScope,
   UsageScopeSchema,
+  type UsageSummary,
+  UsageSummarySchema,
 } from './usage';
 export {
   type Capabilities,

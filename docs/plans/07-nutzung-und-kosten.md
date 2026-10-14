@@ -1,6 +1,14 @@
 # Plan 7: Nutzung, Limits und Kosten
 
-## Ist (im Code belegt, Stand 2026-10-14)
+## Stand der Umsetzung (2026-10-14)
+
+Schritt 1 bis 3 sind gebaut. Jeder Modellaufruf schreibt eine Zeile in `usage_events` (Nutzer, Zweck, Rolle, Eingabe- und Ausgabe-Tokens, Kennzeichen „geschätzt“; Thinking-Tokens zählen als
+Ausgabe; Aufrufe älter als 30 Tage werden stündlich gelöscht). `pnpm report:usage` fasst sie je Zweck und je Nutzer zusammen. `MAX_OUTPUT_TOKENS` in `config/limits.ts` deckelt jede Antwort; die Werte sind
+**vorläufig und großzügig**, bis der Bericht zeigt, was jeder Zweck braucht. Nicht gezählt wird die Websuche (kein Modellaufruf, keine Tokens). Der Bericht nennt Tokens je **Aufruf**, nicht je
+Aktion: Eine Chat-Frage besteht aus bis zu vier Aufrufen (Umformulieren, Übersetzen, Einbetten, Antwort). Die Tabelle „Kosten je Aktion“ mit Preisen (gegen die Preisseite prüfen) entsteht, sobald es echte
+Messdaten gibt. Offen: Schritt 4 bis 6 und die Messung selbst (`pnpm eval:live`, echte Nutzung).
+
+## Ist (im Code belegt, Stand 2026-10-14, vor Schritt 1 bis 3)
 
 - Der Rate-Limiter (`apps/api/src/ai/rate-limiter.ts`) hält die Aufrufe unter den Limits des Anbieters (`PROVIDER_LIMITS` in `config/limits.ts`, Werte des
   bezahlten Tarifs von 2026-10-03). Er liegt im Speicher, arbeitet in einer gemeinsamen Warteschlange und kennt keine Nutzer.
@@ -8,7 +16,7 @@
   der Nutzer hat es am 2026-10-03 entfernt (`e1051e2`, `433be81`). Offen ist, ob diese Entscheidung unter den Antworten unten Bestand hat.
 - Vorhandene Schutzgrenzen: Upload 10 MB, PDF 50 Seiten, URL-Import 5 MB, Frage 2000 Zeichen, 12 Passagen und 3 Verlaufsrunden je Chat-Anfrage,
   Studio 120 000 Zeichen je Ausgabe, Inhalts-Hash je Nutzer, Gäste 20 je Stunde (alle zusammen), 200 gleichzeitig, 7 Tage.
-- Gemessen wird nur eine Zahl: Der Chat loggt `promptTokens` und `outputTokens` je Antwort (`providers.ts`), ohne Nutzer und ohne Zweck.
+- Gemessen wurde nur eine Zahl (jetzt ersetzt durch `usage_events`): Der Chat loggte `promptTokens` und `outputTokens` je Antwort (`providers.ts`), ohne Nutzer und ohne Zweck.
   Studio, Übersicht, Lesen von Quellen und Embedding verbrauchen Tokens, die niemand zählt; der Limiter rechnet dort mit Schätzungen.
 - Es ist keine Obergrenze für die Länge einer Modellantwort gesetzt (kein `maxOutputTokens`).
 - Gäste sind echte Konten und kosten dasselbe wie Nutzer. Der Limiter reiht alle Anfragen nacheinander ein: Ein Nutzer mit vielen Anfragen verzögert alle anderen.

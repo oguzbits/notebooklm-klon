@@ -30,6 +30,7 @@
     "e2e": "pnpm --filter @nlm/web exec playwright test",
     "eval:live": "pnpm --filter @nlm/api eval:live",
     "eval:overview": "pnpm --filter @nlm/api eval:overview",
+    "report:usage": "pnpm --filter @nlm/api report:usage",
     "eval:studio": "pnpm --filter @nlm/api eval:studio",
     "seed:demo": "pnpm --filter @nlm/api seed:demo"
   },
