@@ -97,16 +97,16 @@ Playwright) before they count as done.
 
 **Commands**
 
-| Command                              | Purpose                                                           |
-| ------------------------------------ | ----------------------------------------------------------------- |
-| `pnpm check`                         | typecheck, lint, depcruise, knip, jscpd (2 %), magic-string audit |
-| `pnpm test`                          | Vitest, offline                                                   |
-| `pnpm test:db`                       | Postgres and S3 tests (needs `pnpm db:up`, Docker)                |
-| `pnpm e2e`                           | Playwright browser tests (needs `pnpm db:up`)                     |
-| `pnpm audit:duplication:details`     | lists the duplicates when `pnpm check` reports too many           |
-| `pnpm --filter @nlm/api db:generate` | drizzle-kit: new migration from `apps/api/src/db/schema.ts`       |
-| `pnpm format:check`                  | Prettier (staged files are formatted by lint-staged)              |
-| `pnpm depcruise:graph`               | writes `architecture.mmd` for the README                          |
+| Command                              | Purpose                                                                    |
+| ------------------------------------ | -------------------------------------------------------------------------- |
+| `pnpm check`                         | typecheck, lint, depcruise, knip, jscpd (2 %), magic-string and docs audit |
+| `pnpm test`                          | Vitest, offline                                                            |
+| `pnpm test:db`                       | Postgres and S3 tests (needs `pnpm db:up`, Docker)                         |
+| `pnpm e2e`                           | Playwright browser tests (needs `pnpm db:up`)                              |
+| `pnpm audit:duplication:details`     | lists the duplicates when `pnpm check` reports too many                    |
+| `pnpm --filter @nlm/api db:generate` | drizzle-kit: new migration from `apps/api/src/db/schema.ts`                |
+| `pnpm format:check`                  | Prettier (staged files are formatted by lint-staged)                       |
+| `pnpm depcruise:graph`               | writes `architecture.mmd` for the README                                   |
 
 **Commits and pushes are allowed** once `pnpm check` and `pnpm test` are green (the Husky hooks run
 them; never skip them with `--no-verify`, never force-push, never rewrite remote history). One
