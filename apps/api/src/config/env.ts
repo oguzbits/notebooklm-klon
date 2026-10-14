@@ -97,6 +97,18 @@ export function parseEnv(raw: Record<string, string | undefined>): Env {
   return parse(EnvSchema, raw);
 }
 
+// The live evals use their own key, so the key of the dev server (same .env.local) is never spent
+// on them. There is no fallback to GEMINI_API_KEY.
+const EvalEnvSchema = EnvSchema.omit({ GEMINI_API_KEY: true }).extend({
+  EVAL_GEMINI_API_KEY: z.string().trim().min(1),
+});
+
+/** For the live evals: like `parseEnv`, but the model key is EVAL_GEMINI_API_KEY. */
+export function parseEvalEnv(raw: Record<string, string | undefined>): Env {
+  const { EVAL_GEMINI_API_KEY, ...rest } = parse(EvalEnvSchema, raw);
+  return { ...rest, GEMINI_API_KEY: EVAL_GEMINI_API_KEY };
+}
+
 /** For scripts that only touch the database (migrations) and need no API keys. */
 export function parseDatabaseEnv(raw: Record<string, string | undefined>): DatabaseEnv {
   return parse(DatabaseEnvSchema, raw);

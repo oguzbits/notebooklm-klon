@@ -141,3 +141,9 @@ Wie andere es machen (Quellen sind Drittseiten und die offizielle Doku von OpenA
 
 - Alle Entscheidungen oben. Schritt 1 bis 3 sind unabhängig davon und können sofort beginnen.
 - Der frühere Stand (Limits je Nutzer, Commit `ac6e991`) ist im Verlauf nachlesbar und kann als Ausgangspunkt dienen; er wurde auf Entscheidung des Nutzers entfernt, nicht wegen eines Fehlers.
+
+## Schlüssel und Free Tier für die Evals (2026-10-15)
+
+- Die Live-Evals (`pnpm eval:live`, `eval:studio`, `eval:overview`) lesen `EVAL_GEMINI_API_KEY` (`parseEvalEnv`), nie `GEMINI_API_KEY`; es gibt keinen Rückfall. So verbraucht ein Eval nie das bezahlte Guthaben des Betriebsschlüssels. Der Schlüssel kann aus einem Konto mit Free Tier stammen.
+- Free-Tier-Werte aus der AI-Studio-Konsole, Stand 2026-09-29 (aus der Git-Historie, Commits `64b48c7`, `e3bafc6`): Flash 5 Anfragen/Min und 20 pro Tag, Flash-Lite 15 Anfragen/Min und 500 pro Tag, je 250K Tokens/Min. Nur ein Verlauf, nicht gegen die offizielle Seite zu Rate Limits neu geprüft; Werte für `gemini-embedding-2` fehlen. Vor einem Lauf in der Konsole nachsehen (Regel 12).
+- Im Free Tier sind Anfragen und Eingaben für Google nutzbar (Training); die Evals senden nur öffentliche Texte.

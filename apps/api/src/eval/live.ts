@@ -13,7 +13,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 
-import { parseEnv } from '../config/env';
+import { parseEvalEnv } from '../config/env';
 import { user } from '../db/auth-schema';
 import { createDb } from '../db/client';
 import { runMigrations } from '../db/migrate';
@@ -46,7 +46,7 @@ function rootMessage(error: unknown): string {
   return error.cause instanceof Error ? rootMessage(error.cause) : error.message;
 }
 
-const env = parseEnv(process.env);
+const env = parseEvalEnv(process.env);
 const corpusDir = path.resolve(option('corpus') ?? path.join(REPO_ROOT, 'spikes/corpus'));
 const onlyIds = option('ids')?.split(',');
 const pauseMs = Number(option('pause-ms') ?? DEFAULT_PAUSE_MS);

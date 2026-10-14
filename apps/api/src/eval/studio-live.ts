@@ -17,7 +17,7 @@ import {
   USAGE_PURPOSE,
 } from '@nlm/shared';
 
-import { parseEnv } from '../config/env';
+import { parseEvalEnv } from '../config/env';
 import { LIMITS } from '../config/limits';
 import { readStudioReply, studioRequest } from '../core/studio-prompt';
 import { user } from '../db/auth-schema';
@@ -44,7 +44,7 @@ const REQUESTS: CreateStudioBody[] = [
   { kind: STUDIO_KIND.DATA_TABLE },
 ];
 
-const env = parseEnv(process.env);
+const env = parseEvalEnv(process.env);
 await runMigrations(env.DATABASE_URL);
 const { db, pool } = createDb(env.DATABASE_URL);
 const providers = createProviders(env, (event) => recordUsage(db, event));

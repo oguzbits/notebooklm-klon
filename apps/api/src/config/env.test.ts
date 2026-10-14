@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseDatabaseEnv, parseEnv, parseTestDatabaseEnv } from './env';
+import { parseDatabaseEnv, parseEnv, parseEvalEnv, parseTestDatabaseEnv } from './env';
 
 const SECRET = 'test-secret-value-1234';
 const DB_PASSWORD = 'db-password-5678';
@@ -107,6 +107,24 @@ describe('parseEnv', () => {
     expect(message).toContain('PORT');
     expect(message).not.toContain(SECRET);
     expect(message).not.toContain(DB_PASSWORD);
+  });
+});
+
+describe('parseEvalEnv', () => {
+  it('takes the model key from EVAL_GEMINI_API_KEY and ignores the key of the dev server', () => {
+    const env = parseEvalEnv({
+      ...VALID,
+      GEMINI_API_KEY: 'dev-server-key-1234',
+      EVAL_GEMINI_API_KEY: 'eval-key-5678',
+    });
+
+    expect(env.GEMINI_API_KEY).toBe('eval-key-5678');
+  });
+
+  it('refuses to run without EVAL_GEMINI_API_KEY, even when GEMINI_API_KEY is set', () => {
+    const message = messageOf(() => parseEvalEnv({ ...VALID, EVAL_GEMINI_API_KEY: undefined }));
+
+    expect(message).toMatch(/EVAL_GEMINI_API_KEY/);
   });
 });
 

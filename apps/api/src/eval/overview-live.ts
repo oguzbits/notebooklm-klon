@@ -11,7 +11,7 @@ import path from 'node:path';
 
 import { getOrCreateNotebookOverview } from '../chat/notebook-overview';
 import { createNotebookOverviewPorts } from '../chat/notebook-overview-ports';
-import { parseEnv } from '../config/env';
+import { parseEvalEnv } from '../config/env';
 import { user } from '../db/auth-schema';
 import { createDb } from '../db/client';
 import { runMigrations } from '../db/migrate';
@@ -27,7 +27,7 @@ const EVAL_USER_ID = 'eval-overview-user';
 const DEMO_DIR = path.resolve(import.meta.dirname, '../../seed/demo');
 const BOLD_TERM = /\*\*[^*]+\*\*/g;
 
-const env = parseEnv(process.env);
+const env = parseEvalEnv(process.env);
 await runMigrations(env.DATABASE_URL);
 const { db, pool } = createDb(env.DATABASE_URL);
 const providers = createProviders(env, (event) => recordUsage(db, event));
