@@ -3,6 +3,7 @@ import type { ChatPorts } from './chat/answer';
 import type { Database } from './db/client';
 import type { FetchDeps } from './import/fetch-url';
 import type { SubmitPorts } from './ingestion/submit';
+import type { ErrorReporter } from './observability/error-reporter';
 import type { WebSearch } from './search/tavily-search';
 import type { ObjectStore } from './storage/object-store';
 
@@ -19,5 +20,7 @@ export interface AppDeps {
   /** Holds the cover images. Null: not set up, and cover images are not offered. */
   objectStore: ObjectStore | null;
   /** The provider side of the chat: the rest of the chat ports comes from the database. */
+  /** Tells the error tracking about a failure nobody expected. Does nothing when none is set up. */
+  reportError: ErrorReporter['report'];
   chat: Pick<ChatPorts, 'embedQuery' | 'translateQuery' | 'stream' | 'onError'>;
 }

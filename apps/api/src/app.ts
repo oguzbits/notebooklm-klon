@@ -9,6 +9,7 @@ import { type AuthVariables, requireUser } from './auth/session';
 import { errorBody, mapError } from './error-mapping';
 import { HTTP_STATUS } from './http-status';
 import { log } from './logger';
+import { ERROR_ORIGIN } from './observability/error-origin';
 import { chatRoutes } from './routes/chat';
 import { chatConfigRoutes } from './routes/chat-config';
 import { coverRoutes } from './routes/cover';
@@ -54,6 +55,7 @@ export function createApp(deps: AppDeps) {
       path: new URL(c.req.url).pathname,
       requestId: c.get('requestId'),
     });
+    deps.reportError(error, { origin: ERROR_ORIGIN.REQUEST, requestId: c.get('requestId') });
     return c.json(
       errorBody(API_ERROR.INTERNAL, undefined, c.get('requestId')),
       HTTP_STATUS.INTERNAL_SERVER_ERROR

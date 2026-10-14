@@ -65,12 +65,13 @@ export interface JobFailure {
 /**
  * The work behind one queued job. The upload is deleted only once the source is ready: after a
  * failure the bytes stay, so the source can be read again without uploading it a second time.
- * A failure is reported to `onFailure` and then thrown.
+ * A failure is reported to `onFailure`, with the error itself for the error tracking (never for a log:
+ * its message could quote the document), and then thrown.
  */
 export async function runIngestJob(
   payload: unknown,
   ports: SubmitPorts,
-  onFailure?: (failure: JobFailure) => void
+  onFailure?: (failure: JobFailure, error: unknown) => void
 ): Promise<void> {
   const known: Omit<JobFailure, 'errorName'> = {};
   try {
@@ -83,12 +84,10 @@ export async function runIngestJob(
     await ports.uploads.remove(sourceId);
   } catch (error) {
     const ingest = error instanceof IngestError ? error : null;
-    onFailure?.({
-      ...known,
-      stage: ingest?.stage,
-      code: ingest?.code,
-      errorName: errorName(error),
-    });
+    onFailure?.(
+      { ...known, stage: ingest?.stage, code: ingest?.code, errorName: errorName(error) },
+      error
+    );
     throw error;
   }
 }

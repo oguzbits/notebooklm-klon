@@ -48,12 +48,13 @@ scp "${ssh_opts[@]}" deploy/bootstrap.sh "$root:/root/bootstrap.sh"
 ssh "${ssh_opts[@]}" "$root" bash /root/bootstrap.sh "$host" "'$(cat "$work/deploy_key.pub")'"
 
 # Fill only the FILL_IN lines, so a second run never overwrites a value that is already set.
-# An unset optional model removes its line; the Tavily key is appended when present.
+# An unset optional model removes its line; the Tavily key and the Sentry DSN are appended when present.
 {
   printf 'GEMINI_API_KEY=%s\nAI_MODEL=%s\nPARSE_MODEL=%s\nEMBEDDING_MODEL=%s\nSEED_DEMO_EMAIL=%s\n' \
     "$GEMINI_API_KEY" "$AI_MODEL" "$PARSE_MODEL" "$EMBEDDING_MODEL" "$demo_email"
   [ -z "${PARSE_FALLBACK_MODEL:-}" ] || printf 'PARSE_FALLBACK_MODEL=%s\n' "$PARSE_FALLBACK_MODEL"
   [ -z "${TAVILY_API_KEY:-}" ] || printf 'TAVILY_API_KEY=%s\n' "$TAVILY_API_KEY"
+  [ -z "${SENTRY_DSN:-}" ] || printf 'SENTRY_DSN=%s\n' "$SENTRY_DSN"
 } | ssh "${ssh_opts[@]}" "$root" '
   set -euo pipefail
   umask 077
@@ -68,6 +69,7 @@ ssh "${ssh_opts[@]}" "$root" bash /root/bootstrap.sh "$host" "'$(cat "$work/depl
     { print }
   " "$values" "$env" > "$merged"
   grep -q "^TAVILY_API_KEY=" "$merged" || grep "^TAVILY_API_KEY=" "$values" >> "$merged" || true
+  grep -q "^SENTRY_DSN=" "$merged" || grep "^SENTRY_DSN=" "$values" >> "$merged" || true
   cat "$merged" > "$env"
   if grep -q FILL_IN "$env"; then echo "server.env still has FILL_IN" >&2; exit 1; fi
 '

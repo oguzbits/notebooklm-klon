@@ -144,6 +144,8 @@ const app = createApp({
   db,
   ingest,
   demoOwnerEmail: DEMO_OWNER_EMAIL,
+  // The offline server has no error tracking.
+  reportError: () => undefined,
   fetch: systemDeps,
   // The offline server has no search service.
   webSearch: null,

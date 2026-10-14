@@ -8,6 +8,7 @@ import { createSourceStorage, createUploadStorage } from '../db/source-storage';
 import { axisVector, createTestDb } from '../db/testing/test-db';
 import type { FetchDeps } from '../import/fetch-url';
 import { runIngestJob } from '../ingestion/submit';
+import type { ErrorTags } from '../observability/error-reporter';
 import type { WebSearch } from '../search/tavily-search';
 import type { ObjectStore } from '../storage/object-store';
 
@@ -49,6 +50,7 @@ export function createHarness(options: HarnessOptions = {}) {
   const enqueued: string[] = [];
   const modelInputs: ChatInput[] = [];
   const errors: unknown[] = [];
+  const reported: { error: unknown; tags: ErrorTags }[] = [];
 
   const deps: AppDeps = {
     auth,
@@ -66,6 +68,9 @@ export function createHarness(options: HarnessOptions = {}) {
       embed: async (texts) => texts.map(() => axisVector(0, EMBEDDING_DIMENSIONS)),
     },
     demoOwnerEmail: DEMO_OWNER_EMAIL,
+    reportError: (error, tags) => {
+      reported.push({ error, tags });
+    },
     fetch: options.fetch ?? noNetwork,
     webSearch: options.webSearch ?? null,
     objectStore: options.objectStore ?? null,
@@ -94,5 +99,5 @@ export function createHarness(options: HarnessOptions = {}) {
     for (const sourceId of ids) await runIngestJob({ sourceId }, deps.ingest);
   }
 
-  return { deps, db, pool, auth, enqueued, modelInputs, errors, runJobs };
+  return { deps, db, pool, auth, enqueued, modelInputs, errors, reported, runJobs };
 }

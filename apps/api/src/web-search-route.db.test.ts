@@ -7,6 +7,7 @@ import {
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { createApp } from './app';
+import { ERROR_ORIGIN } from './observability/error-origin';
 import { WebSearchError } from './search/tavily-search';
 import { BASE_URL, createHarness } from './testing/app-harness';
 import { captureLog } from './testing/log-capture';
@@ -131,6 +132,8 @@ describe('POST /api/web-search', () => {
     expect(ApiErrorSchema.parse(await response.json()).code).toBe(
       API_ERROR.WEB_SEARCH_LIMIT_REACHED
     );
+    // A limit that someone else's use caused is not an error of the app.
+    expect(used.reported).toEqual([]);
     await used.pool.end();
   });
 
@@ -154,6 +157,12 @@ describe('POST /api/web-search', () => {
     expect(capture.lines().find((line) => line.msg === 'unhandled error')).toMatchObject({
       requestId: response.headers.get('x-request-id'),
     });
+    expect(broken.reported).toEqual([
+      {
+        error: expect.any(WebSearchError),
+        tags: { origin: ERROR_ORIGIN.REQUEST, requestId: response.headers.get('x-request-id') },
+      },
+    ]);
     const body = ApiErrorSchema.parse(await response.json());
     expect(body.requestId).toBe(response.headers.get('x-request-id'));
     await broken.pool.end();

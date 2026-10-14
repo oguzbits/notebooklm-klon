@@ -8,7 +8,7 @@ import {
 } from '@nlm/shared';
 import { describe, expect, it } from 'vitest';
 
-import { INGEST_ERROR, INGEST_STAGE } from './ingest';
+import { INGEST_ERROR, INGEST_STAGE, IngestError } from './ingest';
 import { restartSource, runIngestJob, type SubmitPorts, submitSource } from './submit';
 
 const USER = 'user-a';
@@ -157,11 +157,17 @@ describe('runIngestJob', () => {
     });
     await submitSource(input, ports);
     const failures: unknown[] = [];
+    const errors: unknown[] = [];
 
     await expect(
-      runIngestJob({ sourceId: 's1' }, ports, (f) => failures.push(f))
+      runIngestJob({ sourceId: 's1' }, ports, (f, error) => {
+        failures.push(f);
+        errors.push(error);
+      })
     ).rejects.toThrow();
 
+    // The error itself goes to the error tracking, which strips its message; the log gets only `failures`.
+    expect(errors).toEqual([expect.any(IngestError)]);
     expect(failures).toEqual([
       {
         sourceId: 's1',

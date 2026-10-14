@@ -41,6 +41,17 @@ describe('parseEnv', () => {
     expect(() => parseEnv({ ...VALID, PARSE_FALLBACK_MODEL: ' ' })).toThrow(/PARSE_FALLBACK_MODEL/);
   });
 
+  it('reports no errors unless SENTRY_DSN is set, and refuses a DSN that is not an https address', () => {
+    expect(parseEnv(VALID).SENTRY_DSN).toBeUndefined();
+    expect(
+      parseEnv({ ...VALID, SENTRY_DSN: 'https://key@o1.ingest.de.sentry.io/2' })
+    ).toMatchObject({
+      SENTRY_DSN: 'https://key@o1.ingest.de.sentry.io/2',
+    });
+    expect(() => parseEnv({ ...VALID, SENTRY_DSN: 'not-a-dsn' })).toThrow(/SENTRY_DSN/);
+    expect(() => parseEnv({ ...VALID, SENTRY_DSN: 'http://key@host/2' })).toThrow(/SENTRY_DSN/);
+  });
+
   it('serves no web app unless WEB_DIST_DIR is set, and rejects a blank value', () => {
     expect(parseEnv(VALID).WEB_DIST_DIR).toBeUndefined();
     expect(parseEnv({ ...VALID, WEB_DIST_DIR: 'apps/web/dist' }).WEB_DIST_DIR).toBe(

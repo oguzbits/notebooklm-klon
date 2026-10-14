@@ -32,6 +32,10 @@ export const EnvSchema = DatabaseEnvSchema.extend({
   S3_BUCKET: z.string().trim().min(1).optional(),
   S3_ACCESS_KEY_ID: z.string().trim().min(1).optional(),
   S3_SECRET_ACCESS_KEY: z.string().trim().min(1).optional(),
+  // Optional. Where unexpected errors are reported (Sentry, EU region). Without it nothing is sent.
+  SENTRY_DSN: z.url({ protocol: /^https$/ }).optional(),
+  // Optional. Names the build in Sentry, so an error says which version it came from (the commit).
+  SENTRY_RELEASE: z.string().trim().min(1).optional(),
   // Folder of the built web app. Set: the API serves it (one container). Unset: API only.
   WEB_DIST_DIR: z.string().trim().min(1).optional(),
   // Only for `pnpm seed:demo`: the account of the example notebook. Both or neither.

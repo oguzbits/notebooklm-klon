@@ -53,6 +53,8 @@ Was nur du tun kannst, ist hier fett.
    [bootstrap.sh](../deploy/bootstrap.sh).
 
 4. **Erster Deploy:** Actions > Deploy > Run workflow. Danach läuft er nach jedem grünen CI-Lauf auf `main`.
+   Für Sentry: `SENTRY_DSN` (Projekt `notebooklm-hono`) in `server.env` eintragen und die GitHub-Variable `SENTRY_WEB_DSN`
+   (Projekt `notebooklm-react`) setzen. Beides ist optional; ohne die Werte wird nichts gesendet.
 5. **Demo-Notebook anlegen** (einmalig, siehe unten).
 6. **Uptime-Check:** der Workflow `Uptime` ruft alle 15 Minuten `https://<Hostname>/health` auf; ein roter Lauf
    ist der Alarm (GitHub mailt). Optional zusätzlich UptimeRobot. Dann Live-Link, Demo-Zugang und Loom-Link in
@@ -96,7 +98,7 @@ Zu beobachten nach dem ersten Lauf: ob 4 GB RAM reichen (`docker stats`, Swap mi
 Regel 7 in [AGENTS.md](../AGENTS.md) nur IDs, Längen, Dauer und Token-Zahlen, keine Dokumentinhalte. Docker rotiert sie
 (je 10 MB, 3 Dateien). Jede Anfrage trägt eine ID (`X-Request-Id`, steht in Caddys Zugriffslog und in jeder Logzeile der App); eine
 Fehlermeldung im Browser nennt die ersten acht Zeichen als „Referenz“. Die Logs eines Containers gehen mit dem Container verloren,
-also bei jedem Deploy. Fehler länger festzuhalten ist Sache von Sentry ([Plan 1](plans/01-beobachtbarkeit.md)).
+also bei jedem Deploy. Unerwartete Fehler gehen an Sentry (EU), sobald `SENTRY_DSN` in `server.env` steht; was gesendet wird und was nicht, steht in [Plan 1](plans/01-beobachtbarkeit.md).
 
 ### Backup und Wiederherstellung
 

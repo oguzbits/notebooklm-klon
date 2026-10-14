@@ -1,4 +1,5 @@
 import { serve } from '@hono/node-server';
+import * as Sentry from '@sentry/node';
 
 import { createApp } from './app';
 import { createAuth } from './auth/auth';
@@ -16,6 +17,8 @@ import { systemDeps } from './import/system-deps';
 import { runIngestJob, type SubmitPorts } from './ingestion/submit';
 import { createJobQueue } from './jobs/queue';
 import { errorName, log } from './logger';
+import { ERROR_ORIGIN } from './observability/error-origin';
+import { createErrorReporter } from './observability/error-reporter';
 import { createProviders } from './providers';
 import { createTavilySearch } from './search/tavily-search';
 import { createShutdown } from './shutdown';
@@ -34,6 +37,12 @@ try {
   process.exit(1);
 }
 
+// Started first, so a failure in the start-up below is reported too.
+const errors = createErrorReporter(
+  { dsn: env.SENTRY_DSN, environment: env.NODE_ENV, release: env.SENTRY_RELEASE },
+  Sentry
+);
+
 await runMigrations(env.DATABASE_URL);
 
 const { db } = createDb(env.DATABASE_URL);
@@ -50,7 +59,10 @@ const auth = createAuth(db, {
 });
 
 const queue = await createJobQueue(env.DATABASE_URL, {
-  onError: (error) => log({ level: 'error', msg: 'queue error', name: error.name }),
+  onError: (error) => {
+    log({ level: 'error', msg: 'queue error', name: error.name });
+    errors.report(error, { origin: ERROR_ORIGIN.QUEUE });
+  },
 });
 
 // Every provider call goes through the limiter of its role.
@@ -68,14 +80,20 @@ await queue.work(async (payload) => {
   const started = Date.now();
   // The failure carries IDs, size, step and error name only: the message of a provider or parser
   // error could carry document content.
-  await runIngestJob(payload, ingest, (failure) =>
+  await runIngestJob(payload, ingest, (failure, error) => {
     log({
       level: 'error',
       msg: 'ingestion job failed',
       ...failure,
       durationMs: Date.now() - started,
-    })
-  );
+    });
+    errors.report(error, {
+      origin: ERROR_ORIGIN.INGESTION,
+      sourceId: failure.sourceId,
+      stage: failure.stage,
+      code: failure.code,
+    });
+  });
   log({ level: 'info', msg: 'ingestion job done', durationMs: Date.now() - started });
 });
 
@@ -84,6 +102,7 @@ const app = createApp({
   db,
   ingest,
   demoOwnerEmail: env.SEED_DEMO_EMAIL,
+  reportError: errors.report,
   fetch: systemDeps,
   webSearch: env.TAVILY_API_KEY ? createTavilySearch({ apiKey: env.TAVILY_API_KEY }) : null,
   objectStore,
@@ -91,12 +110,10 @@ const app = createApp({
     embedQuery: providers.embedQuery,
     translateQuery: providers.translateQuery,
     stream: providers.stream,
-    onError: (error) =>
-      log({
-        level: 'error',
-        msg: 'chat failed',
-        name: errorName(error),
-      }),
+    onError: (error) => {
+      log({ level: 'error', msg: 'chat failed', name: errorName(error) });
+      errors.report(error, { origin: ERROR_ORIGIN.CHAT });
+    },
   },
 });
 
@@ -162,7 +179,11 @@ const shutdown = createShutdown({
 process.once('SIGTERM', () => {
   log({ level: 'info', msg: 'shutting down' });
   shutdown().then(
-    () => process.exit(0),
+    // What was reported must leave the process before it ends.
+    async () => {
+      await errors.flush();
+      process.exit(0);
+    },
     (error: unknown) => {
       log({ level: 'error', msg: 'shutdown failed', name: errorName(error) });
       process.exit(1);

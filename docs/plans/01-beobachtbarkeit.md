@@ -47,10 +47,18 @@ Ein gemeldeter Fehler lässt sich mit einer ID bis zur Ursache verfolgen, ohne D
 Gebaut: Schritte 1 bis 3 (Job-Fehlerlog, Upload-Ablehnung, Request-ID) und das Caddy-Zugriffslog. Schritt 4 (Journal des Servers) wurde gebaut und auf Wunsch des Nutzers wieder entfernt; die Logs bleiben beim Docker-Treiber `json-file` und gehen mit dem Container verloren. Dauerhafte Logs übernimmt ein Dienst (siehe unten). Beim Job-Fehler ist die `sourceId` auch dann im Log, wenn der Upload fehlt;
 es fehlen dann `userId`, Art und Größe. Ohne `sourceId` bleibt nur eine fehlerhafte Job-Nutzlast.
 
+## Sentry (gebaut 2026-10-14, EU-Region)
+
+- API: [observability/](../../apps/api/src/observability) (`@sentry/node`, ein eigener Port `ErrorReporter`). Gemeldet werden unerwartete Fehler einer Anfrage (500), ein fehlgeschlagener Import-Job, Fehler der Job-Queue und des Chats. Fehler, die die App auf einen Status abbildet (Limit erreicht, nicht gefunden), gehören nicht dazu. Tags: `origin`, `requestId`, `sourceId`, `stage`, `code`. Beim Beenden (SIGTERM) wartet die App, bis Gemeldetes gesendet ist.
+- Browser: [error-reporting.ts](../../apps/web/src/lib/error-reporting.ts) (`@sentry/react`), meldet Fehler, die die Seite abbrechen, und globale Fehler.
+- **Was gesendet wird, legt eine Liste erlaubter Felder fest** (`scrubEvent`, in API und Web): Fehlerart, Stapel (Datei, Funktion, Zeile), Release, Umgebung, Tags. **Nie:** Fehlertext (er kann Dokumentinhalt zitieren, Invariante 7), Variablen, Quelltextzeilen, Anfrage, Adresse, Nutzer, Breadcrumbs. Ein Feld, das ein späteres SDK ergänzt, entfällt, bis es dort erlaubt wird. `dataCollection` ist ausdrücklich ausgeschaltet, weil seit SDK 11 die Standardwerte immer gelten.
+- Das Release ist der Commit (`GIT_SHA` als Build-Argument in [Dockerfile](../../Dockerfile) und [deploy.yml](../../.github/workflows/deploy.yml)).
+- Ohne `SENTRY_DSN` (API) oder `VITE_SENTRY_DSN` (Build des Web) startet das SDK nicht.
+- Geprüft mit dem echten SDK gegen einen lokalen Server: im gesendeten Ereignis steht der Inhalt des Fehlertextes nicht.
+
 ## Offen
 
-- **Sentry (EU, Frankfurt): entschieden, kommt.** Der Nutzer will eine Lösung, wie Unternehmen sie nutzen. Vor dem Einbau gegen die aktuelle Doku prüfen: SDK für Node (Hono) und React,
-  EU-Region, `sendDefaultPii` aus, Bodys und Fehlertexte entfernen (Invariante 7: Fehlermeldungen können Dokumentinhalt zitieren, also nur Name und Stapel senden), `requestId` als Tag,
-  Release aus dem Git-Hash, Source Maps für das Web. Der Nutzer legt Projekte und DSN an; der Schlüssel steht nur in der Umgebung (`SENTRY_DSN` optional, ohne Wert passiert nichts).
+- **Sentry-Schlüssel eintragen** (Nutzer): `SENTRY_DSN` des Projekts `notebooklm-hono` in `/srv/nlm/server.env` (oder in `.env.local` vor `provision.sh`), `SENTRY_WEB_DSN` des Projekts `notebooklm-react` als GitHub-Variable (kein Geheimnis). Ohne die Werte sendet nichts.
+- **Source Maps für das Web** (`@sentry/vite-plugin`, braucht `SENTRY_AUTH_TOKEN` als GitHub-Secret und die Kurznamen von Organisation und Projekt): noch nicht gebaut; ohne sie zeigen Fehler des Browsers minifizierte Stellen.
 - Das Lesen vorhandener Logs der gemeldeten Zeit auf dem Server braucht SSH-Zugriff; nur mit Freigabe des Nutzers.
 - Log-Dienst für dauerhafte, durchsuchbare Logs: Entscheidung offen. Kandidaten sind Grafana Cloud Free und eine selbst betriebene Variante (Loki); vor dem Einbau Limits gegen die offizielle Seite prüfen.
