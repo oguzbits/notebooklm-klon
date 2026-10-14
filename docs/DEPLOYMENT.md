@@ -54,7 +54,7 @@ Was nur du tun kannst, ist hier fett.
 
 4. **Erster Deploy:** Actions > Deploy > Run workflow. Danach läuft er nach jedem grünen CI-Lauf auf `main`.
    Für Sentry: `SENTRY_DSN` (Projekt `notebooklm-hono`) in `server.env` eintragen und das GitHub-Secret `SENTRY_WEB_DSN`
-   (Projekt `notebooklm-react`) setzen. Beides ist optional; ohne die Werte wird nichts gesendet.
+   (Projekt `notebooklm-react`) und `SENTRY_AUTH_TOKEN` (Organization Token, für die Source Maps) setzen. Alles ist optional; ohne die Werte wird nichts gesendet.
 5. **Demo-Notebook anlegen** (einmalig, siehe unten).
 6. **Uptime-Check:** der Workflow `Uptime` ruft alle 15 Minuten `https://<Hostname>/health` auf; ein roter Lauf
    ist der Alarm (GitHub mailt). Optional zusätzlich UptimeRobot. Dann Live-Link, Demo-Zugang und Loom-Link in

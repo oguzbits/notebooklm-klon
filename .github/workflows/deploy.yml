@@ -6,6 +6,7 @@ name: Deploy
 #   DEPLOY_SSH_KEY     private key of the user "deploy"
 #   DEPLOY_KNOWN_HOSTS the line of the server from `ssh-keyscan` (pins the host key)
 #   SENTRY_WEB_DSN    the DSN of the browser project in Sentry (optional)
+#   SENTRY_AUTH_TOKEN organization token of Sentry for the upload of source maps (optional)
 on:
   workflow_run:
     workflows: [CI]
@@ -54,7 +55,8 @@ jobs:
         env:
           GIT_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
           SENTRY_WEB_DSN: ${{ secrets.SENTRY_WEB_DSN }}
-        run: docker build --build-arg GIT_SHA="$GIT_SHA" --build-arg VITE_SENTRY_DSN="$SENTRY_WEB_DSN" -t nlm-app:current .
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: docker build --secret id=sentry_auth_token,env=SENTRY_AUTH_TOKEN --build-arg GIT_SHA="$GIT_SHA" --build-arg VITE_SENTRY_DSN="$SENTRY_WEB_DSN" -t nlm-app:current .
       - name: Copy files and image
         run: |
           scp deploy/docker-compose.prod.yml deploy/Caddyfile deploy/backup.sh "$TARGET:/srv/nlm/"

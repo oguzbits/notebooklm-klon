@@ -2,5 +2,7 @@ packages:
   - apps/*
   - packages/*
 allowBuilds:
+  # Downloads the upload tool of Sentry (source maps of the web build).
+  '@sentry/cli': true
   esbuild: false
   msw: false
