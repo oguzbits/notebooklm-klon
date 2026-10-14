@@ -22,30 +22,32 @@ Reihenfolge: erst messen, dann entscheiden, dann begrenzen.
 
 ## Entscheidungen (2026-10-14)
 
-Vom Nutzer: Das Limit kommt wieder. Alle Nutzer werden gleich behandelt, Gäste wie Konten. Jeder darf sich anmelden. Gezählt werden Tokens. Es gibt ein stündliches Limit und eine unauffällige
-Anzeige als Ring, der sich mit dem Verbrauch füllt und ab 75 % die Warnfarbe (gelb) zeigt. Keine Sonderbegrenzung für teure Wege. Der Verbrauch liegt in der Datenbank. Die Höhe des Limits
-folgt aus der Messung (Schritt 2): Es soll zwischen „normal“ und „exzessiv“ liegen. Das Guthaben bei Google ist fest.
+Vom Nutzer: Das Limit kommt wieder. Alle Nutzer werden gleich behandelt, Gäste wie Konten. Jeder darf sich anmelden. Keine Sonderbegrenzung für teure Wege. Der Verbrauch liegt in der Datenbank.
+Das Guthaben bei Google ist fest. Die Höhe der Grenzen folgt aus der Messung (Schritt 2): Sie soll zwischen „normal“ und „exzessiv“ liegen.
+**Form der Grenze: wie bei NotebookLM, einfach.** Der Nutzer hat zuerst Tokens und einen Ring genannt und danach gesagt, die Lösung von NotebookLM sei einfacher und eleganter. Daraus folgt (Stand: so
+umzusetzen, solange der Nutzer nicht widerspricht):
 
-Von mir ergänzt, gilt, solange der Nutzer nicht widerspricht:
-
-- **Ein Topf für alles.** Chat, Studio, Übersicht und das Lesen von Quellen zählen in dasselbe Stundenkontingent (Ausgabe-Tokens höher gewichtet als Eingabe, wenn die Preisseite
-  das Verhältnis belegt; sonst 1:1). Embeddings zählen nicht, solange ihr Preis vernachlässigbar ist (vor dem Eintragen prüfen).
-- **Gleitendes Fenster von einer Stunde.** Der Ring zeigt Verbrauch der letzten 60 Minuten geteilt durch das Limit. „Wieder frei in n Minuten“ ist der Zeitpunkt, an dem das älteste
-  Ereignis das Fenster verlässt. Bei 100 % wird der Ring rot (Fehlerfarbe), Senden ist gesperrt, der Hinweis nennt die Wartezeit.
-- **Gesamtgrenze pro Tag als Notbremse.** Das Guthaben ist fest und endet ohne Vorwarnung mit Fehlern bei allen. Darum zusätzlich eine Obergrenze für alle zusammen am Tag
-  (Wert aus Messung und Guthaben). Ist sie erreicht, sagt die Oberfläche das ehrlich („Heute ist das Kontingent der Demo aufgebraucht“), statt Fehler zu zeigen.
-- **Keine bestätigte E-Mail-Adresse zunächst.** Wer mehrere Konten anlegt, umgeht das Limit je Konto; die Tagesgrenze für alle fängt das ab. Neu bewerten, wenn die Messung Missbrauch zeigt.
+- **Gezählt wird, was der Nutzer versteht:** Fragen im Chat und erzeugte Studio-Ausgaben, je Nutzer in den letzten 24 Stunden (gleitend). Tokens werden trotzdem je Aufruf gemessen, aber nur zum
+  Eichen der Zahlen und als Notbremse, nicht als Anzeige. Das trägt, weil jede Eingabe schon begrenzt ist (Frage 2000 Zeichen, 12 Passagen, 3 Verlaufsrunden, Studio 120 000 Zeichen) und mit
+  `maxOutputTokens` (Schritt 3) auch jede Ausgabe: Eine Frage kostet dann höchstens ein bekanntes Vielfaches der durchschnittlichen.
+- **Keine ständige Anzeige.** Der Ring entfällt als Dauerelement. Erst wenn wenig übrig ist (Vorschlag: ab 75 % verbraucht), erscheint unter dem Eingabefeld ein ruhiger Hinweis in der Warnfarbe
+  („Noch 10 Fragen heute“). Am Limit ist das Eingabefeld gesperrt und nennt den Zeitpunkt („Das Limit ist erreicht. Ab 15:00 Uhr geht es wieder.“), wie NotebookLM es laut Drittquellen tut.
+- **Eine Zahl je Funktion**, nicht ein Topf: Chat, Studio-Ausgabe. Die Notizbuch-Übersicht und das Lesen von Quellen zählen nicht gegen den Nutzer, sondern gegen die Notbremse und gegen die
+  bestehenden Grenzen (50 Seiten, 10 MB, Inhalts-Hash); die Grenzen für Notizbücher und Quellen je Notizbuch kommen aus [Plan 6](06-mutationstests-und-limits.md).
+- **Gesamtgrenze je Tag als Notbremse (Tokens, alle Nutzer zusammen).** Das Guthaben ist fest und endet ohne Vorwarnung mit Fehlern bei allen. Der Wert folgt aus Messung und Guthaben. Ist er erreicht,
+  sagt die Oberfläche das ehrlich („Heute ist das Kontingent der Demo aufgebraucht“), statt Fehler zu zeigen. Sie fängt auch Nutzer ab, die mehrere Konten anlegen.
+- **Keine bestätigte E-Mail-Adresse zunächst.** Neu bewerten, wenn die Messung Missbrauch zeigt.
 - **Gleichzeitigkeit:** Dafür gibt es bei NotebookLM keine veröffentlichte Zahl (nicht gefunden). Vorschlag: höchstens eine laufende Antwort je Nutzer und höchstens eine Studio-Erzeugung
   zugleich; die Oberfläche sperrt „Senden“ ohnehin, solange geantwortet wird.
-- **Wortwahl in der Oberfläche:** Nicht „Token“ (Regel 10 in [AGENTS.md](../../AGENTS.md)), sondern „Nutzung“ und „Stundenkontingent“.
-- **Speicherung:** Tabelle `usage_events` mit Nutzer, Zweck, Tokens, Zeit; Ereignisse älter als 30 Tage werden gelöscht. Der Ring liest `GET /api/usage` (Verbrauch, Limit, Freigabezeitpunkt).
+- **Wortwahl in der Oberfläche:** Nicht „Token“ (Regel 10 in [AGENTS.md](../../AGENTS.md)), sondern „Fragen“ und „Ausgaben“.
+- **Speicherung:** Tabelle `usage_events` mit Nutzer, Zweck, Tokens, Zeit; Ereignisse älter als 30 Tage werden gelöscht. Die Oberfläche liest `GET /api/usage` (Rest je Funktion, Freigabezeitpunkt).
 
 Wie andere es machen (Quellen sind Drittseiten und die offizielle Doku von OpenAI; Zahlen ändern sich, vor Übernahme prüfen):
 
 - **Claude (App):** Fenster von fünf Stunden, das mit der ersten Nachricht beginnt, dazu ein Wochenlimit; Anthropic nennt nur Vielfache, keine festen Zahlen; der Verbrauch steht auf einer Seite in den Einstellungen als Balken.
 - **NotebookLM:** feste Zählung je Tag (Free laut Drittquellen 50 Chat-Anfragen, Pro 500) und Grenzen für Notizbücher und Quellen; nicht offiziell bestätigt.
 - **OpenAI API:** Grenzen je Minute (Anfragen und Tokens) nach Stufe; jede Antwort trägt Header mit Rest und Rücksetzzeit (`x-ratelimit-remaining-tokens`, `x-ratelimit-reset-tokens`), ein 429 trägt `Retry-After`.
-- Gemeinsam ist: ein gleitendes oder festes Fenster, ein sichtbarer Rest und eine Zeit bis zur Freigabe. Unser Ring plus „frei in n Minuten“ entspricht dem.
+- Gemeinsam ist: ein gleitendes oder festes Fenster, ein Rest und eine Zeit bis zur Freigabe. Unsere Lösung folgt NotebookLM: Zählung je Tag, ein Hinweis erst am Ende, am Limit die Zeit der Freigabe.
 
 ## Fragen, die zuerst beantwortet werden müssen (Entscheidungen des Nutzers; oben beantwortet, der Rest ist Vorschlag)
 
