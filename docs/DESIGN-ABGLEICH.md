@@ -92,6 +92,20 @@ Stand 2026-10-01, Maße gegen das Original im Browser geprüft (Spalten bei 1720
 angeglichen.
 Nicht gemessen: Dokumenttext der Quellenansicht, Symbolstärke.
 
+**Vergleich mit rea (2026-10-14):** Die Bilder des Originals wurden mit `rea compare-web-screenshots` gegen die Bilder des Klons
+(Offline-Server) verglichen, je 8 Ansichten vorher und nachher. Angeglichen wurde:
+
+- Kartentitel auf eine Zeile mit Auslassung.
+- Zitat-Popup links am Chip, 11 px davor.
+- „Chat konfigurieren“ 864 px breit.
+- Eine Seite für unbekannte Adressen.
+
+Die Pixelwerte bewegten sich dabei nur um höchstens 0,3 Prozentpunkte, teils in die falsche Richtung. Allein der Zeitpunkt der
+Aufnahme (mitten im Wechsel hell/dunkel) verschob einen Wert um 5 Punkte. Die Werte werden von Unterschieden getrieben, die
+bleiben: andere Antworttexte, Abschnitt 3. Fazit: Gesamtwerte über Pixel taugen nicht als Maß für den Abgleich. Belege bleiben
+gemessene Maße im Browser und Bilder nebeneinander (Abschnitt 1). Offen: ob das Original die Quellenübersicht nach einem
+Zitat-Klick zuklappt.
+
 **Offen, nicht gebaut** (nicht ohne neuen Umfang möglich): Filter und Sammlungen auf der Startseite,
 Ausgabesprache als Kontoeinstellung, „Alle Notizen als Quelle festlegen“.
 
