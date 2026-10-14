@@ -13,5 +13,8 @@ Jede Zahl und jeder Modell- oder Bibliothekswert ist vor der Umsetzung gegen die
 | 4   | [Doppelte Werte und Temperatur](04-doppelte-werte-temperatur.md) | Klein, aber nur mit Eval belegbar                               | nein                               |
 | 5   | [RAG-Experimente](05-rag-experimente.md)                         | Je Experiment eine Messung gegen das Eval                       | nein                               |
 | 6   | [Mutationstests und Limits](06-mutationstests-und-limits.md)     | Unabhängig, kann parallel laufen                                | Höhe der Limits                    |
+| 7   | [Nutzung, Limits und Kosten](07-nutzung-und-kosten.md)           | Ohne Verbrauchszählung kein begründetes Limit; Schritt 1 sofort | Budget, Limitform (17 Fragen)      |
 
-Reihenfolge: 1, 2 zuerst und unabhängig voneinander. 3 vor 4 und 5. 6 jederzeit.
+Reihenfolge: 1, 2 zuerst und unabhängig voneinander. 3 vor 4 und 5. 6 jederzeit. 7: Schritt 1 bis 3 (messen) sofort, danach Entscheidungen.
+
+Stand der Umsetzung: Plan 1 gebaut (ohne Sentry und SSH). Plan 2 Teil A (mechanische Prüfung `pnpm audit:docs`) gebaut, Teil B offen.
