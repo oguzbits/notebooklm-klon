@@ -11,9 +11,8 @@
 		Permissions-Policy "camera=(), microphone=(), geolocation=()"
 	}
 
-	# One JSON line per request on stdout, so it lands in the journal like the other logs. The ID that
-	# the app puts in the response header X-Request-Id is part of it (resp_headers). Cookie and
-	# Authorization are redacted by Caddy.
+	# One JSON line per request on stdout (docker logs). The ID that the app puts in the response
+	# header X-Request-Id is part of it (resp_headers). Cookie and Authorization are redacted by Caddy.
 	log {
 		output stdout
 		format json

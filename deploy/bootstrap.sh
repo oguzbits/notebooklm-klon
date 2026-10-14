@@ -37,19 +37,6 @@ PermitRootLogin prohibit-password
 EOF
 systemctl reload ssh
 
-# Container logs live in the journal and must survive deploys and reboots: keep them 30 days, at
-# most 500 MB. The deploy user may read them (journalctl CONTAINER_NAME=...).
-install -d /var/log/journal
-install -d /etc/systemd/journald.conf.d
-cat > /etc/systemd/journald.conf.d/10-nlm.conf <<'EOF'
-[Journal]
-Storage=persistent
-SystemMaxUse=500M
-MaxRetentionSec=30day
-EOF
-usermod -aG systemd-journal deploy
-systemctl restart systemd-journald
-
 # Firewall (the Hetzner firewall should say the same).
 ufw allow 22/tcp
 ufw allow 80/tcp

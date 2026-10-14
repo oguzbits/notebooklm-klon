@@ -2,10 +2,12 @@
 # with pgvector and the S3-compatible store of the cover images. Only Caddy is reachable from the
 # internet (80, 443); the database listens on the server's loopback for the SSH tunnel of the seed.
 # The secrets live in server.env on the server (made by bootstrap.sh), never in the repository.
-# Container logs go to the journal of the host (kept 30 days, see bootstrap.sh). The json-file driver
-# keeps them inside the container, so every deploy, which replaces the containers, deleted them.
+# Docker keeps container logs without a limit by default; cap them so they cannot fill the disk.
 x-logging: &logging
-  driver: journald
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '3'
 
 services:
   caddy:

@@ -44,7 +44,7 @@ Ein gemeldeter Fehler lässt sich mit einer ID bis zur Ursache verfolgen, ohne D
 
 ## Stand (2026-10-14)
 
-Gebaut: Schritte 1 bis 4 (Job-Fehlerlog, Upload-Ablehnung, Request-ID, Journal und Caddy-Zugriffslog). Beim Job-Fehler ist die `sourceId` auch dann im Log, wenn der Upload fehlt;
+Gebaut: Schritte 1 bis 3 (Job-Fehlerlog, Upload-Ablehnung, Request-ID) und das Caddy-Zugriffslog. Schritt 4 (Journal des Servers) wurde gebaut und auf Wunsch des Nutzers wieder entfernt; die Logs bleiben beim Docker-Treiber `json-file` und gehen mit dem Container verloren. Dauerhafte Logs übernimmt ein Dienst (siehe unten). Beim Job-Fehler ist die `sourceId` auch dann im Log, wenn der Upload fehlt;
 es fehlen dann `userId`, Art und Größe. Ohne `sourceId` bleibt nur eine fehlerhafte Job-Nutzlast.
 
 ## Offen
@@ -52,5 +52,5 @@ es fehlen dann `userId`, Art und Größe. Ohne `sourceId` bleibt nur eine fehler
 - **Sentry (EU, Frankfurt): entschieden, kommt.** Der Nutzer will eine Lösung, wie Unternehmen sie nutzen. Vor dem Einbau gegen die aktuelle Doku prüfen: SDK für Node (Hono) und React,
   EU-Region, `sendDefaultPii` aus, Bodys und Fehlertexte entfernen (Invariante 7: Fehlermeldungen können Dokumentinhalt zitieren, also nur Name und Stapel senden), `requestId` als Tag,
   Release aus dem Git-Hash, Source Maps für das Web. Der Nutzer legt Projekte und DSN an; der Schlüssel steht nur in der Umgebung (`SENTRY_DSN` optional, ohne Wert passiert nichts).
-- Die Journal-Einrichtung auf dem bestehenden Server (einmal als root) und das Lesen der vorhandenen Logs der gemeldeten Zeit brauchen SSH-Zugriff; nur mit Freigabe des Nutzers.
-- Ob zusätzlich ein Log-Dienst (Sammeln und Suchen über Server hinweg) gewünscht ist, ist offen. Journal und Sentry decken Einzelserver und Fehler ab.
+- Das Lesen vorhandener Logs der gemeldeten Zeit auf dem Server braucht SSH-Zugriff; nur mit Freigabe des Nutzers.
+- Log-Dienst für dauerhafte, durchsuchbare Logs: Entscheidung offen. Kandidaten sind Grafana Cloud Free und eine selbst betriebene Variante (Loki); vor dem Einbau Limits gegen die offizielle Seite prüfen.

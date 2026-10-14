@@ -17,4 +17,4 @@ Jede Zahl und jeder Modell- oder Bibliothekswert ist vor der Umsetzung gegen die
 
 Reihenfolge: 1, 2 zuerst und unabhängig voneinander. 3 vor 4 und 5. 6 jederzeit. 7: Schritt 1 bis 3 (messen) sofort, danach Entscheidungen.
 
-Stand der Umsetzung: Plan 1 gebaut (ohne Sentry und SSH). Plan 2 Teil A (mechanische Prüfung `pnpm audit:docs`) gebaut, Teil B offen.
+Stand der Umsetzung: Plan 1 gebaut (ohne Sentry, dauerhafte Logs und SSH). Plan 2 Teil A (mechanische Prüfung `pnpm audit:docs`) gebaut, Teil B offen.
