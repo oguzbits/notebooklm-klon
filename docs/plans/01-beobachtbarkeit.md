@@ -54,6 +54,7 @@ es fehlen dann `userId`, Art und Größe. Ohne `sourceId` bleibt nur eine fehler
 - **Was gesendet wird, legt eine Liste erlaubter Felder fest** (`scrubEvent`, in API und Web): Fehlerart, Stapel (Datei, Funktion, Zeile), Release, Umgebung, Tags. **Nie:** Fehlertext (er kann Dokumentinhalt zitieren, Invariante 7), Variablen, Quelltextzeilen, Anfrage, Adresse, Nutzer, Breadcrumbs. Ein Feld, das ein späteres SDK ergänzt, entfällt, bis es dort erlaubt wird. `dataCollection` ist ausdrücklich ausgeschaltet, weil seit SDK 11 die Standardwerte immer gelten.
 - Das Release ist der Commit (`GIT_SHA` als Build-Argument in [Dockerfile](../../Dockerfile) und [deploy.yml](../../.github/workflows/deploy.yml)).
 - Ohne `SENTRY_DSN` (API) oder `VITE_SENTRY_DSN` (Build des Web) startet das SDK nicht.
+- Zum Untersuchen von Fehlern gibt es den Sentry-MCP-Server, je Benutzer eingerichtet und nicht im Repository: `claude mcp add --transport http sentry https://mcp.sentry.dev/mcp/oguz-gd` (Anmeldung per OAuth beim ersten Gebrauch). Er bleibt ausgeschaltet (`/mcp`) und wird nur für eine Untersuchung eingeschaltet. Ob der gehostete Server die EU-Region (`de.sentry.io`) unterstützt, steht nicht in der Doku und ist beim ersten Gebrauch zu prüfen.
 - Geprüft mit dem echten SDK gegen einen lokalen Server: im gesendeten Ereignis steht der Inhalt des Fehlertextes nicht.
 
 ## Offen
