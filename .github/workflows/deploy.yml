@@ -5,7 +5,7 @@ name: Deploy
 #   DEPLOY_HOST        host name of the server
 #   DEPLOY_SSH_KEY     private key of the user "deploy"
 #   DEPLOY_KNOWN_HOSTS the line of the server from `ssh-keyscan` (pins the host key)
-# Variable (not secret): SENTRY_WEB_DSN, the DSN of the browser project in Sentry.
+#   SENTRY_WEB_DSN    the DSN of the browser project in Sentry (optional)
 on:
   workflow_run:
     workflows: [CI]
@@ -49,11 +49,11 @@ jobs:
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
           printf 'Host *\n  IdentityFile ~/.ssh/id_deploy\n  StrictHostKeyChecking yes\n' > ~/.ssh/config
       - name: Build image
-        # The commit names the build in Sentry. The DSN of the browser is public by design (Settings >
-        # Secrets and variables > Actions > Variables: SENTRY_WEB_DSN); unset, the browser reports nothing.
+        # The commit names the build in Sentry. The DSN of the browser ends up in the public bundle anyway;
+        # unset, the browser reports nothing.
         env:
           GIT_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
-          SENTRY_WEB_DSN: ${{ vars.SENTRY_WEB_DSN }}
+          SENTRY_WEB_DSN: ${{ secrets.SENTRY_WEB_DSN }}
         run: docker build --build-arg GIT_SHA="$GIT_SHA" --build-arg VITE_SENTRY_DSN="$SENTRY_WEB_DSN" -t nlm-app:current .
       - name: Copy files and image
         run: |

@@ -58,7 +58,7 @@ es fehlen dann `userId`, Art und Größe. Ohne `sourceId` bleibt nur eine fehler
 
 ## Offen
 
-- **Sentry-Schlüssel eintragen** (Nutzer): `SENTRY_DSN` des Projekts `notebooklm-hono` in `/srv/nlm/server.env` (oder in `.env.local` vor `provision.sh`), `SENTRY_WEB_DSN` des Projekts `notebooklm-react` als GitHub-Variable (kein Geheimnis). Ohne die Werte sendet nichts.
+- **Sentry-Schlüssel eintragen** (Nutzer): `SENTRY_DSN` des Projekts `notebooklm-hono` in `/srv/nlm/server.env` (oder in `.env.local` vor `provision.sh`), `SENTRY_WEB_DSN` des Projekts `notebooklm-react` als GitHub-Secret (die DSN steht später ohnehin im öffentlichen Bundle). Ohne die Werte sendet nichts.
 - **Source Maps für das Web** (`@sentry/vite-plugin`, braucht `SENTRY_AUTH_TOKEN` als GitHub-Secret und die Kurznamen von Organisation und Projekt): noch nicht gebaut; ohne sie zeigen Fehler des Browsers minifizierte Stellen.
 - Das Lesen vorhandener Logs der gemeldeten Zeit auf dem Server braucht SSH-Zugriff; nur mit Freigabe des Nutzers.
 - Log-Dienst für dauerhafte, durchsuchbare Logs: Entscheidung offen. Kandidaten sind Grafana Cloud Free und eine selbst betriebene Variante (Loki); vor dem Einbau Limits gegen die offizielle Seite prüfen.
