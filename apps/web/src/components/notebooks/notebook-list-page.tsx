@@ -61,7 +61,9 @@ function NotebookCard({
           {notebook.emoji ?? notebookEmoji(notebook.id)}
         </span>
         <span>
-          <span className="line-clamp-2 block text-xl leading-6 font-title">{notebook.title}</span>
+          <span className="block truncate text-xl leading-6 font-title" title={notebook.title}>
+            {notebook.title}
+          </span>
           <span className="mt-1 block text-ui text-muted-foreground">
             {formatDay(notebook.createdAt)} · {sourcesLabel(notebook.sourceCount)}
           </span>
