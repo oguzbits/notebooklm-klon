@@ -17,4 +17,4 @@ Jede Zahl und jeder Modell- oder Bibliothekswert ist vor der Umsetzung gegen die
 
 Reihenfolge: 1, 2 zuerst und unabhängig voneinander. 3 vor 4 und 5. 6 jederzeit. 7: Schritt 1 bis 6 gebaut, die Höhen sind Annahmen bis zur Messung.
 
-Stand der Umsetzung: Plan 1 gebaut (Sentry im Code, DSN und Source Maps fehlen; dauerhafte Logs und SSH offen). Plan 2 Teil A (mechanische Prüfung `pnpm audit:docs`) gebaut, Teil B offen. Plan 7 Schritt 1 bis 3 (Verbrauch zählen, `pnpm report:usage`, Obergrenze je Antwort) gebaut, Messung und Limit offen.
+Stand der Umsetzung: Plan 1 gebaut (Sentry im Code, DSN und Source Maps fehlen; dauerhafte Logs und SSH offen). Plan 2 Teil A (mechanische Prüfung `pnpm audit:docs`) gebaut, Teil B offen. Plan 7 Schritt 1 bis 6 gebaut (Zählung, Bericht, Obergrenze je Antwort, Limit je Nutzer, Notbremse, Oberfläche); die Messung mit echter Nutzung und das Eichen der Höhen sind offen.
