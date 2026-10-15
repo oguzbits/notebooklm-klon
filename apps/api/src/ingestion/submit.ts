@@ -1,6 +1,7 @@
 import { SOURCE_FAILURE, type SourceKind, SUBMIT_ACTION, type SubmitAction } from '@nlm/shared';
 import { z } from 'zod';
 
+import { LIMITS } from '../config/limits';
 import { errorName } from '../logger';
 import {
   IngestError,
@@ -23,6 +24,11 @@ export interface SubmitPorts extends IngestPorts {
   queue: { enqueue: (sourceId: string) => Promise<void> };
 }
 
+/** A file name or page title can be any length; the list and the header cannot show that. */
+function clampTitle(title: string): string {
+  return [...title].slice(0, LIMITS.SOURCE_TITLE_MAX_CHARS).join('');
+}
+
 const JobPayloadSchema = z.object({ sourceId: z.string().min(1) });
 
 /**
@@ -33,7 +39,7 @@ export async function submitSource(
   input: RegisterInput,
   ports: SubmitPorts
 ): Promise<{ sourceId: string; action: SubmitAction }> {
-  const registered = await registerSource(input, ports);
+  const registered = await registerSource({ ...input, title: clampTitle(input.title) }, ports);
   if (registered.action === SUBMIT_ACTION.REUSED) return registered;
 
   await ports.uploads.put(registered.sourceId, input.bytes);

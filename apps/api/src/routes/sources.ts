@@ -16,6 +16,7 @@ import type { AuthVariables } from '../auth/session';
 import { LIMITS } from '../config/limits';
 import { detectSourceKind } from '../core/file-kind';
 import { youtubeVideoUrl } from '../core/youtube-url';
+import { zipUncompressedBytes } from '../core/zip-size';
 import { findNotebook } from '../db/notebook-repository';
 import { assertRoomForSource, linkSource } from '../db/notebook-source-repository';
 import { HTTP_STATUS } from '../http-status';
@@ -152,11 +153,27 @@ async function pdfRefusal(bytes: Uint8Array): Promise<Checked | null> {
   return pages > LIMITS.UPLOAD_MAX_PDF_PAGES ? { ...TOO_MANY, kind: SOURCE_KIND.PDF } : null;
 }
 
-/** Looks at a file before anything is stored: kind, and for a PDF its pages. */
+const ZIP_KINDS: SourceKind[] = [SOURCE_KIND.DOCX, SOURCE_KIND.PPTX];
+const TOO_LARGE_UNPACKED: Checked = {
+  ok: false,
+  status: HTTP_STATUS.UNPROCESSABLE_ENTITY,
+  code: API_ERROR.FILE_TOO_LARGE,
+};
+
+/** Why a DOCX or PPTX is refused: it unpacks to more than the limit, or its directory is damaged. */
+function zipRefusal(kind: SourceKind, bytes: Uint8Array): Checked | null {
+  const unpacked = zipUncompressedBytes(bytes);
+  if (unpacked === null) return { ...UNREADABLE, kind };
+  return unpacked > LIMITS.UPLOAD_MAX_UNPACKED_BYTES ? { ...TOO_LARGE_UNPACKED, kind } : null;
+}
+
+/** Looks at a file before anything is stored: kind, for a PDF its pages, for a DOCX or PPTX its unpacked size. */
 async function checkBytes(filename: string, bytes: Uint8Array): Promise<Checked> {
   const kind = detectSourceKind(filename, bytes);
   if (kind === null) return UNREADABLE;
-  const refusal = kind === SOURCE_KIND.PDF ? await pdfRefusal(bytes) : null;
+  let refusal: Checked | null = null;
+  if (kind === SOURCE_KIND.PDF) refusal = await pdfRefusal(bytes);
+  else if (ZIP_KINDS.includes(kind)) refusal = zipRefusal(kind, bytes);
   return refusal ?? { ok: true, kind, bytes };
 }
 

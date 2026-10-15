@@ -8,6 +8,7 @@ import {
 } from '@nlm/shared';
 import { describe, expect, it } from 'vitest';
 
+import { LIMITS } from '../config/limits';
 import { INGEST_ERROR, INGEST_STAGE, IngestError } from './ingest';
 import { restartSource, runIngestJob, type SubmitPorts, submitSource } from './submit';
 
@@ -73,6 +74,20 @@ function fakePorts(overrides: Partial<SubmitPorts> = {}) {
 }
 
 describe('submitSource', () => {
+  it('keeps at most the title length of a very long file name', async () => {
+    const { ports } = fakePorts();
+    const titles: string[] = [];
+    const findOrCreate = ports.sources.findOrCreate;
+    ports.sources.findOrCreate = async (data) => {
+      titles.push(data.title);
+      return findOrCreate(data);
+    };
+
+    await submitSource({ ...input, title: 'ä'.repeat(LIMITS.SOURCE_TITLE_MAX_CHARS + 50) }, ports);
+
+    expect(titles).toEqual(['ä'.repeat(LIMITS.SOURCE_TITLE_MAX_CHARS)]);
+  });
+
   it('stores the upload and enqueues one job for new content', async () => {
     const { ports, log } = fakePorts();
 

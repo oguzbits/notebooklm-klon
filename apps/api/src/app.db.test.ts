@@ -11,6 +11,7 @@ import {
   SUBMIT_ACTION,
   SubmitSourceResultSchema,
 } from '@nlm/shared';
+import { zipSync } from 'fflate';
 import { PDFDocument } from 'pdf-lib';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
@@ -388,6 +389,23 @@ describe('file upload', () => {
 
     expect(response.status).toBe(422);
     expect(ApiErrorSchema.parse(await response.json()).code).toBe(API_ERROR.TOO_MANY_PAGES);
+    expect(harness.enqueued).toEqual([]);
+  });
+
+  it('rejects a DOCX that unpacks to far more than it weighs, before it costs anything', async () => {
+    const notebook = await createNotebook(alice);
+    const bomb = zipSync({
+      'word/document.xml': new Uint8Array(LIMITS.UPLOAD_MAX_UNPACKED_BYTES + 1),
+    });
+    expect(bomb.length).toBeLessThan(LIMITS.UPLOAD_MAX_BYTES);
+
+    const response = await app.request(
+      `/api/notebooks/${notebook}/sources/file`,
+      upload(alice, 'bombe.docx', bomb)
+    );
+
+    expect(response.status).toBe(422);
+    expect(ApiErrorSchema.parse(await response.json()).code).toBe(API_ERROR.FILE_TOO_LARGE);
     expect(harness.enqueued).toEqual([]);
   });
 

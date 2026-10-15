@@ -20,6 +20,10 @@ export const LIMITS = {
   UPLOAD_MAX_BYTES: 10 * 1024 * 1024,
   /** Upload: most pages a PDF may have (each page costs provider quota). */
   UPLOAD_MAX_PDF_PAGES: 50,
+  /** Upload: most bytes a DOCX or PPTX may declare unpacked (a ZIP bomb is small and unpacks huge). */
+  UPLOAD_MAX_UNPACKED_BYTES: 100 * 1024 * 1024,
+  /** Sources: longest title kept (characters); a file name or page title can be any length. */
+  SOURCE_TITLE_MAX_CHARS: 200,
   /** Chat: passages handed to the model per question. */
   CHAT_CONTEXT_CHUNKS: 12,
   /** Chat: earlier exchanges handed to the model so that a short follow-up question has a subject. */
