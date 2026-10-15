@@ -7,3 +7,6 @@ export const GUEST_LIMITS = { LIFETIME_DAYS: 7 } as const;
 export const GuestStartSchema = z.object({ notebookId: z.uuid() });
 
 export type GuestStart = z.infer<typeof GuestStartSchema>;
+
+/** Most a user may keep: notebooks, and sources inside one notebook. The original limits rather than paging. */
+export const USER_LIMITS = { NOTEBOOKS: 100, SOURCES_PER_NOTEBOOK: 50 } as const;

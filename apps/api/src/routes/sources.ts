@@ -17,7 +17,7 @@ import { LIMITS } from '../config/limits';
 import { detectSourceKind } from '../core/file-kind';
 import { youtubeVideoUrl } from '../core/youtube-url';
 import { findNotebook } from '../db/notebook-repository';
-import { linkSource } from '../db/notebook-source-repository';
+import { assertRoomForSource, linkSource } from '../db/notebook-source-repository';
 import { HTTP_STATUS } from '../http-status';
 import { fetchPublicUrl, PDF_CONTENT_TYPE } from '../import/fetch-url';
 import { submitSource } from '../ingestion/submit';
@@ -96,6 +96,7 @@ async function addToNotebook(
     bytes: Uint8Array;
   }
 ) {
+  await assertRoomForSource(deps.db, input.userId, input.notebookId, LIMITS.SOURCES_PER_NOTEBOOK);
   const result = await submitSource(
     {
       userId: input.userId,
@@ -106,7 +107,15 @@ async function addToNotebook(
     },
     deps.ingest
   );
-  if (!(await linkSource(deps.db, input.userId, input.notebookId, result.sourceId))) {
+  if (
+    !(await linkSource(
+      deps.db,
+      input.userId,
+      input.notebookId,
+      result.sourceId,
+      LIMITS.SOURCES_PER_NOTEBOOK
+    ))
+  ) {
     throw new Error('The source could not be linked to the notebook.');
   }
   return result;

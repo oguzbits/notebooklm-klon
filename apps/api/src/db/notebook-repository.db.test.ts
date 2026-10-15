@@ -1,6 +1,7 @@
 import { CHAT_ROLE, SOURCE_FAILURE, SOURCE_KIND, SOURCE_STATUS } from '@nlm/shared';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
+import { NotebookLimitReachedError } from '../core/notebook-limit';
 import {
   createNotebook,
   deleteNotebook,
@@ -372,5 +373,58 @@ describe('selectedReadySourceIds', () => {
 
     expect(await selectedReadySourceIds(db, USER, one.id)).toEqual([]);
     expect(await selectedReadySourceIds(db, USER, two.id)).toEqual([source.id]);
+  });
+});
+
+describe('notebook limit', () => {
+  const MAX = 3;
+
+  it('lets the notebook at the limit through and refuses the one after it', async () => {
+    await createNotebook(db, USER, '1', MAX);
+    await createNotebook(db, USER, '2', MAX);
+
+    await expect(createNotebook(db, USER, '3', MAX)).resolves.toMatchObject({ title: '3' });
+    await expect(createNotebook(db, USER, '4', MAX)).rejects.toBeInstanceOf(
+      NotebookLimitReachedError
+    );
+  });
+
+  it('counts only the own notebooks', async () => {
+    await createNotebook(db, OTHER, 'x', MAX);
+    await createNotebook(db, OTHER, 'y', MAX);
+    await createNotebook(db, OTHER, 'z', MAX);
+
+    await expect(createNotebook(db, USER, 'mine', MAX)).resolves.toMatchObject({ title: 'mine' });
+  });
+
+  it('waits while another creation by the same user is in progress, so the count is not stale', async () => {
+    await createNotebook(db, USER, '1', MAX);
+    await createNotebook(db, USER, '2', MAX);
+    const other = await pool.connect();
+    await other.query('BEGIN');
+    try {
+      await other.query(`select pg_advisory_xact_lock(hashtext($1))`, [`notebooks:${USER}`]);
+      let settled = false;
+      const pending = createNotebook(db, USER, 'a', MAX).finally(() => {
+        settled = true;
+      });
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      expect(settled).toBe(false);
+
+      await other.query('COMMIT');
+      await expect(pending).resolves.toMatchObject({ title: 'a' });
+    } finally {
+      other.release();
+    }
+  });
+
+  it('refuses a copy at the limit', async () => {
+    const original = await createNotebook(db, USER, '1', MAX);
+    await createNotebook(db, USER, '2', MAX);
+    await createNotebook(db, USER, '3', MAX);
+
+    await expect(duplicateNotebook(db, USER, original.id, MAX)).rejects.toBeInstanceOf(
+      NotebookLimitReachedError
+    );
   });
 });

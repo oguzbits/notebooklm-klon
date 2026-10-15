@@ -1,4 +1,4 @@
-import { GUEST_LIMITS, USAGE_PURPOSE } from '@nlm/shared';
+import { GUEST_LIMITS, USAGE_PURPOSE, USER_LIMITS } from '@nlm/shared';
 
 /**
  * Numeric limits of the application. Model IDs are not here: they come from the environment.
@@ -6,6 +6,10 @@ import { GUEST_LIMITS, USAGE_PURPOSE } from '@nlm/shared';
  * sources or web search; the guards are the page limit, the content hash and the limits for guests.
  */
 export const LIMITS = {
+  /** Notebooks per user (the free tier of the original). The web shows the same number. */
+  NOTEBOOKS_PER_USER: USER_LIMITS.NOTEBOOKS,
+  /** Sources per notebook. */
+  SOURCES_PER_NOTEBOOK: USER_LIMITS.SOURCES_PER_NOTEBOOK,
   /** URL import: redirects followed before giving up. */
   URL_IMPORT_MAX_REDIRECTS: 5,
   /** URL import: total time for all hops together. */

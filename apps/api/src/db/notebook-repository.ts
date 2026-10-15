@@ -1,6 +1,12 @@
-import { type Notebook, NOTEBOOK_TITLE_MAX_CHARS, type UpdateNotebookBody } from '@nlm/shared';
+import {
+  type Notebook,
+  NOTEBOOK_TITLE_MAX_CHARS,
+  type UpdateNotebookBody,
+  USER_LIMITS,
+} from '@nlm/shared';
 import { desc, eq, sql } from 'drizzle-orm';
 
+import { NotebookLimitReachedError } from '../core/notebook-limit';
 import type { Database } from './client';
 import { ownedNotebook } from './ownership';
 import { notebooks, notebookSources } from './schema';
@@ -48,12 +54,40 @@ function toNotebook(row: {
   };
 }
 
+/**
+ * Inside a transaction: waits for any other creation by the same user (the lock above), then throws when the user
+ * already has `max` notebooks. The lock makes counting and inserting one step, so two requests
+ * at one below the limit cannot both pass.
+ */
+async function lockNotebooksOf(tx: Pick<Database, 'execute'>, userId: string): Promise<void> {
+  await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`notebooks:${userId}`}))`);
+}
+
+async function assertRoomForNotebook(
+  tx: Pick<Database, 'execute'>,
+  userId: string,
+  max: number
+): Promise<void> {
+  await lockNotebooksOf(tx, userId);
+  const [row] = await tx
+    .execute<{ count: number }>(
+      sql`select count(*)::int as count from ${notebooks} where ${notebooks.userId} = ${userId}`
+    )
+    .then((result) => result.rows);
+  if ((row?.count ?? 0) >= max) throw new NotebookLimitReachedError();
+}
+
 export async function createNotebook(
   db: Database,
   userId: string,
-  title: string
+  title: string,
+  max: number = USER_LIMITS.NOTEBOOKS
 ): Promise<Notebook> {
-  const [row] = await db.insert(notebooks).values({ userId, title }).returning();
+  const row = await db.transaction(async (tx) => {
+    await assertRoomForNotebook(tx, userId, max);
+    const [inserted] = await tx.insert(notebooks).values({ userId, title }).returning();
+    return inserted;
+  });
   if (!row) throw new Error('insert returned no row');
   return toNotebook({ ...row, emoji: null, pinned: false, coverVersion: null, sourceCount: 0 });
 }
@@ -142,10 +176,12 @@ export async function setCoverVersion(
 export async function duplicateNotebook(
   db: Database,
   userId: string,
-  notebookId: string
+  notebookId: string,
+  max: number = USER_LIMITS.NOTEBOOKS
 ): Promise<Notebook | null> {
   if (!UUID.test(notebookId)) return null;
   const copyId = await db.transaction(async (tx) => {
+    await assertRoomForNotebook(tx, userId, max);
     const [original] = await tx.select().from(notebooks).where(ownedNotebook(notebookId, userId));
     if (!original) return null;
     const [copy] = await tx

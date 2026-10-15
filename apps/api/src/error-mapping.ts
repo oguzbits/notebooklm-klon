@@ -3,6 +3,7 @@ import type { ContentfulStatusCode } from 'hono/utils/http-status';
 
 import { GeminiError } from './ai/gemini-error';
 import { NoSourcesSelectedError } from './chat/answer';
+import { NotebookLimitReachedError, SourceLimitReachedError } from './core/notebook-limit';
 import { EmptyStudioOutputError } from './core/studio-prompt';
 import {
   DailyBudgetReachedError,
@@ -26,7 +27,7 @@ export const errorBody = (
 
 type Mapped = { status: ContentfulStatusCode; body: ApiError };
 
-/** The refusals of the usage limits: the personal limit, the budget of the demo, a request in progress. */
+/** The refusals of the limits: usage, the budget of the demo, a request in progress, notebooks and sources. */
 function mapUsageError(error: Error): Mapped | null {
   if (error instanceof UsageLimitReachedError) {
     return {
@@ -42,6 +43,12 @@ function mapUsageError(error: Error): Mapped | null {
   }
   if (error instanceof RequestInProgressError) {
     return { status: HTTP_STATUS.CONFLICT, body: errorBody(API_ERROR.REQUEST_IN_PROGRESS) };
+  }
+  if (error instanceof NotebookLimitReachedError) {
+    return { status: HTTP_STATUS.CONFLICT, body: errorBody(API_ERROR.NOTEBOOK_LIMIT_REACHED) };
+  }
+  if (error instanceof SourceLimitReachedError) {
+    return { status: HTTP_STATUS.CONFLICT, body: errorBody(API_ERROR.SOURCE_LIMIT_REACHED) };
   }
   return null;
 }

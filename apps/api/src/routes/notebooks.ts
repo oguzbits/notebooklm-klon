@@ -1,6 +1,7 @@
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
 import {
   API_ERROR,
+  ApiErrorSchema,
   CreateNotebookBodySchema,
   NotebookListSchema,
   NotebookSchema,
@@ -9,6 +10,7 @@ import {
 
 import type { AppDeps } from '../app-deps';
 import type { AuthVariables } from '../auth/session';
+import { LIMITS } from '../config/limits';
 import {
   createNotebook,
   deleteNotebook,
@@ -41,6 +43,7 @@ const createRoute_ = createRoute({
     [HTTP_STATUS.CREATED]: json(NotebookSchema, 'The new notebook'),
     400: invalid,
     401: unauthenticated,
+    [HTTP_STATUS.CONFLICT]: json(ApiErrorSchema, 'The user has as many notebooks as allowed'),
   },
 });
 
@@ -70,6 +73,7 @@ const copyRoute = createRoute({
     ),
     401: unauthenticated,
     [HTTP_STATUS.NOT_FOUND]: notFound,
+    [HTTP_STATUS.CONFLICT]: json(ApiErrorSchema, 'The user has as many notebooks as allowed'),
   },
 });
 
@@ -94,7 +98,10 @@ export function notebookRoutes(deps: AppDeps) {
     )
     .openapi(createRoute_, async (c) => {
       const { title } = c.req.valid('json');
-      return c.json(await createNotebook(deps.db, c.var.userId, title), HTTP_STATUS.CREATED);
+      return c.json(
+        await createNotebook(deps.db, c.var.userId, title, LIMITS.NOTEBOOKS_PER_USER),
+        HTTP_STATUS.CREATED
+      );
     })
     .openapi(updateRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
@@ -106,7 +113,12 @@ export function notebookRoutes(deps: AppDeps) {
     })
     .openapi(copyRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
-      const copy = await duplicateNotebook(deps.db, c.var.userId, notebookId);
+      const copy = await duplicateNotebook(
+        deps.db,
+        c.var.userId,
+        notebookId,
+        LIMITS.NOTEBOOKS_PER_USER
+      );
       return copy
         ? c.json(copy, HTTP_STATUS.CREATED)
         : c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);

@@ -37,6 +37,10 @@ export const ERROR_MESSAGE: Record<ApiErrorCode, string> = {
     'Heute ist das Kontingent der Demo aufgebraucht. Morgen geht es weiter.',
   [API_ERROR.REQUEST_IN_PROGRESS]:
     'Es läuft schon eine Anfrage von dir. Warte, bis sie fertig ist.',
+  [API_ERROR.NOTEBOOK_LIMIT_REACHED]:
+    'Du hast die Höchstzahl an Notebooks erreicht. Lösche eines, um ein neues anzulegen.',
+  [API_ERROR.SOURCE_LIMIT_REACHED]:
+    'Dieses Notebook hat die Höchstzahl an Quellen erreicht. Entferne eine, um eine neue hinzuzufügen.',
   [API_ERROR.INTERNAL]: 'Etwas ist schiefgelaufen. Bitte versuche es noch einmal.',
 };
 

@@ -33,6 +33,9 @@ export const API_ERROR = {
   DAILY_BUDGET_REACHED: 'DAILY_BUDGET_REACHED',
   /** The user already has a request of this kind running. */
   REQUEST_IN_PROGRESS: 'REQUEST_IN_PROGRESS',
+  /** The user has as many notebooks as allowed, or the notebook has as many sources as allowed. */
+  NOTEBOOK_LIMIT_REACHED: 'NOTEBOOK_LIMIT_REACHED',
+  SOURCE_LIMIT_REACHED: 'SOURCE_LIMIT_REACHED',
   INTERNAL: 'INTERNAL',
 } as const;
 

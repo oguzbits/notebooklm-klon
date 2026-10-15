@@ -1,4 +1,4 @@
-import { API_ERROR } from '@nlm/shared';
+import { API_ERROR, USER_LIMITS } from '@nlm/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
@@ -66,6 +66,30 @@ describe('NotebookListPage', () => {
 
     await waitFor(() => expect(created).toEqual({ title: UNTITLED_NOTEBOOK }));
     expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('disables "Neues Notebook" and says why once the limit is reached, and not one below it', async () => {
+    const many = (count: number) =>
+      Array.from({ length: count }, (_, i) =>
+        notebook({ id: crypto.randomUUID(), title: `Notebook ${i}` })
+      );
+    server.use(list(many(USER_LIMITS.NOTEBOOKS - 1)));
+    const below = renderWithProviders(<NotebookListPage />);
+    await screen.findByText('Notebook 0');
+    expect(screen.getByRole('button', { name: 'Neues Notebook' })).toHaveProperty(
+      'disabled',
+      false
+    );
+    below.unmount();
+
+    server.use(list(many(USER_LIMITS.NOTEBOOKS)));
+    renderWithProviders(<NotebookListPage />);
+    await screen.findByText('Notebook 0');
+
+    const button = screen.getByRole('button', { name: 'Neues Notebook' });
+    expect(button).toHaveProperty('disabled', true);
+    expect(button.getAttribute('aria-describedby')).toBeTruthy();
+    expect(screen.getByText(/Höchstzahl an Notebooks erreicht/)).toBeTruthy();
   });
 
   it('tells why no notebook was made and tries again on request', async () => {

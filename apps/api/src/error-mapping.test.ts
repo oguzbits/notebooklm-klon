@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { GeminiError } from './ai/gemini-error';
 import { NoSourcesSelectedError } from './chat/answer';
+import { NotebookLimitReachedError, SourceLimitReachedError } from './core/notebook-limit';
 import { EmptyStudioOutputError } from './core/studio-prompt';
 import { mapError } from './error-mapping';
 import { HTTP_STATUS } from './http-status';
@@ -19,6 +20,8 @@ describe('mapError', () => {
         API_ERROR.CHAT_LIMIT_REACHED,
       ],
       [new NoSourcesSelectedError(), HTTP_STATUS.CONFLICT, API_ERROR.NO_SOURCES_SELECTED],
+      [new NotebookLimitReachedError(), HTTP_STATUS.CONFLICT, API_ERROR.NOTEBOOK_LIMIT_REACHED],
+      [new SourceLimitReachedError(), HTTP_STATUS.CONFLICT, API_ERROR.SOURCE_LIMIT_REACHED],
       [new EmptyStudioOutputError(), HTTP_STATUS.UNPROCESSABLE_ENTITY, API_ERROR.STUDIO_EMPTY],
       [
         new WebSearchError(HTTP_STATUS.TOO_MANY_REQUESTS, true),

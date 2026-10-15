@@ -237,6 +237,31 @@ describe('notebooks', () => {
 });
 
 describe('file upload', () => {
+  it('refuses a file once the notebook has the most sources, before the file is read or queued', async () => {
+    const notebook = await createNotebook(alice);
+    await harness.pool.query(
+      `INSERT INTO sources (user_id, content_hash, kind, title)
+       SELECT u.id, 'full-' || g, $2, 'Quelle ' || g FROM "user" u, generate_series(1, $1::int) g
+       WHERE u.email = 'alice@example.test'`,
+      [LIMITS.SOURCES_PER_NOTEBOOK, SOURCE_KIND.TXT]
+    );
+    await harness.pool.query(
+      `INSERT INTO notebook_sources (notebook_id, source_id) SELECT $1, id FROM sources`,
+      [notebook]
+    );
+
+    const response = await app.request(
+      `/api/notebooks/${notebook}/sources/file`,
+      upload(alice, 'noch-eine.txt', 'Zu viel')
+    );
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({ code: API_ERROR.SOURCE_LIMIT_REACHED });
+    expect(harness.enqueued).toEqual([]);
+    const { rows } = await harness.pool.query('SELECT count(*)::int AS n FROM sources');
+    expect(rows[0].n).toBe(LIMITS.SOURCES_PER_NOTEBOOK);
+  });
+
   it('accepts a text file, queues one job and lists it as pending', async () => {
     const notebook = await createNotebook(alice);
 
