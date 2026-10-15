@@ -9,7 +9,7 @@ web
 ## Users
 
 Primary: reviewers and visitors. They open the live demo
-for a few minutes, try the example notebook, then read the repo and watch a short walkthrough video. They judge
+for a few minutes, try the example notebook, then read the repo. They judge
 whether the author masters a full-stack engineer's stack (React, Node.js, PostgreSQL, API design, LLM
 integration) and cares about verifiable answers, not only about a demo that looks good.
 
@@ -33,8 +33,8 @@ verifiability, not about a new look.
 
 ## Operating Context
 
-- Deployment and walkthrough: a live demo with a guest account ("Demo ausprobieren") that holds a
-  copy of an example notebook, a GitHub repo, and a video of at most ten minutes.
+- Deployment: a live demo with a guest account ("Demo ausprobieren") that holds a
+  copy of an example notebook, and a GitHub repo.
 - Free-tier operation: Gemini free tier, a separate Google project for the demo, per-user quotas and
   rate limits, daily caps on web search (Tavily).
 - Optional features depend on configuration: web search needs a Tavily key, cover images need an
@@ -62,7 +62,7 @@ not connected to Google. Using the original's logo and name was explicitly allow
 
 - Spike results on retrieval, models and limits: [docs/SPIKE-ERGEBNISSE.md](docs/SPIKE-ERGEBNISSE.md).
 - An example notebook ("Demo: Projekt Nordlicht") seeded by `pnpm seed:demo`.
-- No customers, testimonials or usage numbers exist. Do not invent any. The Loom link is not recorded yet.
+- No customers, testimonials or usage numbers exist. Do not invent any.
 
 ## Product Principles
 

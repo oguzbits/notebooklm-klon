@@ -4,7 +4,7 @@ Sep 29, 2026 · @Oguz Öztürk · Fakten zu Limits, Modellen und Kosten abgeglic
 
 ## Ziel und Rahmen
 
-Ziel ist ein NotebookLM-Klon in production-ready Qualität, abgegeben mit drei Artefakten: GitHub-Repo, Live-Deployment und ein Loom-Video von höchstens 10 Minuten, in dem du Vorgehen und Umsetzung erklärst und den Klon live testest.
+Ziel ist ein NotebookLM-Klon in production-ready Qualität, abgegeben mit zwei Artefakten: GitHub-Repo und Live-Deployment.
 
 - **Aufgabe:** Umsetzung, Umfang und Struktur sind frei, die Nutzung von AI-Tools ist ausdrücklich erwünscht.
 - **Beweisziel:** Du beherrschst den Stack eines Full-Stack-Engineers (React, Node.js, PostgreSQL, API-Design, LLM-Integration).

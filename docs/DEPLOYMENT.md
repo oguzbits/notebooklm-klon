@@ -57,7 +57,7 @@ Was nur du tun kannst, ist hier fett.
    (Projekt `notebooklm-react`) und `SENTRY_AUTH_TOKEN` (Organization Token, für die Source Maps) setzen. Alles ist optional; ohne die Werte wird nichts gesendet.
 5. **Demo-Notebook anlegen** (einmalig, siehe unten).
 6. **Uptime-Check:** der Workflow `Uptime` ruft alle 15 Minuten `https://<Hostname>/health` auf; ein roter Lauf
-   ist der Alarm (GitHub mailt). Optional zusätzlich UptimeRobot. Dann Live-Link, Demo-Zugang und Loom-Link in
+   ist der Alarm (GitHub mailt). Optional zusätzlich UptimeRobot. Dann Live-Link und Demo-Zugang in
    die [README](../README.md) eintragen.
 
 ### Demo-Notebook anlegen
