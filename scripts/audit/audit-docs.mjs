@@ -7,7 +7,6 @@
  * package.json defines, names a path under apps/, packages/ or deploy/ that does not exist,
  * contains an absolute machine path, or states a test count ("1179 Tests").
  * Fenced code blocks are skipped, except for the absolute-path rule.
- * `docs/plans` describes code that does not exist yet, so only links and machine paths apply there.
  */
 
 import fs from 'node:fs';
@@ -15,7 +14,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const SKIP_DIRS = new Set(['node_modules', 'dist', 'coverage', '.git', 'reports', 'results']);
-const PLANS_DIR = 'docs/plans/';
 const PNPM_BUILTINS = new Set([
   'install',
   'add',
@@ -101,7 +99,6 @@ export function auditDocs(root) {
   };
 
   for (const file of collectMarkdown(root)) {
-    const isPlan = file.startsWith(PLANS_DIR);
     let fenced = false;
     fs.readFileSync(path.join(root, file), 'utf8')
       .split('\n')
@@ -126,7 +123,6 @@ export function auditDocs(root) {
         if (TEST_COUNT.test(text)) {
           report(`test count in docs (run the command instead): ${TEST_COUNT.exec(text)[0]}`);
         }
-        if (isPlan) return;
 
         for (const [, code] of text.matchAll(INLINE_CODE)) {
           if (code.startsWith('pnpm ')) {

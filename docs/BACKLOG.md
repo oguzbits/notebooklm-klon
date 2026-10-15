@@ -35,6 +35,20 @@ Kleinigkeiten:
 - Rohe Controls statt shadcn an einigen Stellen (`quiz-option.tsx`, `studio-tiles.tsx`, `library-row.tsx`), nicht einzeln beurteilt.
 - `pdf-lib` hat seit November 2021 kein Release mehr, funktioniert aber.
 
+## Aus den Plänen (Stand 2026-10-15)
+
+Die Pläne sind abgeschlossen und gelöscht (Git-Historie, Commit vor diesem). Offen daraus:
+
+- **Eval:** n >= 3 je Frage und die Schwelle des Gates aus der Schwankung statt geschätzt; Korpus (`spikes/corpus`) mit geklärter Lizenz ins Repo; Replay der Modellantworten offline (Invariante 5);
+  **schwerere Fragen** (Quellen vergleichen, Zahlen aus Tabellen, deutsche Fragen zu englischen Quellen), weil die Menge bei 100 % nichts mehr zeigt.
+- **RAG-Experimente**, erst mit schwereren Fragen, je Experiment eine Variable und ein Lauf mit n >= 3, Neu-Einbetten vorher beziffern und abstimmen:
+  E1 ganze Quellen statt Suche, wenn sie passen; E2 Volltext mit deutschem Wortstamm statt `simple` (Migration); E3 Chunkgröße 800, 1500, 2500; E4 Passagenzahl 6, 12, 20; E5 Quellentitel in den Einbettungstext; E6 Reranker (nur wenn E1 bis E5 nicht reichen).
+- **Temperatur und `thinkingLevel`:** heute überall 0 und ungesetzt (`ai/gemini-chat.ts`, `ai/gemini-pdf-parser.ts`). Gemini 3 empfiehlt laut Doku 1,0 (neu lesen). Wenn gemessen wird: `GENERATION = { CHAT, QUERY, PDF, STUDIO }` in `apps/api/src/config`,
+  je Rolle 0 gegen 1,0, n >= 3, grob 1 bis 2 Euro. Ein Test je Rolle, dass der Anfragekörper den Wert aus der Konfiguration trägt.
+- **Limits eichen:** Höhen der Limits je Nutzer und `MAX_OUTPUT_TOKENS` aus echter Nutzung (`pnpm report:usage`). Ob `maxOutputTokens` Thinking-Tokens mitzählt, ist nicht eindeutig: Die Thinking-Doku sagt für `max_output_tokens` „including thought tokens“
+  (ai.google.dev/gemini-api/docs/thinking, per Agent gelesen), die Referenz von `generationConfig.maxOutputTokens` wurde nicht gelesen; bei Erreichen kann die Ausgabe gekürzt oder leer sein. Vor dem Verkleinern mit einem Aufruf messen.
+- **Doku:** Datumsvergleich `Stand` gegen die letzte Änderung eines zugeordneten Pfads (Schicht 3 von früher Plan 2) nachrüsten, wenn trotz `docs-map.json` Doku veraltet.
+
 ## Messung steht aus
 
 Das Gewicht 0,5 der Volltextsuche in der Hybridsuche ist nur durch den Sprachunterschied begründet, nicht durch eine Messung:

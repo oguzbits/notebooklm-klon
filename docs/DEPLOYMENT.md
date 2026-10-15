@@ -98,7 +98,7 @@ Zu beobachten nach dem ersten Lauf: ob 4 GB RAM reichen (`docker stats`, Swap mi
 Regel 7 in [AGENTS.md](../AGENTS.md) nur IDs, Längen, Dauer und Token-Zahlen, keine Dokumentinhalte. Docker rotiert sie
 (je 10 MB, 3 Dateien). Jede Anfrage trägt eine ID (`X-Request-Id`, steht in Caddys Zugriffslog und in jeder Logzeile der App); eine
 Fehlermeldung im Browser nennt die ersten acht Zeichen als „Referenz“. Die Logs eines Containers gehen mit dem Container verloren,
-also bei jedem Deploy. Unerwartete Fehler gehen an Sentry (EU), sobald `SENTRY_DSN` in `server.env` steht; was gesendet wird und was nicht, steht in [Plan 1](plans/01-beobachtbarkeit.md).
+also bei jedem Deploy. Unerwartete Fehler gehen an Sentry (EU), sobald `SENTRY_DSN` in `server.env` steht; was gesendet wird und was nicht, steht in [PLAN.md](PLAN.md#betrieb-und-qualitätswerkzeuge).
 
 ### Backup und Wiederherstellung
 

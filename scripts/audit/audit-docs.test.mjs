@@ -83,12 +83,6 @@ describe('auditDocs', () => {
     expect(audit(doc)).toEqual([expect.stringContaining('/Users/')]);
   });
 
-  it('checks only links and machine paths in docs/plans, which describe future code', () => {
-    const plan = '`pnpm kommt-noch` `apps/api/src/neu.ts` [x](weg.md)\n';
-    const found = auditDocs(makeRepo({ 'docs/plans/01-x.md': plan })).map((v) => v.message);
-    expect(found).toEqual([expect.stringContaining('weg.md')]);
-  });
-
   it('reports the line of the finding', () => {
     const [violation] = auditDocs(makeRepo({ 'README.md': 'ok\n\n[x](weg.md)\n' }));
     expect(violation).toMatchObject({ file: 'README.md', line: 3 });

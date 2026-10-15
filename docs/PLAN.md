@@ -1,6 +1,6 @@
 # NotebookLM-Klon: Requirements, Stack und Risiken
 
-Sep 29, 2026 · @Oguz Öztürk · Fakten zu Limits, Modellen und Kosten abgeglichen mit dem Code am 2026-10-14
+Sep 29, 2026 · @Oguz Öztürk · Fakten zu Limits, Modellen und Kosten abgeglichen mit dem Code am 2026-10-15
 
 ## Ziel und Rahmen
 
@@ -10,8 +10,8 @@ Ziel ist ein NotebookLM-Klon in production-ready Qualität, abgegeben mit zwei A
 - **Beweisziel:** Du beherrschst den Stack eines Full-Stack-Engineers (React, Node.js, PostgreSQL, API-Design, LLM-Integration).
 - **Schwerpunkt:** AI-Kern (RAG, verifizierbare Zitate, Evals) und ein sichtbarer agentischer Workflow im Repo. Breite nur so weit nötig.
 - **Zeit:** 4 bis 5 volle Arbeitstage, die Frist beträgt eine Woche. Ziel ist, früh fertig zu sein und den Rest als Puffer zu behalten.
-- **Kosten:** minimal. Gebaut wurde im Gemini Free Tier; seit 2026-10-03 rechnet die Config mit den Limits des bezahlten Tarifs
-  (siehe [Kontingent und Kosten](#kontingent-und-kosten)).
+- **Kosten:** minimal. Gebaut wurde im Gemini Free Tier; seit 2026-10-03 läuft der Betrieb im bezahlten Tarif mit einem kleinen Guthaben,
+  begrenzt durch Limits je Nutzer und eine Tagesbremse (siehe [Kontingent und Kosten](#kontingent-und-kosten)).
 - **Sprache:** Oberfläche nur Deutsch. Quellen und Fragen dürfen Englisch sein.
 
 ## Was NotebookLM ausmacht
@@ -79,8 +79,8 @@ ein Nachbau ist. Dazu:
 
 **Qualitätsanforderungen (production-ready)**
 
-- SSRF-Schutz beim URL-Import, Upload-Limits (Größe, Seitenzahl) und Rate Limiting gegenüber dem Anbieter. Quoten pro Nutzer
-  wurden gebaut und am 2026-10-03 auf Entscheidung des Nutzers wieder entfernt; der Plan dazu: [Plan 7](plans/07-nutzung-und-kosten.md).
+- SSRF-Schutz beim URL-Import, Upload-Limits (Größe, Seitenzahl, entpackte Größe) und Rate Limiting gegenüber dem Anbieter, dazu Limits je Nutzer und eine Tagesbremse
+  (siehe [Kontingent und Kosten](#kontingent-und-kosten)).
 - Env-Validierung mit Zod, Health-Check, strukturierte Logs, Migrationen mit drizzle-kit.
 - Tests: Vitest, Playwright-Nutzerreisen, ein Eval-Skript mit Golden-Fragen. Tests laufen ohne echte API-Aufrufe (Fixtures und Mocks), damit sie kein Tageskontingent verbrauchen.
 - CI mit Typecheck, Lint und Tests, dazu eine AGENTS.md, die deinen agentischen Workflow im Repo sichtbar macht.
@@ -91,7 +91,7 @@ Die Ingestion schreibt Chunks und Vektoren in Postgres, der Chat liest nur die p
 
 ## Tech Stack v3
 
-React-Frontend und Node.js-Backend in einem Monorepo, ein Container, Postgres mit pgvector, Gemini im Free Tier. Docling und ein zweiter Service entfallen. Preise und Benchmarks stammen teils aus Drittquellen (Stand 29.09.2026) und sind vor dem Bau zu prüfen.
+React-Frontend und Node.js-Backend in einem Monorepo, ein Container, Postgres mit pgvector, Gemini. Docling und ein zweiter Service entfallen. Preise und Benchmarks stammen teils aus Drittquellen (Stand 29.09.2026) und sind vor dem Bau zu prüfen.
 
 | Bereich          | Wahl                                                                                                                      | Begründung / Alternative                                                                                                   |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
@@ -117,7 +117,7 @@ React-Frontend und Node.js-Backend in einem Monorepo, ein Container, Postgres mi
 - **TypeScript:** 6.0, weil typescript-eslint TypeScript 7 noch nicht unterstützt.
 - **Neu:** Env-Validierung mit Zod (`apps/api/src/config/env.ts`), Netzwerk-Riegel in Tests (MSW lehnt jede nicht abgefangene Anfrage ab), Tests für die Hook-Skripte selbst, Docs-Audit (`pnpm audit:docs`).
 - **Skills und MCP:** chrome-devtools läuft als MCP-Server auf Benutzerebene, nicht im Repo. `software-craftsmanship` und `context7` entfallen, weil `AGENTS.md`, ESLint und die Audits dieselben Regeln erzwingen.
-- **Eval:** Übernommen ist die Idee, keine Zeile Code. Dataset-Schema mit Textankern statt Chunk-IDs, reine Scorer, aufgezeichnete Modellantworten offline abgespielt; Promptfoo, der Jev-Judge und ein Mock-Modell aus der Ground Truth entfallen, weil sie nur die Verdrahtung prüften, nicht die Qualität. Aufbau: [Plan 3](plans/03-eval.md).
+- **Eval:** Übernommen ist die Idee, keine Zeile Code. Dataset-Schema mit Textankern statt Chunk-IDs, reine Scorer, aufgezeichnete Modellantworten offline abgespielt; Promptfoo, der Jev-Judge und ein Mock-Modell aus der Ground Truth entfallen, weil sie nur die Verdrahtung prüften, nicht die Qualität. Stand und Baseline: [Betrieb und Qualitätswerkzeuge](#betrieb-und-qualitätswerkzeuge).
 
 **Nicht übernommen:** Supabase-RLS und -Repositories (Autorisierung liegt in der API), Next.js-Route-Handler, Audit-Trail mit Hash-Kette, Wissensdatenbank der Rechtsnormen, PII-Logging-Scan (§ 203 StGB), Supabase-N+1-Scan, Health-Score, promptfoo und die Fixture-Generatoren für Notar-Scans.
 
@@ -211,7 +211,7 @@ Umgebungsvariablen (`EnvSchema`):
   Instanzen würden getrennt zählen. Er schützt das Kontingent beim Anbieter, nicht vor einzelnen Nutzern.
 - **Limit je Nutzer** (24 Stunden gleitend) für Fragen und Studio-Ausgaben, **Notbremse** in Tokens je Tag für alle, ein laufender
   Aufruf je Nutzer, Obergrenze je Antwort (`MAX_OUTPUT_TOKENS`), Grenzen für Notizbücher und Quellen. Verbrauch in `usage_events`,
-  Bericht mit `pnpm report:usage`. Die Höhen sind Annahmen bis zur Messung: [Plan 7](plans/07-nutzung-und-kosten.md).
+  Bericht mit `pnpm report:usage`. Die Höhen sind Annahmen bis zur Messung (siehe [BACKLOG.md](BACKLOG.md)). Die Notbremse von 2 Millionen Tokens folgt aus einem Guthaben von etwa 4 € und den Preisen von gemini-3.5-flash-lite (0,30 USD je Million Eingabe-, 2,50 USD je Million Ausgabe-Tokens inklusive Thinking; ai.google.dev/gemini-api/docs/pricing, 2026-10-14 per Agent gelesen, nicht von Hand geprüft). Eine Chat-Frage kostete gemessen etwa 0,35 Cent.
 - **Inhalts-Hash pro Nutzer:** Dasselbe Dokument wird nie zweimal gelesen oder eingebettet.
 - **Gäste:** begrenzt je Stunde, gleichzeitig und in der Lebensdauer (`GUESTS_*`, `GUEST_LIFETIME_DAYS` oben).
 - **Websuche** (Tavily): eigenes Limit entfernt; eine erschöpfte Tavily-Quote wird als 429 weitergereicht.
@@ -226,17 +226,34 @@ verbrauchen ([DEPLOYMENT.md](DEPLOYMENT.md)).
 Minute und 500 pro Tag, 3.5 bis 3.8 Flash 5 pro Minute und 20 pro Tag, Embedding 2 100 pro Minute, 30K Tokens pro Minute und 1000
 pro Tag. Die Limits gelten pro Projekt, nicht pro Key. Das war der Grund für die Drosselung im Worker und für die Lite-Modelle im Dev.
 
+## Betrieb und Qualitätswerkzeuge
+
+- **Beobachtbarkeit:** Jede Anfrage trägt eine ID (`X-Request-Id`, in Zugriffslog, Logzeilen und Fehlerantworten). Job-Fehler und abgelehnte Uploads werden mit Art, Größe und Stufe geloggt, nie mit Dateiname oder Inhalt.
+  Sentry (EU) meldet unerwartete Fehler (500, Import-Jobs, Job-Queue, Chat) in [observability/](../apps/api/src/observability) und [error-reporting.ts](../apps/web/src/lib/error-reporting.ts). Gesendet wird nur eine Liste erlaubter Felder
+  (`scrubEvent`: Fehlerart, Stapel, Release = Commit, Umgebung, Tags, Source-Map-Kennungen), nie Fehlertext, Variablen, Quelltext, Anfrage oder Nutzer. Ohne `SENTRY_DSN` startet das SDK nicht. Source Maps des Web gehen beim
+  Deploy-Build zu Sentry und werden gelöscht (`SENTRY_AUTH_TOKEN` als Build-Secret). Der Sentry-MCP-Server ist je Benutzer eingerichtet, nicht im Repo, und bleibt ausgeschaltet. Dauerhafte Logs gibt es bewusst nicht ([BACKLOG.md](BACKLOG.md)).
+- **Eval:** `pnpm eval:live` fragt 34 goldene Fragen ([golden-questions.json](../apps/api/src/eval/golden-questions.json)) durch denselben Code wie der Chat. Der Schlüssel ist `EVAL_GEMINI_API_KEY` (nie `GEMINI_API_KEY`, kein Rückfall).
+  Ein voller Lauf wird mit [baseline.json](../apps/api/src/eval/baseline.json) verglichen und endet mit Fehlercode 1, wenn ein Maß um mehr als 5 Prozentpunkte fällt (`GATE_TOLERANCE`, geschätzt). Baseline vom 2026-10-15 (bezahlter Schlüssel,
+  n=1, etwa 12 Cent): Suche, Fakten in Antwort und Zitat, Verweigerung je 100 %. Die Menge ist gesättigt; Verbesserungen sind darauf nicht messbar. Bei erschöpftem Free-Tier-Kontingent bricht der Lauf ab und nennt die Rest-IDs für `--ids`.
+- **Mutationstests:** `pnpm mutation` (StrykerJS, Vitest-Runner) auf `apps/api/src/core`, etwa 2 Minuten, in CI nur manuell oder wöchentlich ([mutation.yml](../.github/workflows/mutation.yml)). Mutation Score 81,5 %, `break` bei 80;
+  nur anheben, wenn echte Überlebende dazukommen. Der Runner 10.0.0 passt den Namensfilter nicht an Vitest 5 an ([Issue 6210](https://github.com/stryker-mutator/stryker-js/issues/6210)); ein pnpm-Patch in `patches/` behebt das und fällt weg, sobald der Runner es tut.
+- **Doku:** Tabellen mit Limits und Variablen werden aus dem Code erzeugt (`pnpm docs:generate`, geprüft in `pnpm audit:docs`). [docs-map.json](docs-map.json) bindet Code-Pfade an ihr Dokument; ein Commit braucht das Dokument oder
+  `Docs: n/a, <Grund>`. Geprüft im Hook `.husky/commit-msg` und im CI. Keine Zählwerte (Tests, Dateien) in der Doku. Ein Abgleich Dokument gegen Code von Hand am Ende einer Funktion; ein Datumsvergleich (`Stand`) ist nicht gebaut.
+- **Nutzung:** Jeder Modellaufruf schreibt eine Zeile in `usage_events` (30 Tage), Auswertung mit `pnpm report:usage` (Tokens je Aufruf; eine Chat-Frage besteht aus bis zu vier Aufrufen). Websuche wird nicht gezählt.
+  Ab 75 % zeigt die Oberfläche „Noch N Fragen heute.“, am Limit sperrt sie das Eingabefeld und nennt die Uhrzeit der Freigabe; ist die Tagesbremse erreicht, sagt sie „Heute ist das Kontingent der Demo aufgebraucht“.
+  Free-Tier-Werte der AI-Studio-Konsole (Stand 2026-09-29, nur Verlauf): Flash 5 Anfragen/Min und 20/Tag, Flash-Lite 15/Min und 500/Tag; die offizielle Seite zu Rate Limits nennt keine Free-Tier-Zahlen. Im Free Tier dürfen Anfragen für Training genutzt werden.
+
 ## Risiken und offene Punkte
 
-Das größte Risiko sind Kosten und Kontingent im Live-Demo, weil kein Limit pro Nutzer gilt ([Plan 7](plans/07-nutzung-und-kosten.md)). Danach folgen Parsing-Qualität und Latenz.
+Das größte Risiko sind Kosten und Kontingent im Live-Demo; Limits je Nutzer und die Tagesbremse begrenzen es, ihre Höhen sind aber nicht gemessen. Danach folgen Parsing-Qualität und Latenz.
 
-- **Kontingent und Kosten:** ein einzelner Nutzer oder Gast kann das gemeinsame Kontingent und das Budget aufbrauchen. Es gibt keine Verbrauchszählung pro Nutzer ([Plan 7](plans/07-nutzung-und-kosten.md)).
+- **Kontingent und Kosten:** Mehrere Konten eines Menschen umgehen das Limit je Nutzer; die Tagesbremse fängt das ab. Der Merker „ein laufender Aufruf je Nutzer“ liegt im Speicher und stimmt nur bei einem Container.
 - **Embeddings:** Der Limiter drosselt nach geschätzten Tokens. Wie der Anbieter einen Batch zählt, ist nicht geprüft.
 - **Latenz:** GPT-6 Luna (im Spike nicht gemessen) hatte laut Artificial Analysis bei Max-Reasoning eine Zeit bis zum ersten Token von etwa 139 Sekunden (Gemini 3.5 Flash-Lite etwa 8,8 Sekunden). Bei niedriger Stufe nicht gemessen.
 - **Parsing per LLM** ist nicht deterministisch und kann auslassen. Gegenmittel: Stichprobentests; ein liteparse-Fallback wurde nicht gebaut.
 - **ParseBench** stammt von LlamaIndex, deckt Enterprise-PDFs ab und enthält kein DOCX. Deshalb der eigene Spike.
 - **Datennutzung im Free Tier:** Bedingungen lesen, Hinweis im Demo.
 - **Hosting:** Läuft seit 2026-10-02 auf einem Hetzner-Server; Deploy mit Dump, Health-Prüfung und Rollback ist im Betrieb erprobt.
-- **Billing:** ❓ Ob ein hartes Budget-Limit gesetzt ist und ob eine automatische Aufladung läuft, ist nicht belegt.
+- **Billing:** ❓ Ob ein hartes Budget-Limit gesetzt ist und ob eine automatische Aufladung läuft, ist nicht belegt (Guthaben etwa 4 € am 2026-10-15).
 - **Preise und Benchmarks** aus Drittquellen vor dem Bau auf den offiziellen Seiten prüfen.
 - **Take-home-Repos** sind nur Ideengeber: keinen Code kopieren.
