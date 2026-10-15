@@ -1,6 +1,6 @@
 # Verbesserungspläne
 
-Stand 2026-10-14, aus der Besprechung der neun Punkte. Jeder Plan nennt Interfaces, Verhaltensregeln, Testfälle als Liste und
+Stand 2026-10-15, aus der Besprechung der neun Punkte. Jeder Plan nennt Interfaces, Verhaltensregeln, Testfälle als Liste und
 je Schutzfunktion den Test, der rot werden muss. Code steht hier nicht; er entsteht beim Umsetzen testgetrieben.
 Jede Zahl und jeder Modell- oder Bibliothekswert ist vor der Umsetzung gegen die aktuelle Quelle zu prüfen
 (Regel 12 in [AGENTS.md](../../AGENTS.md)).
@@ -18,3 +18,5 @@ Jede Zahl und jeder Modell- oder Bibliothekswert ist vor der Umsetzung gegen die
 Reihenfolge: 1, 2 zuerst und unabhängig voneinander. 3 vor 4 und 5. 6 jederzeit. 7: Schritt 1 bis 6 gebaut, die Höhen sind Annahmen bis zur Messung.
 
 Stand der Umsetzung: Plan 1 gebaut (Sentry in Betrieb, API-DSN gesetzt, Source Maps für das Web gebaut; Web-DSN als GitHub-Secret gesetzt; dauerhafte Logs und SSH offen). Plan 2 Teil A (mechanische Prüfung `pnpm audit:docs`) gebaut, Teil B offen. Plan 6 Teil „Limits“ gebaut (100 Notebooks je Nutzer, 50 Quellen je Notebook, atomar in der Datenbank, Oberfläche sperrt „Neues Notebook“); Teil „Mutationstests“ gebaut (`pnpm mutation`, StrykerJS auf `apps/api/src/core`, Ausgangswert 79,3 %, nach den ersten Tests 81,5 %, Schwelle `break` 80; Vitest-5-Fehler im Runner per pnpm-Patch umgangen, siehe Plan 6). Plan 7 Schritt 1 bis 6 gebaut (Zählung, Bericht, Obergrenze je Antwort, Limit je Nutzer, Notbremse, Oberfläche); die Messung mit echter Nutzung und das Eichen der Höhen sind offen.
+
+Plan 3 teilweise gebaut (Golden-Set, Scorer, Bericht, `pnpm eval:live`, `eval:studio`, `eval:overview`; ein Gate gegen eine Baseline ist nicht belegt, der erste Lauf mit Free-Tier-Schlüssel ist keine Qualitätsmessung, siehe Plan 7). Plan 4 nicht gebaut (kein Commit). Plan 5: Suche in Deutsch und Englisch, Teilfragen und Chunking an Zeilengrenzen sind gebaut (Commits `c5962c0`, `554e974`, `a04bb00`); die Experimente mit Messung gegen eine Baseline stehen aus. Die Pläne 1, 6 und 7 sind auf Entscheidungen, Stand und Offenes gekürzt; Einzelheiten stehen in der Git-Historie.
