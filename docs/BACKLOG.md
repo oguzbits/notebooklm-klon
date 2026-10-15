@@ -7,7 +7,7 @@ Git-Historie; hier steht nur, was offen ist oder bewusst nicht gebaut wird.
 ## Stand
 
 Alle Befunde der Stufen „Hoch“ (H1 bis H7) sind behoben. Von den mittleren sind M1, M2, M3, M5 und M8 bis M17 erledigt, M6 (Titel auf 200 Zeichen gekürzt, DOCX und PPTX auf 100 MB entpackt begrenzt), M7 bis auf den Tarif-Hinweis;
-offen sind M4 und M10. Die Funktionslücken aus dem Review
+offen ist M10; M4 trifft nicht zu (siehe unten). Die Funktionslücken aus dem Review
 (neu einlesen, Export, Konto löschen, Stopp-Button) und die Dateitypen PDF-Link, Bilder, Audio, PPTX und YouTube sind gebaut.
 
 Gates auf dem letzten Stand: `pnpm check`, `pnpm test`, `pnpm test:db` und `pnpm e2e` grün.
@@ -21,14 +21,15 @@ Nicht geprüft: Screenreader auf echten Geräten, echte Mobilgeräte, Semgrep lo
 
 ## Offen
 
-| #   | Thema                 | Befund                                                                                                                                                                                                                                      | Fix                                                                                                   |
-| --- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| M4  | HNSW-Index mit Filter | Weder `hnsw.iterative_scan` noch `ef_search` sind gesetzt. Bei vielen Nutzern kann der nachgelagerte SQL-Filter zu wenige Treffer liefern. Heute bei kleinen Mengen ohne Folge.                                                             | `SET LOCAL hnsw.iterative_scan = relaxed_order` pro Abfrage, vorher und nachher mit `EXPLAIN` messen. |
-| M10 | CI und Server-Härtung | Dependency-Audit (Produktion, ab `high`) läuft im CI; kein Trivy. `pnpm audit` meldet eine moderate Lücke (esbuild über drizzle-kit, nur Dev-Server). Kein fail2ban, `deploy` sitzt in der Docker-Gruppe. sslip.io teilt Zertifikatslimits. | Audit im CI, fail2ban, eigene Domain.                                                                 |
+| #   | Thema                 | Befund                                                                                                                                                                                                                                      | Fix                                   |
+| --- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| M10 | CI und Server-Härtung | Dependency-Audit (Produktion, ab `high`) läuft im CI; kein Trivy. `pnpm audit` meldet eine moderate Lücke (esbuild über drizzle-kit, nur Dev-Server). Kein fail2ban, `deploy` sitzt in der Docker-Gruppe. sslip.io teilt Zertifikatslimits. | Audit im CI, fail2ban, eigene Domain. |
+
+M4 (HNSW-Index mit Filter) trifft nicht zu: Die Suche ordnet nach Abstand über die CTE `scoped`, die über Verbindungen auf Nutzer, Notizbuch und Quellen gefiltert ist ([db/retrieval.ts](../apps/api/src/db/retrieval.ts)). Der HNSW-Index kann darüber nicht angewandt werden, der Scan ist exakt und verliert keine Treffer an einen nachgelagerten Filter. Aus dem Aufbau der Abfrage geschlossen, nicht mit `EXPLAIN` gemessen. Neu bewerten, wenn die Suche je auf den Index ausgerichtet wird.
 
 Kleinigkeiten:
 
-- `use-sources.ts`: Abfrage alle 2 s ohne Backoff, solange eine Quelle arbeitet.
+- `use-sources.ts`: Abfrage alle 2 s ohne Backoff, solange eine Quelle arbeitet. Bewusst gelassen: eine kurze, billige Abfrage während weniger Minuten.
 - Hash über rohe HTML-Bytes: dynamische Seiten werden nie als Duplikat erkannt.
 - Rohe Controls statt shadcn an einigen Stellen (`quiz-option.tsx`, `studio-tiles.tsx`, `library-row.tsx`), nicht einzeln beurteilt.
 - `pdf-lib` hat seit November 2021 kein Release mehr, funktioniert aber.
