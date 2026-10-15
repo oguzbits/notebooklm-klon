@@ -60,7 +60,9 @@ Project context and stack: [docs/PLAN.md](docs/PLAN.md). Use `pnpm`, never `npm`
 12. **Verify before deciding.** Never rely on memory for model IDs, prices, limits or library APIs.
     Check the current docs first and say where you are unsure.
 13. **Portable docs.** No absolute machine paths in files; use relative Markdown links.
-    Update docs in the same change when architecture or contracts change.
+    Update docs in the same change when architecture or contracts change. Tables of limits and
+    environment variables in `docs/PLAN.md` are generated (`pnpm docs:generate`); a change to a path in
+    `docs/docs-map.json` needs its document in the same commit or `Docs: n/a, <reason>` in the message.
 
 ## 3. Workflow
 

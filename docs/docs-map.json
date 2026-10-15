@@ -1,0 +1,7 @@
+{
+  "apps/api/src/config/limits.ts": "docs/PLAN.md",
+  "apps/api/src/config/env.ts": "docs/PLAN.md",
+  "apps/api/src/db/schema.ts": "docs/PLAN.md",
+  "packages/shared/src/": "docs/PLAN.md",
+  "deploy/": "docs/DEPLOYMENT.md"
+}

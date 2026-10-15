@@ -20,7 +20,8 @@
     "audit:duplication": "jscpd --reporters threshold",
     "audit:duplication:details": "jscpd --reporters console",
     "audit:magic": "node scripts/audit/audit-magic-strings.mjs",
-    "audit:docs": "node scripts/audit/audit-docs.mjs",
+    "audit:docs": "node scripts/audit/audit-docs.mjs && pnpm docs:generate --check",
+    "docs:generate": "pnpm --filter @nlm/api exec tsx ../../scripts/docs/generate.mjs",
     "test": "NODE_OPTIONS=--no-experimental-webstorage vitest run --project shared --project api --project hooks --project scripts --project web",
     "test:watch": "NODE_OPTIONS=--no-experimental-webstorage vitest",
     "prepare": "husky",
@@ -77,7 +78,8 @@
       ".": {
         "entry": [
           ".claude/hooks/guard-*.mjs",
-          "config/vitest.mutation.config.ts"
+          "config/vitest.mutation.config.ts",
+          "scripts/docs/generate.mjs"
         ],
         "ignore": [
           "spikes/**"

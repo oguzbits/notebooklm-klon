@@ -68,6 +68,12 @@ Zusätzlich: Dokumente teilen sich nach Zweck. **Kontext** (Ziel, Schichten) än
 
 - Prüfmodus der Erzeugung entfernen: Test „Tabelle weicht ab“. Zuordnung ignorieren: Test „Änderung ohne Doku“. Prüfung des Datums entfernen: Test „älterer Stand“.
 
+### Stand (2026-10-15)
+
+Schicht 1 gebaut: `pnpm docs:generate` schreibt `limits`, `provider-limits` und `env` in [PLAN.md](../PLAN.md); `pnpm audit:docs` ruft `docs:generate --check` auf.
+Schicht 2 gebaut: [docs-map.json](../docs-map.json), Prüfer `scripts/audit/audit-docs-map.mjs`, Hook `.husky/commit-msg` und ein Schritt im CI. Schicht 3 (Datum `Stand`) nicht gebaut:
+Schicht 2 erzwingt das Mitändern der Doku schon, und ein Datumsvergleich über `git log` ist in flachen CI-Klonen unzuverlässig. Nachrüsten, wenn trotz Schicht 2 Doku veraltet.
+
 ### Entschieden (2026-10-14)
 
 Die Schichten 1 bis 3 genügen. Schicht 4 (Abgleich) läuft von Hand am Ende einer Funktion, nicht nächtlich im CI. Die Zuordnungen in `docs-map.json` am Anfang: `config/limits.ts`,

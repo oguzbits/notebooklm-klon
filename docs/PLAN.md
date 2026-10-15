@@ -123,22 +123,96 @@ React-Frontend und Node.js-Backend in einem Monorepo, ein Container, Postgres mi
 
 ## Kontingent und Kosten
 
-**Was gilt heute** (Quelle ist der Code, nicht diese Seite): Die Limits der Anbieter stehen in `PROVIDER_LIMITS` und die eigenen
-Grenzen in `LIMITS`, beide in [config/limits.ts](../apps/api/src/config/limits.ts). `PROVIDER_LIMITS` enthält die Werte des
-bezahlten Tarifs aus dem AI-Studio-Dashboard (Stand 2026-10-03). ❓ Ob die Abrechnung verknüpft ist und ein Budget-Limit gesetzt
-wurde, steht nirgends im Repo.
+**Was gilt heute** (Quelle ist der Code, die Tabellen unten werden von `pnpm docs:generate` aus [config/limits.ts](../apps/api/src/config/limits.ts)
+und [config/env.ts](../apps/api/src/config/env.ts) geschrieben; nicht von Hand ändern). Die Werte der Anbieter sind die des bezahlten Tarifs
+aus dem AI-Studio-Dashboard (Stand 2026-10-03). ❓ Ob die Abrechnung verknüpft ist und ein Budget-Limit gesetzt wurde, steht nirgends im Repo.
+
+Eigene Grenzen (`LIMITS`):
+
+<!-- generated:limits -->
+| Grenze | Wert |
+| --- | --- |
+| `NOTEBOOKS_PER_USER` | 100 |
+| `SOURCES_PER_NOTEBOOK` | 50 |
+| `URL_IMPORT_MAX_REDIRECTS` | 5 |
+| `URL_IMPORT_TIMEOUT_MS` | 15,000 |
+| `URL_IMPORT_MAX_BYTES` | 5,242,880 |
+| `UPLOAD_MAX_BYTES` | 10,485,760 |
+| `UPLOAD_MAX_PDF_PAGES` | 50 |
+| `CHAT_CONTEXT_CHUNKS` | 12 |
+| `CHAT_HISTORY_TURNS` | 3 |
+| `CHAT_HISTORY_ANSWER_CHARS` | 600 |
+| `PARSE_TIMEOUT_MS` | 120,000 |
+| `AUDIO_PARSE_TIMEOUT_MS` | 300,000 |
+| `VIDEO_ESTIMATED_TOKENS` | 90,000 |
+| `CHAT_TIMEOUT_MS` | 120,000 |
+| `EMBED_TIMEOUT_MS` | 60,000 |
+| `RETRY_MAX_WAIT_MS` | 30,000 |
+| `STUDIO_MAX_CHARS` | 120,000 |
+| `USAGE_RETENTION_DAYS` | 30 |
+| `USAGE_WINDOW_MS` | 86,400,000 |
+| `CHAT_QUESTIONS_PER_WINDOW` | 40 |
+| `STUDIO_OUTPUTS_PER_WINDOW` | 10 |
+| `DAILY_TOKEN_BUDGET` | 2,000,000 |
+| `GUESTS_PER_HOUR` | 20 |
+| `GUESTS_ALIVE` | 200 |
+| `GUEST_LIFETIME_DAYS` | 7 |
+| `WEB_SEARCH_TIMEOUT_MS` | 10,000 |
+| `EMBED_BATCH_SIZE` | 16 |
+| `INTERRUPTED_JOB_AFTER_MS` | 3,600,000 |
+| `SHUTDOWN_SERVER_WAIT_MS` | 10,000 |
+| `SHUTDOWN_JOB_WAIT_MS` | 60,000 |
+<!-- /generated -->
+
+Grenzen des Anbieters je Modellrolle (`PROVIDER_LIMITS`):
+
+<!-- generated:provider-limits -->
+| Rolle | Anfragen je Minute | Tokens je Minute |
+| --- | --- | --- |
+| PARSE | 1,000 | 2,000,000 |
+| CHAT | 1,000 | 2,000,000 |
+| EMBED | 3,000 | 1,000,000 |
+<!-- /generated -->
+
+Umgebungsvariablen (`EnvSchema`):
+
+<!-- generated:env -->
+| Variable | Art |
+| --- | --- |
+| `DATABASE_URL` | Pflicht |
+| `NODE_ENV` | Standardwert |
+| `PORT` | Standardwert |
+| `GEMINI_API_KEY` | Pflicht |
+| `AI_MODEL` | Pflicht |
+| `PARSE_MODEL` | Pflicht |
+| `PARSE_FALLBACK_MODEL` | optional |
+| `EMBEDDING_MODEL` | Pflicht |
+| `BETTER_AUTH_SECRET` | Pflicht |
+| `BETTER_AUTH_URL` | Pflicht |
+| `TAVILY_API_KEY` | optional |
+| `S3_ENDPOINT` | optional |
+| `S3_REGION` | optional |
+| `S3_BUCKET` | optional |
+| `S3_ACCESS_KEY_ID` | optional |
+| `S3_SECRET_ACCESS_KEY` | optional |
+| `SENTRY_DSN` | optional |
+| `SENTRY_RELEASE` | optional |
+| `WEB_DIST_DIR` | optional |
+| `SEED_DEMO_EMAIL` | optional |
+| `SEED_DEMO_PASSWORD` | optional |
+<!-- /generated -->
 
 **Schutz vor Kosten und Missbrauch, wie gebaut**
 
 - **Rate-Limiter vor dem Anbieter:** Jeder Aufruf an ein Sprach- oder Embedding-Modell läuft durch einen Gleitfenster-Limiter
   (Anfragen und Tokens pro Minute, in einer Warteschlange). Er liegt im Speicher: Ein Neustart setzt ihn zurück, mehrere
   Instanzen würden getrennt zählen. Er schützt das Kontingent beim Anbieter, nicht vor einzelnen Nutzern.
+- **Limit je Nutzer** (24 Stunden gleitend) für Fragen und Studio-Ausgaben, **Notbremse** in Tokens je Tag für alle, ein laufender
+  Aufruf je Nutzer, Obergrenze je Antwort (`MAX_OUTPUT_TOKENS`), Grenzen für Notizbücher und Quellen. Verbrauch in `usage_events`,
+  Bericht mit `pnpm report:usage`. Die Höhen sind Annahmen bis zur Messung: [Plan 7](plans/07-nutzung-und-kosten.md).
 - **Inhalts-Hash pro Nutzer:** Dasselbe Dokument wird nie zweimal gelesen oder eingebettet.
-- **Upload:** höchstens 10 MB, PDFs höchstens 50 Seiten; URL-Import höchstens 5 MB.
-- **Gäste:** höchstens 20 neue pro Stunde für alle zusammen, 200 gleichzeitig, 7 Tage Lebensdauer.
+- **Gäste:** begrenzt je Stunde, gleichzeitig und in der Lebensdauer (`GUESTS_*`, `GUEST_LIFETIME_DAYS` oben).
 - **Websuche** (Tavily): eigenes Limit entfernt; eine erschöpfte Tavily-Quote wird als 429 weitergereicht.
-- **Kein Limit pro Nutzer** für Chat, Studio, Quellen oder Notizbücher. Entscheidung des Nutzers vom 2026-10-03 (Commit `e1051e2`).
-  Die Folge und die offenen Fragen dazu: [Plan 7](plans/07-nutzung-und-kosten.md).
 - **Kill-Switch** per Umgebungsvariable: nicht gebaut; wer alles sperren will, stoppt den Container.
 
 **Zwei Google-Projekte:** eines zum Bauen und Testen, eines für das Live-Demo, damit Tests das Kontingent der Prüfer nicht
