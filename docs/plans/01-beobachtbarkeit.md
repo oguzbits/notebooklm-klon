@@ -22,5 +22,4 @@ Ein gemeldeter Fehler lässt sich mit einer ID bis zur Ursache verfolgen, ohne D
 
 ## Offen
 
-- Dauerhafte, durchsuchbare Logs: Entscheidung offen (Kandidaten Grafana Cloud Free, Loki; Limits vorher gegen die offizielle Seite prüfen).
-- Lesen vorhandener Server-Logs braucht SSH, nur mit Freigabe des Nutzers.
+Nichts, was gebaut wird. Dauerhafte, durchsuchbare Logs und das Lesen von Server-Logs per SSH sind bewusst nicht gebaut (Entscheidung des Nutzers, 2026-10-15, siehe [BACKLOG.md](../BACKLOG.md)): Sentry meldet Fehler, und die Seite ist eine Demo.

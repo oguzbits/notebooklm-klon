@@ -1,52 +1,20 @@
 # Plan 3: Eval
 
-## Stand (2026-10-15)
+Stand: 2026-10-15. Teilweise gebaut.
 
-Baseline gemessen mit dem bezahlten Schlüssel, 34 Fragen, ein Lauf (n=1), Kosten etwa 12 Cent: Suchtreffer 100 %, Fakten in der Antwort 96 % (die eine Lücke war ein Fehler des Bewerters: er las `**verhindert Halluzinationen** nicht` nicht, behoben in `normalizeText`, danach 100 %), Fakten im Zitat 100 %, richtig verweigert 100 %, keine verworfenen Aussagen. Die Baseline steht in [baseline.json](../../apps/api/src/eval/baseline.json); `pnpm eval:live` vergleicht einen vollen Lauf damit und endet mit Fehlercode 1, wenn ein Maß um mehr als 5 Prozentpunkte fällt (`GATE_TOLERANCE`, geschätzt: ungefähr eine Frage Spielraum, nicht aus Wiederholungen gemessen). Offen: n >= 3, Schwelle aus der Schwankung, Korpus im Repo, Replay. **Die Menge ist gesättigt:** Bei 100 % gibt es nichts mehr zu verbessern; Änderungen an Suche oder Prompt sind damit nur noch als Verschlechterung erkennbar. Für Verbesserungen braucht es schwerere Fragen.
+## Gebaut
 
-## Ist (vor dem Stand oben)
+- 34 goldene Fragen mit Textankern und deterministischen Bewertern ([golden-questions.json](../../apps/api/src/eval/golden-questions.json), [scorers.ts](../../apps/api/src/eval/scorers.ts)), Bericht, `pnpm eval:live`, `eval:studio`, `eval:overview`. Nur live, Korpus unter `spikes/corpus` (nicht im Repo).
+- Baseline vom 2026-10-15 (bezahlter Schlüssel, ein Lauf, etwa 12 Cent): Suchtreffer 100 %, Fakten in Antwort 100 %, Fakten im Zitat 100 %, richtig verweigert 100 %, keine verworfenen Aussagen. Die eine Lücke (96 %) war ein Bewerterfehler: `**fett**` wurde mitgelesen, behoben in `normalizeText`.
+- Gate: [baseline.json](../../apps/api/src/eval/baseline.json) und [gate.ts](../../apps/api/src/eval/gate.ts). Ein voller Lauf endet mit Fehlercode 1, wenn ein Maß mehr als `GATE_TOLERANCE` (5 Prozentpunkte, etwa eine Frage, geschätzt) unter die Baseline fällt.
+- Free Tier: Ein 429 wird nach 65 s einmal wiederholt, bleibt das Kontingent leer, bricht der Lauf ab und nennt die Rest-IDs für `--ids` (`run-all.ts`). Der Lauf mit Free-Tier-Schlüssel schaffte am 2026-10-15 nur 4 Fragen und ist keine Messung.
 
-- 34 goldene Fragen mit Textankern und deterministischen Bewertern, nur live (`pnpm eval:live`).
-- Korpus ist nicht im Repo, kein Replay, keine Baseline, kein Gate, ein Durchlauf je Frage (n=1).
+## Gemessen
 
-## Vorbilder (vor der Umsetzung neu lesen)
-
-- Hamel Husain und Shreya Shankar: Fehleranalyse an echten Verläufen zuerst, dann Bewerter.
-- Anthropic, „Demystifying evals“ (Januar 2026): Aufgaben mit eindeutigem Erfolgskriterium, mehrere Durchläufe, Bewerter prüfen.
-- Klassische IR-Maße (Recall@k, MRR) für die Suche; RAGAS-Begriffe (Treue, Kontexttreffer) als Vokabular; FACTS Grounding als Vorbild für Belegtreue.
-
-## Ziel
-
-Eine Änderung an Prompt, Chunking oder Suche ist vor dem Merge als besser, gleich oder schlechter belegt.
-
-## Bausteine
-
-1. **Korpus im Repo**: öffentliche oder selbst geschriebene Texte, Lizenz geklärt, klein genug zum Einchecken. Entscheidung offen.
-2. **Zwei Stufen**:
-   - Suche (offline, schnell): je Frage die erwarteten Textanker in den Top-k? Maße Recall@k und MRR. Läuft in `pnpm test` mit festen Einbettungen aus Aufnahmen.
-   - Antwort (live, selten): Treue (jede Aussage durch zitierte Passage gedeckt), Zitatgültigkeit (nur Chunks aus dem Kontext), Vollständigkeit gegen Anker.
-3. **Replay**: Modellantworten einmal aufnehmen, offline wiederholen (Invariante 5). Aufnahme trägt Modell-ID, Prompt-Hash, Datum.
-4. **n >= 3** je Frage bei Live-Läufen, Ausgabe als Anteil bestanden, nicht als einzelnes Ja/Nein.
-5. **Baseline und Gate**: `eval/baseline.json` im Repo; Lauf schlägt fehl, wenn ein Maß um mehr als die gemessene Schwankung fällt. Schwelle aus den ersten Läufen, nicht geraten.
-6. **Fehleranalyse zuerst**: 30 echte oder erdachte Verläufe lesen, Fehlerarten notieren, daraus neue goldene Fragen (u. a. der Fall „46,2 Mio.“).
-7. **Bewerter prüfen**: Wenn ein LLM-Bewerter dazukommt, an handbewerteten Fällen gegen Übereinstimmung messen.
-
-## Interfaces
-
-- Schema `EvalCase` und `EvalResult` in `packages/shared` (Frage, Quellen, erwartete Anker, erlaubte Zitate).
-- Bewerter sind reine Funktionen in `apps/api/src/core` (Eingabe: Antwort und Kontext, Ausgabe: Urteil mit Grund).
-
-## Testfälle (für die Bewerter)
-
-- Antwort zitiert Chunk außerhalb des Kontexts: Urteil „ungültig“.
-- Aussage ohne Zitat: „unbelegt“.
-- Anker fehlt in Top-k: Recall sinkt; MRR ändert sich bei Rangwechsel.
-- Gate: Baseline minus Schwelle ergibt Fehler, innerhalb der Schwelle nicht.
-
-## Welcher Test wird rot
-
-- Prüfung „Zitat im Kontext“ entfernen: Test „außerhalb des Kontexts“. Gate-Vergleich umdrehen: Gate-Test.
+Die Menge ist **gesättigt**: Bei 100 % ist eine Verbesserung nicht mehr messbar, nur eine Verschlechterung. Für Experimente (Plan 5) und die Temperatur (Plan 4) braucht es zuerst schwerere Fragen (Quellen vergleichen, Zahlen aus Tabellen, deutsche Fragen zu englischen Quellen).
 
 ## Offen
 
-- Welche Texte kommen in den Korpus (Lizenz)? Wer bewertet die ersten 30 Verläufe?
+- n >= 3 je Frage und die Schwelle aus der Schwankung statt geschätzt.
+- Korpus im Repo (Lizenz klären), Replay offline (Invariante 5).
+- Schwerere Fragen, sonst bleibt die Menge ohne Aussagekraft für Verbesserungen.

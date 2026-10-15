@@ -7,7 +7,7 @@ Git-Historie; hier steht nur, was offen ist oder bewusst nicht gebaut wird.
 ## Stand
 
 Alle Befunde der Stufen „Hoch“ (H1 bis H7) sind behoben. Von den mittleren sind M1, M2, M3, M5 und M8 bis M17 erledigt, M6 (Titel auf 200 Zeichen gekürzt, DOCX und PPTX auf 100 MB entpackt begrenzt), M7 bis auf den Tarif-Hinweis;
-offen ist M10; M4 trifft nicht zu (siehe unten). Die Funktionslücken aus dem Review
+M10 bewusst nicht gebaut (siehe unten); M4 trifft nicht zu (siehe unten). Die Funktionslücken aus dem Review
 (neu einlesen, Export, Konto löschen, Stopp-Button) und die Dateitypen PDF-Link, Bilder, Audio, PPTX und YouTube sind gebaut.
 
 Gates auf dem letzten Stand: `pnpm check`, `pnpm test`, `pnpm test:db` und `pnpm e2e` grün.
@@ -21,11 +21,12 @@ Nicht geprüft: Screenreader auf echten Geräten, echte Mobilgeräte, Semgrep lo
 
 ## Offen
 
-| #   | Thema                 | Befund                                                                                                                                                                                                                                      | Fix                                   |
-| --- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| M10 | CI und Server-Härtung | Dependency-Audit (Produktion, ab `high`) läuft im CI; kein Trivy. `pnpm audit` meldet eine moderate Lücke (esbuild über drizzle-kit, nur Dev-Server). Kein fail2ban, `deploy` sitzt in der Docker-Gruppe. sslip.io teilt Zertifikatslimits. | Audit im CI, fail2ban, eigene Domain. |
+| #   | Thema | Befund | Fix |
+| --- | ----- | ------ | --- |
 
 M4 (HNSW-Index mit Filter) trifft nicht zu: Die Suche ordnet nach Abstand über die CTE `scoped`, die über Verbindungen auf Nutzer, Notizbuch und Quellen gefiltert ist ([db/retrieval.ts](../apps/api/src/db/retrieval.ts)). Der HNSW-Index kann darüber nicht angewandt werden, der Scan ist exakt und verliert keine Treffer an einen nachgelagerten Filter. Aus dem Aufbau der Abfrage geschlossen, nicht mit `EXPLAIN` gemessen. Neu bewerten, wenn die Suche je auf den Index ausgerichtet wird.
+
+Bewusst nicht gebaut, weil die Seite eine Demo ist (Entscheidung des Nutzers, 2026-10-15): dauerhafte Logs (Sentry meldet Fehler; Docker-Logs gehen beim Deploy verloren) und die Serverhärtung M10 (fail2ban, `deploy` aus der Docker-Gruppe, Trivy; Dependency-Audit läuft im CI, eine moderate Lücke in esbuild über drizzle-kit betrifft nur den Dev-Server). sslip.io teilt Zertifikatslimits; eine eigene Domain nur auf Wunsch.
 
 Kleinigkeiten:
 
