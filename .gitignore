@@ -25,3 +25,5 @@ spikes/corpus/*
 spikes/results/
 # Screenshots and captures of NotebookLM for design measurements: Google's, never committed.
 spikes/reference/
+.stryker-tmp/
+stryker.log

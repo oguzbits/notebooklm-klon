@@ -6,3 +6,5 @@ allowBuilds:
   '@sentry/cli': true
   esbuild: false
   msw: false
+patchedDependencies:
+  '@stryker-mutator/vitest-runner': patches/@stryker-mutator__vitest-runner.patch

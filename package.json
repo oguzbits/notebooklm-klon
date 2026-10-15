@@ -32,10 +32,13 @@
     "eval:overview": "pnpm --filter @nlm/api eval:overview",
     "report:usage": "pnpm --filter @nlm/api report:usage",
     "eval:studio": "pnpm --filter @nlm/api eval:studio",
-    "seed:demo": "pnpm --filter @nlm/api seed:demo"
+    "seed:demo": "pnpm --filter @nlm/api seed:demo",
+    "mutation": "stryker run"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@stryker-mutator/core": "^10.0.0",
+    "@stryker-mutator/vitest-runner": "^10.0.0",
     "@types/node": "^24.19.0",
     "dependency-cruiser": "^18.4.0",
     "eslint": "^10.11.0",
@@ -73,7 +76,8 @@
     "workspaces": {
       ".": {
         "entry": [
-          ".claude/hooks/guard-*.mjs"
+          ".claude/hooks/guard-*.mjs",
+          "config/vitest.mutation.config.ts"
         ],
         "ignore": [
           "spikes/**"
