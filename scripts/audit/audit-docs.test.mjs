@@ -83,6 +83,14 @@ describe('auditDocs', () => {
     expect(audit(doc)).toEqual([expect.stringContaining('/Users/')]);
   });
 
+  it('reports a date or a status word in the stable context document, and only there', () => {
+    const doc = 'Das Limit ist seit 2026-10-03 gebaut.\n';
+    expect(audit(doc)).toEqual([]);
+    expect(auditDocs(makeRepo({ 'docs/PLAN.md': doc })).map((v) => v.message)).toEqual([
+      expect.stringContaining('state in a stable document'),
+    ]);
+  });
+
   it('reports the line of the finding', () => {
     const [violation] = auditDocs(makeRepo({ 'README.md': 'ok\n\n[x](weg.md)\n' }));
     expect(violation).toMatchObject({ file: 'README.md', line: 3 });

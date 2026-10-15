@@ -1,6 +1,6 @@
 # NotebookLM-Klon: Requirements, Stack und Risiken
 
-Sep 29, 2026 · @Oguz Öztürk · Fakten zu Limits, Modellen und Kosten abgeglichen mit dem Code am 2026-10-15
+Sep 29, 2026 · @Oguz Öztürk · Kontext und Rahmen. Zustand und Offenes stehen im Code, in [BACKLOG.md](BACKLOG.md) und in der Git-Historie, nicht hier.
 
 ## Ziel und Rahmen
 
@@ -10,8 +10,8 @@ Ziel ist ein NotebookLM-Klon in production-ready Qualität, abgegeben mit zwei A
 - **Beweisziel:** Du beherrschst den Stack eines Full-Stack-Engineers (React, Node.js, PostgreSQL, API-Design, LLM-Integration).
 - **Schwerpunkt:** AI-Kern (RAG, verifizierbare Zitate, Evals) und ein sichtbarer agentischer Workflow im Repo. Breite nur so weit nötig.
 - **Zeit:** 4 bis 5 volle Arbeitstage, die Frist beträgt eine Woche. Ziel ist, früh fertig zu sein und den Rest als Puffer zu behalten.
-- **Kosten:** minimal. Gebaut wurde im Gemini Free Tier; seit 2026-10-03 läuft der Betrieb im bezahlten Tarif mit einem kleinen Guthaben,
-  begrenzt durch Limits je Nutzer und eine Tagesbremse (siehe [Kontingent und Kosten](#kontingent-und-kosten)).
+- **Kosten:** minimal. Der Betrieb nutzt den bezahlten Gemini-Tarif mit einem kleinen Guthaben, begrenzt durch Limits je Nutzer und eine Tagesbremse
+  (siehe [Kontingent und Kosten](#kontingent-und-kosten)).
 - **Sprache:** Oberfläche nur Deutsch. Quellen und Fragen dürfen Englisch sein.
 
 ## Was NotebookLM ausmacht
@@ -44,18 +44,18 @@ Wenige Funktionen in hoher Qualität schlagen viele halbfertige. Der Kern ist de
 5. Quellenübersicht pro Quelle (Zusammenfassung und Schlüsselthemen).
 6. Live-Deployment, README und ein Demo-Zugang mit vorbefülltem Demo-Notebook.
 
-**Should** (umgesetzt: Vorschlagsfragen, Notizen)
+**Should**
 
 - Vorschlagsfragen beim Hinzufügen einer Quelle.
 - Notizen aus Antworten speichern.
 
-**Runde 2: Nachbau (Stand 2026-09-30).** Die Oberfläche folgt NotebookLM so genau wie möglich, dreispaltig
+**Nachbau.** Die Oberfläche folgt NotebookLM so genau wie möglich, dreispaltig
 (Quellen | Chat | Studio), mit Google Sans Flex (OFL) und den am Original gemessenen Farben, Rundungen und
 Abständen (neutrales Grau, Blau nur als Akzent), hell und dunkel.
 Logo und Name sind ausdrücklich erlaubt (Entscheidung des Nutzers); im Live-Demo steht ein Hinweis, dass es
 ein Nachbau ist. Dazu:
 
-- **Studio-Spalte:** Bericht (Briefing, FAQ, Lernleitfaden), Karteikarten, Quiz, Mindmap, Datentabelle (später ergänzt). Alle Ausgaben
+- **Studio-Spalte:** Bericht (Briefing, FAQ, Lernleitfaden), Karteikarten, Quiz, Mindmap, Datentabelle. Alle Ausgaben
   sind strukturiert, stützen sich auf die ausgewählten Quellen und folgen dem Zitat-Vertrag: Jeder
   Abschnitt, jede Karte, jede Frage, jede Zelle der Datentabelle und jeder Ast verweist auf echte Passagen, der Server verwirft, was
   nicht belegt ist. Notizen wohnen wie bei NotebookLM in der Studio-Spalte.
@@ -67,13 +67,12 @@ ein Nachbau ist. Dazu:
 
 **Stretch**
 
-- PPTX, Aufnahmen (MP3, WAV) und YouTube als Quelle (gebaut).
-- Websuche im Chat (Tavily, optional, ohne Deep Research) und Gastzugang mit einer Kopie des Demo-Notizbuchs (gebaut).
+- PPTX, Aufnahmen (MP3, WAV) und YouTube als Quelle.
+- Websuche im Chat (Tavily, optional, ohne Deep Research) und Gastzugang mit einer Kopie des Demo-Notizbuchs.
 
 **Bewusst nicht**
 
 - Audio- und Video-Overview, Infografik, Präsentation, Deep Research.
-- Später ergänzt (Runde 4): eine schnelle Websuche mit Tavily (ohne Deep Research) und ein Titelbild im S3-Speicher.
 - Sharing und Kollaboration, Drive-Anbindung. Eine eigene Handy-App entfällt; die Seite selbst hat ein Handy-Layout (Tabs).
 - Originaldateien speichern (nur extrahierter Text plus Metadaten).
 
@@ -91,7 +90,7 @@ Die Ingestion schreibt Chunks und Vektoren in Postgres, der Chat liest nur die p
 
 ## Tech Stack v3
 
-React-Frontend und Node.js-Backend in einem Monorepo, ein Container, Postgres mit pgvector, Gemini. Docling und ein zweiter Service entfallen. Preise und Benchmarks stammen teils aus Drittquellen (Stand 29.09.2026) und sind vor dem Bau zu prüfen.
+React-Frontend und Node.js-Backend in einem Monorepo, ein Container, Postgres mit pgvector, Gemini. Docling und ein zweiter Service entfallen. Preise und Benchmarks stammen teils aus Drittquellen und sind vor einer Entscheidung zu prüfen.
 
 | Bereich          | Wahl                                                                                                                      | Begründung / Alternative                                                                                                   |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
@@ -101,13 +100,13 @@ React-Frontend und Node.js-Backend in einem Monorepo, ein Container, Postgres mi
 | Auth             | Better Auth mit Drizzle-Adapter                                                                                           | Nutzer in der eigenen Postgres. Supabase Auth bringt bei direkter DB-Verbindung keinen RLS-Vorteil                         |
 | Datenbank        | PostgreSQL mit pgvector (HNSW), Postgres-Volltextsuche, Drizzle ORM; in Produktion ein Container auf dem Hetzner-Server | Eine Datenbank für alles; Neon und Render-Postgres verworfen (schlafen im Gratis-Tarif ein beziehungsweise laufen nach 30 Tagen ab)               |
 | Jobs             | pg-boss                                                                                                                   | Etablierte Postgres-Queue statt Eigenbau. Braucht eine direkte Verbindung, kein PgBouncer                                                    |
-| Parsing          | PDF: Gemini 3.1 Flash-Lite (Spike entschieden, [Ergebnisse](SPIKE-ERGEBNISSE.md)). DOCX: mammoth. PPTX: fflate + XML (Folientext, Tabellen, Notizen). Audio: Gemini transkribiert wörtlich (inline, bis 10 MB). TXT/MD direkt. URL: Readability. DOCX und URL werden als Markdown gespeichert (Links, Fett, Tabellen), TXT bleibt Klartext. Fallback bei Recitation-Sperre: ein zweites Gemini-Modell (`PARSE_FALLBACK_MODEL`), kein liteparse | ParseBench (Tabellen / Inhaltstreue): Gemini 3.1 Flash-Lite 85,5 / 89,5, Docling 66,4 / 66,9, LiteParse 42,4 / 70,0        |
-| Embeddings       | Gemini Embedding 2 mit 768 Dimensionen (`EMBEDDING_MODEL`); ein Fallback-Modell gibt es nicht                                                  | Limits bekannt (RPM 100, TPM 30K, RPD 1000), im Spike gleichauf mit 001 (17 gegen 16 von 18). Die Vektorräume beider Modelle sind inkompatibel                              |
+| Parsing          | PDF: Gemini 3.1 Flash-Lite ([Spike](SPIKE-ERGEBNISSE.md)). DOCX: mammoth. PPTX: fflate + XML (Folientext, Tabellen, Notizen). Audio: Gemini transkribiert wörtlich (inline, bis 10 MB). TXT/MD direkt. URL: Readability. DOCX und URL werden als Markdown gespeichert (Links, Fett, Tabellen), TXT bleibt Klartext. Bei Recitation-Sperre: ein zweites Gemini-Modell (`PARSE_FALLBACK_MODEL`) | ParseBench (Tabellen / Inhaltstreue): Gemini 3.1 Flash-Lite 85,5 / 89,5, Docling 66,4 / 66,9, LiteParse 42,4 / 70,0        |
+| Embeddings       | Gemini Embedding 2 mit 768 Dimensionen (`EMBEDDING_MODEL`)                                                  | Limits bekannt (RPM 100, TPM 30K, RPD 1000), im Spike gleichauf mit 001 (17 gegen 16 von 18). Die Vektorräume beider Modelle sind inkompatibel                              |
 | Retrieval        | pgvector plus Volltextsuche, Fusion per RRF in SQL                                                                        | Hybrid fängt Eigennamen und Zahlen, die Vektorsuche verfehlt (im Spike ein Fehltreffer, der zu einer falschen Antwort führte)                                                               |
-| LLM-Schicht      | Eigener schlanker Gemini-Client statt Vercel AI SDK, Modell-IDs und Limits in der Config                                                                        | Chat: Gemini 3.5 Flash-Lite (Spike entschieden, GPT-6 Luna ungemessen). Studio und Übersichten: dasselbe Modell  |
+| LLM-Schicht      | Eigener schlanker Gemini-Client statt Vercel AI SDK, Modell-IDs und Limits in der Config                                                                        | Chat, Studio und Übersichten: dasselbe Modell (`AI_MODEL`), im [Spike](SPIKE-ERGEBNISSE.md) gewählt  |
 | Zitate           | Strukturierte Ausgabe mit Chunk-Nummern, Server prüft, dass die zitierten Chunks im Kontext waren                         | Anthropic-Citations verworfen (Kosten, Anbieter-Bindung)                                                                   |
 | Tests, Qualität  | Vitest, Playwright-Nutzerreisen, Eval-Skript, ESLint, Prettier, GitHub Actions                                                   | Tests ohne echte API-Aufrufe                                                                                               |
-| Hosting          | Hetzner Cloud: Docker Compose mit Caddy, App, Postgres und SeaweedFS, Deployment per GitHub Actions ([DEPLOYMENT.md](DEPLOYMENT.md)); live seit 2026-10-02 | Läuft dauerhaft, kein Kaltstart. Render und Vercel verworfen                                  |
+| Hosting          | Hetzner Cloud: Docker Compose mit Caddy, App, Postgres und SeaweedFS, Deployment per GitHub Actions ([DEPLOYMENT.md](DEPLOYMENT.md)) | Läuft dauerhaft, kein Kaltstart. Render und Vercel verworfen                                  |
 
 **Abgrenzung zu notar-agent:** Übernommen werden Zod, Drizzle, pgvector und das Hybrid-Retrieval mit RRF. Neu bzw. geändert sind Auth, Queue (pg-boss statt Eigenbau), Parsing (Gemini statt liteparse plus mammoth für alles) und der Verzicht auf Supabase.
 
@@ -125,7 +124,7 @@ React-Frontend und Node.js-Backend in einem Monorepo, ein Container, Postgres mi
 
 **Was gilt heute** (Quelle ist der Code, die Tabellen unten werden von `pnpm docs:generate` aus [config/limits.ts](../apps/api/src/config/limits.ts)
 und [config/env.ts](../apps/api/src/config/env.ts) geschrieben; nicht von Hand ändern). Die Werte der Anbieter sind die des bezahlten Tarifs
-aus dem AI-Studio-Dashboard (Stand 2026-10-03). ❓ Ob die Abrechnung verknüpft ist und ein Budget-Limit gesetzt wurde, steht nirgends im Repo.
+aus dem AI-Studio-Dashboard. ❓ Ob die Abrechnung verknüpft ist und ein Budget-Limit gesetzt wurde, steht nirgends im Repo.
 
 Eigene Grenzen (`LIMITS`):
 
@@ -204,27 +203,23 @@ Umgebungsvariablen (`EnvSchema`):
 | `SEED_DEMO_PASSWORD` | optional |
 <!-- /generated -->
 
-**Schutz vor Kosten und Missbrauch, wie gebaut**
+**Schutz vor Kosten und Missbrauch**
 
 - **Rate-Limiter vor dem Anbieter:** Jeder Aufruf an ein Sprach- oder Embedding-Modell läuft durch einen Gleitfenster-Limiter
   (Anfragen und Tokens pro Minute, in einer Warteschlange). Er liegt im Speicher: Ein Neustart setzt ihn zurück, mehrere
   Instanzen würden getrennt zählen. Er schützt das Kontingent beim Anbieter, nicht vor einzelnen Nutzern.
 - **Limit je Nutzer** (24 Stunden gleitend) für Fragen und Studio-Ausgaben, **Notbremse** in Tokens je Tag für alle, ein laufender
   Aufruf je Nutzer, Obergrenze je Antwort (`MAX_OUTPUT_TOKENS`), Grenzen für Notizbücher und Quellen. Verbrauch in `usage_events`,
-  Bericht mit `pnpm report:usage`. Die Höhen sind Annahmen bis zur Messung (siehe [BACKLOG.md](BACKLOG.md)). Die Notbremse von 2 Millionen Tokens folgt aus einem Guthaben von etwa 4 € und den Preisen von gemini-3.5-flash-lite (0,30 USD je Million Eingabe-, 2,50 USD je Million Ausgabe-Tokens inklusive Thinking; ai.google.dev/gemini-api/docs/pricing, 2026-10-14 per Agent gelesen, nicht von Hand geprüft). Eine Chat-Frage kostete gemessen etwa 0,35 Cent.
+  Bericht mit `pnpm report:usage`. Die Höhen sind Annahmen bis zur Messung (siehe [BACKLOG.md](BACKLOG.md)).
 - **Inhalts-Hash pro Nutzer:** Dasselbe Dokument wird nie zweimal gelesen oder eingebettet.
 - **Gäste:** begrenzt je Stunde, gleichzeitig und in der Lebensdauer (`GUESTS_*`, `GUEST_LIFETIME_DAYS` oben).
-- **Websuche** (Tavily): eigenes Limit entfernt; eine erschöpfte Tavily-Quote wird als 429 weitergereicht.
-- **Kill-Switch** per Umgebungsvariable: nicht gebaut; wer alles sperren will, stoppt den Container.
+- **Websuche** (Tavily): kein eigenes Limit; eine erschöpfte Tavily-Quote wird als 429 weitergereicht.
+- **Kein Kill-Switch** per Umgebungsvariable; wer alles sperren will, stoppt den Container.
 
 **Zwei Google-Projekte:** eines zum Bauen und Testen, eines für das Live-Demo, damit Tests das Kontingent der Prüfer nicht
 verbrauchen ([DEPLOYMENT.md](DEPLOYMENT.md)).
 
 **Hinweis im Demo:** keine sensiblen Dokumente hochladen; für das Free Tier können Google-Bedingungen zur Datennutzung gelten.
-
-**Free Tier beim Bau (Stand 2026-09-29, aus der AI-Studio-Konsole, nur noch als Verlauf):** Gemini 3.1/3.5 Flash-Lite 15 Anfragen pro
-Minute und 500 pro Tag, 3.5 bis 3.8 Flash 5 pro Minute und 20 pro Tag, Embedding 2 100 pro Minute, 30K Tokens pro Minute und 1000
-pro Tag. Die Limits gelten pro Projekt, nicht pro Key. Das war der Grund für die Drosselung im Worker und für die Lite-Modelle im Dev.
 
 ## Betrieb und Qualitätswerkzeuge
 
@@ -233,15 +228,12 @@ pro Tag. Die Limits gelten pro Projekt, nicht pro Key. Das war der Grund für di
   (`scrubEvent`: Fehlerart, Stapel, Release = Commit, Umgebung, Tags, Source-Map-Kennungen), nie Fehlertext, Variablen, Quelltext, Anfrage oder Nutzer. Ohne `SENTRY_DSN` startet das SDK nicht. Source Maps des Web gehen beim
   Deploy-Build zu Sentry und werden gelöscht (`SENTRY_AUTH_TOKEN` als Build-Secret). Der Sentry-MCP-Server ist je Benutzer eingerichtet, nicht im Repo, und bleibt ausgeschaltet. Dauerhafte Logs gibt es bewusst nicht ([BACKLOG.md](BACKLOG.md)).
 - **Eval:** `pnpm eval:live` fragt 34 goldene Fragen ([golden-questions.json](../apps/api/src/eval/golden-questions.json)) durch denselben Code wie der Chat. Der Schlüssel ist `EVAL_GEMINI_API_KEY` (nie `GEMINI_API_KEY`, kein Rückfall).
-  Ein voller Lauf wird mit [baseline.json](../apps/api/src/eval/baseline.json) verglichen und endet mit Fehlercode 1, wenn ein Maß um mehr als 5 Prozentpunkte fällt (`GATE_TOLERANCE`, geschätzt). Baseline vom 2026-10-15 (bezahlter Schlüssel,
-  n=1, etwa 12 Cent): Suche, Fakten in Antwort und Zitat, Verweigerung je 100 %. Die Menge ist gesättigt; Verbesserungen sind darauf nicht messbar. Bei erschöpftem Free-Tier-Kontingent bricht der Lauf ab und nennt die Rest-IDs für `--ids`.
-- **Mutationstests:** `pnpm mutation` (StrykerJS, Vitest-Runner) auf `apps/api/src/core`, etwa 2 Minuten, in CI nur manuell oder wöchentlich ([mutation.yml](../.github/workflows/mutation.yml)). Mutation Score 81,5 %, `break` bei 80;
-  nur anheben, wenn echte Überlebende dazukommen. Der Runner 10.0.0 passt den Namensfilter nicht an Vitest 5 an ([Issue 6210](https://github.com/stryker-mutator/stryker-js/issues/6210)); ein pnpm-Patch in `patches/` behebt das und fällt weg, sobald der Runner es tut.
+  Ein voller Lauf wird mit [baseline.json](../apps/api/src/eval/baseline.json) verglichen und endet mit Fehlercode 1, wenn ein Maß um mehr als 5 Prozentpunkte fällt (`GATE_TOLERANCE`, geschätzt). Die Werte der Baseline stehen in der Datei; ob die Menge noch Verbesserungen zeigen kann, steht im [Backlog](BACKLOG.md). Bei erschöpftem Free-Tier-Kontingent bricht der Lauf ab und nennt die Rest-IDs für `--ids`.
+- **Mutationstests:** `pnpm mutation` (StrykerJS, Vitest-Runner) auf `apps/api/src/core`, etwa 2 Minuten, in CI nur manuell oder wöchentlich ([mutation.yml](../.github/workflows/mutation.yml)). Die Schwelle `break` steht in [stryker.config.json](../stryker.config.json); nur anheben, wenn echte Überlebende dazukommen. Der Runner 10.0.0 passt den Namensfilter nicht an Vitest 5 an ([Issue 6210](https://github.com/stryker-mutator/stryker-js/issues/6210)); ein pnpm-Patch in `patches/` behebt das und fällt weg, sobald der Runner es tut.
 - **Doku:** Tabellen mit Limits und Variablen werden aus dem Code erzeugt (`pnpm docs:generate`, geprüft in `pnpm audit:docs`). [docs-map.json](docs-map.json) bindet Code-Pfade an ihr Dokument; ein Commit braucht das Dokument oder
-  `Docs: n/a, <Grund>`. Geprüft im Hook `.husky/commit-msg` und im CI. Keine Zählwerte (Tests, Dateien) in der Doku. Ein Abgleich Dokument gegen Code von Hand am Ende einer Funktion; ein Datumsvergleich (`Stand`) ist nicht gebaut.
+  `Docs: n/a, <Grund>`. Geprüft im Hook `.husky/commit-msg` und im CI. Keine Zählwerte (Tests, Dateien) in der Doku. Ein Abgleich Dokument gegen Code von Hand am Ende einer Funktion.
 - **Nutzung:** Jeder Modellaufruf schreibt eine Zeile in `usage_events` (30 Tage), Auswertung mit `pnpm report:usage` (Tokens je Aufruf; eine Chat-Frage besteht aus bis zu vier Aufrufen). Websuche wird nicht gezählt.
   Ab 75 % zeigt die Oberfläche „Noch N Fragen heute.“, am Limit sperrt sie das Eingabefeld und nennt die Uhrzeit der Freigabe; ist die Tagesbremse erreicht, sagt sie „Heute ist das Kontingent der Demo aufgebraucht“.
-  Free-Tier-Werte der AI-Studio-Konsole (Stand 2026-09-29, nur Verlauf): Flash 5 Anfragen/Min und 20/Tag, Flash-Lite 15/Min und 500/Tag; die offizielle Seite zu Rate Limits nennt keine Free-Tier-Zahlen. Im Free Tier dürfen Anfragen für Training genutzt werden.
 
 ## Risiken und offene Punkte
 
@@ -250,10 +242,10 @@ Das größte Risiko sind Kosten und Kontingent im Live-Demo; Limits je Nutzer un
 - **Kontingent und Kosten:** Mehrere Konten eines Menschen umgehen das Limit je Nutzer; die Tagesbremse fängt das ab. Der Merker „ein laufender Aufruf je Nutzer“ liegt im Speicher und stimmt nur bei einem Container.
 - **Embeddings:** Der Limiter drosselt nach geschätzten Tokens. Wie der Anbieter einen Batch zählt, ist nicht geprüft.
 - **Latenz:** GPT-6 Luna (im Spike nicht gemessen) hatte laut Artificial Analysis bei Max-Reasoning eine Zeit bis zum ersten Token von etwa 139 Sekunden (Gemini 3.5 Flash-Lite etwa 8,8 Sekunden). Bei niedriger Stufe nicht gemessen.
-- **Parsing per LLM** ist nicht deterministisch und kann auslassen. Gegenmittel: Stichprobentests; ein liteparse-Fallback wurde nicht gebaut.
+- **Parsing per LLM** ist nicht deterministisch und kann auslassen. Gegenmittel: Stichprobentests.
 - **ParseBench** stammt von LlamaIndex, deckt Enterprise-PDFs ab und enthält kein DOCX. Deshalb der eigene Spike.
 - **Datennutzung im Free Tier:** Bedingungen lesen, Hinweis im Demo.
-- **Hosting:** Läuft seit 2026-10-02 auf einem Hetzner-Server; Deploy mit Dump, Health-Prüfung und Rollback ist im Betrieb erprobt.
-- **Billing:** ❓ Ob ein hartes Budget-Limit gesetzt ist und ob eine automatische Aufladung läuft, ist nicht belegt (Guthaben etwa 4 € am 2026-10-15).
-- **Preise und Benchmarks** aus Drittquellen vor dem Bau auf den offiziellen Seiten prüfen.
+- **Hosting:** Ein Hetzner-Server; Deploy mit Dump, Health-Prüfung und Rollback ([DEPLOYMENT.md](DEPLOYMENT.md)).
+- **Billing:** ❓ Ob ein hartes Budget-Limit gesetzt ist und ob eine automatische Aufladung läuft, ist nicht belegt.
+- **Preise und Benchmarks** aus Drittquellen vor einer Entscheidung auf den offiziellen Seiten prüfen (Regel 12 in [AGENTS.md](../AGENTS.md)).
 - **Take-home-Repos** sind nur Ideengeber: keinen Code kopieren.

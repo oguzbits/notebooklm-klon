@@ -5,7 +5,8 @@
  *
  * Fails when a Markdown file links to a missing file or anchor, names a `pnpm` script that no
  * package.json defines, names a path under apps/, packages/ or deploy/ that does not exist,
- * contains an absolute machine path, or states a test count ("1179 Tests").
+ * contains an absolute machine path, or states a test count ("1179 Tests"). The stable documents
+ * (docs/PLAN.md) also may not carry a date or a word about what is built, removed or done.
  * Fenced code blocks are skipped, except for the absolute-path rule.
  */
 
@@ -31,6 +32,9 @@ const INLINE_CODE = /`([^`\n]+)`/g;
 const ABSOLUTE_PATH = /(?:\/Users\/|\/home\/|[A-Z]:\\Users\\)/;
 const TEST_COUNT = /\b\d[\d.]*\s+tests\b/i;
 const FENCE = /^\s*```/;
+// Documents that hold context, not state: a date or a word about what is built goes stale unnoticed.
+const STABLE_DOCS = new Set(['docs/PLAN.md']);
+const STATE_WORD = /\b(\d{4}-\d{2}-\d{2}|gebaut|entfernt|umgesetzt|später ergänzt|Stand \d)/i;
 
 function collectMarkdown(root, dir = root) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -120,6 +124,11 @@ export function auditDocs(root) {
           }
         }
 
+        if (STABLE_DOCS.has(file) && STATE_WORD.test(text)) {
+          report(
+            `state in a stable document (put it in BACKLOG.md or leave it to git): ${STATE_WORD.exec(text)[0]}`
+          );
+        }
         if (TEST_COUNT.test(text)) {
           report(`test count in docs (run the command instead): ${TEST_COUNT.exec(text)[0]}`);
         }
