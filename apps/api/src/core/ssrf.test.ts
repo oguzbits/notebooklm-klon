@@ -126,4 +126,9 @@ describe('parseImportUrl', () => {
       reason: URL_REJECTION.PRIVATE_ADDRESS,
     });
   });
+
+  it('accepts a public address given as a literal, also in brackets for IPv6', () => {
+    expect(parseImportUrl('http://8.8.8.8/seite')).toMatchObject({ ok: true });
+    expect(parseImportUrl('http://[2606:4700:4700::1111]/seite')).toMatchObject({ ok: true });
+  });
 });

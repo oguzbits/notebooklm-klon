@@ -34,6 +34,6 @@
 
 - Gebaut: `pnpm mutation` (Konfiguration in [stryker.config.json](../../stryker.config.json), Vitest-Konfiguration in [config/vitest.mutation.config.ts](../../config/vitest.mutation.config.ts)). Lauf dauert etwa 2 Minuten; CI nur manuell oder wöchentlich ([mutation.yml](../../.github/workflows/mutation.yml)), Bericht als Artefakt.
 - Ausgangswert (2026-10-15): 79,3 % Mutation Score (234 überlebte Mutanten, 35 ohne Abdeckung). Schwächste Dateien: `notebook-limit.ts` (kein Test), `studio-prompt.ts`, `chat-prompt.ts` (je ~55 %).
-- Schwelle `break` bleibt `null`, bis die ersten Überlebenden abgearbeitet sind; dann knapp unter den Ist-Wert setzen.
+- Nach dem ersten Abarbeiten der Überlebenden in Dateien mit Logik (ssrf, Dateitypen, Zahlenabgleich): 81,5 %, `break` steht auf 80. Der Rest sind meist Prompt-Texte, Fehlermeldungen und gleichwertige Mutanten; `break` nur anheben, wenn echte Überlebende dazu kommen.
 - Stryker-Runner 10.0.0 passt den Namensfilter auf Vitest 5 nicht an ([Issue 6210](https://github.com/stryker-mutator/stryker-js/issues/6210)): jeder Mutant überlebt, weil kein Test läuft. Ein pnpm-Patch (`patches/`) verbindet die Namensteile mit `' > '`. Patch entfernen, sobald der Runner das behebt.
 - Die Vitest-Konfiguration nutzt `process.cwd()` statt Dateipfaden: Stryker lädt sie aus dem echten Projekt, führt aber in einer Sandbox-Kopie aus.

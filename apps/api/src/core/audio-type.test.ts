@@ -36,4 +36,13 @@ describe('detectAudioType', () => {
     expect(detectAudioType(bytes(0xff))).toBeNull();
     expect(detectAudioType(bytes(...ascii('RIFF'), 0, 0, 0, 0, ...ascii('WAV')))).toBeNull();
   });
+
+  it('wants the RIFF header before the WAVE marker', () => {
+    expect(detectAudioType(bytes(...ascii('XXXX'), 1, 2, 3, 4, ...ascii('WAVE')))).toBeNull();
+  });
+
+  it('wants both the first byte and the sync bits of the second for a frame', () => {
+    expect(detectAudioType(bytes(0x00, 0xfb, 0x90, 0x00))).toBeNull();
+    expect(detectAudioType(bytes(0xff, 0x1b, 0x90, 0x00))).toBeNull();
+  });
 });

@@ -44,4 +44,8 @@ describe('youtubeVideoUrl', () => {
   ])('rejects %s', (_name, input) => {
     expect(youtubeVideoUrl(input)).toBeNull();
   });
+
+  it('ignores spaces around the link', () => {
+    expect(youtubeVideoUrl(`  ${CANONICAL}\n`)).toBe(CANONICAL);
+  });
 });

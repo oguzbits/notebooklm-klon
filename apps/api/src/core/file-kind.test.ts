@@ -74,4 +74,13 @@ describe('detectSourceKind', () => {
     expect(detectSourceKind('leer.txt', new Uint8Array())).toBeNull();
     expect(detectSourceKind('leer.pdf', new Uint8Array())).toBeNull();
   });
+
+  it('needs every signature byte, not just one of them', () => {
+    expect(detectSourceKind('a.pdf', bytes(0x25, 0x50, 0x44, 0x58, 0x2d))).toBeNull();
+  });
+
+  it('takes no extension from a name without a dot, but one from a name that is only an extension', () => {
+    expect(detectSourceKind('pdf', PDF)).toBeNull();
+    expect(detectSourceKind('.txt', TEXT)).toBe(SOURCE_KIND.TXT);
+  });
 });

@@ -188,3 +188,43 @@ describe('findUnsupportedNumbers', () => {
     });
   });
 });
+
+describe('repeatsStatement: thresholds', () => {
+  it('counts a word of five letters and a number of four digits as topic words', () => {
+    expect(repeatsStatement('Preis Wachstum', 'Preis Wachstum fiel')).toBe(true);
+    expect(repeatsStatement('Umsatz 2019 gestiegen', 'Umsatz 2019 gesunken')).toBe(true);
+  });
+
+  it('does not count a word of four letters or a number of three digits as topic words', () => {
+    expect(repeatsStatement('Wert Wachstum', 'Wert Wachstum fiel')).toBe(false);
+    expect(repeatsStatement('Umsatz 201 gestiegen', 'Umsatz 201 gesunken')).toBe(false);
+  });
+
+  it('merges at exactly the overlap of three fifths and not below it', () => {
+    expect(repeatsStatement('alpha bravo charl delta echoo', 'alpha bravo charl xxxxx yyyyy')).toBe(
+      true
+    );
+    expect(repeatsStatement('alpha bravo charl delta echoo', 'alpha bravo xxxxx yyyyy zzzzz')).toBe(
+      false
+    );
+  });
+
+  it('does not let a figure on only one side keep two statements apart', () => {
+    expect(repeatsStatement('Wachstumsrate Unternehmen', 'Wachstumsrate Unternehmen 12')).toBe(
+      true
+    );
+  });
+
+  it('keeps apart a statement whose figures are only part of the other one', () => {
+    expect(
+      repeatsStatement('Wachstumsrate Unternehmen 12', 'Wachstumsrate Unternehmen 12 und 34')
+    ).toBe(false);
+  });
+});
+
+describe('findUnsupportedNumbers: size of the evidence figure', () => {
+  it('rounds an evidence figure of fifteen digits, but not one of sixteen', () => {
+    expect(findUnsupportedNumbers('12', '123456789012345')).toEqual([]);
+    expect(findUnsupportedNumbers('12', '1234567890123456')).toEqual(['12']);
+  });
+});

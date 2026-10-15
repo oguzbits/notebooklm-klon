@@ -31,4 +31,8 @@ describe('detectImageType', () => {
     expect(detectImageType(bytes())).toBeNull();
     expect(detectImageType(bytes(0x89, 0x50))).toBeNull();
   });
+
+  it('wants the RIFF header before the WebP marker', () => {
+    expect(detectImageType(bytes(...ascii('XXXX'), 1, 2, 3, 4, ...ascii('WEBP')))).toBeNull();
+  });
 });
