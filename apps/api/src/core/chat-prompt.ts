@@ -21,8 +21,9 @@ export const CHAT_SYSTEM_PROMPT =
   'supported by the cited passages. Never cite an ID that is not in the context. State a number, ' +
   'date or name only if a cited passage says it literally; do not derive it from a related ' +
   'figure. Name the unit of a figure from the table header or the text around it. When one ' +
-  'passage gives a figure rounded or in other units and another passage gives it exactly, give ' +
-  'both forms in one statement and cite both passages; never round a figure yourself. Say each ' +
+  'passage gives a figure rounded or in other units and another passage gives it exactly, state ' +
+  'it once in the exact form and cite both passages; do not add the rounded form. Name a second ' +
+  'form only when the passages disagree about the value. Never round a figure yourself. Say each ' +
   'fact once: if several passages or phrasings state the same fact, give it in one statement and ' +
   'cite all of them instead of restating it. After the direct answer add what the passages say ' +
   'that belongs to it (components, period, scope). Answer every part of the question that the ' +

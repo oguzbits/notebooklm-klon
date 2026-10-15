@@ -2,6 +2,11 @@
 
 ## Doppelte Werte
 
+**Gebaut (2026-10-15).** Ursache war der Satz im Chat-Prompt „give both forms in one statement and cite both passages“ (Commit `da65b56`; davor mit den Zahlen eines Falls). Er ließ das Modell
+`46 185 Tausend bzw. 46,2 Millionen` und `617 000 bzw. rund 620 000` schreiben und widersprach „Say each fact once“. Jetzt: ein Wert einmal, in der genauen Form, mit allen stützenden Zitaten; eine zweite
+Form nur bei widersprüchlichen Quellen. Eval: `forbiddenFacts` auf der gerundeten Form in `destatis-erwerbspersonen` und `destatis-landwirtschaft`; gegen die alte Fassung waren die Baseline-Antworten rot
+(nur aus den Antworten abgeleitet, nicht neu bewertet), nach der Änderung grün (ein Lauf, n=1). Ein voller Lauf danach: Suche 100 %, Zitate 100 %, Verweigerung 100 %, keine Regression. Temperatur unten ist nicht angefasst.
+
 - Ist: `core/chat-prompt.ts` verlangt bewusst „beide Formen in einer Aussage nennen und beide Passagen zitieren“.
   Folge: Ein Wert wie „46,2 Mio.“ erscheint in zwei Schreibweisen oder doppelt, die Antwort wirkt unsicher.
 - Ziel: eine zuversichtliche Antwort, ohne die Belegpflicht aufzugeben.

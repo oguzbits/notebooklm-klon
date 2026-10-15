@@ -85,7 +85,8 @@
         "text": "Zahl der Erwerbspersonen erreicht mit 46,2 Millionen für 2018 einen neuen Höchststand"
       }
     ],
-    "requiredFacts": [["46,2", "46 185", "46,185"]]
+    "requiredFacts": [["46 185", "46,185"]],
+    "forbiddenFacts": ["46,2"]
   },
   {
     "id": "destatis-erwerbslosenquote",
@@ -313,7 +314,8 @@
         "text": "und Fischerei sinkt auf rund 620 000 im Jahr 2018"
       }
     ],
-    "requiredFacts": [["620 000", "620.000", "620 Tausend"]]
+    "requiredFacts": [["617 000", "617.000", "617"]],
+    "forbiddenFacts": ["620 000", "620.000"]
   },
   {
     "id": "gg-gleichberechtigung",
@@ -380,6 +382,7 @@
         "nicht verhindern",
         "nicht verhindert",
         "Halluzinationen nicht",
+        "keine direkte Lösung",
         "nicht vollständig",
         "does not prevent"
       ]
