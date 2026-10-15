@@ -37,7 +37,7 @@ export interface CitationScore {
 }
 
 export function normalizeText(text: string): string {
-  return text.normalize('NFKC').toLowerCase().replace(/\s+/g, ' ').trim();
+  return text.normalize('NFKC').toLowerCase().replaceAll('*', '').replace(/\s+/g, ' ').trim();
 }
 
 function ratio(numerator: number, denominator: number): number | null {

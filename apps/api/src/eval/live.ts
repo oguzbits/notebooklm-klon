@@ -7,6 +7,9 @@
  *
  *   pnpm eval:live [--ids a,b] [--pause-ms 4000] [--corpus <dir>]
  *
+ * A full run is compared with `baseline.json`; a measure that fell by more than the tolerance fails
+ * the run. After a change that is meant to move the baseline, edit the file by hand.
+ *
  * With a free-tier key the daily quota can run out: the run then stops, reports the questions asked
  * so far and names the rest for a later run with --ids.
  *
@@ -31,6 +34,7 @@ import { log } from '../logger';
 import { createProviders } from '../providers';
 import { toLocalFile } from './corpus';
 import { EvalDatasetSchema, questionSourceFiles } from './dataset';
+import { BaselineSchema, compareToBaseline } from './gate';
 import { formatReport } from './report';
 import { runQuestion, summarize } from './run';
 import { isQuotaError, runAll } from './run-all';
@@ -161,7 +165,20 @@ try {
     notAsked.length === 0
       ? ''
       : `\n\nAbgebrochen, Kontingent erschöpft. Nicht gestellt: ${notAsked.join(', ')}\nWeiter später mit: --ids ${notAsked.join(',')}`;
-  const markdown = `${formatReport(results, summary)}${notRead}${stopped}`;
+  // The gate compares a full run only: a part of the questions has other shares than the baseline.
+  const baseline = BaselineSchema.parse(
+    JSON.parse(readFileSync(path.join(import.meta.dirname, 'baseline.json'), 'utf8'))
+  );
+  const worse =
+    onlyIds || notAsked.length > 0 || unreadable.length > 0
+      ? []
+      : compareToBaseline(summary, baseline);
+  const gate =
+    worse.length === 0
+      ? ''
+      : `\n\nSchlechter als die Baseline vom ${baseline.date}: ${worse.join('; ')}`;
+  if (worse.length > 0) process.exitCode = 1;
+  const markdown = `${formatReport(results, summary)}${notRead}${stopped}${gate}`;
   const stamp = new Date().toISOString().replaceAll(':', '-');
   const reports = path.join(REPO_ROOT, 'reports');
   mkdirSync(reports, { recursive: true });

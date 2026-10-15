@@ -1,6 +1,10 @@
 # Plan 3: Eval
 
-## Ist
+## Stand (2026-10-15)
+
+Baseline gemessen mit dem bezahlten Schlüssel, 34 Fragen, ein Lauf (n=1), Kosten etwa 12 Cent: Suchtreffer 100 %, Fakten in der Antwort 96 % (die eine Lücke war ein Fehler des Bewerters: er las `**verhindert Halluzinationen** nicht` nicht, behoben in `normalizeText`, danach 100 %), Fakten im Zitat 100 %, richtig verweigert 100 %, keine verworfenen Aussagen. Die Baseline steht in [baseline.json](../../apps/api/src/eval/baseline.json); `pnpm eval:live` vergleicht einen vollen Lauf damit und endet mit Fehlercode 1, wenn ein Maß um mehr als 5 Prozentpunkte fällt (`GATE_TOLERANCE`, geschätzt: ungefähr eine Frage Spielraum, nicht aus Wiederholungen gemessen). Offen: n >= 3, Schwelle aus der Schwankung, Korpus im Repo, Replay. **Die Menge ist gesättigt:** Bei 100 % gibt es nichts mehr zu verbessern; Änderungen an Suche oder Prompt sind damit nur noch als Verschlechterung erkennbar. Für Verbesserungen braucht es schwerere Fragen.
+
+## Ist (vor dem Stand oben)
 
 - 34 goldene Fragen mit Textankern und deterministischen Bewertern, nur live (`pnpm eval:live`).
 - Korpus ist nicht im Repo, kein Replay, keine Baseline, kein Gate, ein Durchlauf je Frage (n=1).

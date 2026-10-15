@@ -105,6 +105,12 @@ describe('scoreRequiredFacts', () => {
     expect(scoreRequiredFacts(answer, ['12 %', '4,2 Mio. Euro', 'Berlin'])).toBeCloseTo(2 / 3);
   });
 
+  it('reads a fact through the bold marks the answer puts around key terms', () => {
+    const answer = 'RAG **verhindert Halluzinationen** nicht.';
+
+    expect(scoreRequiredFacts(answer, ['Halluzinationen nicht'])).toBe(1);
+  });
+
   it('counts a fact as present when any of its equivalent spellings is', () => {
     const answer = 'Das Budget beträgt 1,25 Millionen Euro.';
 
