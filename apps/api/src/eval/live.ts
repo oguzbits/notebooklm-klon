@@ -7,12 +7,16 @@
  *
  *   pnpm eval:live [--ids a,b] [--pause-ms 4000] [--corpus <dir>]
  *
+ * With a free-tier key the daily quota can run out: the run then stops, reports the questions asked
+ * so far and names the rest for a later run with --ids.
+ *
  * The report (JSON with the answers, and Markdown) goes to reports/, which git ignores.
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 
+import { GeminiError } from '../ai/gemini-error';
 import { parseEvalEnv } from '../config/env';
 import { user } from '../db/auth-schema';
 import { createDb } from '../db/client';
@@ -28,10 +32,13 @@ import { createProviders } from '../providers';
 import { toLocalFile } from './corpus';
 import { EvalDatasetSchema, questionSourceFiles } from './dataset';
 import { formatReport } from './report';
-import { type QuestionResult, runQuestion, summarize } from './run';
+import { runQuestion, summarize } from './run';
+import { isQuotaError, runAll } from './run-all';
 
 const EVAL_USER_ID = 'eval-user';
 const DEFAULT_PAUSE_MS = 4000;
+/** Wait before a question that hit the quota is asked once more: a per-minute limit passes. */
+const QUOTA_WAIT_MS = 65_000;
 const REPO_ROOT = path.resolve(import.meta.dirname, '../../../..');
 
 const args = process.argv.slice(2);
@@ -108,39 +115,53 @@ try {
   if (scope.sourceIds.length !== expectedReady) {
     throw new Error(`Only ${scope.sourceIds.length} of ${expectedReady} corpus files are ready.`);
   }
+  let quotaHit = false;
   const ports = {
     embedQuery: providers.embedQuery,
     translateQuery: providers.translateQuery,
     search: (request: Parameters<typeof searchChunks>[1]) => searchChunks(db, request),
     stream: providers.stream,
-    onError: (error: unknown) =>
+    onError: (error: unknown) => {
+      quotaHit ||= isQuotaError(error);
       log({
         level: 'error',
         msg: 'eval: model failed',
         name: error instanceof Error ? error.name : '',
-      }),
+        status: error instanceof GeminiError ? error.status : undefined,
+      });
+    },
   };
 
-  const results: QuestionResult[] = [];
-  for (const question of questions) {
-    const result = await runQuestion(question, scope, ports);
-    results.push(result);
-    log({
-      level: 'info',
-      msg: 'eval: question done',
-      id: result.id,
-      hit: result.retrieval?.hit ?? null,
-      failure: result.failure,
-    });
-    await sleep(pauseMs);
-  }
+  // Free tier: a used-up quota stops the run and names the questions left, so a later run can
+  // continue with --ids instead of scoring them as failures.
+  const { results, notAsked } = await runAll(
+    questions,
+    async (question) => {
+      quotaHit = false;
+      const result = await runQuestion(question, scope, ports);
+      log({
+        level: 'info',
+        msg: 'eval: question done',
+        id: result.id,
+        hit: result.retrieval?.hit ?? null,
+        failure: result.failure,
+      });
+      return { result, quotaHit };
+    },
+    { pauseMs, quotaWaitMs: QUOTA_WAIT_MS, sleep: (ms) => sleep(ms) }
+  );
+  if (results.length === 0) throw new Error('The quota was used up before the first question.');
 
   const summary = summarize(results);
   const notRead =
     unreadable.length === 0
       ? ''
       : `\n\nNicht gelesen (die Fragen dazu fehlen oben): ${unreadable.join(', ')}`;
-  const markdown = `${formatReport(results, summary)}${notRead}`;
+  const stopped =
+    notAsked.length === 0
+      ? ''
+      : `\n\nAbgebrochen, Kontingent erschöpft. Nicht gestellt: ${notAsked.join(', ')}\nWeiter später mit: --ids ${notAsked.join(',')}`;
+  const markdown = `${formatReport(results, summary)}${notRead}${stopped}`;
   const stamp = new Date().toISOString().replaceAll(':', '-');
   const reports = path.join(REPO_ROOT, 'reports');
   mkdirSync(reports, { recursive: true });
