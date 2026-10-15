@@ -28,10 +28,8 @@ Nicht geprüft: Screenreader auf echten Geräten, echte Mobilgeräte, Semgrep lo
 
 Kleinigkeiten:
 
-- `lib/download.ts`: `revokeObjectURL` direkt nach `click()` kann Downloads abbrechen.
 - `use-sources.ts`: Abfrage alle 2 s ohne Backoff, solange eine Quelle arbeitet.
 - Hash über rohe HTML-Bytes: dynamische Seiten werden nie als Duplikat erkannt.
-- „Prompt“ ist ein Fachbegriff für Nutzer (`studio/prompt-chip.tsx`) und verletzt Regel 10 aus [AGENTS.md](../AGENTS.md), wenn er sichtbar ist.
 - Rohe Controls statt shadcn an einigen Stellen (`quiz-option.tsx`, `studio-tiles.tsx`, `library-row.tsx`), nicht einzeln beurteilt.
 - `pdf-lib` hat seit November 2021 kein Release mehr, funktioniert aber.
 

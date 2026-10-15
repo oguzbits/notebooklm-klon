@@ -12,7 +12,7 @@ interface PromptChipProps {
 }
 
 /**
- * "Prompt und 2 Quellen ansehen": a chip under the title that opens how the output was asked for
+ * "Anweisung und 2 Quellen ansehen": a chip under the title that opens how the output was asked for
  * (the instruction in words) and the sources it was made from. Where the original shows no prompt
  * (cards, quiz, mind map), the chip names the sources only.
  */
@@ -20,7 +20,7 @@ export function PromptChip({ notebookId, request, withPrompt }: PromptChipProps)
   const sources = useSources(notebookId);
   const count = request.sources.length;
   const sourcesText = `${count} ${count === 1 ? 'Quelle' : 'Quellen'}`;
-  const label = withPrompt ? `Prompt und ${sourcesText} ansehen` : `${sourcesText} ansehen`;
+  const label = withPrompt ? `Anweisung und ${sourcesText} ansehen` : `${sourcesText} ansehen`;
 
   return (
     <Popover>
@@ -37,7 +37,7 @@ export function PromptChip({ notebookId, request, withPrompt }: PromptChipProps)
           <section className="flex flex-col gap-2">
             <h4 className="flex items-center gap-2 text-ui font-title">
               <Sparkles className="size-5" aria-hidden />
-              Prompt
+              Anweisung
             </h4>
             <p className="text-[0.875rem] leading-6 whitespace-pre-line">{request.prompt}</p>
           </section>

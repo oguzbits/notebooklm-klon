@@ -32,7 +32,7 @@ Schritt 4 bis 6 sind gebaut (die Höhen stehen in `config/limits.ts` und sind **
 
 ## Offen
 
-- Messung mit echter Nutzung, danach Höhen und `MAX_OUTPUT_TOKENS` eichen. Ob `maxOutputTokens` Thinking-Tokens mitzählt, ist unbelegt.
+- Messung mit echter Nutzung, danach Höhen und `MAX_OUTPUT_TOKENS` eichen. Ob `maxOutputTokens` Thinking-Tokens mitzählt, ist nicht eindeutig: die Thinking-Doku sagt für `max_output_tokens` „including thought tokens“ (ai.google.dev/gemini-api/docs/thinking, per Agent gelesen, 2026-10-15), die Referenz von `generationConfig.maxOutputTokens` wurde nicht gelesen. Bei Erreichen kann die Ausgabe gekürzt oder leer sein. Thinking wird zum Ausgabepreis berechnet. Vor dem Verkleinern von `MAX_OUTPUT_TOKENS` mit einem Aufruf messen.
 
 ## Schlüssel und Free Tier für die Evals (2026-10-15)
 

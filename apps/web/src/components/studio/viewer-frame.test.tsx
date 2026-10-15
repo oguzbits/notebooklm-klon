@@ -76,7 +76,7 @@ describe('ViewerFrame', () => {
   it('opens the prompt and the sources behind a chip that counts them', async () => {
     const { user } = renderFrame();
 
-    await user.click(screen.getByRole('button', { name: 'Prompt und 2 Quellen ansehen' }));
+    await user.click(screen.getByRole('button', { name: 'Anweisung und 2 Quellen ansehen' }));
 
     const popup = await screen.findByRole('dialog');
     expect(within(popup).getByText('Erstelle ein Briefing über die Quellen.')).toBeTruthy();
