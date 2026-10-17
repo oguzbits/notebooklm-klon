@@ -9,7 +9,12 @@ import { eq } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { chunks, sources } from './schema';
-import { createSourceStorage, createUploadStorage, failInterruptedSources } from './source-storage';
+import {
+  countStalledSources,
+  createSourceStorage,
+  createUploadStorage,
+  failInterruptedSources,
+} from './source-storage';
 import { axisVector, createTestDb, ensureUsers } from './testing/test-db';
 
 const { db, pool } = createTestDb();
@@ -215,6 +220,30 @@ describe('failing sources an interrupted job left behind', () => {
     expect(await failInterruptedSources(db, cutoff())).toBe(0);
     expect(await statusOf(ready)).toBe(SOURCE_STATUS.READY);
     expect(await statusOf(failed)).toBe(SOURCE_STATUS.FAILED);
+  });
+});
+
+describe('counting stalled sources for the health check', () => {
+  const MINUTE_MS = 60 * 1000;
+  const cutoff = () => new Date(Date.now() - 15 * MINUTE_MS);
+
+  async function withUpload(hash: string, status: SourceStatus, ageMs: number) {
+    const { id } = await storage.findOrCreate(newSource(hash));
+    await db.update(sources).set({ status }).where(eq(sources.id, id));
+    await uploads.put(id, new Uint8Array([1]));
+    await pool.query(`UPDATE source_uploads SET created_at = $1 WHERE source_id = $2`, [
+      new Date(Date.now() - ageMs),
+      id,
+    ]);
+  }
+
+  it('counts PENDING and PROCESSING sources whose upload is older than the cutoff, and no others', async () => {
+    await withUpload('s-pending', SOURCE_STATUS.PENDING, 30 * MINUTE_MS);
+    await withUpload('s-processing', SOURCE_STATUS.PROCESSING, 30 * MINUTE_MS);
+    await withUpload('s-fresh', SOURCE_STATUS.PENDING, MINUTE_MS);
+    await withUpload('s-failed', SOURCE_STATUS.FAILED, 30 * MINUTE_MS);
+
+    expect(await countStalledSources(db, cutoff())).toBe(2);
   });
 });
 

@@ -102,7 +102,7 @@ describe('health and authentication', () => {
     const response = await app.request('/health');
 
     expect(response.status).toBe(200);
-    expect(HealthSchema.safeParse(await response.json()).success).toBe(true);
+    expect(HealthSchema.parse(await response.json())).toEqual({ status: 'ok', stalledSources: 0 });
   });
 
   it('fails the health check when the database cannot be reached', async () => {

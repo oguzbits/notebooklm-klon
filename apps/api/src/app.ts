@@ -1,11 +1,12 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { API_ERROR, HealthSchema } from '@nlm/shared';
-import { sql } from 'drizzle-orm';
 import { HTTPException } from 'hono/http-exception';
 import { requestId, type RequestIdVariables } from 'hono/request-id';
 
 import type { AppDeps } from './app-deps';
 import { type AuthVariables, requireUser } from './auth/session';
+import { LIMITS } from './config/limits';
+import { countStalledSources } from './db/source-storage';
 import { errorBody, mapError } from './error-mapping';
 import { HTTP_STATUS } from './http-status';
 import { log } from './logger';
@@ -25,6 +26,18 @@ import { studioRoutes } from './routes/studio';
 import { usageRoutes } from './routes/usage';
 import { capabilityRoutes, webSearchRoutes } from './routes/web-search';
 import { createUsageGuard } from './usage/usage-guard';
+
+/**
+ * The container is only healthy while the database answers (the count asks it): a failure throws and
+ * becomes a 500. A stalled queue shows in the body only, it must not restart the container.
+ */
+async function checkHealth(deps: AppDeps) {
+  const stalledSources = await countStalledSources(
+    deps.db,
+    new Date(Date.now() - LIMITS.STALLED_JOB_AFTER_MS)
+  );
+  return HealthSchema.parse({ status: 'ok', stalledSources });
+}
 
 export function createApp(deps: AppDeps) {
   const app = new OpenAPIHono<{ Variables: AuthVariables & RequestIdVariables }>({
@@ -64,11 +77,7 @@ export function createApp(deps: AppDeps) {
     );
   });
 
-  // The container is only healthy while the database answers: a failure throws and becomes a 500.
-  app.get('/health', async (c) => {
-    await deps.db.execute(sql`select 1`);
-    return c.json(HealthSchema.parse({ status: 'ok' }));
-  });
+  app.get('/health', async (c) => c.json(await checkHealth(deps)));
   // Guests are made by the guest route only: it copies the example and counts them.
   app.post('/api/auth/sign-in/anonymous', (c) => c.json(errorBody(API_ERROR.NOT_FOUND), 404));
   app.on(['GET', 'POST'], '/api/auth/*', (c) => deps.auth.handler(c.req.raw));

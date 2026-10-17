@@ -1,5 +1,5 @@
 import { SOURCE_FAILURE, SOURCE_STATUS } from '@nlm/shared';
-import { and, eq, inArray, lt } from 'drizzle-orm';
+import { and, count, eq, inArray, lt } from 'drizzle-orm';
 
 import type { IngestPorts } from '../ingestion/ingest';
 import type { SubmitPorts } from '../ingestion/submit';
@@ -99,6 +99,21 @@ export async function failInterruptedSources(db: Database, olderThan: Date): Pro
       .where(inArray(sources.id, ids));
     return ids.length;
   });
+}
+
+/** How many sources wait for a job that should have finished by now: the health check shows it, a person looks at it. */
+export async function countStalledSources(db: Database, olderThan: Date): Promise<number> {
+  const [row] = await db
+    .select({ stalled: count() })
+    .from(sources)
+    .innerJoin(sourceUploads, eq(sourceUploads.sourceId, sources.id))
+    .where(
+      and(
+        inArray(sources.status, [SOURCE_STATUS.PENDING, SOURCE_STATUS.PROCESSING]),
+        lt(sourceUploads.createdAt, olderThan)
+      )
+    );
+  return row?.stalled ?? 0;
 }
 
 /** Holds the raw bytes of an upload until its ingestion job has run. */

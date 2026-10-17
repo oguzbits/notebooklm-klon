@@ -161,6 +161,7 @@ Eigene Grenzen (`LIMITS`):
 | `GUEST_LIFETIME_DAYS` | 7 |
 | `WEB_SEARCH_TIMEOUT_MS` | 10,000 |
 | `EMBED_BATCH_SIZE` | 16 |
+| `STALLED_JOB_AFTER_MS` | 900,000 |
 | `INTERRUPTED_JOB_AFTER_MS` | 3,600,000 |
 | `SHUTDOWN_SERVER_WAIT_MS` | 10,000 |
 | `SHUTDOWN_JOB_WAIT_MS` | 60,000 |
@@ -227,7 +228,7 @@ verbrauchen ([DEPLOYMENT.md](DEPLOYMENT.md)).
 - **Beobachtbarkeit:** Jede Anfrage trägt eine ID (`X-Request-Id`, in Zugriffslog, Logzeilen und Fehlerantworten). Job-Fehler und abgelehnte Uploads werden mit Art, Größe und Stufe geloggt, nie mit Dateiname oder Inhalt.
   Sentry (EU) meldet unerwartete Fehler (500, Import-Jobs, Job-Queue, Chat) in [observability/](../apps/api/src/observability) und [error-reporting.ts](../apps/web/src/lib/error-reporting.ts). Gesendet wird nur eine Liste erlaubter Felder
   (`scrubEvent`: Fehlerart, Stapel, Release = Commit, Umgebung, Tags, Source-Map-Kennungen), nie Fehlertext, Variablen, Quelltext, Anfrage oder Nutzer. Ohne `SENTRY_DSN` startet das SDK nicht. Source Maps des Web gehen beim
-  Deploy-Build zu Sentry und werden gelöscht (`SENTRY_AUTH_TOKEN` als Build-Secret). Der Sentry-MCP-Server ist je Benutzer eingerichtet, nicht im Repo, und bleibt ausgeschaltet. Dauerhafte Logs gibt es bewusst nicht ([BACKLOG.md](BACKLOG.md)). Was bei Wachstum folgt: [SCALING.md](SCALING.md).
+  Deploy-Build zu Sentry und werden gelöscht (`SENTRY_AUTH_TOKEN` als Build-Secret). Der Sentry-MCP-Server ist je Benutzer eingerichtet, nicht im Repo, und bleibt ausgeschaltet. Dauerhafte Logs gibt es bewusst nicht ([BACKLOG.md](BACKLOG.md)). Was bei Wachstum folgt: [SCALING.md](SCALING.md). Ziele: [SLO.md](SLO.md), Anleitung bei Alarmen: [RUNBOOK.md](RUNBOOK.md).
 - **Lieferkette:** Dependabot (npm, Actions, Docker; wöchentlich), `pnpm audit` und Semgrep im CI, GitHub Secret Scanning mit Push-Schutz.
 - **Eval:** `pnpm eval:live` fragt 34 goldene Fragen ([golden-questions.json](../apps/api/src/eval/golden-questions.json)) durch denselben Code wie der Chat. Der Schlüssel ist `EVAL_GEMINI_API_KEY` (nie `GEMINI_API_KEY`, kein Rückfall).
   Ein voller Lauf wird mit [baseline.json](../apps/api/src/eval/baseline.json) verglichen und endet mit Fehlercode 1, wenn ein Maß um mehr als 5 Prozentpunkte fällt (`GATE_TOLERANCE`, geschätzt). Die Werte der Baseline stehen in der Datei; ob die Menge noch Verbesserungen zeigen kann, steht im [Backlog](BACKLOG.md). Bei erschöpftem Free-Tier-Kontingent bricht der Lauf ab und nennt die Rest-IDs für `--ids`.

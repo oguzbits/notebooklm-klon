@@ -17,4 +17,6 @@ jobs:
     steps:
       - env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-        run: curl --fail --silent --show-error --max-time 20 --retry 3 --retry-delay 10 --retry-all-errors "https://$DEPLOY_HOST/health"
+        # Red when the app does not answer, and when sources wait longer than a job may take (the queue hangs).
+        run: |
+          curl --fail --silent --show-error --max-time 20 --retry 3 --retry-delay 10 --retry-all-errors "https://$DEPLOY_HOST/health" | tee /dev/stderr | jq --exit-status '.stalledSources == 0'
