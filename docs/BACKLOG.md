@@ -35,17 +35,24 @@ Das ersetzt die frühere Entscheidung vom 2026-10-15 (Logs und M10 „weil Demo�
 
 ### Wird gebaut (kostenlos oder sehr günstig)
 
-| Thema                              | Heute stattdessen                                                                                | Bestes Werkzeug                                                                               | Auslöser zum Nachholen                              |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| Captcha für Gäste                  | Limit je Adresse, je Stunde, gleichzeitig; Tagesbremse für Tokens                                | Cloudflare Turnstile (kostenlos, ohne Tracking)                                               | Gäste werden trotz Limit gezielt ausgesperrt        |
-| Dauerhafte, zentrale Logs          | Docker-Logs (gehen beim Deploy verloren), Sentry                                                 | Grafana Alloy mit Loki (Grafana Cloud) oder Better Stack                                      | Fehler lassen sich ohne Logs nicht mehr eingrenzen  |
-| Alarm bei hängender Queue          | Unterbrochene Aufträge werden erkannt (`INTERRUPTED_JOB_AFTER_MS`), Nutzer kann erneut versuchen | Sentry Alerts und Cron Monitors auf Queue-Tiefe aus `/health`                                 | Aufträge bleiben unbemerkt liegen                   |
-| Staging-Umgebung                   | CI mit DB, S3 und E2E, Deploy mit Health-Check, Image `nlm-app:previous` für Rollback            | Zweiter kleiner Hetzner-Server mit demselben `deploy.yml`, GitHub Environments                | Mehrere Entwickler oder Schemaänderungen ohne Probe |
-| Row-Level-Security                 | Jede Abfrage filtert nach `userId`, Tests prüfen das                                             | Postgres RLS mit Drizzle `pgPolicy`, `SET LOCAL` je Anfrage, eigene Rolle ohne Besitzerrechte | Sensiblere Daten oder mehrere Teams                 |
-| Image-Signierung, SBOM, Scan (M10) | Dependabot, `pnpm audit`, Semgrep, gepinnte Actions                                              | cosign (Sigstore) mit GitHub Artifact Attestations, Syft für die SBOM, Trivy für das Image    | Echte Nutzerdaten                                   |
-| Lasttests                          | Kontingent und Tagesbremse begrenzen die Last                                                    | k6 (Skripte in TypeScript/JS, läuft im CI)                                                    | Werbung für die Seite oder mehr als etwa 50 Nutzer  |
-| SLOs                               | Keine Zusagen; Uptime-Check zeigt nur Erreichbarkeit                                             | Zuerst eine Seite in `docs/`; Messung später mit Grafana SLO oder Better Stack                | Nutzer außerhalb der Demo                           |
-| Runbook                            | Schritte für Deploy, Backup und Wiederherstellung stehen in [DEPLOYMENT.md](DEPLOYMENT.md)       | Markdown-Datei `docs/RUNBOOK.md` je Alarm: Symptom, Prüfung, Maßnahme                         | Jemand anderes als der Autor betreibt die Seite     |
+| Thema                              | Heute stattdessen                                                                                | Bestes Werkzeug                                                                               | Auslöser zum Nachholen                             |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Alarm bei hängender Queue          | Unterbrochene Aufträge werden erkannt (`INTERRUPTED_JOB_AFTER_MS`), Nutzer kann erneut versuchen | Sentry Alerts und Cron Monitors auf Queue-Tiefe aus `/health`                                 | Aufträge bleiben unbemerkt liegen                  |
+| Row-Level-Security                 | Jede Abfrage filtert nach `userId`, Tests prüfen das                                             | Postgres RLS mit Drizzle `pgPolicy`, `SET LOCAL` je Anfrage, eigene Rolle ohne Besitzerrechte | Sensiblere Daten oder mehrere Teams                |
+| Image-Signierung, SBOM, Scan (M10) | Dependabot, `pnpm audit`, Semgrep, gepinnte Actions                                              | cosign (Sigstore) mit GitHub Artifact Attestations, Syft für die SBOM, Trivy für das Image    | Echte Nutzerdaten                                  |
+| Lasttests                          | Kontingent und Tagesbremse begrenzen die Last                                                    | k6 (Skripte in TypeScript/JS, läuft im CI)                                                    | Werbung für die Seite oder mehr als etwa 50 Nutzer |
+| SLOs                               | Keine Zusagen; Uptime-Check zeigt nur Erreichbarkeit                                             | Zuerst eine Seite in `docs/`; Messung später mit Grafana SLO oder Better Stack                | Nutzer außerhalb der Demo                          |
+| Runbook                            | Schritte für Deploy, Backup und Wiederherstellung stehen in [DEPLOYMENT.md](DEPLOYMENT.md)       | Markdown-Datei `docs/RUNBOOK.md` je Alarm: Symptom, Prüfung, Maßnahme                         | Jemand anderes als der Autor betreibt die Seite    |
+
+### Braucht ein neues Konto oder Geld (Backlog, erst nach Freigabe)
+
+Regel: Alles, was ein neues Konto, Schlüssel oder einen zusätzlichen Server braucht, baut der Agent nicht allein.
+
+| Thema                     | Heute stattdessen                                                                     | Bestes Werkzeug                                                                | Auslöser zum Nachholen                              |
+| ------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------- |
+| Captcha für Gäste         | Limit je Adresse, je Stunde, gleichzeitig; Tagesbremse für Tokens                     | Cloudflare Turnstile (kostenlos, ohne Tracking)                                | Gäste werden trotz Limit gezielt ausgesperrt        |
+| Dauerhafte, zentrale Logs | Docker-Logs (gehen beim Deploy verloren), Sentry                                      | Grafana Alloy mit Loki (Grafana Cloud) oder Better Stack                       | Fehler lassen sich ohne Logs nicht mehr eingrenzen  |
+| Staging-Umgebung          | CI mit DB, S3 und E2E, Deploy mit Health-Check, Image `nlm-app:previous` für Rollback | Zweiter kleiner Hetzner-Server mit demselben `deploy.yml`, GitHub Environments | Mehrere Entwickler oder Schemaänderungen ohne Probe |
 
 ### Zurückgestellt (kostet Geld oder braucht Wachstum)
 
