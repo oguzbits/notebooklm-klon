@@ -30,6 +30,8 @@ Bis 2026-10-15 als „Demo“ nicht gebaut (siehe „Betrieb, Sicherheit, Skalie
 
 ## Betrieb, Sicherheit, Skalierung
 
+Der Weg über diese Punkte hinaus (Stufen, Engpässe, Maßnahmen) steht in [SCALING.md](SCALING.md).
+
 Maßstab: Die Seite wird wie ein Produkt eines Teams behandelt, wartbar und skalierbar (Entscheidung des Nutzers, 2026-10-18). Als Demo gilt sie nur bei den **Kosten**: kein Werkzeug, das Geld kostet oder eigene Server braucht, solange es keinen Grund dafür gibt.
 Das ersetzt die frühere Entscheidung vom 2026-10-15 (Logs und M10 „weil Demo“). Werkzeugnamen sind aus dem Gedächtnis, vor dem Bau gegen die aktuelle Doku prüfen (Regel 12).
 
