@@ -5,11 +5,16 @@ import { z } from 'zod';
 
 import type { AppDeps } from '../app-deps';
 import { DEMO_NOTEBOOK_TITLE } from '../config/demo';
+import { LIMITS } from '../config/limits';
 import { user } from '../db/auth-schema';
 import { copyNotebookToUser, countGuests, findDemoTemplate } from '../db/guest-repository';
+import { createIpLimit } from '../guest/ip-limit';
 import { startGuest } from '../guest/start-guest';
 import { HTTP_STATUS } from '../http-status';
 import { json } from './openapi';
+
+const HOUR_MS = 60 * 60 * 1000;
+const FORWARDED_FOR = 'x-forwarded-for';
 
 const SignedInSchema = z.object({ user: z.object({ id: z.string() }) });
 
@@ -33,8 +38,15 @@ const guestRoute = createRoute({
 export function guestRoutes(deps: AppDeps) {
   const app = new OpenAPIHono();
   const ownerEmail = deps.demoOwnerEmail;
+  const allowAddress = createIpLimit(LIMITS.GUESTS_PER_IP_PER_HOUR, HOUR_MS);
 
   return app.openapi(guestRoute, async (c) => {
+    // Only Caddy reaches the app, and it replaces this header with the address it saw. Without the
+    // header (local development, tests) there is no address to count.
+    const address = c.req.header(FORWARDED_FOR)?.split(',').at(-1)?.trim();
+    if (address && !allowAddress(address, new Date()))
+      return c.json({ code: API_ERROR.GUEST_UNAVAILABLE }, HTTP_STATUS.SERVICE_UNAVAILABLE);
+
     const started = ownerEmail
       ? await startGuest({
           findTemplate: () => findDemoTemplate(deps.db, ownerEmail, DEMO_NOTEBOOK_TITLE),

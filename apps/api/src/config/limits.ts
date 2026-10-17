@@ -66,6 +66,8 @@ export const LIMITS = {
   DAILY_TOKEN_BUDGET: 2_000_000,
   /** Guests of the live demo: most that may be started within one hour, for everybody together. */
   GUESTS_PER_HOUR: 20,
+  /** Guests of the live demo: most that one address (last X-Forwarded-For entry, set by Caddy) may start within one hour. */
+  GUESTS_PER_IP_PER_HOUR: 3,
   /** Guests of the live demo: most that may exist at the same time. */
   GUESTS_ALIVE: 200,
   /** Guests of the live demo: days until the account and its data are deleted. */

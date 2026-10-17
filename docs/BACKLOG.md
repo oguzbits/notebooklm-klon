@@ -28,6 +28,26 @@ M4 (HNSW-Index mit Filter) trifft nicht zu: Die Suche ordnet nach Abstand über 
 
 Bewusst nicht gebaut, weil die Seite eine Demo ist (Entscheidung des Nutzers, 2026-10-15): dauerhafte Logs (Sentry meldet Fehler; Docker-Logs gehen beim Deploy verloren) und die Serverhärtung M10 (fail2ban, `deploy` aus der Docker-Gruppe, Trivy; Dependency-Audit läuft im CI, eine moderate Lücke in esbuild über drizzle-kit betrifft nur den Dev-Server). sslip.io teilt Zertifikatslimits; eine eigene Domain nur auf Wunsch.
 
+## Bewusst nicht gebaut (Betrieb, Sicherheit, Skalierung)
+
+Die Seite ist eine Demo mit wenigen Besuchern und einem Server. Diese Punkte sind bekannt und geprüft, nicht vergessen.
+„Auslöser“ nennt, was sich ändern müsste, damit sie sich lohnen.
+
+| Thema                                | Heute stattdessen                                                                                | Auslöser zum Nachholen                                  |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| Captcha (Turnstile) für Gäste        | Limit je Adresse, je Stunde, gleichzeitig; Tagesbremse für Tokens                                | Gäste werden trotz Limit gezielt ausgesperrt            |
+| Metriken, Dashboards, Tracing (OTel) | Sentry für Fehler, `X-Request-Id` im Log, Uptime-Check                                           | Mehr als ein Server oder ein Ziel für Antwortzeiten     |
+| Dauerhafte, zentrale Logs            | Docker-Logs (gehen beim Deploy verloren), Sentry                                                 | Fehler lassen sich ohne Logs nicht mehr eingrenzen      |
+| Alarm bei hängender Queue            | Unterbrochene Aufträge werden erkannt (`INTERRUPTED_JOB_AFTER_MS`), Nutzer kann erneut versuchen | Aufträge bleiben unbemerkt liegen                       |
+| Staging-Umgebung                     | CI mit DB, S3 und E2E, Deploy mit Health-Check und Image `nlm-app:previous` für Rollback         | Mehrere Entwickler oder Änderungen am Schema ohne Probe |
+| Rate-Limiter in Postgres oder Redis  | Im Prozessspeicher, ein Server                                                                   | Zweite API-Instanz                                      |
+| Row-Level-Security                   | Jede Abfrage filtert nach `userId`, Tests prüfen das                                             | Sensiblere Daten oder mehrere Teams                     |
+| Image-Signierung, SBOM, Trivy (M10)  | Dependabot, `pnpm audit`, Semgrep, gepinnte Actions                                              | Echte Nutzerdaten                                       |
+| Lasttests                            | Kontingent und Tagesbremse begrenzen die Last                                                    | Werbung für die Seite oder mehr als etwa 50 Nutzer      |
+| Multi-Region, Kubernetes             | Ein Hetzner-Server mit Backup und Restore-Probe                                                  | Verfügbarkeitsziel über dem eines Servers               |
+| Feature-Flags                        | Deploy mit Rollback                                                                              | Teilfreigaben für Nutzergruppen                         |
+| SLOs                                 | Keine Zusagen; Uptime-Check zeigt nur Erreichbarkeit                                             | Nutzer außerhalb der Demo                               |
+
 Kleinigkeiten:
 
 - `use-sources.ts`: Abfrage alle 2 s ohne Backoff, solange eine Quelle arbeitet. Bewusst gelassen: eine kurze, billige Abfrage während weniger Minuten.

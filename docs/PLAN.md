@@ -156,6 +156,7 @@ Eigene Grenzen (`LIMITS`):
 | `STUDIO_OUTPUTS_PER_WINDOW` | 10 |
 | `DAILY_TOKEN_BUDGET` | 2,000,000 |
 | `GUESTS_PER_HOUR` | 20 |
+| `GUESTS_PER_IP_PER_HOUR` | 3 |
 | `GUESTS_ALIVE` | 200 |
 | `GUEST_LIFETIME_DAYS` | 7 |
 | `WEB_SEARCH_TIMEOUT_MS` | 10,000 |
@@ -212,7 +213,7 @@ Umgebungsvariablen (`EnvSchema`):
   Aufruf je Nutzer, Obergrenze je Antwort (`MAX_OUTPUT_TOKENS`), Grenzen für Notizbücher und Quellen. Verbrauch in `usage_events`,
   Bericht mit `pnpm report:usage`. Die Höhen sind Annahmen bis zur Messung (siehe [BACKLOG.md](BACKLOG.md)).
 - **Inhalts-Hash pro Nutzer:** Dasselbe Dokument wird nie zweimal gelesen oder eingebettet.
-- **Gäste:** begrenzt je Stunde, gleichzeitig und in der Lebensdauer (`GUESTS_*`, `GUEST_LIFETIME_DAYS` oben).
+- **Gäste:** begrenzt je Stunde, je Adresse und Stunde (letzter Eintrag von `X-Forwarded-For`, von Caddy gesetzt; im Prozessspeicher), gleichzeitig und in der Lebensdauer (`GUESTS_*`, `GUEST_LIFETIME_DAYS` oben). Ein Captcha gibt es bewusst nicht ([BACKLOG.md](BACKLOG.md)).
 - **Websuche** (Tavily): kein eigenes Limit; eine erschöpfte Tavily-Quote wird als 429 weitergereicht.
 - **Kein Kill-Switch** per Umgebungsvariable; wer alles sperren will, stoppt den Container.
 
@@ -227,6 +228,7 @@ verbrauchen ([DEPLOYMENT.md](DEPLOYMENT.md)).
   Sentry (EU) meldet unerwartete Fehler (500, Import-Jobs, Job-Queue, Chat) in [observability/](../apps/api/src/observability) und [error-reporting.ts](../apps/web/src/lib/error-reporting.ts). Gesendet wird nur eine Liste erlaubter Felder
   (`scrubEvent`: Fehlerart, Stapel, Release = Commit, Umgebung, Tags, Source-Map-Kennungen), nie Fehlertext, Variablen, Quelltext, Anfrage oder Nutzer. Ohne `SENTRY_DSN` startet das SDK nicht. Source Maps des Web gehen beim
   Deploy-Build zu Sentry und werden gelöscht (`SENTRY_AUTH_TOKEN` als Build-Secret). Der Sentry-MCP-Server ist je Benutzer eingerichtet, nicht im Repo, und bleibt ausgeschaltet. Dauerhafte Logs gibt es bewusst nicht ([BACKLOG.md](BACKLOG.md)).
+- **Lieferkette:** Dependabot (npm, Actions, Docker; wöchentlich), `pnpm audit` und Semgrep im CI, GitHub Secret Scanning mit Push-Schutz.
 - **Eval:** `pnpm eval:live` fragt 34 goldene Fragen ([golden-questions.json](../apps/api/src/eval/golden-questions.json)) durch denselben Code wie der Chat. Der Schlüssel ist `EVAL_GEMINI_API_KEY` (nie `GEMINI_API_KEY`, kein Rückfall).
   Ein voller Lauf wird mit [baseline.json](../apps/api/src/eval/baseline.json) verglichen und endet mit Fehlercode 1, wenn ein Maß um mehr als 5 Prozentpunkte fällt (`GATE_TOLERANCE`, geschätzt). Die Werte der Baseline stehen in der Datei; ob die Menge noch Verbesserungen zeigen kann, steht im [Backlog](BACKLOG.md). Bei erschöpftem Free-Tier-Kontingent bricht der Lauf ab und nennt die Rest-IDs für `--ids`.
 - **Mutationstests:** `pnpm mutation` (StrykerJS, Vitest-Runner) auf `apps/api/src/core`, etwa 2 Minuten, in CI nur manuell oder wöchentlich ([mutation.yml](../.github/workflows/mutation.yml)). Die Schwelle `break` steht in [stryker.config.json](../stryker.config.json); nur anheben, wenn echte Überlebende dazukommen. Der Runner 10.0.0 passt den Namensfilter nicht an Vitest 5 an ([Issue 6210](https://github.com/stryker-mutator/stryker-js/issues/6210)); ein pnpm-Patch in `patches/` behebt das und fällt weg, sobald der Runner es tut.

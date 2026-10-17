@@ -60,7 +60,11 @@ async function makeExample() {
   return { owner, notebookId: id };
 }
 
-const startGuest = () => app.request('/api/guest', { method: 'POST' });
+const startGuest = (address?: string) =>
+  app.request('/api/guest', {
+    method: 'POST',
+    headers: address ? { 'x-forwarded-for': `198.51.100.99, ${address}` } : {},
+  });
 
 beforeEach(async () => {
   await harness.pool.query('TRUNCATE "user" CASCADE');
@@ -134,6 +138,16 @@ describe('POST /api/guest', () => {
     const response = await startGuest();
 
     expect(response.status).toBe(503);
+  });
+
+  it('answers 503 when one address started too many guests, and still serves another address', async () => {
+    await makeExample();
+    for (let i = 0; i < LIMITS.GUESTS_PER_IP_PER_HOUR; i += 1) {
+      expect((await startGuest('203.0.113.7')).status).toBe(200);
+    }
+
+    expect((await startGuest('203.0.113.7')).status).toBe(503);
+    expect((await startGuest('203.0.113.8')).status).toBe(200);
   });
 
   it('does not let anybody make a guest around the route, which would skip the copy and the limits', async () => {
