@@ -24,6 +24,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useNotebookDraft } from '@/hooks/use-notebook-draft';
 import { coverUrl, useRemoveCover, useUpdateNotebook, useUploadCover } from '@/hooks/use-notebooks';
 import { useCapabilities } from '@/hooks/use-web-search';
+import { tr } from '@/lib/i18n';
 import { describeError } from '@/lib/messages';
 
 interface CustomizeNotebookDialogProps {
@@ -66,7 +67,7 @@ function CoverPreview({ notebook, busy, uploading, onPick, onRemove }: CoverPrev
       {notebook.coverVersion ? (
         <img
           src={coverUrl(notebook.id, notebook.coverVersion)}
-          alt="Titelbild"
+          alt={tr('Titelbild', 'Cover image')}
           className="size-full object-cover"
         />
       ) : (
@@ -82,8 +83,8 @@ function CoverPreview({ notebook, busy, uploading, onPick, onRemove }: CoverPrev
             type="button"
             variant="secondary"
             size="icon"
-            aria-label="Titelbild entfernen"
-            tooltip="Titelbild entfernen"
+            aria-label={tr('Titelbild entfernen', 'Remove cover image')}
+            tooltip={tr('Titelbild entfernen', 'Remove cover image')}
             disabled={busy}
             onClick={onRemove}
           >
@@ -92,7 +93,7 @@ function CoverPreview({ notebook, busy, uploading, onPick, onRemove }: CoverPrev
         )}
         <Button type="button" variant="secondary" disabled={busy} onClick={onPick}>
           <Upload />
-          {uploading ? 'Wird hochgeladen …' : 'Hochladen'}
+          {uploading ? tr('Wird hochgeladen …', 'Uploading …') : tr('Hochladen', 'Upload')}
         </Button>
       </div>
     </div>
@@ -131,7 +132,7 @@ function CoverPicker({ notebook }: CoverPickerProps) {
         type="file"
         className="hidden"
         accept={COVER_IMAGE.TYPES.join(',')}
-        aria-label="Titelbild auswählen"
+        aria-label={tr('Titelbild auswählen', 'Choose cover image')}
         onChange={choose}
       />
       {failed && (
@@ -156,21 +157,23 @@ function SummaryField({ writing, summary, onWriting, onSummary }: SummaryFieldPr
     <div className="grid gap-2">
       <div className="flex items-center justify-between gap-4">
         <Label htmlFor="own-summary-switch" className="text-ui font-title">
-          Eigene Zusammenfassung festlegen
+          {tr('Eigene Zusammenfassung festlegen', 'Set your own summary')}
         </Label>
         <Switch id="own-summary-switch" checked={writing} onCheckedChange={onWriting} />
       </div>
       <p className="text-ui text-muted-foreground">
-        Standardmäßig fasst das Notebook deine Quellen selbst zusammen. Mit einer eigenen
-        Zusammenfassung ersetzt du diesen Text.
+        {tr(
+          'Standardmäßig fasst das Notebook deine Quellen selbst zusammen. Mit einer eigenen Zusammenfassung ersetzt du diesen Text.',
+          'By default the notebook summarizes your sources itself. A summary of your own replaces that text.'
+        )}
       </p>
       {writing && (
         <Textarea
-          aria-label="Eigene Zusammenfassung"
+          aria-label={tr('Eigene Zusammenfassung', 'Your own summary')}
           value={summary}
           maxLength={MAX_SUMMARY_CHARS}
           rows={5}
-          placeholder="Worum geht es in diesem Notebook?"
+          placeholder={tr('Worum geht es in diesem Notebook?', 'What is this notebook about?')}
           onChange={(event) => onSummary(event.target.value)}
         />
       )}
@@ -198,14 +201,19 @@ function CustomizeForm({ notebook, onDone }: CustomizeFormProps) {
   return (
     <form onSubmit={save} className="grid gap-5">
       <DialogHeader>
-        <DialogTitle className="pr-12 break-words">„{notebook.title}“ anpassen</DialogTitle>
+        <DialogTitle className="pr-12 break-words">
+          {tr(`„${notebook.title}“ anpassen`, `Customize “${notebook.title}”`)}
+        </DialogTitle>
         <DialogDescription className="sr-only">
-          Ändere den Titel und lege eine eigene Zusammenfassung fest.
+          {tr(
+            'Ändere den Titel und lege eine eigene Zusammenfassung fest.',
+            'Change the title and set a summary of your own.'
+          )}
         </DialogDescription>
       </DialogHeader>
       {capabilities.data?.coverImage && <CoverPicker notebook={notebook} />}
       <div className="grid gap-2">
-        <Label htmlFor="notebook-title-field">Titel des Notebooks</Label>
+        <Label htmlFor="notebook-title-field">{tr('Titel des Notebooks', 'Notebook title')}</Label>
         <Input
           id="notebook-title-field"
           value={draft.title}
@@ -226,7 +234,7 @@ function CustomizeForm({ notebook, onDone }: CustomizeFormProps) {
       )}
       <DialogFooter>
         <Button type="submit" disabled={!draft.valid || update.isPending}>
-          Fertig
+          {tr('Fertig', 'Done')}
         </Button>
       </DialogFooter>
     </form>

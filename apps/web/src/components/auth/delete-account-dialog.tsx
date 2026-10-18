@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useDeleteAccount } from '@/hooks/use-session';
 import { AuthError } from '@/lib/auth';
+import { tr } from '@/lib/i18n';
 import { AUTH_MESSAGE, describeError } from '@/lib/messages';
 
 /** Asks for the password once more, then removes the account with all notebooks and files. */
@@ -44,14 +45,16 @@ function DeleteForm() {
   return (
     <form onSubmit={submit} className="grid gap-5">
       <DialogHeader>
-        <DialogTitle>Konto löschen</DialogTitle>
+        <DialogTitle>{tr('Konto löschen', 'Delete account')}</DialogTitle>
         <DialogDescription>
-          Dein Konto wird mit allen Notebooks, Quellen, Notizen und Dateien endgültig gelöscht. Das
-          lässt sich nicht rückgängig machen.
+          {tr(
+            'Dein Konto wird mit allen Notebooks, Quellen, Notizen und Dateien endgültig gelöscht. Das lässt sich nicht rückgängig machen.',
+            'Your account will be permanently deleted along with all notebooks, sources, notes and files. This cannot be undone.'
+          )}
         </DialogDescription>
       </DialogHeader>
       <div className="grid gap-2">
-        <Label htmlFor="delete-account-password">Passwort</Label>
+        <Label htmlFor="delete-account-password">{tr('Passwort', 'Password')}</Label>
         <Input
           id="delete-account-password"
           type="password"
@@ -71,7 +74,7 @@ function DeleteForm() {
       )}
       <DialogFooter>
         <Button type="submit" variant="destructive" disabled={password === '' || remove.isPending}>
-          Konto endgültig löschen
+          {tr('Konto endgültig löschen', 'Delete account permanently')}
         </Button>
       </DialogFooter>
     </form>

@@ -13,6 +13,7 @@ import { NotebookCardsSkeleton } from '@/components/skeletons';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useNotebooks } from '@/hooks/use-notebooks';
 import { formatDay } from '@/lib/day';
+import { INTL_LOCALE, locale, tr } from '@/lib/i18n';
 import { describeError } from '@/lib/messages';
 import { notebookEmoji } from '@/lib/notebook-emoji';
 import { IMITATION_NOTICE } from '@/lib/notice';
@@ -24,8 +25,10 @@ function NoNotebooks() {
   return (
     <div className="mt-4 flex flex-col items-center gap-2 rounded-panel bg-secondary p-10 text-center">
       <NotebookPen className="size-10 text-muted-foreground" aria-hidden />
-      <p className="text-xl font-title">Noch kein Notebook</p>
-      <p className="text-ui text-muted-foreground">Lege dein erstes Notebook an.</p>
+      <p className="text-xl font-title">{tr('Noch kein Notebook', 'No notebooks yet')}</p>
+      <p className="text-ui text-muted-foreground">
+        {tr('Lege dein erstes Notebook an.', 'Create your first notebook.')}
+      </p>
     </div>
   );
 }
@@ -35,8 +38,10 @@ function NoMatch({ search }: { search: string }) {
   return (
     <div className="mt-4 flex flex-col items-center gap-2 py-16 text-center">
       <SearchX className="size-10 text-muted-foreground" aria-hidden />
-      <p className="text-xl font-title">Kein Notebook gefunden</p>
-      <p className="text-ui text-muted-foreground">Zu „{search}“ gibt es kein Notebook.</p>
+      <p className="text-xl font-title">{tr('Kein Notebook gefunden', 'No notebook found')}</p>
+      <p className="text-ui text-muted-foreground">
+        {tr(`Zu „${search}“ gibt es kein Notebook.`, `There is no notebook matching “${search}”.`)}
+      </p>
     </div>
   );
 }
@@ -81,7 +86,7 @@ export function NotebookListPage() {
   const [search, setSearch] = useState('');
   // What went wrong with a pin; deleting reports in its own dialog.
   const [actionError, setActionError] = useState<unknown>(null);
-  const needle = search.trim().toLocaleLowerCase('de-DE');
+  const needle = search.trim().toLocaleLowerCase(INTL_LOCALE[locale]);
 
   return (
     <>
@@ -89,8 +94,11 @@ export function NotebookListPage() {
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex flex-col gap-2 px-6 pb-10">
           <div className="flex flex-wrap items-center justify-between gap-3 pt-6">
-            <h1 className="text-2xl leading-8">Deine Notebooks</h1>
-            <CreateNotebookButton label="Neues Notebook" variant="prominent" />
+            <h1 className="text-2xl leading-8">{tr('Deine Notebooks', 'Your notebooks')}</h1>
+            <CreateNotebookButton
+              label={tr('Neues Notebook', 'New notebook')}
+              variant="prominent"
+            />
           </div>
           <QueryBoundary
             query={notebooks}
@@ -100,7 +108,7 @@ export function NotebookListPage() {
           >
             {(all) => {
               const list = all.filter((notebook) =>
-                notebook.title.toLocaleLowerCase('de-DE').includes(needle)
+                notebook.title.toLocaleLowerCase(INTL_LOCALE[locale]).includes(needle)
               );
               if (list.length === 0) return <NoMatch search={search.trim()} />;
               return (

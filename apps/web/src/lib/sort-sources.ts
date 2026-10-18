@@ -1,5 +1,7 @@
 import { SOURCE_KIND, type SourceSummary } from '@nlm/shared';
 
+import { INTL_LOCALE, locale } from './i18n';
+
 /** How the list of sources is ordered. ADDED is the order the server sends (oldest first). */
 export const SOURCE_SORT = {
   ADDED: 'ADDED',
@@ -15,7 +17,7 @@ export const toSourceSort = (value: string): SourceSort | null =>
 
 const KIND_ORDER = Object.values(SOURCE_KIND);
 const byTitle = (x: SourceSummary, y: SourceSummary) =>
-  x.title.localeCompare(y.title, 'de', { sensitivity: 'base' });
+  x.title.localeCompare(y.title, INTL_LOCALE[locale], { sensitivity: 'base' });
 
 /** The sources in the order of the choice, as a new list. */
 export function sortSources(list: SourceSummary[], sort: SourceSort): SourceSummary[] {

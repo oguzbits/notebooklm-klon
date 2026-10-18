@@ -6,6 +6,7 @@ import { GuestStart } from '@/components/auth/guest-start';
 import { Logo } from '@/components/brand/logo';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthenticate, useSession, useStartGuest } from '@/hooks/use-session';
+import { tr } from '@/lib/i18n';
 import { IMITATION_NOTICE } from '@/lib/notice';
 import { ROUTES } from '@/lib/routes';
 
@@ -40,7 +41,10 @@ export function AuthPage() {
             <h1 className="text-xl">{MODE[mode].heading}</h1>
           </CardTitle>
           <CardDescription>
-            Stelle Fragen an deine eigenen Dokumente und prüfe jede Antwort an der Textstelle.
+            {tr(
+              'Stelle Fragen an deine eigenen Dokumente und prüfe jede Antwort an der Textstelle.',
+              'Ask questions about your own documents and check every answer against the passage it comes from.'
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent>

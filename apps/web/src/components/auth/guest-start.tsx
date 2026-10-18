@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { tr } from '@/lib/i18n';
 
 /** The way in without an account: a guest with a copy of the example notebook. */
 export function GuestStart({
@@ -15,10 +16,15 @@ export function GuestStart({
   return (
     <div className="mt-2 flex flex-col gap-2 border-t pt-4">
       <Button type="button" variant="outline" disabled={pending} onClick={onStart}>
-        {starting ? 'Demo wird vorbereitet …' : 'Demo ausprobieren'}
+        {starting
+          ? tr('Demo wird vorbereitet …', 'Preparing the demo …')
+          : tr('Demo ausprobieren', 'Try the demo')}
       </Button>
       <p className="text-center text-xs text-muted-foreground">
-        Ohne Anmeldung, mit einem fertigen Demo-Notebook zum Ausprobieren.
+        {tr(
+          'Ohne Anmeldung, mit einem fertigen Demo-Notebook zum Ausprobieren.',
+          'No sign-up needed, with a ready-made demo notebook to try out.'
+        )}
       </p>
     </div>
   );

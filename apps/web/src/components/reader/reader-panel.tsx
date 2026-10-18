@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useReaderContent } from '@/hooks/use-reader-content';
+import { tr } from '@/lib/i18n';
 import type { ReaderTarget } from '@/lib/reader-target';
 
 interface CloseReaderButtonProps {
@@ -20,8 +21,8 @@ export function CloseReaderButton({ onClick }: CloseReaderButtonProps) {
     <Button
       variant="ghost"
       size="icon-sm"
-      aria-label="Quellenansicht schließen"
-      tooltip="Quellenansicht schließen"
+      aria-label={tr('Quellenansicht schließen', 'Close source view')}
+      tooltip={tr('Quellenansicht schließen', 'Close source view')}
       onClick={onClick}
     >
       <Minimize2 />
@@ -45,8 +46,14 @@ function ReaderFailure({
     <Alert>
       <AlertDescription>
         {chunk.isError
-          ? 'Diese Quelle ist nicht mehr in deinem Notebook.'
-          : 'Der Text dieser Quelle ist noch nicht verfügbar.'}
+          ? tr(
+              'Diese Quelle ist nicht mehr in deinem Notebook.',
+              'This source is no longer in your notebook.'
+            )
+          : tr(
+              'Der Text dieser Quelle ist noch nicht verfügbar.',
+              'The text of this source is not available yet.'
+            )}
         {source.isError && (
           <ErrorNotice
             error={source.error}
@@ -89,12 +96,17 @@ function ReaderSource({
       <header className="flex shrink-0 items-start justify-between gap-2 pb-4">
         <h3 className="min-w-0 text-[1.375rem] leading-9">{source.title}</h3>
         {source.sourceUrl && (
-          <Button variant="ghost" size="icon-sm" tooltip="Extern öffnen" asChild>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            tooltip={tr('Extern öffnen', 'Open externally')}
+            asChild
+          >
             <a
               href={source.sourceUrl}
               target="_blank"
               rel="noreferrer"
-              aria-label="Originalseite öffnen"
+              aria-label={tr('Originalseite öffnen', 'Open original page')}
             >
               <ExternalLink />
             </a>

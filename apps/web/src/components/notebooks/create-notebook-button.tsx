@@ -6,12 +6,13 @@ import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useCreateNotebook, useNotebooks } from '@/hooks/use-notebooks';
+import { tr } from '@/lib/i18n';
 import { describeError, ERROR_MESSAGE } from '@/lib/messages';
 import { ROUTES } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 
 /** The title of a notebook that was just made; it is renamed in its header. */
-export const UNTITLED_NOTEBOOK = 'Unbenanntes Notebook';
+export const UNTITLED_NOTEBOOK = tr('Unbenanntes Notebook', 'Untitled notebook');
 
 const LIMIT_HINT_ID = 'notebook-limit-hint';
 
@@ -66,9 +67,9 @@ export function CreateNotebookButton({
       <ConfirmDialog
         open={failed}
         onOpenChange={setFailed}
-        title="Notebook konnte nicht erstellt werden"
+        title={tr('Notebook konnte nicht erstellt werden', 'The notebook could not be created')}
         description={create.isError ? describeError(create.error) : ''}
-        confirmLabel="Erneut versuchen"
+        confirmLabel={tr('Erneut versuchen', 'Try again')}
         pending={create.isPending}
         onConfirm={make}
       />

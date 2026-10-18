@@ -1,10 +1,11 @@
 import type { KeyboardEvent } from 'react';
 
 import { COLUMN, type Column } from '@/lib/columns';
+import { tr } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 const COLUMN_TAB: { column: Column; label: string }[] = [
-  { column: COLUMN.SOURCES, label: 'Quellen' },
+  { column: COLUMN.SOURCES, label: tr('Quellen', 'Sources') },
   { column: COLUMN.CHAT, label: 'Chat' },
   { column: COLUMN.STUDIO, label: 'Studio' },
 ];
@@ -41,7 +42,7 @@ export function ColumnTabs({
   return (
     <div
       role="tablist"
-      aria-label="Bereiche"
+      aria-label={tr('Bereiche', 'Sections')}
       className="mx-4 mt-3 mb-3 flex shrink-0 gap-0 rounded-full bg-secondary p-0.5 wide:hidden"
     >
       {COLUMN_TAB.map(({ column: own, label }, index) => (

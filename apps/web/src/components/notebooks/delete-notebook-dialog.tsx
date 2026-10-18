@@ -1,5 +1,6 @@
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useDeleteNotebook } from '@/hooks/use-notebooks';
+import { tr } from '@/lib/i18n';
 import { describeError } from '@/lib/messages';
 
 /** Asks before a notebook is deleted with its sources and its chat; `notebook` null keeps it closed. */
@@ -18,14 +19,16 @@ export function DeleteNotebookDialog({
     <ConfirmDialog
       open={notebook !== null}
       onOpenChange={(open) => !open && onClose()}
-      title="Notebook löschen?"
+      title={tr('Notebook löschen?', 'Delete notebook?')}
       description={
         remove.isError ? (
           describeError(remove.error)
         ) : (
           <>
-            „{notebook?.title}“ wird mit allen Quellen und dem Verlauf der Fragen gelöscht. Das
-            lässt sich nicht rückgängig machen.
+            {tr(
+              `„${notebook?.title}“ wird mit allen Quellen und dem Verlauf der Fragen gelöscht. Das lässt sich nicht rückgängig machen.`,
+              `“${notebook?.title}” will be deleted along with all its sources and the chat history. This cannot be undone.`
+            )}
           </>
         )
       }

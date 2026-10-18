@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AUTH_FAILURE, AuthError } from '@/lib/auth';
+import { tr } from '@/lib/i18n';
 import { AUTH_MESSAGE } from '@/lib/messages';
 
 const MIN_PASSWORD_LENGTH = 8;
@@ -12,16 +13,16 @@ const MIN_PASSWORD_LENGTH = 8;
 /** The words and the field settings that differ between signing in and signing up. */
 export const MODE = {
   signIn: {
-    heading: 'Anmelden',
-    submit: 'Anmelden',
-    toggle: 'Noch kein Konto? Jetzt registrieren',
+    heading: tr('Anmelden', 'Sign in'),
+    submit: tr('Anmelden', 'Sign in'),
+    toggle: tr('Noch kein Konto? Jetzt registrieren', 'No account yet? Sign up'),
     autoComplete: 'current-password',
     minLength: undefined,
   },
   signUp: {
-    heading: 'Konto erstellen',
-    submit: 'Konto erstellen',
-    toggle: 'Ich habe schon ein Konto',
+    heading: tr('Konto erstellen', 'Create account'),
+    submit: tr('Konto erstellen', 'Create account'),
+    toggle: tr('Ich habe schon ein Konto', 'I already have an account'),
     autoComplete: 'new-password',
     minLength: MIN_PASSWORD_LENGTH,
   },
@@ -70,11 +71,11 @@ export function AuthForm({
   return (
     <form onSubmit={submit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <Label htmlFor="email">E-Mail-Adresse</Label>
+        <Label htmlFor="email">{tr('E-Mail-Adresse', 'Email address')}</Label>
         <Input id="email" name="email" type="email" autoComplete="email" required />
       </div>
       <div className="flex flex-col gap-2">
-        <Label htmlFor="password">Passwort</Label>
+        <Label htmlFor="password">{tr('Passwort', 'Password')}</Label>
         <Input
           id="password"
           name="password"
@@ -84,12 +85,17 @@ export function AuthForm({
           required
         />
         {mode === 'signUp' && (
-          <p className="text-xs text-muted-foreground">Mindestens {MIN_PASSWORD_LENGTH} Zeichen.</p>
+          <p className="text-xs text-muted-foreground">
+            {tr(
+              `Mindestens ${MIN_PASSWORD_LENGTH} Zeichen.`,
+              `At least ${MIN_PASSWORD_LENGTH} characters.`
+            )}
+          </p>
         )}
       </div>
       {failure ? <FailureAlert failure={failure} /> : null}
       <Button type="submit" disabled={pending}>
-        {submitting ? 'Einen Moment …' : text.submit}
+        {submitting ? tr('Einen Moment …', 'One moment …') : text.submit}
       </Button>
       <Button type="button" variant="link" onClick={onToggle}>
         {text.toggle}

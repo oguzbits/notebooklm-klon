@@ -5,11 +5,14 @@ import { type IncomingQuestion, useIncomingQuestion } from '@/hooks/use-incoming
 import { useSuggestedQuestions } from '@/hooks/use-overview';
 import { useSources } from '@/hooks/use-sources';
 import { useChatLimit } from '@/hooks/use-usage';
+import { tr } from '@/lib/i18n';
 
-const NO_SOURCE_HINT =
-  'Wähle links mindestens eine fertig gelesene Quelle aus, um Fragen zu stellen.';
+const NO_SOURCE_HINT = tr(
+  'Wähle links mindestens eine fertig gelesene Quelle aus, um Fragen zu stellen.',
+  'Select at least one source on the left that has finished loading to ask questions.'
+);
 
-const NOT_ASKED_HINT = 'Die Frage wurde nicht gestellt. ';
+const NOT_ASKED_HINT = tr('Die Frage wurde nicht gestellt. ', 'The question was not asked. ');
 
 /**
  * The conversation of a notebook with what the chat needs to know about its sources, and the question

@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { tr } from '@/lib/i18n';
 
 const MAX_TITLE_CHARS = 200;
 
@@ -92,7 +93,9 @@ function RenameForm({
     <form onSubmit={save} className="grid gap-5">
       <DialogHeader>
         <DialogTitle>{heading}</DialogTitle>
-        <DialogDescription className="sr-only">Gib einen neuen Namen ein.</DialogDescription>
+        <DialogDescription className="sr-only">
+          {tr('Gib einen neuen Namen ein.', 'Enter a new name.')}
+        </DialogDescription>
       </DialogHeader>
       <div className="grid gap-2">
         <Label htmlFor="rename-field">{label}</Label>
@@ -110,7 +113,7 @@ function RenameForm({
       )}
       <DialogFooter>
         <Button type="submit" disabled={clean === '' || pending}>
-          Speichern
+          {tr('Speichern', 'Save')}
         </Button>
       </DialogFooter>
     </form>

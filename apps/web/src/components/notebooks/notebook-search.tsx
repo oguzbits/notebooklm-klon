@@ -1,5 +1,7 @@
 import { Search } from 'lucide-react';
 
+import { tr } from '@/lib/i18n';
+
 /** The search field in the header of the start page: a pill, 256px wide, that narrows the list. */
 export function NotebookSearch({
   value,
@@ -15,8 +17,8 @@ export function NotebookSearch({
         type="search"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        placeholder="Notebooks durchsuchen"
-        aria-label="Notebooks durchsuchen"
+        placeholder={tr('Notebooks durchsuchen', 'Search notebooks')}
+        aria-label={tr('Notebooks durchsuchen', 'Search notebooks')}
         className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted-foreground [&::-webkit-search-cancel-button]:hidden"
       />
     </label>

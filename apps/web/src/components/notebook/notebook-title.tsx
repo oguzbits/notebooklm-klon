@@ -2,6 +2,7 @@ import type { Notebook } from '@nlm/shared';
 
 import { EditableTitle } from '@/components/ui/editable-title';
 import { useUpdateNotebook } from '@/hooks/use-notebooks';
+import { tr } from '@/lib/i18n';
 import { describeError } from '@/lib/messages';
 
 /**
@@ -17,7 +18,7 @@ export function NotebookTitle({ notebook }: { notebook: Notebook }) {
       <h1 className="sr-only">{notebook.title}</h1>
       <EditableTitle
         value={notebook.title}
-        label="Titel des Notebooks"
+        label={tr('Titel des Notebooks', 'Notebook title')}
         saving={rename.isPending}
         error={rename.isError ? describeError(rename.error) : null}
         onSave={(title, revert) => rename.mutate({ title }, { onError: revert })}

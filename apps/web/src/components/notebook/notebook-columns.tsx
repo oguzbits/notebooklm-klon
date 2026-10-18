@@ -11,6 +11,7 @@ import type { AskedQuestion, useNotebookLayout } from '@/hooks/use-notebook-layo
 import { useWindowWidth } from '@/hooks/use-window-width';
 import { COLUMN_MIN_PX, studioMinPx } from '@/lib/column-widths';
 import { COLUMN, type Column } from '@/lib/columns';
+import { tr } from '@/lib/i18n';
 import type { ReaderTarget } from '@/lib/reader-target';
 import { cn } from '@/lib/utils';
 
@@ -42,7 +43,7 @@ export function SourcesColumn({
 }) {
   return (
     <Panel
-      title="Quellen"
+      title={tr('Quellen', 'Sources')}
       side="left"
       collapsed={folded}
       onToggle={onToggle}

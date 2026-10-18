@@ -2,6 +2,7 @@ import { Check, Copy } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { tr } from '@/lib/i18n';
 
 const CONFIRMATION_MS = 2000;
 
@@ -44,14 +45,14 @@ export function CopyButton({
         variant="ghost"
         size={size}
         aria-label={label}
-        tooltip={copied ? 'Kopiert' : tooltip}
+        tooltip={copied ? tr('Kopiert', 'Copied') : tooltip}
         onClick={() => void copy()}
       >
         {copied ? <Check /> : <Copy />}
       </Button>
       {failure !== null && (
         <span className="text-small text-destructive" role="alert">
-          Kopieren hat nicht geklappt.
+          {tr('Kopieren hat nicht geklappt.', 'Copying did not work.')}
         </span>
       )}
     </>

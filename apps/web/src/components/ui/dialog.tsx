@@ -2,6 +2,7 @@ import { X } from 'lucide-react';
 import { Dialog as DialogPrimitive } from 'radix-ui';
 import * as React from 'react';
 
+import { tr } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 function Dialog(props: React.ComponentProps<typeof DialogPrimitive.Root>) {
@@ -50,7 +51,7 @@ function DialogContent({
       >
         {children}
         <DialogPrimitive.Close
-          aria-label="Schließen"
+          aria-label={tr('Schließen', 'Close')}
           className={cn(
             'veil absolute top-4 right-4 inline-flex size-10 items-center justify-center rounded-full text-muted-foreground',
             closeClassName

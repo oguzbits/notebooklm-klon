@@ -8,7 +8,7 @@ import { locale } from './i18n';
 /** The typed client for the API. The base is empty: the browser talks to its own origin. */
 export const api = hc<AppType>('', { headers: { [LOCALE_HEADER]: locale } });
 
-/** An error the API answered with. `code` is one of the shared codes, the UI maps it to German. */
+/** An error the API answered with. `code` is one of the shared codes, the UI maps it to text. */
 export class ApiRequestError extends Error {
   readonly code: ApiErrorCode;
   readonly status: number;

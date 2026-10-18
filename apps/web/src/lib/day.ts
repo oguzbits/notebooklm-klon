@@ -1,4 +1,6 @@
-const dayFormat = new Intl.DateTimeFormat('de-DE', {
+import { INTL_LOCALE, locale } from './i18n';
+
+const dayFormat = new Intl.DateTimeFormat(INTL_LOCALE[locale], {
   day: '2-digit',
   month: '2-digit',
   year: 'numeric',
@@ -9,7 +11,7 @@ export function formatDay(value: string | Date): string {
   return dayFormat.format(typeof value === 'string' ? new Date(value) : value);
 }
 
-const weekdayFormat = new Intl.DateTimeFormat('de-DE', {
+const weekdayFormat = new Intl.DateTimeFormat(INTL_LOCALE[locale], {
   weekday: 'long',
   day: 'numeric',
   month: 'long',

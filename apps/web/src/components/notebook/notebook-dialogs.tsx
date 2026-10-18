@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useClearChat } from '@/hooks/use-chat';
 import { useCopyNotebook } from '@/hooks/use-notebooks';
+import { tr } from '@/lib/i18n';
 import { describeError } from '@/lib/messages';
 import { ROUTES } from '@/lib/routes';
 
@@ -21,13 +22,16 @@ export function CopyNotebookDialog({ notebook, open, onClose }: NotebookDialogPr
     <ConfirmDialog
       open={open}
       onOpenChange={(next) => !next && onClose()}
-      title="Notebook kopieren?"
+      title={tr('Notebook kopieren?', 'Copy notebook?')}
       description={
         copy.isError
           ? describeError(copy.error)
-          : 'Die Kopie hat dieselben Quellen und Zusammenfassungen. Chatverlauf, Notizen und Ausgaben des Studios bleiben beim Original.'
+          : tr(
+              'Die Kopie hat dieselben Quellen und Zusammenfassungen. Chatverlauf, Notizen und Ausgaben des Studios bleiben beim Original.',
+              'The copy has the same sources and summaries. Chat history, notes and Studio outputs stay with the original.'
+            )
       }
-      confirmLabel="Kopieren"
+      confirmLabel={tr('Kopieren', 'Copy')}
       pending={copy.isPending}
       onConfirm={() =>
         copy.mutate(notebook.id, {
@@ -48,11 +52,14 @@ export function ClearChatDialog({ notebook, open, onClose }: NotebookDialogProps
     <ConfirmDialog
       open={open}
       onOpenChange={(next) => !next && onClose()}
-      title="Chatverlauf löschen?"
+      title={tr('Chatverlauf löschen?', 'Delete chat history?')}
       description={
         clear.isError
           ? describeError(clear.error)
-          : 'Alle Fragen und Antworten dieses Notebooks werden gelöscht. Quellen und Notizen bleiben. Das lässt sich nicht rückgängig machen.'
+          : tr(
+              'Alle Fragen und Antworten dieses Notebooks werden gelöscht. Quellen und Notizen bleiben. Das lässt sich nicht rückgängig machen.',
+              'All questions and answers in this notebook will be deleted. Sources and notes stay. This cannot be undone.'
+            )
       }
       pending={clear.isPending}
       onConfirm={() => clear.mutate(undefined, { onSuccess: onClose })}

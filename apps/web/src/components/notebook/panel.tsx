@@ -2,6 +2,7 @@ import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from '
 import type { ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { tr } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 /** Both faces of a panel fade into each other; the one that is not shown is out of reach as well. */
@@ -44,8 +45,8 @@ function PanelHeader({ title, left, bare, header, action, onToggle }: PanelHeade
     <Button
       variant="ghost"
       size="icon-sm"
-      aria-label={`${title} ausblenden`}
-      tooltip={`${title} ausblenden`}
+      aria-label={tr(`${title} ausblenden`, `Hide ${title}`)}
+      tooltip={tr(`${title} ausblenden`, `Hide ${title}`)}
       onClick={onToggle}
     >
       <Close />
@@ -91,8 +92,8 @@ function PanelRail({ title, left, collapsed, onToggle, rail }: PanelRailProps) {
       <Button
         variant="ghost"
         size="icon-sm"
-        aria-label={`${title} einblenden`}
-        tooltip={`${title} einblenden`}
+        aria-label={tr(`${title} einblenden`, `Show ${title}`)}
+        tooltip={tr(`${title} einblenden`, `Show ${title}`)}
         onClick={onToggle}
       >
         <Open />

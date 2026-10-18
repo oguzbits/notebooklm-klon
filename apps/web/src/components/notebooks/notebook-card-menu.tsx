@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { RenameDialog } from '@/components/ui/rename-dialog';
 import { useUpdateNotebook } from '@/hooks/use-notebooks';
+import { tr } from '@/lib/i18n';
 import { describeError } from '@/lib/messages';
 
 /**
@@ -37,8 +38,11 @@ export function NotebookCardMenu({
             variant="ghost"
             size="icon-xs"
             className="absolute top-6 right-6"
-            aria-label={`Weitere Aktionen für Notebook „${notebook.title}“`}
-            tooltip="Mehr"
+            aria-label={tr(
+              `Weitere Aktionen für Notebook „${notebook.title}“`,
+              `More actions for notebook “${notebook.title}”`
+            )}
+            tooltip={tr('Mehr', 'More')}
           >
             <EllipsisVertical />
           </Button>
@@ -46,23 +50,25 @@ export function NotebookCardMenu({
         <DropdownMenuContent align="end">
           <DropdownMenuItem onSelect={() => setRenaming(true)}>
             <Pencil aria-hidden />
-            Titel bearbeiten
+            {tr('Titel bearbeiten', 'Edit title')}
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => update.mutate({ pinned: !notebook.pinned }, { onError })}
           >
             {notebook.pinned ? <PinOff aria-hidden /> : <Pin aria-hidden />}
-            {notebook.pinned ? 'Nicht mehr oben anpinnen' : 'Oben anpinnen'}
+            {notebook.pinned
+              ? tr('Nicht mehr oben anpinnen', 'Unpin from top')
+              : tr('Oben anpinnen', 'Pin to top')}
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={onDelete}>
             <Trash2 aria-hidden />
-            Löschen
+            {tr('Löschen', 'Delete')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       <RenameDialog
-        heading="Titel bearbeiten"
-        label="Titel des Notebooks"
+        heading={tr('Titel bearbeiten', 'Edit title')}
+        label={tr('Titel des Notebooks', 'Notebook title')}
         value={notebook.title}
         open={renaming}
         onOpenChange={setRenaming}

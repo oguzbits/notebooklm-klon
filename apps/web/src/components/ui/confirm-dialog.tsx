@@ -10,6 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { tr } from '@/lib/i18n';
 
 /**
  * Asks once before something is done that cannot be brought back. The button does not close the
@@ -20,7 +21,7 @@ export function ConfirmDialog({
   onOpenChange,
   title,
   description,
-  confirmLabel = 'Löschen',
+  confirmLabel = tr('Löschen', 'Delete'),
   pending,
   onConfirm,
 }: {
@@ -40,7 +41,7 @@ export function ConfirmDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+          <AlertDialogCancel>{tr('Abbrechen', 'Cancel')}</AlertDialogCancel>
           <AlertDialogAction
             disabled={pending}
             onClick={(event) => {

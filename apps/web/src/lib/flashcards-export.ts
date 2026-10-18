@@ -2,11 +2,12 @@ import type { Flashcards } from '@nlm/shared';
 
 import { toCsv } from './csv';
 import { download } from './download';
+import { tr } from './i18n';
 
 /** The set as a CSV file (front, back) named after the output. */
 export function downloadFlashcards(title: string, cards: Flashcards['cards']): void {
   const csv = toCsv(
-    ['Vorderseite', 'Rückseite'],
+    [tr('Vorderseite', 'Front'), tr('Rückseite', 'Back')],
     cards.map((entry) => [entry.front, entry.back])
   );
   download(`${title}.csv`, new Blob([csv], { type: 'text/csv;charset=utf-8' }));

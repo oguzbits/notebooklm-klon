@@ -3,6 +3,7 @@ import { type KeyboardEvent, type PointerEvent, useRef } from 'react';
 import { useColumnWidths } from '@/hooks/use-column-widths';
 import { KEY_STEP_PX, type SideColumn, sideWidthPercent, wantedWidth } from '@/lib/column-widths';
 import { COLUMN } from '@/lib/columns';
+import { tr } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 interface ColumnGutterProps {
@@ -14,8 +15,8 @@ interface ColumnGutterProps {
 }
 
 const LABEL = {
-  [COLUMN.SOURCES]: 'Breite der Quellen ändern',
-  [COLUMN.STUDIO]: 'Breite des Studios ändern',
+  [COLUMN.SOURCES]: tr('Breite der Quellen ändern', 'Resize sources'),
+  [COLUMN.STUDIO]: tr('Breite des Studios ändern', 'Resize Studio'),
 } as const;
 
 const GUTTER = 'max-wide:hidden w-2 shrink-0 touch-none rounded-full outline-none';

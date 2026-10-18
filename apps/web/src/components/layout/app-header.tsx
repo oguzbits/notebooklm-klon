@@ -16,11 +16,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useSession, useSignOut } from '@/hooks/use-session';
+import { tr } from '@/lib/i18n';
 import { describeError } from '@/lib/messages';
 import { ROUTES } from '@/lib/routes';
 
-const GUEST_SIGN_OUT_WARNING =
-  'Ein Gast-Zugang hat kein Passwort. Nach dem Abmelden kommst du nicht mehr an deine Notebooks und Quellen heran; beim nächsten Mal startest du mit einem neuen Beispiel.';
+const GUEST_SIGN_OUT_WARNING = tr(
+  'Ein Gast-Zugang hat kein Passwort. Nach dem Abmelden kommst du nicht mehr an deine Notebooks und Quellen heran; beim nächsten Mal startest du mit einem neuen Beispiel.',
+  'A guest account has no password. After signing out you can no longer reach your notebooks and sources; next time you start with a new example.'
+);
 
 /** The bar on top of every page: the mark, an optional title and actions, and the account menu. */
 export function AppHeader({ title, actions }: { title?: ReactNode; actions?: ReactNode }) {
@@ -29,7 +32,7 @@ export function AppHeader({ title, actions }: { title?: ReactNode; actions?: Rea
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <Link
           to={ROUTES.HOME}
-          aria-label="Zu deinen Notebooks"
+          aria-label={tr('Zu deinen Notebooks', 'To your notebooks')}
           className="flex shrink-0 items-center gap-2 rounded-full"
         >
           <Logo />
@@ -61,7 +64,7 @@ function AccountMenu() {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger
-          aria-label="Konto"
+          aria-label={tr('Konto', 'Account')}
           className="veil inline-flex size-10 items-center justify-center rounded-full bg-secondary text-base font-title text-foreground"
         >
           {isGuest ? 'G' : email.charAt(0).toUpperCase() || '?'}
@@ -69,9 +72,12 @@ function AccountMenu() {
         <DropdownMenuContent align="end">
           {isGuest ? (
             <DropdownMenuLabel>
-              <span className="block">Gast-Zugang</span>
+              <span className="block">{tr('Gast-Zugang', 'Guest account')}</span>
               <span className="block font-normal text-muted-foreground">
-                Deine Daten werden nach {GUEST_LIMITS.LIFETIME_DAYS} Tagen gelöscht.
+                {tr(
+                  `Deine Daten werden nach ${GUEST_LIMITS.LIFETIME_DAYS} Tagen gelöscht.`,
+                  `Your data is deleted after ${GUEST_LIMITS.LIFETIME_DAYS} days.`
+                )}
               </span>
             </DropdownMenuLabel>
           ) : (
@@ -83,12 +89,12 @@ function AccountMenu() {
             onSelect={() => (isGuest ? setConfirmingSignOut(true) : signOut.mutate())}
           >
             <LogOut aria-hidden />
-            Abmelden
+            {tr('Abmelden', 'Sign out')}
           </DropdownMenuItem>
           {!isGuest && (
             <DropdownMenuItem onSelect={() => setDeleting(true)}>
               <Trash2 aria-hidden />
-              Konto löschen
+              {tr('Konto löschen', 'Delete account')}
             </DropdownMenuItem>
           )}
         </DropdownMenuContent>
@@ -97,9 +103,9 @@ function AccountMenu() {
       <ConfirmDialog
         open={confirmingSignOut}
         onOpenChange={setConfirmingSignOut}
-        title="Als Gast abmelden?"
+        title={tr('Als Gast abmelden?', 'Sign out as a guest?')}
         description={signOut.isError ? describeError(signOut.error) : GUEST_SIGN_OUT_WARNING}
-        confirmLabel="Abmelden"
+        confirmLabel={tr('Abmelden', 'Sign out')}
         pending={signOut.isPending}
         onConfirm={() => signOut.mutate()}
       />

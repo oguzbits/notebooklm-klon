@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useChatHistory } from '@/hooks/use-chat';
+import { tr } from '@/lib/i18n';
 import { chatToMarkdown, downloadMarkdown } from '@/lib/markdown-export';
 import { ROUTES } from '@/lib/routes';
 
@@ -42,7 +43,7 @@ function DownloadChatItem({ notebook }: { notebook: Notebook }) {
       onSelect={() => downloadMarkdown(notebook.title, chatToMarkdown(notebook.title, messages))}
     >
       <Download aria-hidden />
-      Chatverlauf herunterladen
+      {tr('Chatverlauf herunterladen', 'Download chat history')}
     </DropdownMenuItem>
   );
 }
@@ -64,8 +65,8 @@ function NotebookMenu({
           variant="ghost"
           size="icon-sm"
           className="size-9"
-          aria-label="Notebook-Konfiguration"
-          tooltip="Weitere Optionen"
+          aria-label={tr('Notebook-Konfiguration', 'Notebook settings')}
+          tooltip={tr('Weitere Optionen', 'More options')}
         >
           <EllipsisVertical />
         </Button>
@@ -73,29 +74,32 @@ function NotebookMenu({
       <DropdownMenuContent align="end" className="w-70">
         <DropdownMenuItem onSelect={() => onPick(DIALOG.CHAT)}>
           <SlidersHorizontal aria-hidden />
-          Chat konfigurieren
+          {tr('Chat konfigurieren', 'Configure chat')}
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={onCustomize}>
           <Paintbrush aria-hidden />
-          Notebook anpassen
+          {tr('Notebook anpassen', 'Customize notebook')}
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => onPick(DIALOG.COPY)}>
           <Copy aria-hidden />
-          Notebook kopieren
+          {tr('Notebook kopieren', 'Copy notebook')}
         </DropdownMenuItem>
         <DownloadChatItem notebook={notebook} />
         <DropdownMenuItem className="h-auto py-2" onSelect={() => onPick(DIALOG.CLEAR)}>
           <Trash2 aria-hidden />
           <span className="flex flex-col">
-            Chatverlauf löschen
+            {tr('Chatverlauf löschen', 'Delete chat history')}
             <span className="text-small text-muted-foreground">
-              Der Chatverlauf ist nur für dich sichtbar.
+              {tr(
+                'Der Chatverlauf ist nur für dich sichtbar.',
+                'The chat history is only visible to you.'
+              )}
             </span>
           </span>
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => onPick(DIALOG.DELETE)}>
           <Trash2 aria-hidden />
-          Notebook löschen
+          {tr('Notebook löschen', 'Delete notebook')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -143,7 +147,7 @@ export function NotebookActions({ notebook, onCustomize }: NotebookActionsProps)
   return (
     <>
       <CreateNotebookButton
-        label="Notebook erstellen"
+        label={tr('Notebook erstellen', 'Create notebook')}
         variant="ghost"
         className="has-[>svg]:pr-4 has-[>svg]:pl-3"
       />
