@@ -1,6 +1,7 @@
 import { type AnswerStatement, CHAT_ROLE, type ChatMessage, type Report } from '@nlm/shared';
 
 import { download } from './download';
+import { tr } from './i18n';
 
 const MARKDOWN_TYPE = 'text/markdown;charset=utf-8';
 
@@ -26,8 +27,8 @@ export function answerToMarkdown(title: string, statements: readonly AnswerState
 export function chatToMarkdown(title: string, messages: readonly ChatMessage[]): string {
   const turns = messages.map((message) =>
     message.role === CHAT_ROLE.USER
-      ? `### Frage\n\n${message.text}\n`
-      : `### Antwort\n\n${paragraph(message.statements)}\n`
+      ? `### ${tr('Frage', 'Question')}\n\n${message.text}\n`
+      : `### ${tr('Antwort', 'Answer')}\n\n${paragraph(message.statements)}\n`
   );
   return [`# ${title}\n`, ...turns].join('\n');
 }
