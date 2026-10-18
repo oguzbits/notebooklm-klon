@@ -107,3 +107,6 @@ Deep Research, Drive, thumbs rating, PDF export, undo on delete (every delete as
 
 Hetzner prices and specs, fork-PR settings on GitHub, `EXPLAIN` of the vector search, the source types of NotebookLM
 itself (rule 12 of AGENTS.md: look there before a decision).
+
+- The overview of a single source is stored once per source, so it keeps the language of its first request. Per-locale storage needs a migration.
+- The English UI has not been checked in the browser or in the Playwright tests (they run in German).

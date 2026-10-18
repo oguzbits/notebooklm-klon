@@ -12,7 +12,7 @@ The goal is a NotebookLM clone of production-ready quality, handed in with two a
 - **Time:** 4 to 5 full working days, the deadline is one week. The aim is to finish early and keep the rest as a buffer.
 - **Cost:** minimal. Operation uses the paid Gemini plan with a small credit, limited by per-user limits and a daily brake
   (see [Quota and cost](#quota-and-cost)).
-- **Language:** UI in German only. Sources and questions may be English.
+- **Language:** UI in German or English (cookie, then browser language, then German). Sources and questions may be either.
 
 ## What makes NotebookLM
 

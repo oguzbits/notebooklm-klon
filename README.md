@@ -2,7 +2,7 @@
 
 A notebook that answers only from your own sources and backs every statement with a number. Clicking the number opens the source text at the cited passage.
 
-A re-build of NotebookLM. The focus is the path from source to verifiable citation: ingestion, search, answer with checked citations, evaluation. The UI is German; sources and questions may be English.
+A re-build of NotebookLM. The focus is the path from source to verifiable citation: ingestion, search, answer with checked citations, evaluation. The UI is German or English (switch in the settings menu); sources and questions may be either.
 
 |             |                                                                                                                                                                            |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
