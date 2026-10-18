@@ -121,6 +121,15 @@ also bei jedem Deploy. Unerwartete Fehler gehen an Sentry (EU), sobald `SENTRY_D
   dc start app
   ```
 
+### Zeilensicherheit (Rolle `nlm_app`)
+
+Die App verbindet als `nlm_app`, die nicht Besitzerin der Tabellen ist; Postgres filtert dort jede Zeile nach dem Nutzer
+(`DATABASE_URL`). Migrationen, Gäste, Sweeps und die Aufnahme laufen über den Besitzer `nlm` (`DATABASE_OWNER_URL`, setzt
+[docker-compose.prod.yml](../deploy/docker-compose.prod.yml)). `bootstrap.sh` legt `APP_DB_USER` und `APP_DB_PASSWORD` in
+`server.env` an; [app-role.sh](../deploy/app-role.sh) gibt der Rolle im Deploy ihr Passwort. Ein bestehender Server schaltet um,
+sobald beide Zeilen in `server.env` stehen (`APP_DB_USER=nlm_app`, `APP_DB_PASSWORD=<zufälliger Wert>`). Zurück: beide Zeilen
+entfernen und `dc up -d app`.
+
 ### Zurück auf die vorige Version
 
 Jeder Deploy behält das bisherige Image als `nlm-app:previous`. Nach dem Start ruft der Workflow `https://<Hostname>/health` von außen auf (DNS, Zertifikat, Caddy, App). Startet die neue

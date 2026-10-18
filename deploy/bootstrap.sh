@@ -50,6 +50,8 @@ if [ ! -f "$app_dir/server.env" ]; then
   {
     echo "SITE_ADDRESS=$host"
     echo "POSTGRES_PASSWORD=$(openssl rand -hex 24)"
+    echo "APP_DB_USER=nlm_app"
+    echo "APP_DB_PASSWORD=$(openssl rand -hex 24)"
     echo "BETTER_AUTH_SECRET=$(openssl rand -hex 32)"
     echo "S3_ACCESS_KEY_ID=$(openssl rand -hex 12)"
     echo "S3_SECRET_ACCESS_KEY=$(openssl rand -hex 24)"

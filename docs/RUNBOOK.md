@@ -42,6 +42,13 @@ Antwort 503 auf `/api/guest`: Entweder fehlt das Beispiel-Notizbuch (Seed lief n
 (`GUESTS_PER_HOUR`, `GUESTS_PER_IP_PER_HOUR`, `GUESTS_ALIVE`). Ein Limit je Adresse trifft viele Nutzer hinter einer Adresse zugleich.
 Die Zählung je Adresse liegt im Prozessspeicher: `dc restart app` setzt sie zurück, falls ein Skript die Stunde belegt hat.
 
+## Nutzer sehen plötzlich keine Daten mehr (Zeilensicherheit)
+
+Die App verbindet als Rolle `nlm_app`; Postgres liefert ihr nur Zeilen des Nutzers, für den die Anfrage läuft. Leere Listen bei
+gesunder Datenbank heißen meist: Eine Abfrage lief ohne `forUser` und damit ohne Nutzer (sie liefert dann nichts, sie leckt nichts).
+`dc logs app` und Sentry zeigen die Route. Als Sofortmaßnahme `APP_DB_USER` und `APP_DB_PASSWORD` aus `server.env` entfernen und
+`dc up -d app`: die App verbindet wieder als Besitzer, ohne Zeilensicherheit. Danach den Fehler beheben, nicht die Policy abschwächen.
+
 ## Sentry-Alert-Regeln (einmal im Sentry-Projekt anlegen)
 
 Das lässt sich nur in der Oberfläche von Sentry einrichten, nicht aus dem Repo.

@@ -61,7 +61,7 @@ const auth = createAuth(db, {
   objectStore,
 });
 
-const queue = await createJobQueue(env.DATABASE_URL, {
+const queue = await createJobQueue(ownerUrl, {
   onError: (error) => {
     log({ level: 'error', msg: 'queue error', name: error.name });
     errors.report(error, { origin: ERROR_ORIGIN.QUEUE });
