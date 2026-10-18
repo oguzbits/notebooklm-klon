@@ -4,6 +4,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { RenameDialog } from '@/components/ui/rename-dialog';
 import type { useDeleteNote } from '@/hooks/use-notes';
 import type { useDeleteStudioOutput, useUpdateStudioOutput } from '@/hooks/use-studio';
+import { tr } from '@/lib/i18n';
 import { describeError } from '@/lib/messages';
 
 /** Asks before a note is deleted; only a saved answer has a copy that stays in the chat. */
@@ -22,11 +23,14 @@ export function DeleteNoteDialog({
     <ConfirmDialog
       open={note !== null}
       onOpenChange={(isOpen) => !isOpen && onCancel()}
-      title="Notiz löschen?"
+      title={tr('Notiz löschen?', 'Delete note?')}
       description={
         note?.kind === NOTE_KIND.WRITTEN
-          ? 'Die Notiz wird gelöscht.'
-          : 'Die Notiz wird gelöscht. Die Antwort im Chat bleibt erhalten.'
+          ? tr('Die Notiz wird gelöscht.', 'The note will be deleted.')
+          : tr(
+              'Die Notiz wird gelöscht. Die Antwort im Chat bleibt erhalten.',
+              'The note will be deleted. The answer in the chat is kept.'
+            )
       }
       pending={pending}
       onConfirm={() => note && onConfirm(note.id)}
@@ -50,8 +54,10 @@ export function DeleteOutputDialog({
     <ConfirmDialog
       open={output !== null}
       onOpenChange={(isOpen) => !isOpen && onCancel()}
-      title="Ausgabe löschen?"
-      description={output ? `„${output.title}“ wird gelöscht.` : ''}
+      title={tr('Ausgabe löschen?', 'Delete output?')}
+      description={
+        output ? tr(`„${output.title}“ wird gelöscht.`, `“${output.title}” will be deleted.`) : ''
+      }
       pending={pending}
       onConfirm={() => output && onConfirm(output.id)}
     />
@@ -74,8 +80,8 @@ export function RenameOutputDialog({
 }) {
   return (
     <RenameDialog
-      heading="Umbenennen"
-      label="Name"
+      heading={tr('Umbenennen', 'Rename')}
+      label={tr('Name', 'Name')}
       value={output?.title ?? ''}
       open={output !== null}
       onOpenChange={(isOpen) => !isOpen && onCancel()}

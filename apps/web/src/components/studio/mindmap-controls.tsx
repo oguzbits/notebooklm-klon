@@ -1,6 +1,7 @@
 import { ChevronsDownUp, ChevronsUpDown, Download, Minus, Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { tr } from '@/lib/i18n';
 import { MAX_ZOOM, MIN_ZOOM } from '@/lib/mindmap-view';
 
 const ROUND = 'size-10 rounded-full border border-border bg-card text-foreground shadow-glow';
@@ -21,8 +22,8 @@ function ZoomButtons({
         variant="ghost"
         size="icon"
         className="rounded-full"
-        aria-label="Vergrößern"
-        tooltip="Vergrößern"
+        aria-label={tr('Vergrößern', 'Zoom in')}
+        tooltip={tr('Vergrößern', 'Zoom in')}
         disabled={zoom >= MAX_ZOOM}
         onClick={onZoomIn}
       >
@@ -32,8 +33,8 @@ function ZoomButtons({
         variant="ghost"
         size="icon"
         className="rounded-full"
-        aria-label="Verkleinern"
-        tooltip="Verkleinern"
+        aria-label={tr('Verkleinern', 'Zoom out')}
+        tooltip={tr('Verkleinern', 'Zoom out')}
         disabled={zoom <= MIN_ZOOM}
         onClick={onZoomOut}
       >
@@ -59,7 +60,9 @@ export function MindmapControls({
   onZoomOut: () => void;
   onDownload: () => void;
 }) {
-  const everythingLabel = everything ? 'Alle Knoten zuklappen' : 'Alle Knoten aufklappen';
+  const everythingLabel = everything
+    ? tr('Alle Knoten zuklappen', 'Collapse all nodes')
+    : tr('Alle Knoten aufklappen', 'Expand all nodes');
   return (
     <div className="absolute top-4 left-4 z-10 flex flex-col gap-3">
       <Button
@@ -77,8 +80,8 @@ export function MindmapControls({
         variant="ghost"
         size="icon"
         className={ROUND}
-        aria-label="Mindmap als Bild herunterladen"
-        tooltip="Als Bild herunterladen"
+        aria-label={tr('Mindmap als Bild herunterladen', 'Download mind map as an image')}
+        tooltip={tr('Als Bild herunterladen', 'Download as an image')}
         onClick={onDownload}
       >
         <Download />

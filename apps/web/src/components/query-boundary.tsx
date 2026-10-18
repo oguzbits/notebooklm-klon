@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { tr } from '@/lib/i18n';
 import { describeError } from '@/lib/messages';
 
 export function ErrorNotice({
@@ -18,12 +19,12 @@ export function ErrorNotice({
   return (
     <Alert variant="destructive">
       <TriangleAlert />
-      <AlertTitle>Das hat nicht geklappt</AlertTitle>
+      <AlertTitle>{tr('Das hat nicht geklappt', 'That didn’t work')}</AlertTitle>
       <AlertDescription>
         <p>{describeError(error)}</p>
         <Button className="mt-2" size="sm" variant="outline" onClick={onRetry} disabled={retrying}>
           <RotateCw />
-          Erneut versuchen
+          {tr('Erneut versuchen', 'Try again')}
         </Button>
       </AlertDescription>
     </Alert>

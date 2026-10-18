@@ -2,6 +2,7 @@ import { ClipboardPaste, Link2, Upload } from 'lucide-react';
 import { type DragEvent, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { tr } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 const ACCEPTED_FILES = '.pdf,.docx,.pptx,.txt,.md,.png,.jpg,.jpeg,.webp,.mp3,.wav';
@@ -37,9 +38,15 @@ function FileDropZone({
     >
       <Upload className="size-6" aria-hidden />
       <p>
-        Dateien zum Hochladen per Drag-and-drop hierher ziehen.
+        {tr(
+          'Dateien zum Hochladen per Drag-and-drop hierher ziehen.',
+          'Drag and drop files here to upload them.'
+        )}
         <br />
-        PDF, DOCX, PPTX, TXT, MD, Bild (PNG, JPG, WEBP) oder Aufnahme (MP3, WAV), bis 10 MB.
+        {tr(
+          'PDF, DOCX, PPTX, TXT, MD, Bild (PNG, JPG, WEBP) oder Aufnahme (MP3, WAV), bis 10 MB.',
+          'PDF, DOCX, PPTX, TXT, MD, image (PNG, JPG, WEBP) or recording (MP3, WAV), up to 10 MB.'
+        )}
       </p>
     </div>
   );
@@ -64,7 +71,7 @@ export function AddSourceChoice({ uploading, onFile, onWebPage, onText }: AddSou
         type="file"
         accept={ACCEPTED_FILES}
         className="hidden"
-        aria-label="Datei auswählen"
+        aria-label={tr('Datei auswählen', 'Choose file')}
         onChange={(event) => {
           onFile(event.target.files?.[0]);
           event.target.value = '';
@@ -79,15 +86,17 @@ export function AddSourceChoice({ uploading, onFile, onWebPage, onText }: AddSou
           onClick={pickFile}
         >
           <Upload />
-          {uploading ? 'Wird hochgeladen …' : 'Datei hochladen'}
+          {uploading
+            ? tr('Wird hochgeladen …', 'Uploading …')
+            : tr('Datei hochladen', 'Upload file')}
         </Button>
         <Button variant="outline" size="lg" className="text-[1.0625rem]" onClick={onWebPage}>
           <Link2 />
-          Webseite
+          {tr('Webseite', 'Web page')}
         </Button>
         <Button variant="outline" size="lg" className="text-[1.0625rem]" onClick={onText}>
           <ClipboardPaste />
-          Kopierter Text
+          {tr('Kopierter Text', 'Pasted text')}
         </Button>
       </div>
       <FileDropZone onPick={pickFile} onFile={onFile} />

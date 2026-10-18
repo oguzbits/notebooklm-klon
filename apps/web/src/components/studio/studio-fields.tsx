@@ -12,6 +12,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Textarea } from '@/components/ui/textarea';
+import { tr } from '@/lib/i18n';
+import { sourcesLabel } from '@/lib/sources-label';
 import { cn } from '@/lib/utils';
 
 /** A heading above a field of a Studio dialog: 16/20 at weight 500, like the original. */
@@ -90,11 +92,11 @@ export function SourcesField({
   };
   return (
     <div className="flex flex-col gap-3">
-      <p className={FIELD_LABEL}>Quellen</p>
+      <p className={FIELD_LABEL}>{tr('Quellen', 'Sources')}</p>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="lg" className="w-fit gap-2 px-6 pr-4">
-            {chosen.size} {chosen.size === 1 ? 'Quelle' : 'Quellen'}
+            {sourcesLabel(chosen.size)}
             <ChevronDown aria-hidden />
           </Button>
         </DropdownMenuTrigger>
@@ -106,7 +108,7 @@ export function SourcesField({
               onChange(on === true ? new Set(sources.map((source) => source.id)) : new Set())
             }
           >
-            Alle Quellen
+            {tr('Alle Quellen', 'All sources')}
           </DropdownMenuCheckboxItem>
           <DropdownMenuSeparator />
           {sources.map((source) => (
@@ -169,7 +171,7 @@ export function FocusField({
             aria-hidden
             className="pointer-events-none col-start-1 row-start-1 px-4 py-4 text-[1.0625rem] leading-6 text-muted-foreground"
           >
-            <p>Vorschläge</p>
+            <p>{tr('Vorschläge', 'Suggestions')}</p>
             <ul className="pl-9">
               {ideas.map((idea) => (
                 <li key={idea} className="list-disc">

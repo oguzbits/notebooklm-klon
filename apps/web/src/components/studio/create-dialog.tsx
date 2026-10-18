@@ -20,6 +20,7 @@ import {
   SegmentedField,
   SourcesField,
 } from '@/components/studio/studio-fields';
+import { CUSTOM_IDEAS, IDEAS } from '@/components/studio/studio-ideas';
 import {
   FORMAT_DESCRIPTION,
   FORMAT_LABEL,
@@ -35,68 +36,37 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { tr } from '@/lib/i18n';
 import { buildCreateBody } from '@/lib/studio-request';
 import { cn } from '@/lib/utils';
 
-/** What the dialog of each format is called; the one for cards says "Lernkarten" like the original. */
+/** What the dialog of each format is called; the one for cards says "Lernkarten" ("Flashcards") like the original. */
 const DIALOG_TITLE: Record<StudioKind, string> = {
-  [STUDIO_KIND.REPORT]: 'Bericht erstellen',
-  [STUDIO_KIND.FLASHCARDS]: 'Lernkarten',
-  [STUDIO_KIND.QUIZ]: 'Quiz',
-  [STUDIO_KIND.MINDMAP]: 'Mindmap',
-  [STUDIO_KIND.DATA_TABLE]: 'Datentabelle',
+  [STUDIO_KIND.REPORT]: tr('Bericht erstellen', 'Create report'),
+  [STUDIO_KIND.FLASHCARDS]: tr('Lernkarten', 'Flashcards'),
+  [STUDIO_KIND.QUIZ]: tr('Quiz', 'Quiz'),
+  [STUDIO_KIND.MINDMAP]: tr('Mindmap', 'Mind Map'),
+  [STUDIO_KIND.DATA_TABLE]: tr('Datentabelle', 'Data table'),
 };
 
 const COUNT_LABEL = {
-  [STUDIO_KIND.FLASHCARDS]: 'Anzahl der Karten',
-  [STUDIO_KIND.QUIZ]: 'Anzahl der Fragen',
+  [STUDIO_KIND.FLASHCARDS]: tr('Anzahl der Karten', 'Number of cards'),
+  [STUDIO_KIND.QUIZ]: tr('Anzahl der Fragen', 'Number of questions'),
 } as const;
 
 /** The words of the middle choice differ between cards and questions in the original. */
 const USUAL_SIZE = {
-  [STUDIO_KIND.FLASHCARDS]: 'Standardeinstellung',
-  [STUDIO_KIND.QUIZ]: 'Standard (Standardeinstellung)',
+  [STUDIO_KIND.FLASHCARDS]: tr('Standardeinstellung', 'Default'),
+  [STUDIO_KIND.QUIZ]: tr('Standard (Standardeinstellung)', 'Default (default setting)'),
 } as const;
 
 const DIFFICULTIES: readonly { value: StudioDifficulty; label: string }[] = [
-  { value: STUDIO_DIFFICULTY.EASY, label: 'Einfach' },
-  { value: STUDIO_DIFFICULTY.MEDIUM, label: 'Mittel (Standardeinstellung)' },
-  { value: STUDIO_DIFFICULTY.HARD, label: 'Schwierig' },
-];
-
-/** Ideas shown in the empty topic field, like the original; they are only examples. */
-const IDEAS: Record<StudioKind, readonly string[]> = {
-  [STUDIO_KIND.REPORT]: [
-    'Der Bericht richtet sich an Leser ohne Vorwissen (z. B. „für eine Besprechung am Montag“)',
-    'Der Bericht stellt die Ergebnisse in einer Tabelle dar',
-    'Der Bericht hat einen sachlichen Ton und höchstens eine Seite',
-  ],
-  [STUDIO_KIND.FLASHCARDS]: [
-    'Die Lernkarten müssen auf eine bestimmte Quelle beschränkt sein (z. B. „der Artikel über Italien“)',
-    'Die Lernkarten müssen sich auf ein konkretes Thema beziehen (z. B. „Newtons zweites Gesetz“)',
-    'Der Text auf der Vorderseite der Karten muss kurz sein (1 bis 5 Wörter), damit er sich leicht merken lässt',
-  ],
-  [STUDIO_KIND.QUIZ]: [
-    'Erstelle mir ein Quiz, mit dem ich für meinen Geschichtstest über das Alte Ägypten lernen kann',
-    'Das Quiz muss auf eine bestimmte Quelle beschränkt sein (z. B. „der Artikel über Italien“)',
-    'Das Quiz muss sich ausschließlich auf die wichtigsten Konzepte der Physik konzentrieren',
-  ],
-  [STUDIO_KIND.MINDMAP]: [
-    'Die Mindmap muss auf eine bestimmte Quelle beschränkt sein, z. B. „der Artikel über Italien“',
-    'Die Mindmap muss sich ausschließlich auf die wichtigsten Konzepte der Quantenphysik konzentrieren',
-    'Eine Mindmap, die mir dabei hilft, mir die Ursachen des Ersten Weltkriegs zu merken',
-  ],
-  [STUDIO_KIND.DATA_TABLE]: [
-    'Die Tabelle vergleicht die Quellen nach Fristen, Kosten und Zuständigkeiten',
-    'Die Tabelle muss auf eine bestimmte Quelle beschränkt sein (z. B. „der Artikel über Italien“)',
-    'Eine Tabelle mit den wichtigsten Personen, ihren Aufgaben und seit wann sie dabei sind',
-  ],
-};
-
-const CUSTOM_IDEAS = [
-  'Ein Brief an die Projektleitung, der die Ergebnisse in drei Absätzen zusammenfasst',
-  'Eine Checkliste mit allen Fristen und Zuständigkeiten aus den Quellen',
-  'Ein Vergleich der Quellen in einer Tabelle, danach eine kurze Empfehlung',
+  { value: STUDIO_DIFFICULTY.EASY, label: tr('Einfach', 'Easy') },
+  {
+    value: STUDIO_DIFFICULTY.MEDIUM,
+    label: tr('Mittel (Standardeinstellung)', 'Medium (default setting)'),
+  },
+  { value: STUDIO_DIFFICULTY.HARD, label: tr('Schwierig', 'Hard') },
 ];
 
 interface TemplateCardsProps {
@@ -109,7 +79,7 @@ function TemplateCards({ value, onChange }: TemplateCardsProps) {
   return (
     <div className="flex flex-col gap-3">
       <p className={FIELD_LABEL} id="report-template">
-        Vorlage
+        {tr('Vorlage', 'Template')}
       </p>
       <div
         role="radiogroup"
@@ -167,9 +137,9 @@ interface SizeFieldsProps {
 /** How many cards or questions, and how hard. */
 function SizeFields({ kind, size, difficulty, onSize, onDifficulty }: SizeFieldsProps) {
   const sizeOptions = [
-    { value: STUDIO_SIZE.FEWER, label: 'Weniger' },
+    { value: STUDIO_SIZE.FEWER, label: tr('Weniger', 'Fewer') },
     { value: STUDIO_SIZE.DEFAULT, label: USUAL_SIZE[kind] },
-    { value: STUDIO_SIZE.MORE, label: 'Mehr' },
+    { value: STUDIO_SIZE.MORE, label: tr('Mehr', 'More') },
   ];
   return (
     <div className="grid grid-cols-1 gap-6 @min-[52rem]:grid-cols-2">
@@ -180,7 +150,7 @@ function SizeFields({ kind, size, difficulty, onSize, onDifficulty }: SizeFields
         onChange={onSize}
       />
       <SegmentedField
-        label="Schwierigkeitsgrad"
+        label={tr('Schwierigkeitsgrad', 'Difficulty')}
         options={DIFFICULTIES}
         value={difficulty}
         onChange={onDifficulty}
@@ -222,8 +192,16 @@ function CreateForm({ kind, sources, onSubmit }: CreateFormProps) {
         )}
         <SourcesField sources={sources} chosen={chosen} onChange={setChosen} />
         <FocusField
-          label={custom ? 'Wie soll der Bericht aussehen?' : 'Was soll das Thema sein?'}
-          hint={custom ? 'Anweisung für den Bericht' : 'Thema'}
+          label={
+            custom
+              ? tr('Wie soll der Bericht aussehen?', 'What should the report look like?')
+              : tr('Was soll das Thema sein?', 'What should the topic be?')
+          }
+          hint={
+            custom
+              ? tr('Anweisung für den Bericht', 'Instruction for the report')
+              : tr('Thema', 'Topic')
+          }
           ideas={custom ? CUSTOM_IDEAS : IDEAS[kind]}
           value={focus}
           maxLength={MAX_STUDIO_FOCUS_CHARS}
@@ -237,7 +215,7 @@ function CreateForm({ kind, sources, onSubmit }: CreateFormProps) {
           disabled={body === null}
           onClick={() => body && onSubmit(body)}
         >
-          Generieren
+          {tr('Generieren', 'Generate')}
         </Button>
       </div>
     </>
@@ -281,7 +259,10 @@ export function CreateDialog({ kind, sources, onCreate, children }: CreateDialog
             {DIALOG_TITLE[kind]}
           </DialogTitle>
           <DialogDescription className="sr-only">
-            Lege fest, woraus und wie die Ausgabe entsteht. Sie stützt sich nur auf deine Quellen.
+            {tr(
+              'Lege fest, woraus und wie die Ausgabe entsteht. Sie stützt sich nur auf deine Quellen.',
+              'Choose what the output is made from and how. It relies only on your sources.'
+            )}
           </DialogDescription>
         </DialogHeader>
         <CreateForm

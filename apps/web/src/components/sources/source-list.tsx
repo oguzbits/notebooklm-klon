@@ -2,6 +2,7 @@ import { FileQuestion } from 'lucide-react';
 
 import { SourceRow } from '@/components/sources/source-row';
 import type { useRemoveSource, useSources, useToggleSource } from '@/hooks/use-sources';
+import { tr } from '@/lib/i18n';
 import { sortSources, type SourceSort } from '@/lib/sort-sources';
 
 /** What the list says while there is no source. */
@@ -9,9 +10,12 @@ export function EmptySources() {
   return (
     <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
       <FileQuestion className="size-10 text-muted-foreground" aria-hidden />
-      <p className="text-ui font-title">Noch keine Quellen</p>
+      <p className="text-ui font-title">{tr('Noch keine Quellen', 'No sources yet')}</p>
       <p className="text-small text-muted-foreground">
-        Lade eine Datei hoch, füge eine Webseite oder einen Text hinzu, um Fragen zu stellen.
+        {tr(
+          'Lade eine Datei hoch, füge eine Webseite oder einen Text hinzu, um Fragen zu stellen.',
+          'Upload a file, or add a web page or some text, to start asking questions.'
+        )}
       </p>
     </div>
   );

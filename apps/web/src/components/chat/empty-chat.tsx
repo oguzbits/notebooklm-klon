@@ -2,6 +2,7 @@ import { MessageCircleQuestion } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import type { Suggestions } from '@/hooks/use-overview';
+import { tr } from '@/lib/i18n';
 
 /** The questions to start with: while they are made, when that failed, and as buttons. */
 function SuggestionList({
@@ -17,12 +18,15 @@ function SuggestionList({
     <>
       {suggestions.loading && (
         <p className="text-ui text-muted-foreground" role="status">
-          Vorschläge werden erstellt …
+          {tr('Vorschläge werden erstellt …', 'Creating suggestions …')}
         </p>
       )}
       {suggestions.failed && (
         <p className="text-ui text-muted-foreground">
-          Vorschläge konnten nicht erstellt werden. Du kannst trotzdem fragen.
+          {tr(
+            'Vorschläge konnten nicht erstellt werden. Du kannst trotzdem fragen.',
+            'Suggestions could not be created. You can still ask a question.'
+          )}
         </p>
       )}
       {suggestions.questions.length > 0 && (
@@ -65,7 +69,10 @@ export function EmptyChat({
     return (
       <div className="flex flex-col items-center gap-2 py-2 text-center">
         <p className="max-w-sm text-ui text-muted-foreground">
-          Jede Aussage einer Antwort hat eine Nummer, die zur Textstelle führt.
+          {tr(
+            'Jede Aussage einer Antwort hat eine Nummer, die zur Textstelle führt.',
+            'Every statement in an answer has a number that leads to the passage.'
+          )}
         </p>
         {list}
       </div>
@@ -74,10 +81,14 @@ export function EmptyChat({
   return (
     <div className="flex flex-col items-center gap-2 py-16 text-center">
       <MessageCircleQuestion className="size-12 text-muted-foreground" aria-hidden />
-      <p className="text-xl font-title">Stelle deine erste Frage</p>
+      <p className="text-xl font-title">
+        {tr('Stelle deine erste Frage', 'Ask your first question')}
+      </p>
       <p className="max-w-sm text-read text-muted-foreground">
-        Die Antwort stützt sich nur auf deine ausgewählten Quellen. Jede Aussage hat eine Nummer,
-        die zur Textstelle führt.
+        {tr(
+          'Die Antwort stützt sich nur auf deine ausgewählten Quellen. Jede Aussage hat eine Nummer, die zur Textstelle führt.',
+          'The answer relies only on your selected sources. Every statement has a number that leads to the passage.'
+        )}
       </p>
       {list}
     </div>

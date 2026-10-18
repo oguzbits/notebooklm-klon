@@ -6,6 +6,7 @@ import { RailButton, RailEntries } from '@/components/studio/studio-library';
 import { TILE_ORDER } from '@/components/studio/studio-tiles';
 import type { useStudioActions } from '@/hooks/use-studio-actions';
 import type { useStudioLibrary } from '@/hooks/use-studio-library';
+import { tr } from '@/lib/i18n';
 
 /** What stays visible when the column is folded: the tiles, one symbol per line, a new note. */
 export function StudioRail({
@@ -34,7 +35,7 @@ export function StudioRail({
       <RailEntries entries={library.entries} onOpen={studio.openEntry} />
       <RailButton
         icon={<NotebookText className="size-6" aria-hidden />}
-        title="Notiz hinzufügen"
+        title={tr('Notiz hinzufügen', 'Add note')}
         disabled={studio.addNote.isPending || library.notes.isPending}
         onClick={studio.startNote}
         className="mt-auto mb-4"

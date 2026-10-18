@@ -5,6 +5,7 @@ import { type FormEvent, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { tr } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 const URL_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
@@ -21,12 +22,12 @@ interface LinkFormProps {
   onRemove: () => void;
 }
 
-/** The address of the link, "Übernehmen", and where there is a link, "Link entfernen". */
+/** The address of the link, "Apply", and where there is a link, "Remove link". */
 function LinkForm({ address, active, onChange, onSubmit, onRemove }: LinkFormProps) {
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-2">
       <Input
-        aria-label="Adresse des Links"
+        aria-label={tr('Adresse des Links', 'Link address')}
         placeholder="https://"
         inputMode="url"
         value={address}
@@ -35,10 +36,10 @@ function LinkForm({ address, active, onChange, onSubmit, onRemove }: LinkFormPro
       <div className="flex justify-end gap-2">
         {active && (
           <Button type="button" variant="ghost" onClick={onRemove}>
-            Link entfernen
+            {tr('Link entfernen', 'Remove link')}
           </Button>
         )}
-        <Button type="submit">Übernehmen</Button>
+        <Button type="submit">{tr('Übernehmen', 'Apply')}</Button>
       </div>
     </form>
   );
@@ -50,7 +51,7 @@ interface LinkToolProps {
   enabled: boolean;
 }
 
-/** "Verknüpfen": gives the selected text an address, changes it, or takes it away. */
+/** "Link": gives the selected text an address, changes it, or takes it away. */
 export function LinkTool({ editor, active, enabled }: LinkToolProps) {
   const [open, setOpen] = useState(false);
   const [address, setAddress] = useState('');
@@ -88,8 +89,8 @@ export function LinkTool({ editor, active, enabled }: LinkToolProps) {
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label="Verknüpfen"
-          tooltip="Verknüpfen"
+          aria-label={tr('Verknüpfen', 'Link')}
+          tooltip={tr('Verknüpfen', 'Link')}
           aria-pressed={active}
           disabled={!enabled}
           onMouseDown={(event) => event.preventDefault()}

@@ -24,29 +24,61 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { useChatConfig, useSaveChatConfig } from '@/hooks/use-chat-config';
+import { tr } from '@/lib/i18n';
 import { describeError } from '@/lib/messages';
 
 const STYLE_OPTIONS = [
-  [CHAT_STYLE.DEFAULT, 'Standard', 'Sachliche Antworten, wie sie die Quellen hergeben.'],
+  [
+    CHAT_STYLE.DEFAULT,
+    tr('Standard', 'Default'),
+    tr(
+      'Sachliche Antworten, wie sie die Quellen hergeben.',
+      'Factual answers, as far as the sources allow.'
+    ),
+  ],
   [
     CHAT_STYLE.LEARNING_GUIDE,
-    'Lernbegleiter',
-    'Erklärt Schritt für Schritt und nennt, was man sich merken sollte.',
+    tr('Lernbegleiter', 'Learning guide'),
+    tr(
+      'Erklärt Schritt für Schritt und nennt, was man sich merken sollte.',
+      'Explains step by step and points out what to remember.'
+    ),
   ],
-  [CHAT_STYLE.CUSTOM, 'Eigene Anweisung', 'Du beschreibst selbst, wie geantwortet werden soll.'],
+  [
+    CHAT_STYLE.CUSTOM,
+    tr('Eigene Anweisung', 'Custom instruction'),
+    tr(
+      'Du beschreibst selbst, wie geantwortet werden soll.',
+      'You describe how answers should be written.'
+    ),
+  ],
 ] as const;
 
 const LENGTH_OPTIONS = [
-  [CHAT_LENGTH.SHORTER, 'Kürzer'],
-  [CHAT_LENGTH.DEFAULT, 'Standard'],
-  [CHAT_LENGTH.LONGER, 'Länger'],
+  [CHAT_LENGTH.SHORTER, tr('Kürzer', 'Shorter')],
+  [CHAT_LENGTH.DEFAULT, tr('Standard', 'Default')],
+  [CHAT_LENGTH.LONGER, tr('Länger', 'Longer')],
 ] as const;
 
 const LANGUAGE_OPTIONS = [
-  [CHAT_LANGUAGE.AUTO, 'Wie die Frage'],
-  [CHAT_LANGUAGE.DE, 'Deutsch'],
-  [CHAT_LANGUAGE.EN, 'Englisch'],
+  [CHAT_LANGUAGE.AUTO, tr('Wie die Frage', 'Same as the question')],
+  [CHAT_LANGUAGE.DE, tr('Deutsch', 'German')],
+  [CHAT_LANGUAGE.EN, tr('Englisch', 'English')],
 ] as const;
+
+const CUSTOM_FIELD = {
+  LABEL: tr('Eigene Anweisung', 'Custom instruction'),
+  PLACEHOLDER: tr(
+    'Zum Beispiel: Antworte knapp und nenne zuerst die Zahl.',
+    'For example: Answer briefly and give the number first.'
+  ),
+};
+
+const LEGEND = {
+  STYLE: tr('Stil der Antworten', 'Answer style'),
+  LENGTH: tr('Länge der Antworten', 'Answer length'),
+  LANGUAGE: tr('Sprache der Antworten', 'Answer language'),
+};
 
 interface OptionProps {
   group: string;
@@ -133,7 +165,7 @@ function SettingsForm({ notebookId, initial, onSaved }: SettingsFormProps) {
   return (
     <form onSubmit={submit} className="flex flex-col gap-5">
       <ChoiceGroup
-        legend="Stil der Antworten"
+        legend={LEGEND.STYLE}
         group="style"
         value={config.style}
         choices={STYLE_OPTIONS}
@@ -141,8 +173,8 @@ function SettingsForm({ notebookId, initial, onSaved }: SettingsFormProps) {
       >
         {custom && (
           <Textarea
-            aria-label="Eigene Anweisung"
-            placeholder="Zum Beispiel: Antworte knapp und nenne zuerst die Zahl."
+            aria-label={CUSTOM_FIELD.LABEL}
+            placeholder={CUSTOM_FIELD.PLACEHOLDER}
             maxLength={MAX_CUSTOM_INSTRUCTION_CHARS}
             value={config.customInstruction}
             onChange={(event) => setConfig({ ...config, customInstruction: event.target.value })}
@@ -150,7 +182,7 @@ function SettingsForm({ notebookId, initial, onSaved }: SettingsFormProps) {
         )}
       </ChoiceGroup>
       <ChoiceGroup
-        legend="Länge der Antworten"
+        legend={LEGEND.LENGTH}
         group="length"
         value={config.length}
         choices={LENGTH_OPTIONS}
@@ -158,7 +190,7 @@ function SettingsForm({ notebookId, initial, onSaved }: SettingsFormProps) {
         onChange={(length) => setConfig({ ...config, length })}
       />
       <ChoiceGroup
-        legend="Sprache der Antworten"
+        legend={LEGEND.LANGUAGE}
         group="language"
         value={config.language}
         choices={LANGUAGE_OPTIONS}
@@ -175,7 +207,7 @@ function SettingsForm({ notebookId, initial, onSaved }: SettingsFormProps) {
           type="submit"
           disabled={save.isPending || (custom && config.customInstruction.trim() === '')}
         >
-          {save.isPending ? 'Wird gespeichert …' : 'Speichern'}
+          {save.isPending ? tr('Wird gespeichert …', 'Saving …') : tr('Speichern', 'Save')}
         </Button>
       </DialogFooter>
     </form>
@@ -196,10 +228,12 @@ export function ChatSettingsDialog({ notebookId, open, onOpenChange }: ChatSetti
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[864px]">
         <DialogHeader>
-          <DialogTitle>Chat konfigurieren</DialogTitle>
+          <DialogTitle>{tr('Chat konfigurieren', 'Configure chat')}</DialogTitle>
           <DialogDescription>
-            Gilt für dieses Notebook. Jede Aussage bleibt mit einer Quelle belegt, was du auch
-            einstellst.
+            {tr(
+              'Gilt für dieses Notebook. Jede Aussage bleibt mit einer Quelle belegt, was du auch einstellst.',
+              'Applies to this notebook. Every statement stays backed by a source, whatever you choose.'
+            )}
           </DialogDescription>
         </DialogHeader>
         <QueryBoundary query={config} loading={<DialogSpinner />} empty={null}>

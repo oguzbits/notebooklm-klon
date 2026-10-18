@@ -11,6 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { tr } from '@/lib/i18n';
 
 /**
  * The button on top of the sources and the dialog behind it, where sources are added. `compact` is
@@ -32,15 +33,19 @@ export function AddSourceDialog({
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label="Quelle hinzufügen"
-            tooltip="Quelle hinzufügen"
+            aria-label={tr('Quelle hinzufügen', 'Add source')}
+            tooltip={tr('Quelle hinzufügen', 'Add source')}
           >
             <Plus />
           </Button>
         ) : (
-          <Button variant="secondary" className="w-full" tooltip="Quelle hinzufügen">
+          <Button
+            variant="secondary"
+            className="w-full"
+            tooltip={tr('Quelle hinzufügen', 'Add source')}
+          >
             <Plus />
-            Quellen hinzufügen
+            {tr('Quellen hinzufügen', 'Add sources')}
           </Button>
         )}
       </DialogTrigger>
@@ -54,9 +59,12 @@ export function AddSourceDialog({
         }}
       >
         <DialogHeader className="items-center text-center sm:px-10">
-          <DialogTitle>Quellen hinzufügen</DialogTitle>
+          <DialogTitle>{tr('Quellen hinzufügen', 'Add sources')}</DialogTitle>
           <DialogDescription>
-            Fragen werden nur aus den Quellen beantwortet, die du hier hinzufügst.
+            {tr(
+              'Fragen werden nur aus den Quellen beantwortet, die du hier hinzufügst.',
+              'Answers come only from the sources you add here.'
+            )}
           </DialogDescription>
         </DialogHeader>
         <AddSource notebookId={notebookId} onAdded={() => setOpen(false)} />

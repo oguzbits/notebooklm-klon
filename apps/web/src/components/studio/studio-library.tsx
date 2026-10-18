@@ -6,6 +6,7 @@ import { LibraryRow } from '@/components/studio/library-row';
 import { describeOutput, noteTitle } from '@/components/studio/studio-labels';
 import { KIND_COLOR, KIND_ICON } from '@/components/studio/studio-tiles';
 import { Button } from '@/components/ui/button';
+import { tr } from '@/lib/i18n';
 import { ENTRY, type LibraryEntry, type OpenEntry } from '@/lib/library-entries';
 import { relativeTime } from '@/lib/relative-time';
 import { cn } from '@/lib/utils';
@@ -16,11 +17,13 @@ export function EmptyLibrary() {
     <div className="flex flex-col items-center gap-2 px-2 py-8 text-center">
       <WandSparkles className="size-8 text-link" aria-hidden />
       <p className="text-[0.875rem] leading-6 font-[500] text-link">
-        Hier wird die Ausgabe von Studio gespeichert.
+        {tr('Hier wird die Ausgabe von Studio gespeichert.', 'Studio output will be saved here.')}
       </p>
       <p className="text-[0.875rem] leading-6 text-muted-foreground">
-        Nachdem du Quellen hinzugefügt hast, klicke oben, um Berichte, Karteikarten, Quizze,
-        Mindmaps und Datentabellen zu erstellen.
+        {tr(
+          'Nachdem du Quellen hinzugefügt hast, klicke oben, um Berichte, Karteikarten, Quizze, Mindmaps und Datentabellen zu erstellen.',
+          'After adding sources, click above to create reports, flashcards, quizzes, mind maps and data tables.'
+        )}
       </p>
     </div>
   );

@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { tr } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 interface LibraryRowProps {
@@ -48,8 +49,8 @@ function RowMenu({ title, unread, deleting, onRename, onDelete }: RowMenuProps) 
             unread &&
               'hidden pointer-coarse:inline-flex group-focus-within/row:inline-flex group-hover/row:inline-flex data-[state=open]:inline-flex'
           )}
-          aria-label={`Weitere Aktionen für „${title}“`}
-          tooltip="Mehr"
+          aria-label={tr(`Weitere Aktionen für „${title}“`, `More actions for “${title}”`)}
+          tooltip={tr('Mehr', 'More')}
           disabled={deleting}
         >
           <EllipsisVertical />
@@ -59,12 +60,12 @@ function RowMenu({ title, unread, deleting, onRename, onDelete }: RowMenuProps) 
         {onRename && (
           <DropdownMenuItem disabled={deleting} onSelect={onRename}>
             <Pencil aria-hidden />
-            Umbenennen
+            {tr('Umbenennen', 'Rename')}
           </DropdownMenuItem>
         )}
         <DropdownMenuItem disabled={deleting} onSelect={onDelete}>
           <Trash2 aria-hidden />
-          Löschen
+          {tr('Löschen', 'Delete')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -93,7 +94,7 @@ export function LibraryRow({
           <button
             type="button"
             // The two lines would run together as one word for a screen reader.
-            aria-label={`${unread ? 'Ungelesen: ' : ''}${title}, ${subtitle}`}
+            aria-label={`${unread ? tr('Ungelesen: ', 'Unread: ') : ''}${title}, ${subtitle}`}
             onClick={onOpen}
             className="flex h-[60px] min-w-0 flex-1 items-center gap-2 rounded-xl p-2 text-left"
           >

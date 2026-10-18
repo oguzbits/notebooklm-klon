@@ -3,6 +3,7 @@ import { FileText, Layers, ListChecks, type LucideIcon, Network, Table } from 'l
 
 import { TILE_LABEL } from '@/components/studio/studio-labels';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { tr } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 export const KIND_ICON: Record<StudioKind, LucideIcon> = {
@@ -33,11 +34,26 @@ export const TILE_ORDER: readonly StudioKind[] = [
 
 /** What a tile says when the pointer rests on it, worded like the original. */
 const KIND_TIP: Record<StudioKind, string> = {
-  [STUDIO_KIND.REPORT]: 'Berichte auf Grundlage deiner Quellen erstellen',
-  [STUDIO_KIND.FLASHCARDS]: 'Karteikarten mithilfe von KI basierend auf deinen Quellen erstellen',
-  [STUDIO_KIND.QUIZ]: 'Interaktives Quiz auf Grundlage deiner Quellen mit KI erstellen',
-  [STUDIO_KIND.MINDMAP]: 'Mindmap mithilfe von KI erstellen, basierend auf deinen Quellen',
-  [STUDIO_KIND.DATA_TABLE]: 'Datentabelle mithilfe von KI erstellen, basierend auf deinen Quellen',
+  [STUDIO_KIND.REPORT]: tr(
+    'Berichte auf Grundlage deiner Quellen erstellen',
+    'Create reports based on your sources'
+  ),
+  [STUDIO_KIND.FLASHCARDS]: tr(
+    'Karteikarten mithilfe von KI basierend auf deinen Quellen erstellen',
+    'Create flashcards with AI based on your sources'
+  ),
+  [STUDIO_KIND.QUIZ]: tr(
+    'Interaktives Quiz auf Grundlage deiner Quellen mit KI erstellen',
+    'Create an interactive quiz with AI based on your sources'
+  ),
+  [STUDIO_KIND.MINDMAP]: tr(
+    'Mindmap mithilfe von KI erstellen, basierend auf deinen Quellen',
+    'Create a mind map with AI based on your sources'
+  ),
+  [STUDIO_KIND.DATA_TABLE]: tr(
+    'Datentabelle mithilfe von KI erstellen, basierend auf deinen Quellen',
+    'Create a data table with AI based on your sources'
+  ),
 };
 
 const TILE =

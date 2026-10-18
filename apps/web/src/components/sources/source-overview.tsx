@@ -5,13 +5,18 @@ import { ErrorNotice } from '@/components/query-boundary';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useOverview } from '@/hooks/use-overview';
+import { tr } from '@/lib/i18n';
 
 /** The body of the card: the wait, the failure with a retry, or the summary and the key topics. */
 function OverviewContent({ overview }: { overview: ReturnType<typeof useOverview> }) {
   return (
     <>
       {overview.isPending && (
-        <div className="flex flex-col gap-2" role="status" aria-label="Wird geladen">
+        <div
+          className="flex flex-col gap-2"
+          role="status"
+          aria-label={tr('Wird geladen', 'Loading')}
+        >
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-11/12" />
           <Skeleton className="h-4 w-2/3" />
@@ -28,7 +33,7 @@ function OverviewContent({ overview }: { overview: ReturnType<typeof useOverview
         <div className="flex flex-col gap-4">
           <p className="text-[0.875rem] leading-6">{overview.data.summary}</p>
           {overview.data.keyTopics.length > 0 && (
-            <ul className="flex flex-wrap gap-2" aria-label="Schlüsselthemen">
+            <ul className="flex flex-wrap gap-2" aria-label={tr('Schlüsselthemen', 'Key topics')}>
               {overview.data.keyTopics.map((topic) => (
                 <li
                   key={topic}
@@ -57,17 +62,20 @@ interface SourceOverviewCardProps {
 export function SourceOverviewCard({ notebookId, sourceId }: SourceOverviewCardProps) {
   const overview = useOverview(notebookId, sourceId, true);
   const [open, setOpen] = useState(true);
-  const toggleLabel = `Quellenübersicht ${open ? 'schließen' : 'öffnen'}`;
+  const toggleLabel = tr(
+    `Quellenübersicht ${open ? 'schließen' : 'öffnen'}`,
+    `${open ? 'Close' : 'Open'} source guide`
+  );
 
   return (
     <section
-      aria-label="Quellenübersicht"
+      aria-label={tr('Quellenübersicht', 'Source guide')}
       className="max-h-[24.6rem] shrink-0 overflow-y-auto rounded-lg bg-source-guide px-4 pb-4"
     >
       <div className="flex h-10 items-center justify-between">
         <h3 className="flex items-center gap-3 text-[1rem] leading-8 font-[500]">
           <Sparkles className="size-5" aria-hidden />
-          Quellenübersicht
+          {tr('Quellenübersicht', 'Source guide')}
         </h3>
         <Button
           variant="ghost"

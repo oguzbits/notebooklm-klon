@@ -7,6 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { tr } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 /** The menu of the card: start the set over, mix it, or download it. */
@@ -25,7 +26,7 @@ function FlashcardMenu({
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label="Weitere Optionen"
+          aria-label={tr('Weitere Optionen', 'More options')}
           className="pointer-events-auto -mt-1 -mr-2 text-flashcard-foreground"
         >
           <EllipsisVertical />
@@ -34,22 +35,27 @@ function FlashcardMenu({
       <DropdownMenuContent align="end" className="min-w-56">
         <DropdownMenuItem onSelect={onRestart}>
           <RotateCcw aria-hidden />
-          Set neu starten
+          {tr('Set neu starten', 'Restart set')}
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={onShuffle}>
           <Shuffle aria-hidden />
-          Set mischen
+          {tr('Set mischen', 'Shuffle set')}
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={onDownload}>
           <Download aria-hidden />
-          Set herunterladen
+          {tr('Set herunterladen', 'Download set')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
-/** The card itself: a click turns it; on the back, "Erklären" asks the chat about it. */
+const FLIP_LABEL = {
+  TO_QUESTION: tr('Aktivieren, um die Frage zu sehen', 'Activate to see the question'),
+  TO_ANSWER: tr('Aktivieren, um die Antwort zu sehen', 'Activate to see the answer'),
+};
+
+/** The card itself: a click turns it; on the back, "Explain" asks the chat about it. */
 export function FlashcardFace({
   front,
   back,
@@ -61,7 +67,7 @@ export function FlashcardFace({
 }: {
   front: string;
   back: string;
-  /** "3 von 12". */
+  /** "3 of 12". */
   position: string;
   turned: boolean;
   onFlip: () => void;
@@ -78,9 +84,7 @@ export function FlashcardFace({
       <button
         type="button"
         onClick={onFlip}
-        aria-label={
-          turned ? 'Aktivieren, um die Frage zu sehen' : 'Aktivieren, um die Antwort zu sehen'
-        }
+        aria-label={turned ? FLIP_LABEL.TO_QUESTION : FLIP_LABEL.TO_ANSWER}
         className="absolute inset-0 rounded-3xl"
       />
       <div className="pointer-events-none relative flex items-start justify-between">
@@ -99,13 +103,13 @@ export function FlashcardFace({
             className="pointer-events-auto w-fit border-flashcard-foreground/40 text-flashcard-foreground text-small"
           >
             <Sparkles aria-hidden />
-            Erklären
+            {tr('Erklären', 'Explain')}
           </Button>
         )}
       </div>
       {!turned && (
         <span className="pointer-events-none relative self-center text-ui text-flashcard-foreground/60">
-          Antwort ansehen
+          {tr('Antwort ansehen', 'See answer')}
         </span>
       )}
     </div>

@@ -5,14 +5,15 @@ import { NoteViewer } from '@/components/studio/note-viewer';
 import { OutputViewer } from '@/components/studio/output-viewer';
 import { CLOSE_NOTE_LABEL, CLOSE_VIEW_LABEL, KIND_LABEL } from '@/components/studio/studio-labels';
 import { Button } from '@/components/ui/button';
+import { tr } from '@/lib/i18n';
 
-/** The path back in the header of the column while something is open: "Studio › Notiz". */
+/** The path back in the header of the column while something is open: "Studio › Note". */
 export function ViewerPath({ crumb, onBack }: { crumb: string; onBack: () => void }) {
   return (
-    <nav aria-label="Pfad" className="flex min-w-0 items-center gap-1 text-ui">
+    <nav aria-label={tr('Pfad', 'Path')} className="flex min-w-0 items-center gap-1 text-ui">
       <button
         type="button"
-        aria-label="Zurück zum Studio"
+        aria-label={tr('Zurück zum Studio', 'Back to Studio')}
         onClick={onBack}
         className="rounded-md pointer-coarse:min-h-10 pointer-coarse:px-1"
       >
@@ -46,7 +47,7 @@ export function CloseViewerButton({ label, onClick }: { label: string; onClick: 
 export function viewerLabels(output: StudioOutput | undefined) {
   return output
     ? { crumb: KIND_LABEL[output.kind], closeLabel: CLOSE_VIEW_LABEL[output.kind] }
-    : { crumb: 'Notiz', closeLabel: CLOSE_NOTE_LABEL };
+    : { crumb: tr('Notiz', 'Note'), closeLabel: CLOSE_NOTE_LABEL };
 }
 
 /** The full view of the output or the note that is open. */

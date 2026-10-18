@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useQuizRun } from '@/hooks/use-quiz-run';
 import { explainQuizPrompt } from '@/lib/explain-prompts';
+import { tr } from '@/lib/i18n';
 
 type Question = Quiz['questions'][number];
 
@@ -29,14 +30,14 @@ function QuizHint({
     <div className="flex flex-col items-start gap-2">
       <Button variant="ghost" size="sm" onClick={onToggle}>
         <Lightbulb aria-hidden />
-        {shown ? 'Tipp verbergen' : 'Tipp anzeigen'}
+        {shown ? tr('Tipp verbergen', 'Hide hint') : tr('Tipp anzeigen', 'Show hint')}
       </Button>
       {shown && <p className="px-3 text-[0.875rem] leading-6">{hint}</p>}
     </div>
   );
 }
 
-/** After the answer: the one explanation of an older quiz, "Erklären", and the passages behind it. */
+/** After the answer: the one explanation of an older quiz, "Explain", and the passages behind it. */
 function QuizAnswer({
   notebookId,
   question,
@@ -55,10 +56,10 @@ function QuizAnswer({
       )}
       <Button variant="outline" size="sm" onClick={onExplain}>
         <Sparkles aria-hidden />
-        Erklären
+        {tr('Erklären', 'Explain')}
       </Button>
       <p className="text-ui text-muted-foreground">
-        Belegt durch:{' '}
+        {tr('Belegt durch:', 'Backed by:')}{' '}
         <CitedBy notebookId={notebookId} chunkIds={question.chunkIds} onOpen={onOpenCitation} />
       </p>
     </div>
@@ -78,10 +79,10 @@ function QuizResult({
   return (
     <div className="flex flex-col items-start gap-3">
       <h3 className="text-xl font-title">
-        {correct} von {total} richtig
+        {tr(`${correct} von ${total} richtig`, `${correct} of ${total} correct`)}
       </h3>
       <Button variant="outline" onClick={onRestart}>
-        Noch einmal
+        {tr('Noch einmal', 'Try again')}
       </Button>
     </div>
   );
@@ -94,14 +95,19 @@ function QuizHeader({ position, onRestart }: { position: string; onRestart: () =
       <span aria-live="polite">{position}</span>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon-sm" aria-label="Weitere Optionen" tooltip="Mehr">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={tr('Weitere Optionen', 'More options')}
+            tooltip={tr('Mehr', 'More')}
+          >
             <EllipsisVertical />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onSelect={onRestart}>
             <RotateCcw aria-hidden />
-            Quiz neu starten
+            {tr('Quiz neu starten', 'Restart quiz')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -109,7 +115,7 @@ function QuizHeader({ position, onRestart }: { position: string; onRestart: () =
   );
 }
 
-/** "Weiter", or "Ergebnis anzeigen" on the last question, pinned to the lower edge. */
+/** "Next", or "Show result" on the last question, pinned to the lower edge. */
 function QuizNext({ last, onNext }: { last: boolean; onNext: () => void }) {
   return (
     <div className="sticky bottom-0 mt-auto flex justify-center bg-gradient-to-t from-card via-card/95 to-transparent pt-4 pb-1">
@@ -118,7 +124,7 @@ function QuizNext({ last, onNext }: { last: boolean; onNext: () => void }) {
         onClick={onNext}
         className="w-61 bg-action text-action-foreground hover:opacity-90"
       >
-        {last ? 'Ergebnis anzeigen' : 'Weiter'}
+        {last ? tr('Ergebnis anzeigen', 'Show result') : tr('Weiter', 'Next')}
       </Button>
     </div>
   );
@@ -126,8 +132,8 @@ function QuizNext({ last, onNext }: { last: boolean; onNext: () => void }) {
 
 /**
  * A quiz question by question, like the original: pick an option and every option says why it is
- * right or wrong (a quiz from before has the one explanation instead), "Weiter" goes on, "Tipp
- * anzeigen" helps before the answer and "Erklären" asks the chat afterwards.
+ * right or wrong (a quiz from before has the one explanation instead), "Next" goes on, "Show
+ * hint" helps before the answer and "Explain" asks the chat afterwards.
  */
 export function QuizView({
   notebookId,
@@ -148,7 +154,10 @@ export function QuizView({
 
   return (
     <div className="flex min-h-full flex-col gap-4">
-      <QuizHeader position={`${run.index + 1} von ${run.total}`} onRestart={run.restart} />
+      <QuizHeader
+        position={tr(`${run.index + 1} von ${run.total}`, `${run.index + 1} of ${run.total}`)}
+        onRestart={run.restart}
+      />
       <h3 className="text-read text-[1.125rem] leading-8 font-[450]">{question.question}</h3>
       <ul className="flex flex-col gap-3">
         {question.options.map((text, optionIndex) => (

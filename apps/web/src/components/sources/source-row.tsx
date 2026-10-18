@@ -22,6 +22,7 @@ import {
 import { RenameDialog } from '@/components/ui/rename-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useRenameSource, useRetrySource } from '@/hooks/use-sources';
+import { tr } from '@/lib/i18n';
 import { describeError, FAILURE_MESSAGE, STATUS_LABEL } from '@/lib/messages';
 
 /** The menu at the end of a row: remove the source, or rename it. It shows while the row is hovered or focused. */
@@ -42,8 +43,8 @@ function SourceMenu({
         <Button
           variant="ghost"
           size="icon-xs"
-          aria-label={`Weitere Aktionen für „${title}“`}
-          tooltip="Mehr"
+          aria-label={tr(`Weitere Aktionen für „${title}“`, `More actions for “${title}”`)}
+          tooltip={tr('Mehr', 'More')}
           disabled={busy}
           className="opacity-0 group-focus-within/row:opacity-100 group-hover/row:opacity-100 data-[state=open]:opacity-100 max-wide:opacity-100"
         >
@@ -53,11 +54,11 @@ function SourceMenu({
       <DropdownMenuContent align="end">
         <DropdownMenuItem disabled={busy} onSelect={onRemove}>
           <Trash2 aria-hidden />
-          Quelle entfernen
+          {tr('Quelle entfernen', 'Remove source')}
         </DropdownMenuItem>
         <DropdownMenuItem disabled={busy} onSelect={onRename}>
           <Pencil aria-hidden />
-          Quelle umbenennen
+          {tr('Quelle umbenennen', 'Rename source')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -86,7 +87,7 @@ function FailedSource({ notebookId, source }: { notebookId: string; source: Sour
         ) : (
           <RotateCw aria-hidden />
         )}
-        Erneut lesen
+        {tr('Erneut lesen', 'Read again')}
       </Button>
       {retry.isError && <p>{describeError(retry.error)}</p>}
     </div>
@@ -157,8 +158,8 @@ export function SourceRow({
           onRename={() => setRenaming(true)}
         />
         <RenameDialog
-          heading="Quelle umbenennen"
-          label="Name der Quelle"
+          heading={tr('Quelle umbenennen', 'Rename source')}
+          label={tr('Name der Quelle', 'Source name')}
           value={source.title}
           open={renaming}
           onOpenChange={setRenaming}
@@ -172,7 +173,10 @@ export function SourceRow({
           checked={source.selected && ready}
           disabled={!ready || busy}
           onCheckedChange={(checked) => onToggle(checked === true)}
-          aria-label={`„${source.title}“ für Antworten verwenden`}
+          aria-label={tr(
+            `„${source.title}“ für Antworten verwenden`,
+            `Use “${source.title}” for answers`
+          )}
         />
       </div>
       <SourceStatus notebookId={notebookId} source={source} />

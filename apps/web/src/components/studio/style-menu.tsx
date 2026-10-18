@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { HEADING_LEVELS, NORMAL } from '@/hooks/use-toolbar-state';
+import { tr } from '@/lib/i18n';
 
 interface StyleMenuProps {
   editor: Editor;
@@ -23,11 +24,13 @@ export function StyleMenu({ editor, level }: StyleMenuProps) {
         <Button
           variant="ghost"
           size="sm"
-          aria-label="Textformat"
-          tooltip="Textformat"
+          aria-label={tr('Textformat', 'Text style')}
+          tooltip={tr('Textformat', 'Text style')}
           className="px-3"
         >
-          {level === NORMAL ? 'Normal' : `Überschrift ${level}`}
+          {level === NORMAL
+            ? tr('Normal', 'Normal')
+            : tr(`Überschrift ${level}`, `Heading ${level}`)}
           <ChevronDown />
         </Button>
       </DropdownMenuTrigger>
@@ -43,14 +46,14 @@ export function StyleMenu({ editor, level }: StyleMenuProps) {
             key={heading}
             onSelect={() => editor.chain().focus().setHeading({ level: heading }).run()}
           >
-            Überschrift {heading}
+            {tr(`Überschrift ${heading}`, `Heading ${heading}`)}
           </DropdownMenuItem>
         ))}
         <DropdownMenuItem
           disabled={level === NORMAL}
           onSelect={() => editor.chain().focus().setParagraph().run()}
         >
-          Normal
+          {tr('Normal', 'Normal')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

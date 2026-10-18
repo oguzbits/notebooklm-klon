@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { EditableTitle } from '@/components/ui/editable-title';
 import { useUpdateNote } from '@/hooks/use-notes';
 import { useUploadFile } from '@/hooks/use-sources';
+import { tr } from '@/lib/i18n';
 import { describeError } from '@/lib/messages';
 
 interface AddAsSourceProps {
@@ -29,7 +30,7 @@ function AddAsSource({ notebookId, fileName, type, getText, disabled }: AddAsSou
     return (
       <p className="flex h-9 items-center gap-2 px-2 text-ui text-muted-foreground">
         <Check className="size-5" aria-hidden />
-        Als Quelle hinzugefügt
+        {tr('Als Quelle hinzugefügt', 'Added as a source')}
       </p>
     );
   }
@@ -51,7 +52,7 @@ function AddAsSource({ notebookId, fileName, type, getText, disabled }: AddAsSou
         }
       >
         <FilePlus2 />
-        Als Quelle festlegen
+        {tr('Als Quelle festlegen', 'Set as source')}
       </Button>
     </div>
   );
@@ -71,14 +72,14 @@ interface NoteFrameProps {
   sourceDisabled?: boolean;
   /** A failure to save, above the footer (only a note of the reader is saved as it is typed). */
   problem?: ReactNode;
-  /** A quiet word on saving, at the right of "Als Quelle festlegen". */
+  /** A quiet word on saving, at the right of "Set as source". */
   footerNote?: ReactNode;
   children: ReactNode;
 }
 
 /**
  * The frame of one note in full, like the original: its title as a field with the trash can, the
- * tools (for a note of the reader), the text, and "Als Quelle festlegen" with what is known about
+ * tools (for a note of the reader), the text, and "Set as source" with what is known about
  * saving. The path back lives in the header of the column.
  */
 export function NoteFrame({
@@ -102,7 +103,7 @@ export function NoteFrame({
       <div className="flex h-[74px] shrink-0 items-center gap-1 pr-4 pl-2">
         <EditableTitle
           value={noteTitle(note)}
-          label="Titel der Notiz"
+          label={tr('Titel der Notiz', 'Note title')}
           saving={update.isPending && update.variables?.changes.title !== undefined}
           error={update.isError ? describeError(update.error) : null}
           maxLength={NOTE_LIMITS.TITLE_CHARS}
@@ -115,8 +116,8 @@ export function NoteFrame({
         <Button
           variant="ghost"
           size="icon-lg"
-          aria-label="Notiz löschen"
-          tooltip="Löschen"
+          aria-label={tr('Notiz löschen', 'Delete note')}
+          tooltip={tr('Löschen', 'Delete')}
           disabled={deleting}
           onClick={onDelete}
         >

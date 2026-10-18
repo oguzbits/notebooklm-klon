@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAddUrl } from '@/hooks/use-sources';
 import { useCapabilities, useWebSearch } from '@/hooks/use-web-search';
+import { tr } from '@/lib/i18n';
 import { describeError } from '@/lib/messages';
 
 /** The domain of an address, for the line under the title. */
@@ -37,14 +38,17 @@ function ResultRow({ notebookId, result }: ResultRowProps) {
       {add.isSuccess ? (
         <span className="flex h-8 shrink-0 items-center gap-1 px-2 text-small text-muted-foreground">
           <Check className="size-4" aria-hidden />
-          Hinzugefügt
+          {tr('Hinzugefügt', 'Added')}
         </span>
       ) : (
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label={`${result.title} als Quelle hinzufügen`}
-          tooltip="Als Quelle hinzufügen"
+          aria-label={tr(
+            `${result.title} als Quelle hinzufügen`,
+            `Add ${result.title} as a source`
+          )}
+          tooltip={tr('Als Quelle hinzufügen', 'Add as a source')}
           disabled={add.isPending}
           onClick={() => add.mutate(result.url)}
         >
@@ -81,8 +85,8 @@ function SearchField({ query, pending, canSearch, onChange, onRun }: SearchField
       className="flex items-end gap-2 rounded-2xl bg-secondary py-2 pr-2 pl-4"
     >
       <Textarea
-        aria-label="Im Web nach neuen Quellen suchen"
-        placeholder="Im Web nach neuen Quellen suchen"
+        aria-label={tr('Im Web nach neuen Quellen suchen', 'Search the web for new sources')}
+        placeholder={tr('Im Web nach neuen Quellen suchen', 'Search the web for new sources')}
         rows={1}
         maxLength={WEB_SEARCH_QUERY.MAX_CHARS}
         value={query}
@@ -95,7 +99,7 @@ function SearchField({ query, pending, canSearch, onChange, onRun }: SearchField
         type="submit"
         size="icon"
         variant={canSearch ? 'default' : 'ghost'}
-        aria-label="Suchen"
+        aria-label={tr('Suchen', 'Search')}
         disabled={!canSearch}
       >
         <ArrowRight />
@@ -114,15 +118,15 @@ interface SearchResultsProps {
 /** What the search brought: the wait, the failure with a way to try again, or the pages found. */
 function SearchResults({ notebookId, search, onRetry, onClose }: SearchResultsProps) {
   return (
-    <section aria-label="Suchergebnisse" className="flex flex-col gap-1">
+    <section aria-label={tr('Suchergebnisse', 'Search results')} className="flex flex-col gap-1">
       {search.isPending && (
         <p
           role="status"
-          aria-label="Suche läuft"
+          aria-label={tr('Suche läuft', 'Searching')}
           className="flex items-center gap-2 px-2 py-3 text-ui text-muted-foreground"
         >
           <LoaderCircle className="size-4 animate-spin" aria-hidden />
-          Suche läuft …
+          {tr('Suche läuft …', 'Searching …')}
         </p>
       )}
       {search.isError && (
@@ -131,21 +135,25 @@ function SearchResults({ notebookId, search, onRetry, onClose }: SearchResultsPr
       {search.isSuccess && (
         <>
           <div className="flex items-center justify-between pl-2">
-            <h3 className="text-small text-muted-foreground">Gefundene Seiten</h3>
+            <h3 className="text-small text-muted-foreground">
+              {tr('Gefundene Seiten', 'Pages found')}
+            </h3>
             <Button
               variant="ghost"
               size="icon-xs"
-              aria-label="Ergebnisse schließen"
-              tooltip="Schließen"
+              aria-label={tr('Ergebnisse schließen', 'Close results')}
+              tooltip={tr('Schließen', 'Close')}
               onClick={onClose}
             >
               <X />
             </Button>
           </div>
           {search.data.results.length === 0 ? (
-            <p className="px-2 py-3 text-ui text-muted-foreground">Dazu wurde nichts gefunden.</p>
+            <p className="px-2 py-3 text-ui text-muted-foreground">
+              {tr('Dazu wurde nichts gefunden.', 'Nothing was found for that.')}
+            </p>
           ) : (
-            <ul aria-label="Gefundene Seiten" className="flex flex-col">
+            <ul aria-label={tr('Gefundene Seiten', 'Pages found')} className="flex flex-col">
               {search.data.results.map((result) => (
                 <ResultRow key={result.url} notebookId={notebookId} result={result} />
               ))}

@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useUpdateStudioOutput } from '@/hooks/use-studio';
+import { tr } from '@/lib/i18n';
 import { reportToMarkdown } from '@/lib/markdown-export';
 import { describeError } from '@/lib/messages';
 import { reportToText } from '@/lib/report-export';
@@ -86,8 +87,8 @@ function OutputContent({
 function CopyReportButton({ report }: { report: Report }) {
   return (
     <CopyButton
-      label="Inhalt mit Formatierung kopieren"
-      tooltip="Inhalt kopieren"
+      label={tr('Inhalt mit Formatierung kopieren', 'Copy content with formatting')}
+      tooltip={tr('Inhalt kopieren', 'Copy content')}
       write={() =>
         navigator.clipboard.write([
           new ClipboardItem({
@@ -128,7 +129,10 @@ function EnlargedOutput({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription className="sr-only">
-            Die Ausgabe in voller Größe. Die Nummern führen zu den Textstellen.
+            {tr(
+              'Die Ausgabe in voller Größe. Die Nummern führen zu den Textstellen.',
+              'The output at full size. The numbers lead to the passages.'
+            )}
           </DialogDescription>
         </DialogHeader>
         <div className="min-h-0 overflow-y-auto">{children}</div>
@@ -172,7 +176,7 @@ export function OutputViewer({
         notebookId={notebookId}
         title={{
           text: output.title,
-          label: 'Titel der Ausgabe',
+          label: tr('Titel der Ausgabe', 'Output title'),
           saving: update.isPending && update.variables?.changes.title !== undefined,
           error: update.isError ? describeError(update.error) : null,
           onSave: (title, revert) =>
@@ -181,7 +185,7 @@ export function OutputViewer({
         prompt={{ request: output.request, withPrompt: report }}
         feedback={{
           value: output.feedback,
-          noun: report ? 'Bericht' : 'Inhalt',
+          noun: report ? tr('Bericht', 'report') : tr('Inhalt', 'content'),
           onChange: (feedback) => update.mutate({ outputId: output.id, changes: { feedback } }),
         }}
         actions={

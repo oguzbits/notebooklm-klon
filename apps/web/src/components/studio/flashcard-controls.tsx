@@ -1,6 +1,7 @@
 import { ArrowLeft, ArrowRight, Check, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { tr } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 const ROUND =
@@ -26,7 +27,7 @@ export function FlashcardControls({
     <div className="flex items-center justify-center gap-4">
       <Button
         variant="ghost"
-        aria-label="Vorherige Karte"
+        aria-label={tr('Vorherige Karte', 'Previous card')}
         disabled={first}
         onClick={() => onGo(-1)}
         className={cn(ROUND, 'text-action')}
@@ -35,7 +36,7 @@ export function FlashcardControls({
       </Button>
       <Button
         variant="ghost"
-        aria-label="Nicht verstanden"
+        aria-label={tr('Nicht verstanden', 'Not understood')}
         onClick={() => onMark(false)}
         className={cn(ROUND, 'w-[75px] gap-2 text-stage-wrong')}
       >
@@ -44,7 +45,7 @@ export function FlashcardControls({
       </Button>
       <Button
         variant="ghost"
-        aria-label="Verstanden"
+        aria-label={tr('Verstanden', 'Understood')}
         onClick={() => onMark(true)}
         className={cn(ROUND, 'w-[75px] gap-2 text-stage-right')}
       >
@@ -53,7 +54,7 @@ export function FlashcardControls({
       </Button>
       <Button
         variant="ghost"
-        aria-label="Nächste Karte"
+        aria-label={tr('Nächste Karte', 'Next card')}
         disabled={last}
         onClick={() => onGo(1)}
         className={cn(ROUND, 'text-action')}

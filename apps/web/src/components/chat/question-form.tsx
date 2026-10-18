@@ -4,6 +4,8 @@ import { type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from 
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { tr } from '@/lib/i18n';
+import { sourcesLabel } from '@/lib/sources-label';
 import type { LimitNote } from '@/lib/usage-note';
 
 /** Safari reports a key that belongs to a composition with this code, after the composition has ended. */
@@ -40,7 +42,7 @@ function SourceCount({ count }: { count: number }) {
   return (
     <>
       <span className="hidden shrink-0 text-small text-muted-foreground sm:inline">
-        {count} {count === 1 ? 'Quelle' : 'Quellen'}
+        {sourcesLabel(count)}
       </span>
       <span
         className="flex shrink-0 items-center gap-1 text-small text-muted-foreground sm:hidden"
@@ -64,7 +66,12 @@ function SendOrStop({
 }) {
   if (pending) {
     return (
-      <Button type="button" size="icon" aria-label="Antwort stoppen" onClick={onStop}>
+      <Button
+        type="button"
+        size="icon"
+        aria-label={tr('Antwort stoppen', 'Stop answer')}
+        onClick={onStop}
+      >
         <Square />
       </Button>
     );
@@ -74,13 +81,23 @@ function SendOrStop({
       type="submit"
       size="icon"
       variant={canSend ? 'default' : 'secondary'}
-      aria-label="Frage senden"
+      aria-label={tr('Frage senden', 'Send question')}
       disabled={!canSend}
     >
       <ArrowUp />
     </Button>
   );
 }
+
+const FIELD = {
+  LABEL: tr('Deine Frage', 'Your question'),
+  PLACEHOLDER: tr('Stelle eine Frage zu deinen Quellen …', 'Ask a question about your sources …'),
+};
+
+const DISCLAIMER = tr(
+  'Antworten können Fehler enthalten. Prüfe wichtige Angaben an der Quelle.',
+  'Answers can contain mistakes. Check important details against the source.'
+);
 
 /** The field for a new question with the number of sources, the send button and the note below. */
 export function QuestionForm({
@@ -120,8 +137,8 @@ export function QuestionForm({
         <div className="flex min-h-16 items-center gap-2 rounded-panel bg-card py-3 pr-3 pl-5 shadow-glow">
           <Textarea
             name="question"
-            aria-label="Deine Frage"
-            placeholder="Stelle eine Frage zu deinen Quellen …"
+            aria-label={FIELD.LABEL}
+            placeholder={FIELD.PLACEHOLDER}
             rows={1}
             maxLength={MAX_QUESTION_CHARS}
             value={question}
@@ -142,7 +159,7 @@ export function QuestionForm({
             </span>
           )}
           {hint ? `${hint} ` : ''}
-          Antworten können Fehler enthalten. Prüfe wichtige Angaben an der Quelle.
+          {DISCLAIMER}
         </p>
       </form>
     </div>

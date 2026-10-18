@@ -8,6 +8,7 @@ import { NoteToolbar } from '@/components/studio/note-toolbar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useNoteAutosave } from '@/hooks/use-note-autosave';
+import { tr } from '@/lib/i18n';
 import { describeError } from '@/lib/messages';
 import { SAVE_STATE, type SaveEvent } from '@/lib/save-queue';
 
@@ -22,10 +23,13 @@ function SaveProblem({ event, onRetry }: { event: SaveEvent | null; onRetry: () 
   return (
     <Alert variant="destructive">
       <AlertDescription className="flex flex-col items-start gap-2">
-        <p>Die Notiz konnte nicht gespeichert werden. {describeError(event.error)}</p>
+        <p>
+          {tr('Die Notiz konnte nicht gespeichert werden.', 'The note could not be saved.')}{' '}
+          {describeError(event.error)}
+        </p>
         <Button size="sm" variant="outline" onClick={onRetry}>
           <RotateCw />
-          Erneut versuchen
+          {tr('Erneut versuchen', 'Try again')}
         </Button>
       </AlertDescription>
     </Alert>
@@ -36,8 +40,8 @@ function SaveProblem({ event, onRetry }: { event: SaveEvent | null; onRetry: () 
 function SaveNote({ event }: { event: SaveEvent | null }) {
   return (
     <p role="status" className="min-h-8 content-center text-small text-muted-foreground">
-      {event?.state === SAVE_STATE.SAVING && 'Speichert …'}
-      {event?.state === SAVE_STATE.SAVED && 'Gespeichert'}
+      {event?.state === SAVE_STATE.SAVING && tr('Speichert …', 'Saving …')}
+      {event?.state === SAVE_STATE.SAVED && tr('Gespeichert', 'Saved')}
     </p>
   );
 }
@@ -71,7 +75,7 @@ export function WrittenNoteView({
         // Tiptap does not put the role on the element, and a label needs one to be read out.
         role: 'textbox',
         'aria-multiline': 'true',
-        'aria-label': 'Text der Notiz',
+        'aria-label': tr('Text der Notiz', 'Text of the note'),
       },
     },
     onUpdate: ({ editor: current }) => autosave.push(markdownOf(current)),

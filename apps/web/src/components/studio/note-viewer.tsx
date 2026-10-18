@@ -57,7 +57,7 @@ function AnswerNoteView({
 
 /**
  * One note in full, in place of the Studio list: a saved answer, or a note of the reader with the
- * editor. "Als Quelle festlegen" puts its text among the sources.
+ * editor. "Set as source" puts its text among the sources.
  */
 export function NoteViewer({
   notebookId,

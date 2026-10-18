@@ -7,9 +7,13 @@ import { InlineText } from '@/components/chat/inline-text';
 import { SaveNoteButton } from '@/components/chat/save-note-button';
 import { numberCitations } from '@/lib/citations';
 import { formatWeekday } from '@/lib/day';
+import { tr } from '@/lib/i18n';
 import { messageTime } from '@/lib/relative-time';
 
-const NO_ANSWER = 'Dazu habe ich in den ausgewählten Quellen keine belegte Antwort gefunden.';
+const NO_ANSWER = tr(
+  'Dazu habe ich in den ausgewählten Quellen keine belegte Antwort gefunden.',
+  'I could not find a supported answer to that in the selected sources.'
+);
 
 interface AnswerViewProps {
   notebookId: string;

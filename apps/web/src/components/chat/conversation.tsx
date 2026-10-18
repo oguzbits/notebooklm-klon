@@ -17,6 +17,7 @@ import type { LiveAnswer, useAskQuestion } from '@/hooks/use-chat';
 import { useNotebook } from '@/hooks/use-notebooks';
 import type { Suggestions } from '@/hooks/use-overview';
 import { isSameDay } from '@/lib/day';
+import { tr } from '@/lib/i18n';
 import { notebookEmoji } from '@/lib/notebook-emoji';
 
 /** Whether a message at this time opens a new day of the conversation. */
@@ -60,7 +61,7 @@ function LiveTurn({
         />
         <p className="mt-2 flex items-center gap-2 text-ui text-muted-foreground">
           <LoaderCircle className="size-4 animate-spin" aria-hidden />
-          Antwort wird geschrieben …
+          {tr('Antwort wird geschrieben …', 'Writing the answer …')}
         </p>
       </div>
     </>

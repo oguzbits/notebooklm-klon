@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button';
 import type { useCreateWrittenNote, useDeleteNote, useNotes } from '@/hooks/use-notes';
 import type { useCreateStudioOutput, useDeleteStudioOutput } from '@/hooks/use-studio';
 import type { useStudioLibrary } from '@/hooks/use-studio-library';
+import { tr } from '@/lib/i18n';
+import { sourcesLabel } from '@/lib/sources-label';
 import type { LimitNote } from '@/lib/usage-note';
 
 type Library = ReturnType<typeof useStudioLibrary>;
@@ -35,17 +37,25 @@ function PendingRows({
     <>
       {addNote.isPending && (
         <PendingRow>
-          <span className="min-w-0 truncate text-small">Notiz wird erstellt …</span>
+          <span className="min-w-0 truncate text-small">
+            {tr('Notiz wird erstellt …', 'Creating note …')}
+          </span>
         </PendingRow>
       )}
       {create.isPending && (
         <PendingRow>
           <span className="min-w-0 text-small">
             <span className="block truncate">
-              {create.variables ? KIND_LABEL[create.variables.kind] : 'Ausgabe'} wird erstellt …
+              {tr(
+                `${create.variables ? KIND_LABEL[create.variables.kind] : 'Ausgabe'} wird erstellt …`,
+                `Creating ${create.variables ? KIND_LABEL[create.variables.kind] : 'output'} …`
+              )}
             </span>
             <span className="block truncate text-muted-foreground">
-              basierend auf {usableCount} {usableCount === 1 ? 'Quelle' : 'Quellen'}
+              {tr(
+                `basierend auf ${sourcesLabel(usableCount)}`,
+                `based on ${sourcesLabel(usableCount)}`
+              )}
             </span>
           </span>
         </PendingRow>
@@ -123,7 +133,10 @@ function CreateSection({
       </div>
       {sources.usable.length === 0 && sources.loaded && (
         <p className="text-small text-muted-foreground">
-          Wähle mindestens eine fertig gelesene Quelle aus, um etwas zu erstellen.
+          {tr(
+            'Wähle mindestens eine fertig gelesene Quelle aus, um etwas zu erstellen.',
+            'Select at least one source that has finished loading to create something.'
+          )}
         </p>
       )}
       {limit.note && (
@@ -154,7 +167,7 @@ function AddNoteBar({ disabled, onClick }: { disabled: boolean; onClick: () => v
         className="absolute bottom-[18px] left-1/2 z-10 -translate-x-1/2 shadow-glow"
       >
         <NotebookText />
-        Notiz hinzufügen
+        {tr('Notiz hinzufügen', 'Add note')}
       </Button>
       {/* The list fades out above the lower edge of the panel, padding included. */}
       <div
@@ -191,7 +204,10 @@ export function StudioHome({
           blocked={blocked}
           onCreate={actions.onCreate}
         />
-        <section aria-label="Erstellte Ausgaben" className="flex flex-col gap-1">
+        <section
+          aria-label={tr('Erstellte Ausgaben', 'Created outputs')}
+          className="flex flex-col gap-1"
+        >
           <PendingRows addNote={addNote} create={create} usableCount={sources.usable.length} />
           <QueryBoundary
             query={outputs}

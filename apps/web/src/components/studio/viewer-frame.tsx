@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { EditableTitle } from '@/components/ui/editable-title';
+import { tr } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 function FeedbackButton({
@@ -35,7 +36,7 @@ function FeedbackButton({
       className={cn('h-9', pressed && 'bg-accent')}
     >
       <Icon className={cn(pressed && 'fill-current')} aria-hidden />
-      {good ? 'Guter' : 'Schlechter'} {noun}
+      {tr(`${good ? 'Guter' : 'Schlechter'} ${noun}`, `${good ? 'Good' : 'Bad'} ${noun}`)}
     </Button>
   );
 }
@@ -48,8 +49,8 @@ function FrameMenu({ deleting, onDelete }: { deleting: boolean; onDelete: () => 
         <Button
           variant="ghost"
           size="icon"
-          aria-label="Weitere Aktionen"
-          tooltip="Mehr"
+          aria-label={tr('Weitere Aktionen', 'More actions')}
+          tooltip={tr('Mehr', 'More')}
           disabled={deleting}
         >
           <EllipsisVertical />
@@ -58,14 +59,14 @@ function FrameMenu({ deleting, onDelete }: { deleting: boolean; onDelete: () => 
       <DropdownMenuContent align="end">
         <DropdownMenuItem disabled={deleting} onSelect={onDelete}>
           <Trash2 aria-hidden />
-          Löschen
+          {tr('Löschen', 'Delete')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
-/** The two buttons that rate the output ("Guter Bericht", "Schlechter Bericht"). */
+/** The two buttons that rate the output ("Good report", "Bad report"). */
 function FeedbackBar({
   noun,
   chosen,
@@ -98,7 +99,7 @@ interface TitleProps {
 
 interface FeedbackProps {
   value: StudioFeedback | null;
-  /** "Bericht" for a report, "Inhalt" for the rest: "Guter Bericht". */
+  /** "report" for a report, "content" for the rest: "Good report". */
   noun: string;
   onChange: (feedback: StudioFeedback | null) => void;
 }
@@ -152,8 +153,8 @@ export function ViewerFrame({
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Maximieren"
-              tooltip="Ansicht maximieren"
+              aria-label={tr('Maximieren', 'Maximize')}
+              tooltip={tr('Ansicht maximieren', 'Maximize view')}
               onClick={onMaximize}
             >
               <Maximize2 />

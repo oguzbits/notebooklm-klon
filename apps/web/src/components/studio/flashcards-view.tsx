@@ -7,11 +7,18 @@ import { FlashcardFace } from '@/components/studio/flashcard-face';
 import { useFlashcardDeck } from '@/hooks/use-flashcard-deck';
 import { explainCardPrompt } from '@/lib/explain-prompts';
 import { downloadFlashcards } from '@/lib/flashcards-export';
+import { tr } from '@/lib/i18n';
 import { shuffle } from '@/lib/shuffle';
+
+const GROUP_LABEL = tr('Lernkarten', 'Flashcards');
+const BACKED_BY = tr('Belegt durch:', 'Backed by:');
+
+const positionLabel = (index: number, total: number) =>
+  tr(`${index + 1} von ${total}`, `${index + 1} of ${total}`);
 
 /**
  * Flashcards one by one, like the original: a dark card on a dark stage with the position in the set,
- * a click turns it, the round buttons go back, mark "nicht verstanden" or "verstanden" (both go on
+ * a click turns it, the round buttons go back, mark "not understood" or "understood" (both go on
  * to the next card) and forward. The menu of the card starts the set over, mixes it or downloads it.
  */
 export function FlashcardsView({
@@ -46,7 +53,7 @@ export function FlashcardsView({
   return (
     <div
       role="group"
-      aria-label="Lernkarten"
+      aria-label={GROUP_LABEL}
       tabIndex={0}
       onKeyDown={onKeyDown}
       className="flex flex-col gap-4 rounded-2xl bg-stage bg-[radial-gradient(70%_35%_at_50%_100%,var(--stage-glow),transparent)] p-4 text-flashcard-foreground"
@@ -54,7 +61,7 @@ export function FlashcardsView({
       <FlashcardFace
         front={card.front}
         back={card.back}
-        position={`${deck.index + 1} von ${deck.cards.length}`}
+        position={positionLabel(deck.index, deck.cards.length)}
         turned={deck.turned}
         onFlip={deck.flip}
         onExplain={() => onAsk(explainCardPrompt(card))}
@@ -73,7 +80,7 @@ export function FlashcardsView({
         onMark={deck.mark}
       />
       <p className="text-ui text-flashcard-foreground/60">
-        Belegt durch:{' '}
+        {BACKED_BY}{' '}
         <CitedBy notebookId={notebookId} chunkIds={card.chunkIds} onOpen={onOpenCitation} />
       </p>
     </div>

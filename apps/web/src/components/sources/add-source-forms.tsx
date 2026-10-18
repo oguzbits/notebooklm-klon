@@ -5,15 +5,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { tr } from '@/lib/i18n';
 
-const PASTED_TEXT_TITLE = 'Eingefügter Text';
+const PASTED_TEXT_TITLE = tr('Eingefügter Text', 'Pasted text');
 const TEXT_FILE_EXTENSION = '.txt';
 
 /** The title of a view of the dialog with the way back to the choice. */
 function BackHeader({ title, onBack }: { title: string; onBack: () => void }) {
   return (
     <div className="flex items-center gap-2">
-      <Button variant="ghost" size="icon-lg" aria-label="Zurück" onClick={onBack}>
+      <Button variant="ghost" size="icon-lg" aria-label={tr('Zurück', 'Back')} onClick={onBack}>
         <ArrowLeft />
       </Button>
       <h3 className="text-[1.375rem] leading-9">{title}</h3>
@@ -41,13 +42,15 @@ export function WebPageForm({ pending, onSubmit, onBack }: WebPageFormProps) {
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-4">
-      <BackHeader title="Webseite hinzufügen" onBack={onBack} />
+      <BackHeader title={tr('Webseite hinzufügen', 'Add web page')} onBack={onBack} />
       <p className="text-read text-muted-foreground">
-        Füge die Adresse einer Webseite, eines PDFs oder eines öffentlichen YouTube-Videos ein. Bei
-        einer Webseite wird der sichtbare Text importiert, bei einem Video das gesprochene Wort.
+        {tr(
+          'Füge die Adresse einer Webseite, eines PDFs oder eines öffentlichen YouTube-Videos ein. Bei einer Webseite wird der sichtbare Text importiert, bei einem Video das gesprochene Wort.',
+          'Paste the address of a web page, a PDF or a public YouTube video. For a web page the visible text is imported, for a video the spoken words.'
+        )}
       </p>
       <div className="flex flex-col gap-2">
-        <Label htmlFor="source-url">Webadresse</Label>
+        <Label htmlFor="source-url">{tr('Webadresse', 'Web address')}</Label>
         <Input id="source-url" name="url" type="url" placeholder="https://…" required />
       </div>
       <Button
@@ -56,9 +59,9 @@ export function WebPageForm({ pending, onSubmit, onBack }: WebPageFormProps) {
         size="lg"
         className="self-end"
         disabled={pending}
-        aria-label="Link hinzufügen"
+        aria-label={tr('Link hinzufügen', 'Add link')}
       >
-        {pending ? 'Lädt …' : 'Einfügen'}
+        {pending ? tr('Lädt …', 'Loading …') : tr('Einfügen', 'Insert')}
       </Button>
     </form>
   );
@@ -88,14 +91,18 @@ export function PastedTextForm({ pending, onSubmit, onBack }: PastedTextFormProp
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-4">
-      <BackHeader title="Kopierten Text einfügen" onBack={onBack} />
-      <Input name="title" aria-label="Titel des Textes" placeholder="Titel (optional)" />
+      <BackHeader title={tr('Kopierten Text einfügen', 'Insert pasted text')} onBack={onBack} />
+      <Input
+        name="title"
+        aria-label={tr('Titel des Textes', 'Title of the text')}
+        placeholder={tr('Titel (optional)', 'Title (optional)')}
+      />
       <div className="flex flex-col gap-2">
-        <Label htmlFor="source-text">Kopierter Text</Label>
+        <Label htmlFor="source-text">{tr('Kopierter Text', 'Pasted text')}</Label>
         <Textarea
           id="source-text"
           name="text"
-          placeholder="Text hier einfügen …"
+          placeholder={tr('Text hier einfügen …', 'Paste text here …')}
           rows={8}
           required
         />
@@ -106,9 +113,9 @@ export function PastedTextForm({ pending, onSubmit, onBack }: PastedTextFormProp
         size="lg"
         className="self-end"
         disabled={pending}
-        aria-label="Text hinzufügen"
+        aria-label={tr('Text hinzufügen', 'Add text')}
       >
-        Einfügen
+        {tr('Einfügen', 'Insert')}
       </Button>
     </form>
   );

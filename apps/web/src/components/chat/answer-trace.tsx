@@ -3,6 +3,7 @@ import { ChevronDown, CircleDot, FileSearch, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 
 import { foundLine, leftOutLines, plural } from '@/lib/answer-trace';
+import { tr } from '@/lib/i18n';
 import { sourcesLabel } from '@/lib/sources-label';
 import { cn } from '@/lib/utils';
 
@@ -14,7 +15,7 @@ interface AnswerTraceViewProps {
 /**
  * "Thoughts" of the original, honestly: a closed line under the question that opens to the steps
  * the server really took for this answer (searched the sources, wrote and checked the statements),
- * in German. There are no thoughts of the model in it, only what was done and what was left out.
+ * in the language of the page. There are no thoughts of the model in it, only what was done and what was left out.
  */
 export function AnswerTraceView({ trace, statements }: AnswerTraceViewProps) {
   const [open, setOpen] = useState(false);
@@ -32,7 +33,7 @@ export function AnswerTraceView({ trace, statements }: AnswerTraceViewProps) {
         )}
       >
         <CircleDot className="size-3.5" aria-hidden />
-        Vorgehen
+        {tr('Vorgehen', 'Steps taken')}
         <ChevronDown
           className={cn('size-4 transition-transform', open && 'rotate-180')}
           aria-hidden
@@ -43,7 +44,7 @@ export function AnswerTraceView({ trace, statements }: AnswerTraceViewProps) {
           <li className="flex items-start gap-3">
             <FileSearch className="mt-0.5 size-5 shrink-0 text-muted-foreground" aria-hidden />
             <span>
-              Deine Quellen wurden durchsucht
+              {tr('Deine Quellen wurden durchsucht', 'Your sources were searched')}
               <span className="block text-small text-muted-foreground">
                 {sourcesLabel(trace.sourcesSearched)} · {foundLine(trace.passagesFound)}
               </span>
@@ -53,9 +54,12 @@ export function AnswerTraceView({ trace, statements }: AnswerTraceViewProps) {
             <li className="flex items-start gap-3">
               <ShieldCheck className="mt-0.5 size-5 shrink-0 text-muted-foreground" aria-hidden />
               <span>
-                Antwort geschrieben und geprüft
+                {tr('Antwort geschrieben und geprüft', 'Answer written and checked')}
                 <span className="block text-small text-muted-foreground">
-                  {plural(statements, 'Aussage', 'Aussagen')}, jede mit Quellenangabe
+                  {tr(
+                    `${plural(statements, 'Aussage', 'Aussagen')}, jede mit Quellenangabe`,
+                    `${plural(statements, 'statement', 'statements')}, each with a citation`
+                  )}
                 </span>
                 {left.map((line) => (
                   <span key={line} className="block text-small text-muted-foreground">

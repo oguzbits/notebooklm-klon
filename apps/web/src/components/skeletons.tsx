@@ -1,10 +1,11 @@
 import { LoaderCircle } from 'lucide-react';
 
 import { Skeleton } from '@/components/ui/skeleton';
+import { tr } from '@/lib/i18n';
 
 /** Each placeholder keeps the size and place of what it stands for, measured on the original. */
 
-const STATUS = { role: 'status', 'aria-label': 'Wird geladen' } as const;
+const STATUS = { role: 'status', 'aria-label': tr('Wird geladen', 'Loading') } as const;
 
 /** The rows of the sources: a symbol, a title and the box to tick. */
 export function SourceRowsSkeleton({ rows = 3 }: { rows?: number }) {
@@ -58,7 +59,7 @@ export function ChatSkeleton({ emoji, title }: { emoji: string; title?: string }
           {emoji}
         </span>
         <h3 className="text-[2.25rem] leading-[2.75rem] font-[320] break-words">
-          {title ?? 'Notebook wird geladen …'}
+          {title ?? tr('Notebook wird geladen …', 'Loading notebook …')}
         </h3>
       </div>
       <div className="mt-6 flex flex-col gap-2">
@@ -115,7 +116,7 @@ export function PageBlank() {
   return <div className="h-dvh" {...STATUS} />;
 }
 
-/** A dialog that waits for its content: the spinner and the words, like the original ("Wird geladen…"). */
+/** A dialog that waits for its content: the spinner and the words, like the original ("Loading…"). */
 export function DialogSpinner() {
   return (
     <div
@@ -123,7 +124,7 @@ export function DialogSpinner() {
       {...STATUS}
     >
       <LoaderCircle className="size-6 animate-spin" aria-hidden />
-      Wird geladen …
+      {tr('Wird geladen …', 'Loading …')}
     </div>
   );
 }

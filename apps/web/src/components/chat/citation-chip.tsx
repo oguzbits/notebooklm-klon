@@ -5,6 +5,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { Skeleton } from '@/components/ui/skeleton';
 import { useHoverOrFocus } from '@/hooks/use-hover-or-focus';
 import { useChunk } from '@/hooks/use-reader';
+import { tr } from '@/lib/i18n';
 
 interface CitationChipProps {
   notebookId: string;
@@ -24,7 +25,11 @@ function PassagePreview({
   return (
     <>
       {chunk.isPending && (
-        <div className="flex flex-col gap-3 p-4" role="status" aria-label="Wird geladen">
+        <div
+          className="flex flex-col gap-3 p-4"
+          role="status"
+          aria-label={tr('Wird geladen', 'Loading')}
+        >
           <Skeleton className="h-5 w-1/2" />
           <Skeleton className="h-6 w-full" />
           <Skeleton className="h-6 w-11/12" />
@@ -33,7 +38,10 @@ function PassagePreview({
       )}
       {chunk.isError && (
         <p className="p-4 text-[0.875rem] leading-6 text-muted-foreground">
-          Diese Quelle ist nicht mehr in deinem Notebook.
+          {tr(
+            'Diese Quelle ist nicht mehr in deinem Notebook.',
+            'This source is no longer in your notebook.'
+          )}
         </p>
       )}
       {chunk.data && (
@@ -46,7 +54,7 @@ function PassagePreview({
           </div>
           <div className="shrink-0 border-t border-[var(--table-line)] p-4 text-[0.875rem] leading-6">
             <button type="button" className="rounded-sm text-link hover:underline" onClick={onShow}>
-              Quelle anzeigen
+              {tr('Quelle anzeigen', 'Show source')}
             </button>
           </div>
         </>
@@ -84,7 +92,7 @@ export function CitationChip({ notebookId, chunkId, number, onOpen }: CitationCh
           onPointerLeave={presence.onPointerLeave}
           onFocus={presence.onFocus}
           onBlur={presence.onBlur}
-          aria-label={`Quelle ${number} anzeigen`}
+          aria-label={tr(`Quelle ${number} anzeigen`, `Show source ${number}`)}
           className="veil ml-1 inline-flex size-[22px] items-center justify-center rounded-full bg-secondary align-middle text-[0.6875rem] leading-4 font-[500] text-meta"
         >
           {number}

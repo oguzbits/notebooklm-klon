@@ -1,5 +1,7 @@
 import { CornerDownRight } from 'lucide-react';
 
+import { tr } from '@/lib/i18n';
+
 /**
  * The cards under the last answer with questions to ask next, three in a row like in NotebookLM.
  * A card asks its question at once; each has the arrow of a follow-up at its lower left.
@@ -14,7 +16,10 @@ export function FollowUps({
   onAsk: (question: string) => void;
 }) {
   return (
-    <ul aria-label="Vorschläge für weitere Fragen" className="mt-4 flex gap-3">
+    <ul
+      aria-label={tr('Vorschläge für weitere Fragen', 'Suggested follow-up questions')}
+      className="mt-4 flex gap-3"
+    >
       {questions.map((question) => (
         <li key={question} className="flex flex-1">
           <button

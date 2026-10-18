@@ -9,12 +9,13 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { tr } from '@/lib/i18n';
 import { SOURCE_SORT, type SourceSort, toSourceSort } from '@/lib/sort-sources';
 
 const SORT_CHOICES = [
-  [SOURCE_SORT.LATEST, 'Letzte'],
-  [SOURCE_SORT.TITLE, 'Titel'],
-  [SOURCE_SORT.TYPE, 'Typ'],
+  [SOURCE_SORT.LATEST, tr('Letzte', 'Latest')],
+  [SOURCE_SORT.TITLE, tr('Titel', 'Title')],
+  [SOURCE_SORT.TYPE, tr('Typ', 'Type')],
 ] as const;
 
 interface SourcesToolbarProps {
@@ -42,8 +43,8 @@ export function SourcesToolbar({
             variant="ghost"
             size="icon-sm"
             className="size-8"
-            aria-label="Quellen sortieren"
-            tooltip="Quellen sortieren"
+            aria-label={tr('Quellen sortieren', 'Sort sources')}
+            tooltip={tr('Quellen sortieren', 'Sort sources')}
           >
             <ArrowDownWideNarrow />
           </Button>
@@ -62,12 +63,12 @@ export function SourcesToolbar({
         </DropdownMenuContent>
       </DropdownMenu>
       <label className="flex items-center gap-3 text-[0.875rem] leading-6">
-        Alle auswählen
+        {tr('Alle auswählen', 'Select all')}
         <Checkbox
           checked={allSelected}
           disabled={busy}
           onCheckedChange={(checked) => onSelectAll(checked === true)}
-          aria-label="Alle Quellen auswählen"
+          aria-label={tr('Alle Quellen auswählen', 'Select all sources')}
         />
       </label>
     </div>
