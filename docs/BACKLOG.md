@@ -1,109 +1,109 @@
-# Stand und Backlog
+# Status and backlog
 
-Aus dem Gesamtreview vom 2026-10-02 (vier lesende Prüfungen und ein Journey-Lauf auf der Live-Seite).
-Die erledigten Punkte stehen in der
-Git-Historie; hier steht nur, was offen ist oder bewusst nicht gebaut wird.
+From the full review of 2026-10-02 (four read-only checks and one journey run on the live site).
+The finished items are in the
+git history; this file lists only what is open or deliberately not built.
 
-## Stand
+## Status
 
-Alle Befunde der Stufen „Hoch“ (H1 bis H7) sind behoben. Von den mittleren sind M1, M2, M3, M5 und M8 bis M17 erledigt, M6 (Titel auf 200 Zeichen gekürzt, DOCX und PPTX auf 100 MB entpackt begrenzt), M7 bis auf den Tarif-Hinweis;
-M10 bewusst nicht gebaut (siehe unten); M4 trifft nicht zu (siehe unten). Die Funktionslücken aus dem Review
-(neu einlesen, Export, Konto löschen, Stopp-Button) und die Dateitypen PDF-Link, Bilder, Audio, PPTX und YouTube sind gebaut.
+All findings of level "High" (H1 to H7) are fixed. Of the medium ones, M1, M2, M3, M5 and M8 to M17 are done, M6 (title cut to 200 characters, DOCX and PPTX limited to 100 MB unpacked), M7 except the plan hint;
+M10 is deliberately not built (see below); M4 does not apply (see below). The feature gaps from the review
+(re-ingest, export, delete account, stop button) and the file types PDF link, images, audio, PPTX and YouTube are built.
 
-Gates auf dem letzten Stand: `pnpm check`, `pnpm test`, `pnpm test:db` und `pnpm e2e` grün.
-Nicht geprüft: Screenreader auf echten Geräten, echte Mobilgeräte, Semgrep lokal (läuft im CI).
+Gates at the latest state: `pnpm check`, `pnpm test`, `pnpm test:db` and `pnpm e2e` green.
+Not checked: screen readers on real devices, real mobile devices, Semgrep locally (runs in CI).
 
-## Entscheidungen des Nutzers
+## Decisions of the user
 
-- Datenschutzerklärung und Impressum: nicht nötig.
-- Kopie des Backups auf einen anderen Server: nicht nötig. Dump vor jedem Deploy und Restore-Probe (`deploy/restore-check.sh`) gibt es.
-- Hinweis zum Gemini-Tarif im Upload-Dialog: zurückgestellt, solange die Seite eine Demo ist. Das README warnt davor, sensible Dokumente hochzuladen.
+- Privacy policy and legal notice: not needed.
+- Copy of the backup to another server: not needed. A dump before every deploy and a restore check (`deploy/restore-check.sh`) exist.
+- Hint about the Gemini plan in the upload dialog: postponed while the site is a demo. The README warns against uploading sensitive documents.
 
-## Offen
+## Open
 
-| #   | Thema | Befund | Fix |
-| --- | ----- | ------ | --- |
+| #   | Topic | Finding | Fix |
+| --- | ----- | ------- | --- |
 
-M4 (HNSW-Index mit Filter) trifft nicht zu: Die Suche ordnet nach Abstand über die CTE `scoped`, die über Verbindungen auf Nutzer, Notizbuch und Quellen gefiltert ist ([db/retrieval.ts](../apps/api/src/db/retrieval.ts)). Der HNSW-Index kann darüber nicht angewandt werden, der Scan ist exakt und verliert keine Treffer an einen nachgelagerten Filter. Aus dem Aufbau der Abfrage geschlossen, nicht mit `EXPLAIN` gemessen. Neu bewerten, wenn die Suche je auf den Index ausgerichtet wird.
+M4 (HNSW index with filter) does not apply: the search orders by distance over the CTE `scoped`, which is filtered through joins on user, notebook and sources ([db/retrieval.ts](../apps/api/src/db/retrieval.ts)). The HNSW index cannot be applied over that, the scan is exact and loses no hits to a downstream filter. Concluded from the shape of the query, not measured with `EXPLAIN`. Re-evaluate if the search is ever aligned to the index.
 
-Bis 2026-10-15 als „Demo“ nicht gebaut (siehe „Betrieb, Sicherheit, Skalierung“ unten, seit 2026-10-18 neu bewertet): dauerhafte Logs (Sentry meldet Fehler; Docker-Logs gehen beim Deploy verloren) und die Serverhärtung M10 (fail2ban, `deploy` aus der Docker-Gruppe, Trivy; Dependency-Audit läuft im CI, eine moderate Lücke in esbuild über drizzle-kit betrifft nur den Dev-Server). sslip.io teilt Zertifikatslimits; eine eigene Domain nur auf Wunsch.
+Until 2026-10-15 not built as "demo" (see "Operations, security, scaling" below, re-evaluated since 2026-10-18): persistent logs (Sentry reports errors; Docker logs are lost on deploy) and the server hardening M10 (fail2ban, `deploy` out of the Docker group, Trivy; the dependency audit runs in CI, a moderate gap in esbuild via drizzle-kit affects only the dev server). sslip.io shares certificate limits; an own domain only on request.
 
-## Betrieb, Sicherheit, Skalierung
+## Operations, security, scaling
 
-Der Weg über diese Punkte hinaus (Stufen, Engpässe, Maßnahmen) steht in [SCALING.md](SCALING.md).
+The path beyond these items (stages, bottlenecks, measures) is in [SCALING.md](SCALING.md).
 
-Maßstab: Die Seite wird wie ein Produkt eines Teams behandelt, wartbar und skalierbar (Entscheidung des Nutzers, 2026-10-18). Als Demo gilt sie nur bei den **Kosten**: kein Werkzeug, das Geld kostet oder eigene Server braucht, solange es keinen Grund dafür gibt.
-Das ersetzt die frühere Entscheidung vom 2026-10-15 (Logs und M10 „weil Demo“). Werkzeugnamen sind aus dem Gedächtnis, vor dem Bau gegen die aktuelle Doku prüfen (Regel 12).
+Standard: the site is treated like a product of a team, maintainable and scalable (decision of the user, 2026-10-18). It counts as a demo only for **cost**: no tool that costs money or needs its own servers as long as there is no reason for it.
+This replaces the earlier decision of 2026-10-15 (logs and M10 "because demo"). Tool names are from memory; check them against the current docs before building (rule 12).
 
-### Wird gebaut (kostenlos oder sehr günstig)
+### Being built (free or very cheap)
 
-| Thema                     | Heute stattdessen                                                                                                                                  | Bestes Werkzeug                                                                                            | Auslöser zum Nachholen                           |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| Alarm bei hängender Queue | `/health` meldet `stalledSources`, der Uptime-Lauf wird rot; Sentry-Regeln stehen im Runbook, sind aber noch nicht angelegt                        | Sentry Alerts und Cron Monitors auf Queue-Tiefe aus `/health`                                              | Aufträge bleiben unbemerkt liegen                |
-| Row-Level-Security        | Gebaut, in CI getestet, `APP_DB_USER` und `APP_DB_PASSWORD` stehen in `server.env` ([DEPLOYMENT.md](DEPLOYMENT.md#zeilensicherheit-rolle-nlm_app)) | Offen: E2E-Server, Seeds und Job-Queue laufen als Besitzer                                                 | Sensiblere Daten oder mehrere Teams              |
-| Image-Signierung (cosign) | Trivy-Scan und SBOM im CI; das Image geht per SSH zum Server, nicht über eine Registry                                                             | cosign (Sigstore) mit Artifact Attestations, setzt eine Registry voraus (GHCR) und einen geänderten Deploy | Deploy über eine Registry oder Echte Nutzerdaten |
+| Topic                  | Instead today                                                                                                                                 | Best tool                                                                                  | Trigger to catch up                          |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------- |
+| Alert on a stuck queue | `/health` reports `stalledSources`, the uptime run turns red; Sentry rules are in the runbook but not yet created                             | Sentry Alerts and Cron Monitors on queue depth from `/health`                              | Jobs stay unnoticed                          |
+| Row-level security     | Built, tested in CI, `APP_DB_USER` and `APP_DB_PASSWORD` are in `server.env` ([DEPLOYMENT.md](DEPLOYMENT.md#row-level-security-role-nlm_app)) | Open: E2E server, seeds and job queue run as the owner                                     | More sensitive data or several teams         |
+| Image signing (cosign) | Trivy scan and SBOM in CI; the image goes to the server over SSH, not through a registry                                                      | cosign (Sigstore) with artifact attestations, needs a registry (GHCR) and a changed deploy | Deploy through a registry, or real user data |
 
-### Braucht ein neues Konto oder Geld (Backlog, erst nach Freigabe)
+### Needs a new account or money (backlog, only after approval)
 
-Regel: Alles, was ein neues Konto, Schlüssel oder einen zusätzlichen Server braucht, baut der Agent nicht allein.
+Rule: anything that needs a new account, key or an additional server is not built by the agent alone.
 
-| Thema                     | Heute stattdessen                                                                     | Bestes Werkzeug                                                                | Auslöser zum Nachholen                              |
-| ------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------- |
-| Captcha für Gäste         | Limit je Adresse, je Stunde, gleichzeitig; Tagesbremse für Tokens                     | Cloudflare Turnstile (kostenlos, ohne Tracking)                                | Gäste werden trotz Limit gezielt ausgesperrt        |
-| Dauerhafte, zentrale Logs | Docker-Logs (gehen beim Deploy verloren), Sentry                                      | Grafana Alloy mit Loki (Grafana Cloud) oder Better Stack                       | Fehler lassen sich ohne Logs nicht mehr eingrenzen  |
-| Staging-Umgebung          | CI mit DB, S3 und E2E, Deploy mit Health-Check, Image `nlm-app:previous` für Rollback | Zweiter kleiner Hetzner-Server mit demselben `deploy.yml`, GitHub Environments | Mehrere Entwickler oder Schemaänderungen ohne Probe |
+| Topic                    | Instead today                                                                           | Best tool                                                                   | Trigger to catch up                                   |
+| ------------------------ | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Captcha for guests       | Limit per address, per hour, concurrent; daily brake for tokens                         | Cloudflare Turnstile (free, no tracking)                                    | Guests are deliberately locked out despite the limit  |
+| Persistent, central logs | Docker logs (lost on deploy), Sentry                                                    | Grafana Alloy with Loki (Grafana Cloud) or Better Stack                     | Errors can no longer be narrowed down without logs    |
+| Staging environment      | CI with DB, S3 and E2E, deploy with health check, image `nlm-app:previous` for rollback | Second small Hetzner server with the same `deploy.yml`, GitHub Environments | Several developers, or schema changes without a trial |
 
-### Zurückgestellt (kostet Geld oder braucht Wachstum)
+### Postponed (costs money or needs growth)
 
-| Thema                         | Heute stattdessen                                      | Bestes Werkzeug                                                                                       | Auslöser zum Nachholen                              |
-| ----------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| Lasttests                     | Kontingent und Tagesbremse begrenzen die Last          | k6 (Skripte in TypeScript/JS, läuft im CI)                                                            | Werbung für die Seite oder mehr als etwa 50 Nutzer  |
-| Metriken, Dashboards, Tracing | Sentry für Fehler, `X-Request-Id` im Log, Uptime-Check | OpenTelemetry SDK mit Grafana Cloud (Free-Tarif); als kleinere Stufe Sentry Tracing, das schon da ist | Mehr als ein Server oder ein Ziel für Antwortzeiten |
-| Rate-Limiter über Instanzen   | Im Prozessspeicher, ein Server                         | Tabelle in Postgres; bei Bedarf `rate-limiter-flexible` mit Postgres- oder Redis-Speicher             | Zweite API-Instanz                                  |
-| Multi-Region, Orchestrierung  | Ein Hetzner-Server mit Backup und Restore-Probe        | Hetzner Load Balancer mit zweitem Server; k3s erst bei vielen Diensten                                | Verfügbarkeitsziel über dem eines Servers           |
-| Feature-Flags                 | Deploy mit Rollback                                    | GrowthBook oder Unleash (selbst gehostet), Schnittstelle OpenFeature                                  | Teilfreigaben für Nutzergruppen                     |
+| Topic                         | Instead today                                              | Best tool                                                                                                  | Trigger to catch up                                   |
+| ----------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Load tests                    | Quota and daily brake limit the load                       | k6 (scripts in TypeScript/JS, runs in CI)                                                                  | Advertising for the site, or more than about 50 users |
+| Metrics, dashboards, tracing  | Sentry for errors, `X-Request-Id` in the log, uptime check | OpenTelemetry SDK with Grafana Cloud (free plan); as a smaller step Sentry tracing, which is already there | More than one server, or a target for response times  |
+| Rate limiter across instances | In process memory, one server                              | Table in Postgres; if needed `rate-limiter-flexible` with Postgres or Redis storage                        | Second API instance                                   |
+| Multi-region, orchestration   | One Hetzner server with backup and restore check           | Hetzner Load Balancer with a second server; k3s only with many services                                    | Availability target above that of one server          |
+| Feature flags                 | Deploy with rollback                                       | GrowthBook or Unleash (self-hosted), interface OpenFeature                                                 | Partial rollouts for user groups                      |
 
-Kleinigkeiten:
+Small items:
 
-- `use-sources.ts`: Abfrage alle 2 s ohne Backoff, solange eine Quelle arbeitet. Bewusst gelassen: eine kurze, billige Abfrage während weniger Minuten.
-- Hash über rohe HTML-Bytes: dynamische Seiten werden nie als Duplikat erkannt.
-- Rohe Controls statt shadcn an einigen Stellen (`quiz-option.tsx`, `studio-tiles.tsx`, `library-row.tsx`), nicht einzeln beurteilt.
-- `pdf-lib` hat seit November 2021 kein Release mehr, funktioniert aber.
+- `use-sources.ts`: polling every 2 s without backoff while a source is working. Left on purpose: a short, cheap query during a few minutes.
+- Hash over raw HTML bytes: dynamic pages are never recognized as a duplicate.
+- Raw controls instead of shadcn in a few places (`quiz-option.tsx`, `studio-tiles.tsx`, `library-row.tsx`), not assessed one by one.
+- `pdf-lib` has had no release since November 2021, but works.
 
-## Aus den Plänen (Stand 2026-10-15)
+## From the plans (as of 2026-10-15)
 
-Die Pläne sind abgeschlossen und gelöscht (Git-Historie, Commit vor diesem). Offen daraus:
+The plans are finished and deleted (git history, the commit before this one). Still open from them:
 
-- **Eval:** n >= 3 je Frage und die Schwelle des Gates aus der Schwankung statt geschätzt; Korpus (`spikes/corpus`) mit geklärter Lizenz ins Repo; Replay der Modellantworten offline (Invariante 5);
-  **schwerere Fragen** (Quellen vergleichen, Zahlen aus Tabellen, deutsche Fragen zu englischen Quellen), weil die Menge bei 100 % nichts mehr zeigt.
-- **RAG-Experimente**, erst mit schwereren Fragen, je Experiment eine Variable und ein Lauf mit n >= 3, Neu-Einbetten vorher beziffern und abstimmen:
-  E1 ganze Quellen statt Suche, wenn sie passen; E2 Volltext mit deutschem Wortstamm statt `simple` (Migration); E3 Chunkgröße 800, 1500, 2500; E4 Passagenzahl 6, 12, 20; E5 Quellentitel in den Einbettungstext; E6 Reranker (nur wenn E1 bis E5 nicht reichen).
-- **Temperatur und `thinkingLevel`:** heute überall 0 und ungesetzt (`ai/gemini-chat.ts`, `ai/gemini-pdf-parser.ts`). Gemini 3 empfiehlt laut Doku 1,0 (neu lesen). Wenn gemessen wird: `GENERATION = { CHAT, QUERY, PDF, STUDIO }` in `apps/api/src/config`,
-  je Rolle 0 gegen 1,0, n >= 3, grob 1 bis 2 Euro. Ein Test je Rolle, dass der Anfragekörper den Wert aus der Konfiguration trägt.
-- **Limits eichen:** Die Notbremse von 2 Millionen Tokens am Tag folgt aus einem Guthaben von etwa 4 € (2026-10-15) und den Preisen von gemini-3.5-flash-lite (0,30 USD je Million Eingabe-, 2,50 USD je Million Ausgabe-Tokens inklusive Thinking; ai.google.dev/gemini-api/docs/pricing, 2026-10-14 per Agent gelesen, nicht von Hand geprüft); eine Chat-Frage kostete am 2026-10-15 gemessen etwa 0,35 Cent. Höhen der Limits je Nutzer und `MAX_OUTPUT_TOKENS` aus echter Nutzung (`pnpm report:usage`). Höhen der Limits je Nutzer und `MAX_OUTPUT_TOKENS` aus echter Nutzung (`pnpm report:usage`). Ob `maxOutputTokens` Thinking-Tokens mitzählt, ist nicht eindeutig: Die Thinking-Doku sagt für `max_output_tokens` „including thought tokens“
-  (ai.google.dev/gemini-api/docs/thinking, per Agent gelesen), die Referenz von `generationConfig.maxOutputTokens` wurde nicht gelesen; bei Erreichen kann die Ausgabe gekürzt oder leer sein. Vor dem Verkleinern mit einem Aufruf messen.
-- **Doku:** Datumsvergleich `Stand` gegen die letzte Änderung eines zugeordneten Pfads (Schicht 3 von früher Plan 2) nachrüsten, wenn trotz `docs-map.json` Doku veraltet.
+- **Eval:** n >= 3 per question and the gate threshold from the variance instead of estimated; corpus (`spikes/corpus`) with a clarified license into the repo; offline replay of the model answers (invariant 5);
+  **harder questions** (compare sources, numbers from tables, German questions about English sources), because the set shows nothing at 100 %.
+- **RAG experiments**, only with harder questions, one variable per experiment and a run with n >= 3, quantify and agree on re-embedding beforehand:
+  E1 whole sources instead of search when they fit; E2 full text with German stemming instead of `simple` (migration); E3 chunk size 800, 1500, 2500; E4 number of passages 6, 12, 20; E5 source titles in the embedding text; E6 reranker (only if E1 to E5 are not enough).
+- **Temperature and `thinkingLevel`:** today 0 everywhere and unset (`ai/gemini-chat.ts`, `ai/gemini-pdf-parser.ts`). Gemini 3 recommends 1.0 according to the docs (re-read). If measured: `GENERATION = { CHAT, QUERY, PDF, STUDIO }` in `apps/api/src/config`,
+  per role 0 against 1.0, n >= 3, roughly 1 to 2 euros. One test per role that the request body carries the value from the configuration.
+- **Calibrate limits:** the emergency brake of 2 million tokens per day follows from a credit of about 4 EUR (2026-10-15) and the prices of gemini-3.5-flash-lite (0.30 USD per million input tokens, 2.50 USD per million output tokens including thinking; ai.google.dev/gemini-api/docs/pricing, read by an agent on 2026-10-14, not checked by hand); one chat question cost about 0.35 cents when measured on 2026-10-15. Set the per-user limits and `MAX_OUTPUT_TOKENS` from real usage (`pnpm report:usage`). Whether `maxOutputTokens` counts thinking tokens is not clear: the thinking docs say for `max_output_tokens` "including thought tokens"
+  (ai.google.dev/gemini-api/docs/thinking, read by an agent); the reference of `generationConfig.maxOutputTokens` was not read; when it is reached the output can be cut or empty. Measure with one call before reducing it.
+- **Docs:** add a date comparison of `Stand` (as-of) against the last change of an assigned path (layer 3 of the former plan 2) if docs go stale despite `docs-map.json`.
 
-## Messung steht aus
+## Measurement pending
 
-Das Gewicht 0,5 der Volltextsuche in der Hybridsuche ist nur durch den Sprachunterschied begründet, nicht durch eine Messung:
-auf den 18 Spike-Fragen ist Hybrid nicht besser als reine Vektorsuche (siehe [SPIKE-ERGEBNISSE.md](SPIKE-ERGEBNISSE.md)).
-Mit mehr Fragen erneut prüfen (`pnpm eval:live`).
+The weight 0.5 of the full-text search in the hybrid search is justified only by the language difference, not by a measurement:
+on the 18 spike questions hybrid is no better than pure vector search (see [SPIKE-RESULTS.md](SPIKE-RESULTS.md)).
+Check again with more questions (`pnpm eval:live`).
 
-## Später
+## Later
 
-| Thema                     | Anmerkung                                                                                                                                                                               |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| XLSX und CSV              | Der Studio-Kontext (`STUDIO_MAX_CHARS` 120 000) wird gleichmäßig auf die Quellen verteilt, der Anfang jeder Quelle bleibt. Große Tabellen würden abgeschnitten, vorher klären.          |
-| HTML-Datei                | Geringer Nutzen.                                                                                                                                                                        |
-| Fußnotenziffern in Zahlen | Die Fußnotenziffer eines PDF steht im Text neben der Zahl (`Erwerbspersonen2`), der Zahlencheck liest sie als Teil der Zahl oder als eigene Zahl. Nicht gemessen, wie oft das vorkommt. |
-| Tastaturkürzel            | Nicht gebaut.                                                                                                                                                                           |
-| Suche über alle Notebooks | Nicht gebaut.                                                                                                                                                                           |
+| Topic                       | Note                                                                                                                                                                                                  |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| XLSX and CSV                | The Studio context (`STUDIO_MAX_CHARS` 120 000) is divided evenly among the sources, the start of each source stays. Large tables would be cut off, clarify beforehand.                               |
+| HTML file                   | Little use.                                                                                                                                                                                           |
+| Footnote digits in numbers  | The footnote digit of a PDF sits in the text next to the number (`Erwerbspersonen2`); the number check reads it as part of the number or as a number of its own. Not measured how often this happens. |
+| Keyboard shortcuts          | Not built.                                                                                                                                                                                            |
+| Search across all notebooks | Not built.                                                                                                                                                                                            |
 
-Bewusst nicht: EPUB, Google Docs und Slides (siehe [DESIGN-ABGLEICH.md](DESIGN-ABGLEICH.md)), Teilen, Audio- und Videoübersicht,
-Deep Research, Drive, Daumen-Bewertung, PDF-Export, Rückgängig beim Löschen (jedes Löschen fragt vorher).
+Deliberately not: EPUB, Google Docs and Slides (see [DESIGN-COMPARISON.md](DESIGN-COMPARISON.md)), sharing, audio and video overview,
+Deep Research, Drive, thumbs rating, PDF export, undo on delete (every delete asks first).
 
-## Nicht gegen die aktuelle Doku geprüft
+## Not checked against the current docs
 
-Hetzner-Preise und -Ausstattung, Fork-PR-Einstellungen auf GitHub, `EXPLAIN` der Vektorsuche, die Quellentypen von NotebookLM
-selbst (Regel 12 aus AGENTS.md: vor einer Entscheidung dort nachsehen).
+Hetzner prices and specs, fork-PR settings on GitHub, `EXPLAIN` of the vector search, the source types of NotebookLM
+itself (rule 12 of AGENTS.md: look there before a decision).

@@ -1,62 +1,62 @@
 # Runbook
 
-Eine Anleitung je Alarm: Symptom, Prüfung, Maßnahme. Befehle laufen auf dem Server als `deploy` in `/srv/nlm` mit der Kurzform
-`dc() { docker compose -f docker-compose.prod.yml --env-file server.env "$@"; }` (siehe [DEPLOYMENT.md](DEPLOYMENT.md#betrieb)).
-Ziele und Zahlen: [SLO.md](SLO.md).
+One guide per alert: symptom, check, action. Commands run on the server as `deploy` in `/srv/nlm` with the shorthand
+`dc() { docker compose -f docker-compose.prod.yml --env-file server.env "$@"; }` (see [DEPLOYMENT.md](DEPLOYMENT.md#operations)).
+Targets and numbers: [SLO.md](SLO.md).
 
-## Uptime-Lauf rot: `/health` antwortet nicht
+## Uptime run red: `/health` does not answer
 
-1. `curl -si https://<Hostname>/health` von außen. Kommt kein Zertifikat oder keine Antwort: Caddy oder DNS (`dc logs --tail 100 caddy`).
-2. `dc ps`: Ist `app` oder `db` nicht `healthy`? `dc logs --tail 200 app` ansehen.
-3. Nach einem Deploy: Der Workflow rollt selbst zurück; ob `nlm-app:current` das alte Image ist, steht im Deploy-Lauf. Sonst von Hand zurück (Abschnitt „Zurück auf die vorige Version“ in DEPLOYMENT.md).
-4. Ein von Docker beendeter Container: `docker inspect <Name> --format '{{.State.OOMKilled}}'`. Bei `true` Speichergrenzen in der Compose-Datei prüfen.
-5. Datenbank kaputt oder Daten weg: Wiederherstellung aus dem Dump (Abschnitt „Backup und Wiederherstellung“).
+1. `curl -si https://<hostname>/health` from outside. If there is no certificate or no answer: Caddy or DNS (`dc logs --tail 100 caddy`).
+2. `dc ps`: Is `app` or `db` not `healthy`? Look at `dc logs --tail 200 app`.
+3. After a deploy: the workflow rolls back by itself; whether `nlm-app:current` is the old image is shown in the deploy run. Otherwise roll back by hand (section "Back to the previous version" in DEPLOYMENT.md).
+4. A container killed by Docker: `docker inspect <name> --format '{{.State.OOMKilled}}'`. If `true`, check the memory limits in the Compose file.
+5. Database broken or data gone: restore from the dump (section "Backup and restore").
 
-## Uptime-Lauf rot: `stalledSources` ist größer als 0
+## Uptime run red: `stalledSources` is greater than 0
 
-Mindestens eine Quelle wartet seit mehr als 15 Minuten auf ihren Aufnahme-Auftrag.
+At least one source has been waiting for its ingestion job for more than 15 minutes.
 
-1. `curl -s https://<Hostname>/health`: Wie viele? Bleibt die Zahl über mehrere Läufe gleich oder steigt sie, hängt die Queue.
-2. `dc logs --tail 200 app | grep -E "ingestion job|queue error"`: Fehlschläge stehen mit Quelle-ID, Stufe und Dauer drin, nie mit Inhalt.
-3. Schlägt jeder Auftrag beim Anbieter fehl (Gemini-Kontingent, Schlüssel): im Log den Fehlernamen lesen; die Tagesbremse und das Free-Tier-Limit prüfen.
-4. `dc restart app` startet den Worker neu. Quellen, deren Auftrag älter als eine Stunde ist (`INTERRUPTED_JOB_AFTER_MS`), markiert der Anlauf als „unterbrochen“; Nutzer können die Quelle erneut lesen.
-5. Hilft das nicht: Ursache in Sentry suchen (Herkunft `ingestion` oder `queue`), die Quelle-ID steht als Tag.
+1. `curl -s https://<hostname>/health`: How many? If the number stays the same or rises over several runs, the queue is stuck.
+2. `dc logs --tail 200 app | grep -E "ingestion job|queue error"`: failures appear with source ID, stage and duration, never with content.
+3. If every job fails at the provider (Gemini quota, key): read the error name in the log; check the daily brake and the free-tier limit.
+4. `dc restart app` restarts the worker. Sources whose job is older than one hour (`INTERRUPTED_JOB_AFTER_MS`) are marked "unterbrochen" (interrupted) on startup; users can read the source again.
+5. If that does not help: look for the cause in Sentry (origin `ingestion` or `queue`), the source ID is set as a tag.
 
-## Fehler in Sentry (Herkunft `request`, `ingestion`, `queue`, `chat`)
+## Error in Sentry (origin `request`, `ingestion`, `queue`, `chat`)
 
-1. Das Tag `requestId` (falls vorhanden) in Caddys Zugriffslog und in den Logzeilen der App suchen: `dc logs app | grep <requestId>`.
-2. Release (= Commit) im Ereignis zeigt, welche Version den Fehler wirft. Trat er mit dem letzten Deploy auf, zurückrollen.
-3. Eine Nutzerbeschwerde enthält die „Referenz“ (die ersten acht Zeichen der Anfrage-ID): damit im Log suchen.
+1. Search for the tag `requestId` (if present) in Caddy's access log and in the app's log lines: `dc logs app | grep <requestId>`.
+2. The release (= commit) in the event shows which version throws the error. If it appeared with the last deploy, roll back.
+3. A user complaint contains the "Referenz" (reference; the first eight characters of the request ID): search the log with it.
 
-## Kontingent des Modellanbieters erschöpft
+## Quota of the model provider exhausted
 
-Symptom: Chat und Aufnahme schlagen mit Fehlern des Anbieters fehl, die Oberfläche meldet das Tageslimit oder einen Fehler.
+Symptom: chat and ingestion fail with errors from the provider, the UI reports the daily limit or an error.
 
-1. `pnpm report:usage` (lokal gegen die Datenbank) zeigt Tokens je Aufruf und Tag.
-2. Ist die Tagesbremse (`DAILY_TOKEN_BUDGET`) erreicht, ist das gewollt; sie öffnet sich im nächsten Fenster. Ändern nur nach Blick auf das Guthaben beim Anbieter.
-3. Ist das Guthaben beim Anbieter leer, dort aufladen; kein Neustart nötig.
+1. `pnpm report:usage` (locally against the database) shows tokens per call and day.
+2. If the daily brake (`DAILY_TOKEN_BUDGET`) is reached, that is intended; it opens in the next window. Change it only after looking at the credit at the provider.
+3. If the credit at the provider is empty, top it up there; no restart is needed.
 
-## Gäste lassen sich nicht starten
+## Guests cannot be started
 
-Antwort 503 auf `/api/guest`: Entweder fehlt das Beispiel-Notizbuch (Seed lief nicht), oder eines der Limits ist erreicht
-(`GUESTS_PER_HOUR`, `GUESTS_PER_IP_PER_HOUR`, `GUESTS_ALIVE`). Ein Limit je Adresse trifft viele Nutzer hinter einer Adresse zugleich.
-Die Zählung je Adresse liegt im Prozessspeicher: `dc restart app` setzt sie zurück, falls ein Skript die Stunde belegt hat.
+Answer 503 on `/api/guest`: Either the sample notebook is missing (the seed did not run), or one of the limits is reached
+(`GUESTS_PER_HOUR`, `GUESTS_PER_IP_PER_HOUR`, `GUESTS_ALIVE`). A per-address limit hits many users behind one address at once.
+The per-address count lives in process memory: `dc restart app` resets it if a script has used up the hour.
 
-## Nutzer sehen plötzlich keine Daten mehr (Zeilensicherheit)
+## Users suddenly see no data (row-level security)
 
-Die App verbindet als Rolle `nlm_app`; Postgres liefert ihr nur Zeilen des Nutzers, für den die Anfrage läuft. Leere Listen bei
-gesunder Datenbank heißen meist: Eine Abfrage lief ohne `forUser` und damit ohne Nutzer (sie liefert dann nichts, sie leckt nichts).
-`dc logs app` und Sentry zeigen die Route. Als Sofortmaßnahme `APP_DB_USER` und `APP_DB_PASSWORD` aus `server.env` entfernen und
-`dc up -d app`: die App verbindet wieder als Besitzer, ohne Zeilensicherheit. Danach den Fehler beheben, nicht die Policy abschwächen.
+The app connects as the role `nlm_app`; Postgres returns to it only the rows of the user the request runs for. Empty lists with a
+healthy database usually mean: a query ran without `forUser` and therefore without a user (it then returns nothing, it leaks nothing).
+`dc logs app` and Sentry show the route. As an immediate measure remove `APP_DB_USER` and `APP_DB_PASSWORD` from `server.env` and run
+`dc up -d app`: the app connects as the owner again, without row-level security. Then fix the bug, do not weaken the policy.
 
-## Sentry-Alert-Regeln (einmal im Sentry-Projekt anlegen)
+## Sentry alert rules (create once in the Sentry project)
 
-Das lässt sich nur in der Oberfläche von Sentry einrichten, nicht aus dem Repo.
+This can only be set up in Sentry's UI, not from the repo.
 
-- Neues Problem in `notebooklm-hono` mit Herkunft `queue` oder `ingestion`: sofort per Mail.
-- Mehr als 5 Ereignisse in 10 Minuten im selben Problem: per Mail.
-- Neues Problem in `notebooklm-react`: tägliche Zusammenfassung genügt.
+- New issue in `notebooklm-hono` with origin `queue` or `ingestion`: email immediately.
+- More than 5 events in 10 minutes in the same issue: email.
+- New issue in `notebooklm-react`: a daily summary is enough.
 
-## Nach dem Vorfall
+## After the incident
 
-Kurze Notiz als Commit-Text oder im Backlog: Was war es, wie wurde es bemerkt, was ändert sich (Alarm, Test, Dokument).
+A short note as commit text or in the backlog: what it was, how it was noticed, what changes (alert, test, document).

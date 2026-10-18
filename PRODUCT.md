@@ -28,7 +28,7 @@ cited answer in under a minute and can follow any citation back to the exact pas
 The core is the citation contract: every statement of an answer carries numbered chips that point to
 real passages sent to the model; the server strips or rejects citations that were not in the context. The same
 contract covers Studio outputs. The interface follows the original closely (measured values, see
-[docs/DESIGN-ABGLEICH.md](docs/DESIGN-ABGLEICH.md)), so the evaluation is about engineering and
+[docs/DESIGN-COMPARISON.md](docs/DESIGN-COMPARISON.md)), so the evaluation is about engineering and
 verifiability, not about a new look.
 
 ## Operating Context
@@ -60,7 +60,7 @@ not connected to Google. Using the original's logo and name was explicitly allow
 
 ## Evidence on Hand
 
-- Spike results on retrieval, models and limits: [docs/SPIKE-ERGEBNISSE.md](docs/SPIKE-ERGEBNISSE.md).
+- Spike results on retrieval, models and limits: [docs/SPIKE-RESULTS.md](docs/SPIKE-RESULTS.md).
 - An example notebook ("Demo: Projekt Nordlicht") seeded by `pnpm seed:demo`.
 - No customers, testimonials or usage numbers exist. Do not invent any.
 

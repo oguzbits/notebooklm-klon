@@ -1,163 +1,163 @@
-# Deployment und Betrieb
+# Deployment and operations
 
-Wie die App auf einem Hetzner-Server läuft, wie man sie dort einrichtet, aktualisiert und wiederherstellt.
+How the app runs on a Hetzner server, and how to set it up, update and restore it there.
 
-## Überblick
+## Overview
 
 ```
-Internet ──443/80──> Caddy ──> app (Hono + gebautes Web, Port 3000) ──> db (Postgres + pgvector)
-                                                                    └──> s3 (SeaweedFS, Titelbilder)
+Internet ──443/80──> Caddy ──> app (Hono + built web, port 3000) ──> db (Postgres + pgvector)
+                                                                    └──> s3 (SeaweedFS, cover images)
 ```
 
-| Teil        | Datei                                                        | Aufgabe                                                           |
-| ----------- | ------------------------------------------------------------ | ----------------------------------------------------------------- |
-| Stack       | [docker-compose.prod.yml](../deploy/docker-compose.prod.yml) | Vier Container; nur Caddy ist aus dem Internet erreichbar         |
-| Proxy       | [Caddyfile](../deploy/Caddyfile)                             | HTTPS-Zertifikat holen und erneuern, ohne Pufferung weiterreichen |
-| Einrichtung | [provision.sh](../deploy/provision.sh)                       | Ein Befehl vom eigenen Rechner: Server, `server.env`, Secrets     |
-| Backup      | [backup.sh](../deploy/backup.sh)                             | Täglich 03:15 und vor jedem Deploy ein `pg_dump`, 7 Tage          |
-| Deploy      | [deploy.yml](../.github/workflows/deploy.yml)                | Baut das Image, schickt es per SSH, startet den Stack             |
+| Part   | File                                                         | Job                                                              |
+| ------ | ------------------------------------------------------------ | ---------------------------------------------------------------- |
+| Stack  | [docker-compose.prod.yml](../deploy/docker-compose.prod.yml) | Four containers; only Caddy is reachable from the internet       |
+| Proxy  | [Caddyfile](../deploy/Caddyfile)                             | Fetch and renew the HTTPS certificate, forward without buffering |
+| Setup  | [provision.sh](../deploy/provision.sh)                       | One command from your own machine: server, `server.env`, secrets |
+| Backup | [backup.sh](../deploy/backup.sh)                             | A `pg_dump` daily at 03:15 and before every deploy, kept 7 days  |
+| Deploy | [deploy.yml](../.github/workflows/deploy.yml)                | Builds the image, sends it over SSH, starts the stack            |
 
-- Das Image entsteht in GitHub Actions (`docker build`) und wird mit `docker save | ssh docker load` übertragen. Der Server
-  braucht weder Registry noch Zugriff auf das Repository.
-- Die Datenbank hört nur auf `127.0.0.1` des Servers. Von außen kommt man nur per SSH-Tunnel heran.
-- Alle Geheimnisse liegen in `/srv/nlm/server.env` (Rechte 600) und in `/srv/nlm/s3.json`. Beides entsteht auf dem Server
-  und ist nie im Repository.
-- Die App migriert die Datenbank beim Start und legt den Bucket für die Titelbilder selbst an.
+- The image is built in GitHub Actions (`docker build`) and transferred with `docker save | ssh docker load`. The server
+  needs neither a registry nor access to the repository.
+- The database listens only on `127.0.0.1` of the server. From outside it is reachable only through an SSH tunnel.
+- All secrets live in `/srv/nlm/server.env` (mode 600) and in `/srv/nlm/s3.json`. Both are created on the server
+  and are never in the repository.
+- The app migrates the database on start and creates the bucket for the cover images itself.
 
-## Einmalige Einrichtung
+## One-time setup
 
-Was nur du tun kannst, ist hier fett.
+What only you can do is in bold here.
 
-1. **Server buchen:** Hetzner Cloud CX23 (2 vCPU, 4 GB RAM, 40 GB), Ubuntu 24.04, deinen SSH-Schlüssel hinterlegen.
-2. **Firewall:** In der Hetzner-Konsole eine Firewall mit eingehend TCP 22, 80 und 443 anlegen und dem Server zuweisen.
-3. **Server einrichten, ein Befehl** auf deinem Rechner, im Repository: `deploy/provision.sh <IPv4 oder Hostname>`.
-   Hostname ohne eigene Domain: `<IP mit Bindestrichen>.sslip.io`, zum Beispiel `203-0-113-7.sslip.io` für `203.0.113.7`
-   (das Skript bildet ihn selbst). Mit eigener Domain stattdessen zuerst einen A-Eintrag auf die IP setzen und die Domain
-   übergeben. Voraussetzung: Login als root mit deinem SSH-Schlüssel, `gh auth login`, eine `.env.local` mit den Werten
-   `GEMINI_API_KEY`, `AI_MODEL`, `PARSE_MODEL`, `EMBEDDING_MODEL` (für den Betrieb ein Schlüssel aus einem eigenen
-   Google-Projekt, damit Tests das Kontingent der Prüfer nicht verbrauchen; Modellnamen vorher in der aktuellen Google-Doku
-   prüfen). Das Skript:
-   - zeigt den SSH-Fingerabdruck des Servers; du vergleichst ihn mit der Hetzner-Konsole (Server > Übersicht) und bestätigst,
-   - erzeugt ein neues Schlüsselpaar für den Benutzer `deploy` und führt [bootstrap.sh](../deploy/bootstrap.sh) aus
-     (Docker, 2 GB Swap, Benutzer `deploy` nur mit Schlüssel, `ufw`, nächtliches Backup, `server.env` mit frisch erzeugten
-     Geheimnissen),
-   - trägt die Werte aus `.env.local` per SSH in `/srv/nlm/server.env` ein (nur Zeilen mit `FILL_IN`, nichts wird
-     ausgegeben, eine ungesetzte `PARSE_FALLBACK_MODEL` entfällt, ein `TAVILY_API_KEY` wird übernommen) und fragt
-     `SEED_DEMO_EMAIL`, falls sie fehlt,
-   - prüft den Login als `deploy` und setzt die GitHub-Secrets `DEPLOY_HOST`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`.
+1. **Book a server:** Hetzner Cloud CX23 (2 vCPU, 4 GB RAM, 40 GB), Ubuntu 24.04, register your SSH key.
+2. **Firewall:** In the Hetzner console create a firewall with inbound TCP 22, 80 and 443 and assign it to the server.
+3. **Set up the server, one command** on your machine, in the repository: `deploy/provision.sh <IPv4 or hostname>`.
+   Hostname without an own domain: `<IP with hyphens>.sslip.io`, for example `203-0-113-7.sslip.io` for `203.0.113.7`
+   (the script builds it itself). With an own domain, first set an A record to the IP and pass the domain.
+   Requirements: login as root with your SSH key, `gh auth login`, a `.env.local` with the values
+   `GEMINI_API_KEY`, `AI_MODEL`, `PARSE_MODEL`, `EMBEDDING_MODEL` (for production a key from a separate
+   Google project, so tests do not use up the reviewers' quota; check model names against the current Google docs
+   first). The script:
+   - shows the SSH fingerprint of the server; you compare it with the Hetzner console (Server > Overview) and confirm,
+   - creates a new key pair for the user `deploy` and runs [bootstrap.sh](../deploy/bootstrap.sh)
+     (Docker, 2 GB swap, user `deploy` with key only, `ufw`, nightly backup, `server.env` with freshly generated
+     secrets),
+   - writes the values from `.env.local` over SSH into `/srv/nlm/server.env` (only lines with `FILL_IN`, nothing is
+     printed, an unset `PARSE_FALLBACK_MODEL` is dropped, a `TAVILY_API_KEY` is taken over) and asks for
+     `SEED_DEMO_EMAIL` if it is missing,
+   - checks the login as `deploy` and sets the GitHub secrets `DEPLOY_HOST`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`.
 
-   Ein zweiter Lauf ist sicher: Er ersetzt das Deploy-Schlüsselpaar auf dem Server und in GitHub, ausgefüllte Werte in
-   `server.env` bleiben. Nicht ändern in `server.env`: `SITE_ADDRESS`, `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`, `S3_*`. Ein
-   neues `POSTGRES_PASSWORD` gilt nur beim ersten Anlegen des Volumes; ein neues `BETTER_AUTH_SECRET` meldet alle ab.
-   Von Hand geht es auch: die Schritte stehen als Kommentar in [provision.sh](../deploy/provision.sh) und in
+   A second run is safe: it replaces the deploy key pair on the server and in GitHub, filled-in values in
+   `server.env` stay. Do not change in `server.env`: `SITE_ADDRESS`, `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`, `S3_*`. A
+   new `POSTGRES_PASSWORD` applies only when the volume is first created; a new `BETTER_AUTH_SECRET` signs everyone out.
+   By hand works too: the steps are in comments in [provision.sh](../deploy/provision.sh) and in
    [bootstrap.sh](../deploy/bootstrap.sh).
 
-4. **Erster Deploy:** Actions > Deploy > Run workflow. Danach läuft er nach jedem grünen CI-Lauf auf `main`.
-   Für Sentry: `SENTRY_DSN` (Projekt `notebooklm-hono`) in `server.env` eintragen und das GitHub-Secret `SENTRY_WEB_DSN`
-   (Projekt `notebooklm-react`) und `SENTRY_AUTH_TOKEN` (Organization Token, für die Source Maps) setzen. Alles ist optional; ohne die Werte wird nichts gesendet.
-5. **Demo-Notebook anlegen** (einmalig, siehe unten).
-6. **Uptime-Check:** der Workflow `Uptime` ruft alle 15 Minuten `https://<Hostname>/health` auf; ein roter Lauf
-   ist der Alarm (GitHub mailt). Optional zusätzlich UptimeRobot. Dann Live-Link und Demo-Zugang in
-   die [README](../README.md) eintragen.
+4. **First deploy:** Actions > Deploy > Run workflow. After that it runs after every green CI run on `main`.
+   For Sentry: put `SENTRY_DSN` (project `notebooklm-hono`) in `server.env` and set the GitHub secrets `SENTRY_WEB_DSN`
+   (project `notebooklm-react`) and `SENTRY_AUTH_TOKEN` (organization token, for the source maps). All of this is optional; without the values nothing is sent.
+5. **Create the demo notebook** (once, see below).
+6. **Uptime check:** the workflow `Uptime` calls `https://<hostname>/health` every 15 minutes; a red run
+   is the alarm (GitHub sends an email). Optionally UptimeRobot as well. Then enter the live link and demo access in
+   the [README](../README.md).
 
-### Demo-Notebook anlegen
+### Create the demo notebook
 
-`pnpm seed:demo` liegt nicht im Produktions-Image und läuft deshalb auf deinem Rechner, im Repository, gegen die
-Datenbank des Servers durch einen SSH-Tunnel:
+`pnpm seed:demo` is not in the production image and therefore runs on your machine, in the repository, against the
+database of the server through an SSH tunnel:
 
 ```bash
-ssh -N -L 5433:127.0.0.1:5432 deploy@<Hostname>      # Shell 1, offen lassen
+ssh -N -L 5433:127.0.0.1:5432 deploy@<hostname>      # shell 1, leave open
 ```
 
-In Shell 2, im Repository, `DATABASE_URL=postgresql://nlm:<POSTGRES_PASSWORD>@127.0.0.1:5433/nlm`, `SEED_DEMO_EMAIL` und
-`SEED_DEMO_PASSWORD` in der Shell setzen (Variablen aus der Shell haben Vorrang vor deiner lokalen `.env.local`; Google-Schlüssel
-und Modellnamen können aus ihr kommen), dann `pnpm seed:demo`. Der Befehl liest drei Beispieldokumente einmal ein (Modellaufrufe, also
-Kontingent) und kann wiederholt werden. Das `POSTGRES_PASSWORD` steht in `/srv/nlm/server.env`.
+In shell 2, in the repository, set `DATABASE_URL=postgresql://nlm:<POSTGRES_PASSWORD>@127.0.0.1:5433/nlm`, `SEED_DEMO_EMAIL` and
+`SEED_DEMO_PASSWORD` in the shell (variables from the shell take precedence over your local `.env.local`; the Google key
+and model names can come from it), then run `pnpm seed:demo`. The command ingests three sample documents once (model calls, so
+quota) and can be repeated. The `POSTGRES_PASSWORD` is in `/srv/nlm/server.env`.
 
-## Betrieb
+## Operations
 
-Alle Befehle auf dem Server als `deploy`, im Verzeichnis `/srv/nlm`. Kurzform:
+All commands on the server as `deploy`, in the directory `/srv/nlm`. Shorthand:
 `dc() { docker compose -f docker-compose.prod.yml --env-file server.env "$@"; }`
 
-| Aufgabe                | Befehl                                                                 |
-| ---------------------- | ---------------------------------------------------------------------- |
-| Zustand ansehen        | `dc ps` und `curl -s https://<Hostname>/health`                        |
-| Logs der App           | `dc logs -f --tail 100 app`                                            |
-| Speicher und CPU       | `docker stats --no-stream`                                             |
-| Neue Version ausrollen | Merge auf `main` (nach grünem CI) oder Actions > Deploy > Run workflow |
-| Alte Version ausrollen | Actions > Deploy > Run workflow mit dem älteren Branch oder Tag        |
-| Neu starten            | `dc restart app`                                                       |
+| Task                    | Command                                                             |
+| ----------------------- | ------------------------------------------------------------------- |
+| Check the state         | `dc ps` and `curl -s https://<hostname>/health`                     |
+| App logs                | `dc logs -f --tail 100 app`                                         |
+| Memory and CPU          | `docker stats --no-stream`                                          |
+| Roll out a new version  | Merge to `main` (after green CI) or Actions > Deploy > Run workflow |
+| Roll out an old version | Actions > Deploy > Run workflow with the older branch or tag        |
+| Restart                 | `dc restart app`                                                    |
 
-Speichergrenzen in [docker-compose.prod.yml](../deploy/docker-compose.prod.yml): App 1,5 GB, Postgres 1 GB (`shared_buffers`
-256 MB), SeaweedFS 512 MB, Caddy 256 MB. Das sind Schätzwerte, keine Messung: ob sie passen, zeigt `docker stats`, und ein
-von Docker beendeter Container steht in `docker inspect <Name> --format '{{.State.OOMKilled}}'`. Images sind auf eine
-Version festgelegt (Postgres `0.8.7-pg18`, Node mit Digest im [Dockerfile](../Dockerfile), Caddy, SeaweedFS); ein Update ist
-ein bewusster Schritt, kein Nachziehen beim nächsten Deploy.
+Memory limits in [docker-compose.prod.yml](../deploy/docker-compose.prod.yml): app 1.5 GB, Postgres 1 GB (`shared_buffers`
+256 MB), SeaweedFS 512 MB, Caddy 256 MB. These are estimates, not a measurement: whether they fit is shown by `docker stats`, and a
+container killed by Docker shows up in `docker inspect <name> --format '{{.State.OOMKilled}}'`. Images are pinned to a
+version (Postgres `0.8.7-pg18`, Node with digest in the [Dockerfile](../Dockerfile), Caddy, SeaweedFS); an update is
+a deliberate step, not something picked up on the next deploy.
 
-Zu beobachten nach dem ersten Lauf: ob 4 GB RAM reichen (`docker stats`, Swap mit `free -h`). Die Logs enthalten nach
-Regel 7 in [AGENTS.md](../AGENTS.md) nur IDs, Längen, Dauer und Token-Zahlen, keine Dokumentinhalte. Docker rotiert sie
-(je 10 MB, 3 Dateien). Jede Anfrage trägt eine ID (`X-Request-Id`, steht in Caddys Zugriffslog und in jeder Logzeile der App); eine
-Fehlermeldung im Browser nennt die ersten acht Zeichen als „Referenz“. Die Logs eines Containers gehen mit dem Container verloren,
-also bei jedem Deploy. Unerwartete Fehler gehen an Sentry (EU), sobald `SENTRY_DSN` in `server.env` steht; was gesendet wird und was nicht, steht in [PLAN.md](PLAN.md#betrieb-und-qualitätswerkzeuge).
+To watch after the first run: whether 4 GB RAM is enough (`docker stats`, swap with `free -h`). Per
+rule 7 in [AGENTS.md](../AGENTS.md) the logs contain only IDs, lengths, durations and token counts, no document content. Docker rotates them
+(10 MB each, 3 files). Every request carries an ID (`X-Request-Id`, in Caddy's access log and in every log line of the app); an
+error message in the browser shows the first eight characters as "Referenz" (reference). The logs of a container are lost with the container,
+that is, on every deploy. Unexpected errors go to Sentry (EU) as soon as `SENTRY_DSN` is in `server.env`; what is sent and what is not is in [PLAN.md](PLAN.md#operations-and-quality-tools).
 
-### Backup und Wiederherstellung
+### Backup and restore
 
-- `backup.sh` schreibt nach `/srv/nlm/backups/nlm-<Datum>.sql.gz` (Fehler stehen in `/srv/nlm/backup.log`). Gesichert wird
-  die Datenbank. **Die Titelbilder (Volume `s3data`) und `server.env` sind nicht im Backup**; eine Kopie der `server.env`
-  gehört in deinen Passwortmanager. Die Dumps liegen auf demselben Server: gegen einen Verlust des Servers helfen sie nur,
-  wenn du sie gelegentlich herunterlädst (`scp deploy@<Hostname>:/srv/nlm/backups/<Datei> .`).
-- Vor jedem Deploy zieht der Workflow einen frischen Dump (derselbe Dateiname wie der nächtliche, er ersetzt den des Tages).
-  Schlägt der Dump fehl, wird nicht deployt.
-- Ob ein Dump sich wiederherstellen lässt, prüft [restore-check.sh](../deploy/restore-check.sh) in einer
-  Wegwerf-Datenbank (Docker nötig, ändert nichts an der echten): `deploy/restore-check.sh nlm-<Datum>.sql.gz` listet die
-  Tabellen mit Zeilenzahlen und endet mit „Restore OK“. Ein defekter Dump bricht mit einem Fehler ab. Einmal im Monat mit
-  einem heruntergeladenen Dump laufen lassen.
-- Wiederherstellen in eine leere Datenbank:
+- `backup.sh` writes to `/srv/nlm/backups/nlm-<date>.sql.gz` (errors go to `/srv/nlm/backup.log`). The database is
+  backed up. **The cover images (volume `s3data`) and `server.env` are not in the backup**; a copy of `server.env`
+  belongs in your password manager. The dumps sit on the same server: against the loss of the server they help only
+  if you download them now and then (`scp deploy@<hostname>:/srv/nlm/backups/<file> .`).
+- Before every deploy the workflow takes a fresh dump (same file name as the nightly one, it replaces that of the day).
+  If the dump fails, nothing is deployed.
+- Whether a dump can be restored is checked by [restore-check.sh](../deploy/restore-check.sh) in a
+  throwaway database (needs Docker, changes nothing in the real one): `deploy/restore-check.sh nlm-<date>.sql.gz` lists the
+  tables with row counts and ends with "Restore OK". A broken dump aborts with an error. Run it once a month with
+  a downloaded dump.
+- Restore into an empty database:
 
   ```bash
   dc stop app
   dc exec -T db psql -U nlm -d postgres -c 'DROP DATABASE nlm' -c 'CREATE DATABASE nlm'
-  gunzip -c backups/nlm-<Datum>.sql.gz | dc exec -T db psql -U nlm -d nlm
+  gunzip -c backups/nlm-<date>.sql.gz | dc exec -T db psql -U nlm -d nlm
   dc start app
   ```
 
-### Zeilensicherheit (Rolle `nlm_app`)
+### Row-level security (role `nlm_app`)
 
-Die App verbindet als `nlm_app`, die nicht Besitzerin der Tabellen ist; Postgres filtert dort jede Zeile nach dem Nutzer
-(`DATABASE_URL`). Migrationen, Gäste, Sweeps und die Aufnahme laufen über den Besitzer `nlm` (`DATABASE_OWNER_URL`, setzt
-[docker-compose.prod.yml](../deploy/docker-compose.prod.yml)). `bootstrap.sh` legt `APP_DB_USER` und `APP_DB_PASSWORD` in
-`server.env` an; [app-role.sh](../deploy/app-role.sh) gibt der Rolle im Deploy ihr Passwort. Ein bestehender Server schaltet um,
-sobald beide Zeilen in `server.env` stehen (`APP_DB_USER=nlm_app`, `APP_DB_PASSWORD=<zufälliger Wert>`). Zurück: beide Zeilen
-entfernen und `dc up -d app`.
+The app connects as `nlm_app`, which does not own the tables; Postgres filters every row there by the user
+(`DATABASE_URL`). Migrations, guests, sweeps and ingestion run through the owner `nlm` (`DATABASE_OWNER_URL`, set by
+[docker-compose.prod.yml](../deploy/docker-compose.prod.yml)). `bootstrap.sh` creates `APP_DB_USER` and `APP_DB_PASSWORD` in
+`server.env`; [app-role.sh](../deploy/app-role.sh) gives the role its password during the deploy. An existing server switches over
+as soon as both lines are in `server.env` (`APP_DB_USER=nlm_app`, `APP_DB_PASSWORD=<random value>`). To go back: remove both lines
+and run `dc up -d app`.
 
-### Zurück auf die vorige Version
+### Back to the previous version
 
-Jeder Deploy behält das bisherige Image als `nlm-app:previous`. Nach dem Start ruft der Workflow `https://<Hostname>/health` von außen auf (DNS, Zertifikat, Caddy, App). Startet die neue
-Version nicht oder antwortet nicht, setzt der Schritt „Roll back“ `previous` automatisch wieder auf `current`; der Lauf bleibt
-rot. Von Hand, auf dem Server:
+Every deploy keeps the previous image as `nlm-app:previous`. After the start the workflow calls `https://<hostname>/health` from outside (DNS, certificate, Caddy, app). If the new
+version does not start or does not answer, the step "Roll back" sets `previous` back to `current` automatically; the run stays
+red. By hand, on the server:
 
 ```bash
 docker tag nlm-app:previous nlm-app:current
 dc up -d
 ```
 
-Die Datenbank-Migrationen laufen beim Start der App vorwärts und werden dabei nicht zurückgenommen; ein Rollback über
-mehrere Versionen mit Schemaänderung braucht deshalb das Backup (siehe oben).
+The database migrations run forward when the app starts and are not undone; a rollback across
+several versions with a schema change therefore needs the backup (see above).
 
-### Zertifikat und Hostname
+### Certificate and hostname
 
-Caddy holt das Zertifikat beim ersten Start und erneuert es selbst; es liegt im Volume `caddy_data`. Bei `sslip.io` können
-die Let’s-Encrypt-Limits für den gemeinsamen Domain-Namen greifen; Caddy weicht dann automatisch auf ZeroSSL aus. Hilft das
-nicht, eine eigene Domain nehmen (nur `SITE_ADDRESS` in `server.env` und `DEPLOY_HOST` ändern). Eine Änderung des Hostnamens
-braucht einen neuen Deploy (`BETTER_AUTH_URL` wird aus `SITE_ADDRESS` gebildet).
+Caddy fetches the certificate on first start and renews it itself; it lives in the volume `caddy_data`. With `sslip.io`
+the Let's Encrypt limits for the shared domain name can apply; Caddy then falls back to ZeroSSL automatically. If that does
+not help, use an own domain (change only `SITE_ADDRESS` in `server.env` and `DEPLOY_HOST`). Changing the hostname
+needs a new deploy (`BETTER_AUTH_URL` is built from `SITE_ADDRESS`).
 
-## Fehlersuche
+## Troubleshooting
 
-| Beobachtung                                  | Wahrscheinliche Ursache und Schritt                                                                                |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Deploy bricht bei `ssh` ab                   | `DEPLOY_KNOWN_HOSTS` oder `DEPLOY_SSH_KEY` falsch; Firewall lässt Port 22 nicht zu                                 |
-| `up --wait` meldet `app` als unhealthy       | `dc logs app`: meist ein `FILL_IN` oder ein fehlender Wert in `server.env` (die App prüft die Umgebung beim Start) |
-| Browser meldet Zertifikatsfehler             | `dc logs caddy`: Ports 80 und 443 offen? Hostname zeigt auf die IP? Limits siehe oben                              |
-| „Demo ausprobieren“ antwortet mit Fehler     | `SEED_DEMO_EMAIL` fehlt oder `pnpm seed:demo` wurde nicht ausgeführt                                               |
-| Titelbilder fehlen nach Neustart des Servers | Volume `s3data` gelöscht? Es ist nicht im Backup; Bilder neu hochladen                                             |
-| Server träge, Container beendet              | `docker stats`, `free -h`: Speicher knapp; größeren Server wählen oder Swap prüfen                                 |
+| Observation                                              | Likely cause and step                                                                                           |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Deploy aborts at `ssh`                                   | `DEPLOY_KNOWN_HOSTS` or `DEPLOY_SSH_KEY` wrong; firewall does not allow port 22                                 |
+| `up --wait` reports `app` as unhealthy                   | `dc logs app`: usually a `FILL_IN` or a missing value in `server.env` (the app checks the environment on start) |
+| Browser reports a certificate error                      | `dc logs caddy`: ports 80 and 443 open? Hostname points to the IP? Limits see above                             |
+| "Demo ausprobieren" (try the demo) answers with an error | `SEED_DEMO_EMAIL` is missing or `pnpm seed:demo` was not run                                                    |
+| Cover images missing after a server restart              | Volume `s3data` deleted? It is not in the backup; upload the images again                                       |
+| Server sluggish, container killed                        | `docker stats`, `free -h`: memory is tight; choose a larger server or check swap                                |

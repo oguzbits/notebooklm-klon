@@ -34,7 +34,7 @@ const TEST_COUNT = /\b\d[\d.]*\s+tests\b/i;
 const FENCE = /^\s*```/;
 // Documents that hold context, not state: a date or a word about what is built goes stale unnoticed.
 const STABLE_DOCS = new Set(['docs/PLAN.md']);
-const STATE_WORD = /\b(\d{4}-\d{2}-\d{2}|gebaut|entfernt|umgesetzt|später ergänzt|Stand \d)/i;
+const STATE_WORD = /\b(\d{4}-\d{2}-\d{2}|built|removed|implemented|added later|as of \d)/i;
 
 function collectMarkdown(root, dir = root) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {

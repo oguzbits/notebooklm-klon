@@ -1,135 +1,135 @@
-# NotebookLM-Klon: Requirements, Stack und Risiken
+# NotebookLM Clone: Requirements, Stack and Risks
 
-Sep 29, 2026 · @Oguz Öztürk · Kontext und Rahmen. Zustand und Offenes stehen im Code, in [BACKLOG.md](BACKLOG.md) und in der Git-Historie, nicht hier.
+Sep 29, 2026 · @Oguz Öztürk · Context and frame. State and open points are in the code, in [BACKLOG.md](BACKLOG.md) and in the git history, not here.
 
-## Ziel und Rahmen
+## Goal and frame
 
-Ziel ist ein NotebookLM-Klon in production-ready Qualität, abgegeben mit zwei Artefakten: GitHub-Repo und Live-Deployment.
+The goal is a NotebookLM clone of production-ready quality, handed in with two artifacts: a GitHub repo and a live deployment.
 
-- **Aufgabe:** Umsetzung, Umfang und Struktur sind frei, die Nutzung von AI-Tools ist ausdrücklich erwünscht.
-- **Beweisziel:** Du beherrschst den Stack eines Full-Stack-Engineers (React, Node.js, PostgreSQL, API-Design, LLM-Integration).
-- **Schwerpunkt:** AI-Kern (RAG, verifizierbare Zitate, Evals) und ein sichtbarer agentischer Workflow im Repo. Breite nur so weit nötig.
-- **Zeit:** 4 bis 5 volle Arbeitstage, die Frist beträgt eine Woche. Ziel ist, früh fertig zu sein und den Rest als Puffer zu behalten.
-- **Kosten:** minimal. Der Betrieb nutzt den bezahlten Gemini-Tarif mit einem kleinen Guthaben, begrenzt durch Limits je Nutzer und eine Tagesbremse
-  (siehe [Kontingent und Kosten](#kontingent-und-kosten)).
-- **Sprache:** Oberfläche nur Deutsch. Quellen und Fragen dürfen Englisch sein.
+- **Task:** Implementation, scope and structure are free; the use of AI tools is explicitly welcome.
+- **Proof goal:** You master the stack of a full-stack engineer (React, Node.js, PostgreSQL, API design, LLM integration).
+- **Focus:** AI core (RAG, verifiable citations, evals) and a visible agentic workflow in the repo. Breadth only as far as needed.
+- **Time:** 4 to 5 full working days, the deadline is one week. The aim is to finish early and keep the rest as a buffer.
+- **Cost:** minimal. Operation uses the paid Gemini plan with a small credit, limited by per-user limits and a daily brake
+  (see [Quota and cost](#quota-and-cost)).
+- **Language:** UI in German only. Sources and questions may be English.
 
-## Was NotebookLM ausmacht
+## What makes NotebookLM
 
-Der Kern ist ein Chat, der nur auf deinen eigenen Quellen antwortet und jede Aussage mit einem nummerierten Zitat belegt, das direkt zur Textstelle führt. Alles andere hängt daran: Notebook anlegen, Quellen hinzufügen, chatten, Studio-Outputs erzeugen.
+The core is a chat that answers only from your own sources and backs every statement with a numbered citation that leads straight to the passage. Everything else hangs on that: create a notebook, add sources, chat, generate Studio outputs.
 
-**Was dein Screenshot zeigt (Gemini Notebook, deutsche Oberfläche):**
+**What your screenshot shows (Gemini Notebook, German UI):**
 
-- Zitate sind **nummerierte Chips im Fließtext**, mehrere pro Aussage sind möglich. Die Nummern stehen offenbar für einzelne Passagen der Quelle (aus dem Bild geschlossen).
-- **Hover** öffnet ein Popup mit Dateiname, dem zitierten Passagentext (scrollbar) und dem Link "Quelle anzeigen".
-- Gleichzeitig zeigt das **linke Panel den extrahierten Quelltext** mit hervorgehobener Passage. Es ist kein PDF-Viewer und es gibt keine Seiten-Overlays.
-- Die Hervorhebung deckt **ganze Absatzblöcke** ab, nicht einzelne Sätze. Die Granularität ist der Chunk.
-- Dazu: Quellenübersicht oben im Quellenpanel, Zähler "1 Quelle" im Eingabefeld, Notizen, Hinweis "kann Fehler machen".
-- **Studio:** Audio, Präsentation, Video, Mindmap, Berichte, Karteikarten, Quiz, Infografik.
+- Citations are **numbered chips in the running text**, several per statement are possible. The numbers apparently stand for individual passages of the source (inferred from the image).
+- **Hover** opens a popup with the file name, the cited passage text (scrollable) and the link "Quelle anzeigen" (show source).
+- At the same time the **left panel shows the extracted source text** with the passage highlighted. It is not a PDF viewer and there are no page overlays.
+- The highlight covers **whole paragraph blocks**, not single sentences. The granularity is the chunk.
+- Also: source overview at the top of the source panel, counter "1 Quelle" (1 source) in the input field, notes, hint "kann Fehler machen" (can make mistakes).
+- **Studio:** audio, presentation, video, mind map, reports, flashcards, quiz, infographic.
 
-**Sprache:** NotebookLM hat die Einstellung "Output Language" für Chat und generierte Inhalte, Standard ist die Sprache des Google-Kontos. Quellen bleiben in ihrer Originalsprache. Laut einer Drittquelle antwortet es ohne diese Einstellung in der Sprache der letzten Nachricht.
+**Language:** NotebookLM has the setting "Output Language" for chat and generated content, the default is the language of the Google account. Sources stay in their original language. According to a third-party source it answers, without this setting, in the language of the last message.
 
-**Konsequenz für den Klon:** Zitate sind chunk-genau und werden im extrahierten Text hervorgehoben. Wir brauchen weder Bounding Boxes noch einen PDF-Viewer. Wie NotebookLM intern arbeitet, ist nicht belegt (nur Sekundärquellen).
+**Consequence for the clone:** Citations are chunk-exact and are highlighted in the extracted text. We need neither bounding boxes nor a PDF viewer. How NotebookLM works internally is not documented (only secondary sources).
 
 ## Requirements
 
-Wenige Funktionen in hoher Qualität schlagen viele halbfertige. Der Kern ist der Weg von der Quelle zum nachprüfbaren Zitat.
+A few features in high quality beat many half-finished ones. The core is the path from source to verifiable citation.
 
 **Must**
 
-1. Anmeldung und Notebooks anlegen, auflisten, löschen.
-2. Quellen hinzufügen: PDF, DOCX, PPTX, Bilder, Aufnahmen (MP3, WAV), öffentliche YouTube-Videos, TXT/MD und URL. Die Verarbeitung läuft asynchron mit Status und verständlichen Fehlermeldungen.
-3. Chat mit Streaming, der nur auf den gewählten Quellen antwortet, mit nummerierten Zitaten. Hover zeigt das Popup, Klick öffnet den Quelltext mit Chunk-Hervorhebung.
-4. Quellen an- und abwählen. Die Auswahl begrenzt auch das Retrieval.
-5. Quellenübersicht pro Quelle (Zusammenfassung und Schlüsselthemen).
-6. Live-Deployment, README und ein Demo-Zugang mit vorbefülltem Demo-Notebook.
+1. Sign-in and create, list and delete notebooks.
+2. Add sources: PDF, DOCX, PPTX, images, recordings (MP3, WAV), public YouTube videos, TXT/MD and URL. Processing runs asynchronously with status and understandable error messages.
+3. Chat with streaming that answers only from the selected sources, with numbered citations. Hover shows the popup, a click opens the source text with chunk highlighting.
+4. Select and deselect sources. The selection also limits retrieval.
+5. Source overview per source (summary and key topics).
+6. Live deployment, README and a demo access with a prefilled demo notebook.
 
 **Should**
 
-- Vorschlagsfragen beim Hinzufügen einer Quelle.
-- Notizen aus Antworten speichern.
+- Suggested questions when a source is added.
+- Save notes from answers.
 
-**Nachbau.** Die Oberfläche folgt NotebookLM so genau wie möglich, dreispaltig
-(Quellen | Chat | Studio), mit Google Sans Flex (OFL) und den am Original gemessenen Farben, Rundungen und
-Abständen (neutrales Grau, Blau nur als Akzent), hell und dunkel.
-Logo und Name sind ausdrücklich erlaubt (Entscheidung des Nutzers); im Live-Demo steht ein Hinweis, dass es
-ein Nachbau ist. Dazu:
+**Re-creation.** The UI follows NotebookLM as exactly as possible, three columns
+(sources | chat | Studio), with Google Sans Flex (OFL) and the colors, radii and
+spacing measured on the original (neutral gray, blue only as an accent), light and dark.
+Logo and name are explicitly allowed (decision of the user); the live demo carries a notice that it is
+a re-creation. In addition:
 
-- **Studio-Spalte:** Bericht (Briefing, FAQ, Lernleitfaden), Karteikarten, Quiz, Mindmap, Datentabelle. Alle Ausgaben
-  sind strukturiert, stützen sich auf die ausgewählten Quellen und folgen dem Zitat-Vertrag: Jeder
-  Abschnitt, jede Karte, jede Frage, jede Zelle der Datentabelle und jeder Ast verweist auf echte Passagen, der Server verwirft, was
-  nicht belegt ist. Notizen wohnen wie bei NotebookLM in der Studio-Spalte.
-- **Chat-Einstellungen pro Notizbuch:** Stil (Standard, Lernbegleiter, eigene Anweisung), Antwortlänge,
-  Ausgabesprache (Standard: Sprache der Frage).
-- **Kleine NotebookLM-Funktionen:** Text einfügen als Quelle, Notiz in Quelle umwandeln, Antwort kopieren.
-- **Modelle:** Alle Modell-IDs kommen aus der Umgebung (`AI_MODEL`, `PARSE_MODEL`, `EMBEDDING_MODEL`). Chat, Studio und Übersichten
-  nutzen dasselbe `AI_MODEL`; ein eigenes Studio-Modell gibt es nicht.
+- **Studio column:** report (briefing, FAQ, study guide), flashcards, quiz, mind map, data table. All outputs
+  are structured, rely on the selected sources and follow the citation contract: every
+  section, every card, every question, every cell of the data table and every branch points to real passages, and the server drops what is
+  not backed. Notes live in the Studio column, as in NotebookLM.
+- **Chat settings per notebook:** style (default, learning companion, custom instruction), answer length,
+  output language (default: language of the question).
+- **Small NotebookLM features:** paste text as a source, turn a note into a source, copy an answer.
+- **Models:** All model IDs come from the environment (`AI_MODEL`, `PARSE_MODEL`, `EMBEDDING_MODEL`). Chat, Studio and overviews
+  use the same `AI_MODEL`; there is no separate Studio model.
 
 **Stretch**
 
-- PPTX, Aufnahmen (MP3, WAV) und YouTube als Quelle.
-- Websuche im Chat (Tavily, optional, ohne Deep Research) und Gastzugang mit einer Kopie des Demo-Notizbuchs.
+- PPTX, recordings (MP3, WAV) and YouTube as a source.
+- Web search in the chat (Tavily, optional, without Deep Research) and guest access with a copy of the demo notebook.
 
-**Bewusst nicht**
+**Deliberately not**
 
-- Audio- und Video-Overview, Infografik, Präsentation, Deep Research.
-- Sharing und Kollaboration, Drive-Anbindung. Eine eigene Handy-App entfällt; die Seite selbst hat ein Handy-Layout (Tabs).
-- Originaldateien speichern (nur extrahierter Text plus Metadaten).
+- Audio and video overview, infographic, presentation, Deep Research.
+- Sharing and collaboration, Drive integration. An own mobile app is out; the site itself has a mobile layout (tabs).
+- Storing original files (only extracted text plus metadata).
 
-**Qualitätsanforderungen (production-ready)**
+**Quality requirements (production-ready)**
 
-- SSRF-Schutz beim URL-Import, Upload-Limits (Größe, Seitenzahl, entpackte Größe) und Rate Limiting gegenüber dem Anbieter, dazu Limits je Nutzer und eine Tagesbremse
-  (siehe [Kontingent und Kosten](#kontingent-und-kosten)).
-- Env-Validierung mit Zod, Health-Check, strukturierte Logs, Migrationen mit drizzle-kit.
-- Tests: Vitest, Playwright-Nutzerreisen, ein Eval-Skript mit Golden-Fragen. Tests laufen ohne echte API-Aufrufe (Fixtures und Mocks), damit sie kein Tageskontingent verbrauchen.
-- CI mit Typecheck, Lint und Tests, dazu eine AGENTS.md, die deinen agentischen Workflow im Repo sichtbar macht.
+- SSRF protection for URL import, upload limits (size, page count, unpacked size) and rate limiting towards the provider, plus per-user limits and a daily brake
+  (see [Quota and cost](#quota-and-cost)).
+- Env validation with Zod, health check, structured logs, migrations with drizzle-kit.
+- Tests: Vitest, Playwright user journeys, an eval script with golden questions. Tests run without real API calls (fixtures and mocks) so they do not use up the daily quota.
+- CI with typecheck, lint and tests, plus an AGENTS.md that makes your agentic workflow visible in the repo.
 
-## Architektur und Datenfluss
+## Architecture and data flow
 
-Die Ingestion schreibt Chunks und Vektoren in Postgres, der Chat liest nur die passenden Chunks der gewählten Quellen, das Studio lädt die gewählten Quellen vollständig.
+Ingestion writes chunks and vectors to Postgres, the chat reads only the matching chunks of the selected sources, the Studio loads the selected sources in full.
 
-## Tech Stack v3
+## Tech stack v3
 
-React-Frontend und Node.js-Backend in einem Monorepo, ein Container, Postgres mit pgvector, Gemini. Docling und ein zweiter Service entfallen. Preise und Benchmarks stammen teils aus Drittquellen und sind vor einer Entscheidung zu prüfen.
+React frontend and Node.js backend in a monorepo, one container, Postgres with pgvector, Gemini. Docling and a second service are dropped. Prices and benchmarks come partly from third-party sources and must be checked before a decision.
 
-| Bereich          | Wahl                                                                                                                      | Begründung / Alternative                                                                                                   |
+| Area             | Choice                                                                                                                    | Reason / alternative                                                                                                       |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Runtime, Sprache | Node.js LTS, pnpm-Workspaces, TypeScript strict, Zod in `packages/shared`                                                 | Die Anforderungen nennen Node.js und JavaScript. Bun bewusst nicht                                                           |
-| Frontend         | React 19, Vite, React Router, TanStack Query, Tailwind, shadcn/ui, react-markdown                                         | Anzeige nennt React. Ein getrenntes Frontend zeigt API-Design sichtbar                                                     |
-| Backend          | Hono mit `@hono/zod-openapi`, SSE-Streaming, liefert auch das Frontend aus                                                | Typisierter RPC-Client und OpenAPI aus Zod-Schemas. Fastify, Express oder NestJS wären gleichwertig, Hono ist austauschbar |
-| Auth             | Better Auth mit Drizzle-Adapter                                                                                           | Nutzer in der eigenen Postgres. Supabase Auth bringt bei direkter DB-Verbindung keinen RLS-Vorteil. Zeilensicherheit der eigenen Postgres: siehe unten                         |
-| Datenbank        | PostgreSQL mit pgvector (HNSW), Postgres-Volltextsuche, Drizzle ORM; in Produktion ein Container auf dem Hetzner-Server | Eine Datenbank für alles; Neon und Render-Postgres verworfen (schlafen im Gratis-Tarif ein beziehungsweise laufen nach 30 Tagen ab)               |
-| Jobs             | pg-boss                                                                                                                   | Etablierte Postgres-Queue statt Eigenbau. Braucht eine direkte Verbindung, kein PgBouncer                                                    |
-| Parsing          | PDF: Gemini 3.1 Flash-Lite ([Spike](SPIKE-ERGEBNISSE.md)). DOCX: mammoth. PPTX: fflate + XML (Folientext, Tabellen, Notizen). Audio: Gemini transkribiert wörtlich (inline, bis 10 MB). TXT/MD direkt. URL: Readability. DOCX und URL werden als Markdown gespeichert (Links, Fett, Tabellen), TXT bleibt Klartext. Bei Recitation-Sperre: ein zweites Gemini-Modell (`PARSE_FALLBACK_MODEL`) | ParseBench (Tabellen / Inhaltstreue): Gemini 3.1 Flash-Lite 85,5 / 89,5, Docling 66,4 / 66,9, LiteParse 42,4 / 70,0        |
-| Embeddings       | Gemini Embedding 2 mit 768 Dimensionen (`EMBEDDING_MODEL`)                                                  | Limits bekannt (RPM 100, TPM 30K, RPD 1000), im Spike gleichauf mit 001 (17 gegen 16 von 18). Die Vektorräume beider Modelle sind inkompatibel                              |
-| Retrieval        | pgvector plus Volltextsuche, Fusion per RRF in SQL                                                                        | Hybrid fängt Eigennamen und Zahlen, die Vektorsuche verfehlt (im Spike ein Fehltreffer, der zu einer falschen Antwort führte)                                                               |
-| LLM-Schicht      | Eigener schlanker Gemini-Client statt Vercel AI SDK, Modell-IDs und Limits in der Config                                                                        | Chat, Studio und Übersichten: dasselbe Modell (`AI_MODEL`), im [Spike](SPIKE-ERGEBNISSE.md) gewählt  |
-| Zitate           | Strukturierte Ausgabe mit Chunk-Nummern, Server prüft, dass die zitierten Chunks im Kontext waren                         | Anthropic-Citations verworfen (Kosten, Anbieter-Bindung)                                                                   |
-| Tests, Qualität  | Vitest, Playwright-Nutzerreisen, Eval-Skript, ESLint, Prettier, GitHub Actions                                                   | Tests ohne echte API-Aufrufe                                                                                               |
-| Hosting          | Hetzner Cloud: Docker Compose mit Caddy, App, Postgres und SeaweedFS, Deployment per GitHub Actions ([DEPLOYMENT.md](DEPLOYMENT.md)) | Läuft dauerhaft, kein Kaltstart. Render und Vercel verworfen                                  |
+| Runtime, language | Node.js LTS, pnpm workspaces, TypeScript strict, Zod in `packages/shared`                                                | The requirements name Node.js and JavaScript. Bun deliberately not                                                         |
+| Frontend         | React 19, Vite, React Router, TanStack Query, Tailwind, shadcn/ui, react-markdown                                         | The posting names React. A separate frontend visibly shows API design                                                      |
+| Backend          | Hono with `@hono/zod-openapi`, SSE streaming, also serves the frontend                                                    | Typed RPC client and OpenAPI from Zod schemas. Fastify, Express or NestJS would be equivalent, Hono is replaceable        |
+| Auth             | Better Auth with Drizzle adapter                                                                                          | Users in the own Postgres. Supabase Auth brings no RLS advantage with a direct DB connection. Row-level security of the own Postgres: see below |
+| Database         | PostgreSQL with pgvector (HNSW), Postgres full-text search, Drizzle ORM; in production a container on the Hetzner server | One database for everything; Neon and Render Postgres rejected (they sleep on the free plan or expire after 30 days)      |
+| Jobs             | pg-boss                                                                                                                   | Established Postgres queue instead of a home-grown one. Needs a direct connection, no PgBouncer                            |
+| Parsing          | PDF: Gemini 3.1 Flash-Lite ([spike](SPIKE-RESULTS.md)). DOCX: mammoth. PPTX: fflate + XML (slide text, tables, notes). Audio: Gemini transcribes verbatim (inline, up to 10 MB). TXT/MD direct. URL: Readability. DOCX and URL are stored as Markdown (links, bold, tables), TXT stays plain text. On a recitation block: a second Gemini model (`PARSE_FALLBACK_MODEL`) | ParseBench (tables / content fidelity): Gemini 3.1 Flash-Lite 85.5 / 89.5, Docling 66.4 / 66.9, LiteParse 42.4 / 70.0 |
+| Embeddings       | Gemini Embedding 2 with 768 dimensions (`EMBEDDING_MODEL`)                                                                | Limits known (RPM 100, TPM 30K, RPD 1000), on par with 001 in the spike (17 versus 16 of 18). The vector spaces of the two models are incompatible |
+| Retrieval        | pgvector plus full-text search, fusion by RRF in SQL                                                                      | Hybrid catches proper names and numbers that vector search misses (in the spike one miss that led to a wrong answer)       |
+| LLM layer        | Own slim Gemini client instead of Vercel AI SDK, model IDs and limits in the config                                       | Chat, Studio and overviews: the same model (`AI_MODEL`), chosen in the [spike](SPIKE-RESULTS.md)                           |
+| Citations        | Structured output with chunk numbers, the server checks that the cited chunks were in the context                         | Anthropic Citations rejected (cost, provider lock-in)                                                                      |
+| Tests, quality   | Vitest, Playwright user journeys, eval script, ESLint, Prettier, GitHub Actions                                           | Tests without real API calls                                                                                               |
+| Hosting          | Hetzner Cloud: Docker Compose with Caddy, app, Postgres and SeaweedFS, deployment by GitHub Actions ([DEPLOYMENT.md](DEPLOYMENT.md)) | Runs permanently, no cold start. Render and Vercel rejected                                                                |
 
-**Abgrenzung zu notar-agent:** Übernommen werden Zod, Drizzle, pgvector und das Hybrid-Retrieval mit RRF. Neu bzw. geändert sind Auth, Queue (pg-boss statt Eigenbau), Parsing (Gemini statt liteparse plus mammoth für alles) und der Verzicht auf Supabase.
+**Delimitation from notar-agent:** Zod, Drizzle, pgvector and the hybrid retrieval with RRF are adopted. New or changed are auth, queue (pg-boss instead of home-grown), parsing (Gemini instead of liteparse plus mammoth for everything) and dropping Supabase.
 
-**Setup aus notar-agent (übernommen und angepasst):** Regeln und Schichten stehen in [AGENTS.md](../AGENTS.md), die Gates in `package.json` (`pnpm check`, `pnpm test`) und im CI (`.github/workflows`), die Hook-Regeln in `.claude/settings.json` und `.claude/hooks`. Hier steht nur, was von notar-agent abweicht:
+**Setup from notar-agent (adopted and adapted):** Rules and layers are in [AGENTS.md](../AGENTS.md), the gates in `package.json` (`pnpm check`, `pnpm test`) and in CI (`.github/workflows`), the hook rules in `.claude/settings.json` and `.claude/hooks`. Only what differs from notar-agent is listed here:
 
-- **Gate `check`:** ohne Health-Score. Er startete die Einzeltools ein zweites Mal und ließ Abstürze als 100 Punkte durch; die Einzeltools sind schon harte Gates.
-- **TypeScript:** 6.0, weil typescript-eslint TypeScript 7 noch nicht unterstützt.
-- **Neu:** Env-Validierung mit Zod (`apps/api/src/config/env.ts`), Netzwerk-Riegel in Tests (MSW lehnt jede nicht abgefangene Anfrage ab), Tests für die Hook-Skripte selbst, Docs-Audit (`pnpm audit:docs`).
-- **Skills und MCP:** chrome-devtools läuft als MCP-Server auf Benutzerebene, nicht im Repo. `software-craftsmanship` und `context7` entfallen, weil `AGENTS.md`, ESLint und die Audits dieselben Regeln erzwingen.
-- **Eval:** Übernommen ist die Idee, keine Zeile Code. Dataset-Schema mit Textankern statt Chunk-IDs, reine Scorer, aufgezeichnete Modellantworten offline abgespielt; Promptfoo, der Jev-Judge und ein Mock-Modell aus der Ground Truth entfallen, weil sie nur die Verdrahtung prüften, nicht die Qualität. Stand und Baseline: [Betrieb und Qualitätswerkzeuge](#betrieb-und-qualitätswerkzeuge).
+- **Gate `check`:** without a health score. It ran the individual tools a second time and let crashes pass as 100 points; the individual tools are already hard gates.
+- **TypeScript:** 6.0, because typescript-eslint does not yet support TypeScript 7.
+- **New:** env validation with Zod (`apps/api/src/config/env.ts`), network latch in tests (MSW rejects every unmocked request), tests for the hook scripts themselves, docs audit (`pnpm audit:docs`).
+- **Skills and MCP:** chrome-devtools runs as an MCP server at user level, not in the repo. `software-craftsmanship` and `context7` are dropped because `AGENTS.md`, ESLint and the audits enforce the same rules.
+- **Eval:** The idea is adopted, not a line of code. Dataset schema with text anchors instead of chunk IDs, pure scorers, recorded model answers replayed offline; Promptfoo, the Jev judge and a mock model from the ground truth are dropped because they only checked the wiring, not the quality. State and baseline: [Operations and quality tools](#operations-and-quality-tools).
 
-**Nicht übernommen:** Supabase-Repositories (Autorisierung liegt in der API, Postgres-RLS ist die zweite Schicht), Next.js-Route-Handler, Audit-Trail mit Hash-Kette, Wissensdatenbank der Rechtsnormen, PII-Logging-Scan (§ 203 StGB), Supabase-N+1-Scan, Health-Score, promptfoo und die Fixture-Generatoren für Notar-Scans.
+**Not adopted:** Supabase repositories (authorization lives in the API, Postgres RLS is the second layer), Next.js route handlers, audit trail with hash chain, knowledge base of legal norms, PII logging scan (§ 203 StGB), Supabase N+1 scan, health score, promptfoo and the fixture generators for notary scans.
 
-## Kontingent und Kosten
+## Quota and cost
 
-**Was gilt heute** (Quelle ist der Code, die Tabellen unten werden von `pnpm docs:generate` aus [config/limits.ts](../apps/api/src/config/limits.ts)
-und [config/env.ts](../apps/api/src/config/env.ts) geschrieben; nicht von Hand ändern). Die Werte der Anbieter sind die des bezahlten Tarifs
-aus dem AI-Studio-Dashboard. ❓ Ob die Abrechnung verknüpft ist und ein Budget-Limit gesetzt wurde, steht nirgends im Repo.
+**What applies today** (the source is the code, the tables below are written by `pnpm docs:generate` from [config/limits.ts](../apps/api/src/config/limits.ts)
+and [config/env.ts](../apps/api/src/config/env.ts); do not change by hand). The provider values are those of the paid plan
+from the AI Studio dashboard. ❓ Whether billing is linked and a budget limit is set is nowhere in the repo.
 
-Eigene Grenzen (`LIMITS`):
+Own limits (`LIMITS`):
 
 <!-- generated:limits -->
-| Grenze | Wert |
+| Limit | Value |
 | --- | --- |
 | `NOTEBOOKS_PER_USER` | 100 |
 | `SOURCES_PER_NOTEBOOK` | 50 |
@@ -167,32 +167,32 @@ Eigene Grenzen (`LIMITS`):
 | `SHUTDOWN_JOB_WAIT_MS` | 60,000 |
 <!-- /generated -->
 
-Grenzen des Anbieters je Modellrolle (`PROVIDER_LIMITS`):
+Provider limits per model role (`PROVIDER_LIMITS`):
 
 <!-- generated:provider-limits -->
-| Rolle | Anfragen je Minute | Tokens je Minute |
+| Role | Requests per minute | Tokens per minute |
 | --- | --- | --- |
 | PARSE | 1,000 | 2,000,000 |
 | CHAT | 1,000 | 2,000,000 |
 | EMBED | 3,000 | 1,000,000 |
 <!-- /generated -->
 
-Umgebungsvariablen (`EnvSchema`):
+Environment variables (`EnvSchema`):
 
 <!-- generated:env -->
-| Variable | Art |
+| Variable | Kind |
 | --- | --- |
-| `DATABASE_URL` | Pflicht |
+| `DATABASE_URL` | required |
 | `DATABASE_OWNER_URL` | optional |
-| `NODE_ENV` | Standardwert |
-| `PORT` | Standardwert |
-| `GEMINI_API_KEY` | Pflicht |
-| `AI_MODEL` | Pflicht |
-| `PARSE_MODEL` | Pflicht |
+| `NODE_ENV` | default value |
+| `PORT` | default value |
+| `GEMINI_API_KEY` | required |
+| `AI_MODEL` | required |
+| `PARSE_MODEL` | required |
 | `PARSE_FALLBACK_MODEL` | optional |
-| `EMBEDDING_MODEL` | Pflicht |
-| `BETTER_AUTH_SECRET` | Pflicht |
-| `BETTER_AUTH_URL` | Pflicht |
+| `EMBEDDING_MODEL` | required |
+| `BETTER_AUTH_SECRET` | required |
+| `BETTER_AUTH_URL` | required |
 | `TAVILY_API_KEY` | optional |
 | `S3_ENDPOINT` | optional |
 | `S3_REGION` | optional |
@@ -206,51 +206,51 @@ Umgebungsvariablen (`EnvSchema`):
 | `SEED_DEMO_PASSWORD` | optional |
 <!-- /generated -->
 
-**Schutz vor Kosten und Missbrauch**
+**Protection against cost and abuse**
 
-- **Rate-Limiter vor dem Anbieter:** Jeder Aufruf an ein Sprach- oder Embedding-Modell läuft durch einen Gleitfenster-Limiter
-  (Anfragen und Tokens pro Minute, in einer Warteschlange). Er liegt im Speicher: Ein Neustart setzt ihn zurück, mehrere
-  Instanzen würden getrennt zählen. Er schützt das Kontingent beim Anbieter, nicht vor einzelnen Nutzern.
-- **Limit je Nutzer** (24 Stunden gleitend) für Fragen und Studio-Ausgaben, **Notbremse** in Tokens je Tag für alle, ein laufender
-  Aufruf je Nutzer, Obergrenze je Antwort (`MAX_OUTPUT_TOKENS`), Grenzen für Notizbücher und Quellen. Verbrauch in `usage_events`,
-  Bericht mit `pnpm report:usage`. Die Höhen sind Annahmen bis zur Messung (siehe [BACKLOG.md](BACKLOG.md)).
-- **Inhalts-Hash pro Nutzer:** Dasselbe Dokument wird nie zweimal gelesen oder eingebettet.
-- **Gäste:** begrenzt je Stunde, je Adresse und Stunde (letzter Eintrag von `X-Forwarded-For`, von Caddy gesetzt; im Prozessspeicher), gleichzeitig und in der Lebensdauer (`GUESTS_*`, `GUEST_LIFETIME_DAYS` oben). Ein Captcha gibt es bewusst nicht ([BACKLOG.md](BACKLOG.md)).
-- **Websuche** (Tavily): kein eigenes Limit; eine erschöpfte Tavily-Quote wird als 429 weitergereicht.
-- **Kein Kill-Switch** per Umgebungsvariable; wer alles sperren will, stoppt den Container.
+- **Rate limiter in front of the provider:** Every call to a language or embedding model runs through a sliding-window limiter
+  (requests and tokens per minute, in a queue). It lives in memory: a restart resets it, several
+  instances would count separately. It protects the quota at the provider, not against single users.
+- **Per-user limit** (24 hours sliding) for questions and Studio outputs, **emergency brake** in tokens per day for everyone, one running
+  call per user, upper bound per answer (`MAX_OUTPUT_TOKENS`), limits for notebooks and sources. Usage in `usage_events`,
+  report with `pnpm report:usage`. The levels are assumptions until measured (see [BACKLOG.md](BACKLOG.md)).
+- **Content hash per user:** The same document is never read or embedded twice.
+- **Guests:** limited per hour, per address and hour (last entry of `X-Forwarded-For`, set by Caddy; in process memory), concurrently and in lifetime (`GUESTS_*`, `GUEST_LIFETIME_DAYS` above). There is deliberately no captcha ([BACKLOG.md](BACKLOG.md)).
+- **Web search** (Tavily): no limit of its own; an exhausted Tavily quota is passed on as 429.
+- **No kill switch** via environment variable; whoever wants to block everything stops the container.
 
-**Zwei Google-Projekte:** eines zum Bauen und Testen, eines für das Live-Demo, damit Tests das Kontingent der Prüfer nicht
-verbrauchen ([DEPLOYMENT.md](DEPLOYMENT.md)).
+**Two Google projects:** one for building and testing, one for the live demo, so tests do not use up the reviewers'
+quota ([DEPLOYMENT.md](DEPLOYMENT.md)).
 
-**Hinweis im Demo:** keine sensiblen Dokumente hochladen; für das Free Tier können Google-Bedingungen zur Datennutzung gelten.
+**Notice in the demo:** do not upload sensitive documents; for the free tier Google's terms on data use may apply.
 
-## Betrieb und Qualitätswerkzeuge
+## Operations and quality tools
 
-- **Beobachtbarkeit:** Jede Anfrage trägt eine ID (`X-Request-Id`, in Zugriffslog, Logzeilen und Fehlerantworten). Job-Fehler und abgelehnte Uploads werden mit Art, Größe und Stufe geloggt, nie mit Dateiname oder Inhalt.
-  Sentry (EU) meldet unerwartete Fehler (500, Import-Jobs, Job-Queue, Chat) in [observability/](../apps/api/src/observability) und [error-reporting.ts](../apps/web/src/lib/error-reporting.ts). Gesendet wird nur eine Liste erlaubter Felder
-  (`scrubEvent`: Fehlerart, Stapel, Release = Commit, Umgebung, Tags, Source-Map-Kennungen), nie Fehlertext, Variablen, Quelltext, Anfrage oder Nutzer. Ohne `SENTRY_DSN` startet das SDK nicht. Source Maps des Web gehen beim
-  Deploy-Build zu Sentry und werden gelöscht (`SENTRY_AUTH_TOKEN` als Build-Secret). Der Sentry-MCP-Server ist je Benutzer eingerichtet, nicht im Repo, und bleibt ausgeschaltet. Dauerhafte Logs gibt es bewusst nicht ([BACKLOG.md](BACKLOG.md)). Was bei Wachstum folgt: [SCALING.md](SCALING.md). Ziele: [SLO.md](SLO.md), Anleitung bei Alarmen: [RUNBOOK.md](RUNBOOK.md).
-- **Zeilensicherheit (RLS):** Zweite Schicht hinter Invariante 3. Alle neun Tabellen mit Nutzerbezug haben eine Policy (`user_id = current_setting('app.user_id', true)`, bei `chunks`, `source_uploads` und `notebook_sources` über die Eltern-Zeile); [rls.ts](../apps/api/src/db/rls.ts) baut sie, die Migrationen erzeugt `drizzle-kit`. Die App verbindet als `nlm_app` (nicht Besitzerin, kein `BYPASSRLS`), jede Route läuft in `forUser`, einer Transaktion mit gesetztem Nutzer; ohne Nutzer liefert Postgres keine Zeilen. Arbeit, die niemandem gehört (Gäste, Tagesbudget, Sweeps, Aufnahme, Migrationen, Job-Queue), nutzt die Besitzer-Verbindung `systemDb` (`DATABASE_OWNER_URL`). Die Vektorsuche liest einen exakten Scan über die gewählten Quellen; die Policy fügt kleine Semi-Joins hinzu, kein Index geht verloren.
-- **Lieferkette:** Dependabot (npm, Actions, Docker; wöchentlich), `pnpm audit`, Semgrep und Trivy (Abhängigkeiten, Geheimnisse, Dockerfile; SBOM als CI-Artefakt) im CI, GitHub Secret Scanning mit Push-Schutz.
-- **Eval:** `pnpm eval:live` fragt 34 goldene Fragen ([golden-questions.json](../apps/api/src/eval/golden-questions.json)) durch denselben Code wie der Chat. Der Schlüssel ist `EVAL_GEMINI_API_KEY` (nie `GEMINI_API_KEY`, kein Rückfall).
-  Ein voller Lauf wird mit [baseline.json](../apps/api/src/eval/baseline.json) verglichen und endet mit Fehlercode 1, wenn ein Maß um mehr als 5 Prozentpunkte fällt (`GATE_TOLERANCE`, geschätzt). Die Werte der Baseline stehen in der Datei; ob die Menge noch Verbesserungen zeigen kann, steht im [Backlog](BACKLOG.md). Bei erschöpftem Free-Tier-Kontingent bricht der Lauf ab und nennt die Rest-IDs für `--ids`.
-- **Mutationstests:** `pnpm mutation` (StrykerJS, Vitest-Runner) auf `apps/api/src/core`, etwa 2 Minuten, in CI nur manuell oder wöchentlich ([mutation.yml](../.github/workflows/mutation.yml)). Die Schwelle `break` steht in [stryker.config.json](../stryker.config.json); nur anheben, wenn echte Überlebende dazukommen. Der Runner 10.0.0 passt den Namensfilter nicht an Vitest 5 an ([Issue 6210](https://github.com/stryker-mutator/stryker-js/issues/6210)); ein pnpm-Patch in `patches/` behebt das und fällt weg, sobald der Runner es tut.
-- **Doku:** Tabellen mit Limits und Variablen werden aus dem Code erzeugt (`pnpm docs:generate`, geprüft in `pnpm audit:docs`). [docs-map.json](docs-map.json) bindet Code-Pfade an ihr Dokument; ein Commit braucht das Dokument oder
-  `Docs: n/a, <Grund>`. Geprüft im Hook `.husky/commit-msg` und im CI. Keine Zählwerte (Tests, Dateien) in der Doku. Ein Abgleich Dokument gegen Code von Hand am Ende einer Funktion.
-- **Nutzung:** Jeder Modellaufruf schreibt eine Zeile in `usage_events` (30 Tage), Auswertung mit `pnpm report:usage` (Tokens je Aufruf; eine Chat-Frage besteht aus bis zu vier Aufrufen). Websuche wird nicht gezählt.
-  Ab 75 % zeigt die Oberfläche „Noch N Fragen heute.“, am Limit sperrt sie das Eingabefeld und nennt die Uhrzeit der Freigabe; ist die Tagesbremse erreicht, sagt sie „Heute ist das Kontingent der Demo aufgebraucht“.
+- **Observability:** Every request carries an ID (`X-Request-Id`, in access log, log lines and error responses). Job errors and rejected uploads are logged with kind, size and stage, never with file name or content.
+  Sentry (EU) reports unexpected errors (500, import jobs, job queue, chat) in [observability/](../apps/api/src/observability) and [error-reporting.ts](../apps/web/src/lib/error-reporting.ts). Only an allow-list of fields is sent
+  (`scrubEvent`: error kind, stack, release = commit, environment, tags, source-map identifiers), never error text, variables, source text, request or user. Without `SENTRY_DSN` the SDK does not start. Source maps of the web go to Sentry
+  during the deploy build and are deleted (`SENTRY_AUTH_TOKEN` as a build secret). The Sentry MCP server is set up per user, not in the repo, and stays switched off. There are deliberately no persistent logs ([BACKLOG.md](BACKLOG.md)). What follows with growth: [SCALING.md](SCALING.md). Targets: [SLO.md](SLO.md), guide for alerts: [RUNBOOK.md](RUNBOOK.md).
+- **Row-level security (RLS):** Second layer behind invariant 3. All nine tables with a user reference have a policy (`user_id = current_setting('app.user_id', true)`, for `chunks`, `source_uploads` and `notebook_sources` through the parent row); [rls.ts](../apps/api/src/db/rls.ts) defines them, `drizzle-kit` generates the migrations. The app connects as `nlm_app` (not the owner, no `BYPASSRLS`), every route runs in `forUser`, a transaction with the user set; without a user Postgres returns no rows. Work that belongs to no one (guests, daily budget, sweeps, ingestion, migrations, job queue) uses the owner connection `systemDb` (`DATABASE_OWNER_URL`). The vector search reads an exact scan over the selected sources; the policy adds small semi-joins, no index is lost.
+- **Supply chain:** Dependabot (npm, Actions, Docker; weekly), `pnpm audit`, Semgrep and Trivy (dependencies, secrets, Dockerfile; SBOM as a CI artifact) in CI, GitHub secret scanning with push protection.
+- **Eval:** `pnpm eval:live` runs 34 golden questions ([golden-questions.json](../apps/api/src/eval/golden-questions.json)) through the same code as the chat. The key is `EVAL_GEMINI_API_KEY` (never `GEMINI_API_KEY`, no fallback).
+  A full run is compared with [baseline.json](../apps/api/src/eval/baseline.json) and ends with exit code 1 if a measure falls by more than 5 percentage points (`GATE_TOLERANCE`, estimated). The baseline values are in the file; whether the set can still show improvements is in the [backlog](BACKLOG.md). When the free-tier quota is exhausted the run aborts and names the remaining IDs for `--ids`.
+- **Mutation tests:** `pnpm mutation` (StrykerJS, Vitest runner) on `apps/api/src/core`, about 2 minutes, in CI only manually or weekly ([mutation.yml](../.github/workflows/mutation.yml)). The `break` threshold is in [stryker.config.json](../stryker.config.json); raise it only when real survivors are added. Runner 10.0.0 does not adapt the name filter to Vitest 5 ([issue 6210](https://github.com/stryker-mutator/stryker-js/issues/6210)); a pnpm patch in `patches/` fixes that and goes away as soon as the runner does it.
+- **Docs:** Tables with limits and variables are generated from the code (`pnpm docs:generate`, checked in `pnpm audit:docs`). [docs-map.json](docs-map.json) ties code paths to their document; a commit needs the document or
+  `Docs: n/a, <reason>`. Checked in the hook `.husky/commit-msg` and in CI. No counts (tests, files) in the docs. A by-hand comparison of document against code at the end of a feature.
+- **Usage:** Every model call writes a row to `usage_events` (30 days), evaluation with `pnpm report:usage` (tokens per call; one chat question consists of up to four calls). Web search is not counted.
+  From 75 % the UI shows "Noch N Fragen heute." (N questions left today), at the limit it locks the input field and names the time of release; when the daily brake is reached it says "Heute ist das Kontingent der Demo aufgebraucht" (today the demo's quota is used up).
 
-## Risiken und offene Punkte
+## Risks and open points
 
-Das größte Risiko sind Kosten und Kontingent im Live-Demo; Limits je Nutzer und die Tagesbremse begrenzen es, ihre Höhen sind aber nicht gemessen. Danach folgen Parsing-Qualität und Latenz.
+The biggest risk is cost and quota in the live demo; per-user limits and the daily brake limit it, but their levels are not measured. Parsing quality and latency follow.
 
-- **Kontingent und Kosten:** Mehrere Konten eines Menschen umgehen das Limit je Nutzer; die Tagesbremse fängt das ab. Der Merker „ein laufender Aufruf je Nutzer“ liegt im Speicher und stimmt nur bei einem Container.
-- **Embeddings:** Der Limiter drosselt nach geschätzten Tokens. Wie der Anbieter einen Batch zählt, ist nicht geprüft.
-- **Latenz:** GPT-6 Luna (im Spike nicht gemessen) hatte laut Artificial Analysis bei Max-Reasoning eine Zeit bis zum ersten Token von etwa 139 Sekunden (Gemini 3.5 Flash-Lite etwa 8,8 Sekunden). Bei niedriger Stufe nicht gemessen.
-- **Parsing per LLM** ist nicht deterministisch und kann auslassen. Gegenmittel: Stichprobentests.
-- **ParseBench** stammt von LlamaIndex, deckt Enterprise-PDFs ab und enthält kein DOCX. Deshalb der eigene Spike.
-- **Datennutzung im Free Tier:** Bedingungen lesen, Hinweis im Demo.
-- **Hosting:** Ein Hetzner-Server; Deploy mit Dump, Health-Prüfung und Rollback ([DEPLOYMENT.md](DEPLOYMENT.md)).
-- **Billing:** ❓ Ob ein hartes Budget-Limit gesetzt ist und ob eine automatische Aufladung läuft, ist nicht belegt.
-- **Preise und Benchmarks** aus Drittquellen vor einer Entscheidung auf den offiziellen Seiten prüfen (Regel 12 in [AGENTS.md](../AGENTS.md)).
-- **Take-home-Repos** sind nur Ideengeber: keinen Code kopieren.
+- **Quota and cost:** Several accounts of one person get around the per-user limit; the daily brake catches that. The marker "one running call per user" lives in memory and is right only with one container.
+- **Embeddings:** The limiter throttles by estimated tokens. How the provider counts a batch is not checked.
+- **Latency:** GPT-6 Luna (not measured in the spike) had, according to Artificial Analysis, a time to first token of about 139 seconds at max reasoning (Gemini 3.5 Flash-Lite about 8.8 seconds). Not measured at a low level.
+- **Parsing by LLM** is not deterministic and can omit things. Countermeasure: spot-check tests.
+- **ParseBench** comes from LlamaIndex, covers enterprise PDFs and contains no DOCX. Hence the own spike.
+- **Data use on the free tier:** Read the terms, notice in the demo.
+- **Hosting:** One Hetzner server; deploy with dump, health check and rollback ([DEPLOYMENT.md](DEPLOYMENT.md)).
+- **Billing:** ❓ Whether a hard budget limit is set and whether automatic top-up runs is not documented.
+- **Prices and benchmarks** from third-party sources: check on the official pages before a decision (rule 12 in [AGENTS.md](../AGENTS.md)).
+- **Take-home repos** are only a source of ideas: do not copy code.

@@ -24,7 +24,7 @@ for name in GEMINI_API_KEY AI_MODEL PARSE_MODEL EMBEDDING_MODEL; do
   [ -n "${!name:-}" ] || { echo "$name is empty in $env_file" >&2; exit 1; }
 done
 demo_email="${SEED_DEMO_EMAIL:-}"
-[ -n "$demo_email" ] || read -r -p "E-Mail-Adresse für das Demo-Konto (SEED_DEMO_EMAIL): " demo_email
+[ -n "$demo_email" ] || read -r -p "Email address for the demo account (SEED_DEMO_EMAIL): " demo_email
 [ -n "$demo_email" ] || { echo "SEED_DEMO_EMAIL is empty" >&2; exit 1; }
 gh auth status >/dev/null
 
@@ -34,10 +34,10 @@ trap 'rm -rf "$work"' EXIT
 # Pin the host key before any login, and let the person compare it with the Hetzner console.
 ssh-keyscan -t ed25519 "$host" 2>/dev/null > "$work/known_hosts"
 [ -s "$work/known_hosts" ] || { echo "No answer from $host on port 22" >&2; exit 1; }
-echo "Fingerabdruck des Servers $host:"
+echo "Fingerprint of server $host:"
 ssh-keygen -lf "$work/known_hosts"
-read -r -p "Stimmt er mit der Hetzner-Konsole überein (Server > Übersicht)? [j/N] " ok
-[ "$ok" = "j" ] || { echo "Abgebrochen." >&2; exit 1; }
+read -r -p "Does it match the Hetzner console (Server > Overview)? [y/N] " ok
+[ "$ok" = "y" ] || { echo "Aborted." >&2; exit 1; }
 
 ssh_opts=(-o "UserKnownHostsFile=$work/known_hosts" -o StrictHostKeyChecking=yes)
 root="root@$host"
@@ -82,5 +82,5 @@ gh secret set DEPLOY_SSH_KEY < "$work/deploy_key"
 gh secret set DEPLOY_KNOWN_HOSTS < "$work/known_hosts"
 
 echo
-echo "Fertig. Server $host ist eingerichtet, die drei GitHub-Secrets sind gesetzt."
-echo "Nächster Schritt: Merge auf main (Deploy läuft danach automatisch) oder Actions > Deploy > Run workflow."
+echo "Done. Server $host is set up, the three GitHub secrets are set."
+echo "Next step: merge to main (the deploy then runs automatically) or Actions > Deploy > Run workflow."

@@ -97,14 +97,14 @@ components:
 
 The source of truth for every value is [apps/web/src/index.css](apps/web/src/index.css) (semantic
 tokens, light in `:root`, dark in `.dark`). This file describes how to use them. The measured
-comparison with the original is [docs/DESIGN-ABGLEICH.md](docs/DESIGN-ABGLEICH.md).
+comparison with the original is [docs/DESIGN-COMPARISON.md](docs/DESIGN-COMPARISON.md).
 
 ## Overview
 
 **Creative North Star: "Faithful to the Original".** A quiet, neutral grey workspace in which the
 sources and the cited answer are the content. Values were measured on the real product (computed
 styles at 1440x900 and 390x844, light and dark), not guessed. Deviations from the original are
-deliberate and listed in DESIGN-ABGLEICH.md, section 3. Color is rare and carries meaning: focus and
+deliberate and listed in DESIGN-COMPARISON.md, section 3. Color is rare and carries meaning: focus and
 links, the selected state, the icons of the Studio formats, and one soft blue action. Anti-reference:
 decorative gradients, colored cards, and raw palette colors in components.
 
@@ -165,7 +165,7 @@ sharp 4. Radius names carry what they hold (`panel`, `bubble`). Do not invent in
 
 ## Do's and Don'ts
 
-- Do use shadcn primitives and semantic tokens; do copy a measured value from DESIGN-ABGLEICH.md.
+- Do use shadcn primitives and semantic tokens; do copy a measured value from DESIGN-COMPARISON.md.
 - Do keep UI text German, in the informal "du", without technical terms.
 - Don't add color to make a screen livelier; the neutral grey is the look.
 - Don't use side stripes, gradient text or card-in-card nesting.

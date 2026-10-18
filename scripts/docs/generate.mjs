@@ -17,19 +17,19 @@ const ROOT = path.resolve(import.meta.dirname, '../..');
 const TARGETS = ['docs/PLAN.md'];
 
 function envStatus(schema) {
-  if (schema.def.type === 'default') return 'Standardwert';
-  return schema.isOptional() ? 'optional' : 'Pflicht';
+  if (schema.def.type === 'default') return 'default value';
+  return schema.isOptional() ? 'optional' : 'required';
 }
 
 const BLOCKS = {
   limits: () =>
     table(
-      ['Grenze', 'Wert'],
+      ['Limit', 'Value'],
       Object.entries(LIMITS).map(([name, value]) => [`\`${name}\``, value.toLocaleString('en-US')])
     ),
   'provider-limits': () =>
     table(
-      ['Rolle', 'Anfragen je Minute', 'Tokens je Minute'],
+      ['Role', 'Requests per minute', 'Tokens per minute'],
       Object.entries(PROVIDER_LIMITS).map(([role, v]) => [
         role,
         v.requestsPerMinute.toLocaleString('en-US'),
@@ -38,7 +38,7 @@ const BLOCKS = {
     ),
   env: () =>
     table(
-      ['Variable', 'Art'],
+      ['Variable', 'Kind'],
       Object.entries(EnvSchema.shape).map(([name, schema]) => [`\`${name}\``, envStatus(schema)])
     ),
 };

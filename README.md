@@ -1,171 +1,171 @@
-# NotebookLM-Klon
+# NotebookLM Clone
 
-Ein Notebook, das nur auf deinen eigenen Quellen antwortet und jede Aussage mit einer Nummer belegt. Ein Klick auf die Nummer öffnet den Quelltext an der zitierten Stelle.
+A notebook that answers only from your own sources and backs every statement with a number. Clicking the number opens the source text at the cited passage.
 
-Nachbau von NotebookLM. Der Schwerpunkt liegt auf dem Weg von der Quelle zum nachprüfbaren Zitat: Aufnahme, Suche, Antwort mit geprüften Zitaten, Auswertung. Die Oberfläche ist deutsch, Quellen und Fragen dürfen englisch sein.
+A re-build of NotebookLM. The focus is the path from source to verifiable citation: ingestion, search, answer with checked citations, evaluation. The UI is German; sources and questions may be English.
 
-|             |                                                                                                                                                                  |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Live-Demo   | https://128-140-11-37.sslip.io                                                                                                                                   |
-| Demo-Zugang | Auf der Anmeldeseite **„Demo ausprobieren“**: ein Gastkonto mit einer eigenen Kopie des Demo-Notebooks, ohne E-Mail und Passwort. Es wird nach 7 Tagen gelöscht. |
+|             |                                                                                                                                                                            |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Live demo   | https://128-140-11-37.sslip.io                                                                                                                                             |
+| Demo access | On the sign-in page, **„Demo ausprobieren“** (try the demo): a guest account with its own copy of the demo notebook, no email and no password. It is deleted after 7 days. |
 
-## Was es kann
+## What it can do
 
-- **Notebooks und Quellen:** PDF, DOCX, PPTX, Bilder, Aufnahmen (MP3, WAV), öffentliche YouTube-Videos (gesprochenes Wort), TXT, MD und Webseiten per Link, mit Status im Hintergrund. Die Auswahl der Quellen begrenzt auch die Suche. Websuche über Tavily ist optional.
-- **Chat** mit Streaming: Jede Aussage trägt nummerierte Chips, Hover zeigt die Textstelle, Klick öffnet den Quelltext mit hervorgehobenem Abschnitt. Der Verlauf bleibt pro Notebook erhalten und fließt in Folgefragen ein.
-- **Übersichten** pro Quelle und pro Notebook mit Vorschlagsfragen.
-- **Notizen** aus Antworten (Zitate bleiben erhalten) und eigene Notizen mit Editor, auf Wunsch als Quelle.
-- **Studio:** Bericht (Briefing, FAQ, Lernleitfaden, Blogbeitrag, eigene Anweisung), Karteikarten, Quiz, Mindmap und Datentabelle, mit denselben geprüften Zitaten.
-- **Notebook anpassen:** Titel, Zusammenfassung, Titelbild, kopieren, anpinnen.
+- **Notebooks and sources:** PDF, DOCX, PPTX, images, recordings (MP3, WAV), public YouTube videos (spoken word), TXT, MD and web pages by link, with status in the background. The selection of sources also limits the search. Web search through Tavily is optional.
+- **Chat** with streaming: every statement carries numbered chips, hover shows the passage, a click opens the source text with the passage highlighted. The history is kept per notebook and feeds into follow-up questions.
+- **Overviews** per source and per notebook with suggested questions.
+- **Notes** from answers (citations are kept) and own notes with an editor, optionally as a source.
+- **Studio:** report (briefing, FAQ, study guide, blog post, custom instruction), flashcards, quiz, mind map and data table, with the same checked citations.
+- **Customize a notebook:** title, summary, cover image, copy, pin.
 
-Nicht gebaut: Audio- und Videoübersicht, Präsentation und Infografik im Studio (Audio und Video gibt es nur als Quelle), agentische Suche, Deep Research, Drive-Anbindung, Bewertung von Antworten. Gründe: [docs/PLAN.md](docs/PLAN.md).
+Not built: audio and video overview, presentation and infographic in the Studio (audio and video exist only as a source), agentic search, Deep Research, Drive integration, rating of answers. Reasons: [docs/PLAN.md](docs/PLAN.md).
 
-## Architektur
+## Architecture
 
 ```mermaid
 flowchart LR
   subgraph Browser
     Web["React 19<br/>TanStack Query, shadcn"]
   end
-  subgraph Server["Hetzner-Server (Docker Compose)"]
+  subgraph Server["Hetzner server (Docker Compose)"]
     Caddy["Caddy<br/>HTTPS"]
-    subgraph Container["App-Container"]
-      Api["Hono API<br/>Zod-Schemas aus packages/shared"]
-      Worker["Ingestion-Worker<br/>pg-boss"]
+    subgraph Container["App container"]
+      Api["Hono API<br/>Zod schemas from packages/shared"]
+      Worker["Ingestion worker<br/>pg-boss"]
     end
-    DB[("PostgreSQL mit pgvector<br/>Volltextsuche, Sitzungen,<br/>Job-Queue")]
-    S3[("SeaweedFS (S3-kompatibel)<br/>Titelbilder (optional)")]
+    DB[("PostgreSQL with pgvector<br/>full-text search, sessions,<br/>job queue")]
+    S3[("SeaweedFS (S3-compatible)<br/>cover images (optional)")]
   end
-  Gemini["Gemini API<br/>PDF lesen, Einbettungen, Antwort"]
-  Tavily["Tavily<br/>Websuche (optional)"]
+  Gemini["Gemini API<br/>read PDF, embeddings, answer"]
+  Tavily["Tavily<br/>web search (optional)"]
 
   Web -- "HTTPS" --> Caddy
-  Caddy -- "HTTP + SSE, eine Origin" --> Api
+  Caddy -- "HTTP + SSE, one origin" --> Api
   Api --> DB
-  Api -- "Antwort streamen" --> Gemini
-  Api -- "nur Suchbegriffe" --> Tavily
+  Api -- "stream answer" --> Gemini
+  Api -- "search terms only" --> Tavily
   Api --> S3
   Worker --> DB
-  Worker -- "PDF lesen, einbetten" --> Gemini
+  Worker -- "read PDF, embed" --> Gemini
 ```
 
-Das Frontend wird vom selben Prozess ausgeliefert wie die API (`WEB_DIST_DIR`), im Entwicklungsbetrieb leitet Vite `/api` weiter. Lokal laufen Postgres und der Speicher aus `pnpm db:up`.
+The frontend is served by the same process as the API (`WEB_DIST_DIR`); in development Vite forwards `/api`. Locally, Postgres and the object store run from `pnpm db:up`.
 
-### Schichten
+### Layers
 
-Die Regeln stehen in [AGENTS.md](AGENTS.md) und werden von `pnpm check` erzwungen (dependency-cruiser, ESLint, knip, jscpd).
+The rules are in [AGENTS.md](AGENTS.md) and enforced by `pnpm check` (dependency-cruiser, ESLint, knip, jscpd).
 
-- `packages/shared`: nur Zod-Schemas, abgeleitete Typen und `as const`-Wörterbücher. Einzige Quelle der Wahrheit für jeden Vertrag zwischen API und Web, auch für das Zitat-Schema.
-- `apps/api/src/core`: reine Logik ohne Ein- und Ausgabe (Chunking, Zitatprüfung, Kontextaufbau, SSRF-Regeln). Routen sind dünne Adapter, Datenbank, Jobs und Anbieter liegen dahinter.
-- `apps/web`: React, Serverzustand nur über TanStack Query. Der Web-Code importiert aus der API nur den Typ `AppType` für den Hono-RPC-Client.
+- `packages/shared`: only Zod schemas, derived types and `as const` dictionaries. Single source of truth for every contract between API and web, including the citation schema.
+- `apps/api/src/core`: pure logic without I/O (chunking, citation check, context building, SSRF rules). Routes are thin adapters; database, jobs and providers sit behind them.
+- `apps/web`: React, server state only through TanStack Query. The web code imports only the `AppType` type from the API, for the Hono RPC client.
 
-### Aufnahme einer Quelle
+### Ingesting a source
 
 ```mermaid
 sequenceDiagram
-  participant U as Nutzer
+  participant U as User
   participant A as API
-  participant Q as Job-Queue
+  participant Q as Job queue
   participant W as Worker
   participant G as Gemini
   participant D as PostgreSQL
-  U->>A: Datei oder Link
-  A->>A: Typ und Größe prüfen, SHA-256 des Inhalts
-  alt Inhalt schon vorhanden
-    A-->>U: vorhandene Quelle wiederverwenden
-  else neuer Inhalt
-    A->>Q: Job anlegen
-    A-->>U: 202, Status "Wartet"
-    Q->>W: Job
-    W->>G: PDF lesen (Bilder, Tabellen)
-    W->>W: kanonischer Text, Abschnitte mit Offsets
-    W->>G: Einbettungen in Paketen
-    W->>D: Text, Abschnitte, Vektoren in einer Transaktion
-    U->>A: Status abfragen
-    A-->>U: "Bereit"
+  U->>A: file or link
+  A->>A: check type and size, SHA-256 of the content
+  alt content already present
+    A-->>U: reuse the existing source
+  else new content
+    A->>Q: create job
+    A-->>U: 202, status "Wartet" (waiting)
+    Q->>W: job
+    W->>G: read PDF (images, tables)
+    W->>W: canonical text, passages with offsets
+    W->>G: embeddings in batches
+    W->>D: text, passages, vectors in one transaction
+    U->>A: poll status
+    A-->>U: "Bereit" (ready)
   end
 ```
 
-### Antwort mit geprüften Zitaten
+### Answer with checked citations
 
 ```mermaid
 sequenceDiagram
-  participant U as Nutzer
+  participant U as User
   participant A as API
   participant D as PostgreSQL
   participant G as Gemini
-  U->>A: Frage
-  A->>G: Frage einbetten
-  A->>D: Hybridsuche (Vektor + Volltext, RRF) nach Nutzer, Notebook, gewählten Quellen
-  D-->>A: 8 Abschnitte
-  A->>G: Abschnitte als c1 bis c8 und Frage, strukturierte Ausgabe
-  loop je Aussage, sobald sie fertig ist
-    G-->>A: Aussage mit Labels
-    A->>A: Labels auf echte IDs abbilden, nicht gezeigte verwerfen
-    A-->>U: Aussage mit Chunk-IDs (SSE)
+  U->>A: question
+  A->>G: embed question
+  A->>D: hybrid search (vector + full text, RRF) by user, notebook, selected sources
+  D-->>A: 8 passages
+  A->>G: passages as c1 to c8 and question, structured output
+  loop per statement, as soon as it is complete
+    G-->>A: statement with labels
+    A->>A: map labels to real IDs, drop ones not shown
+    A-->>U: statement with chunk IDs (SSE)
   end
-  A->>D: Frage und Antwort speichern
+  A->>D: store question and answer
 ```
 
-Das Modell sieht nur kurze Labels pro Anfrage. Der Server bildet sie auf echte Abschnitt-IDs ab und entfernt jede Aussage ohne gültiges Zitat. Ein Zitat auf etwas, das dem Modell nie gezeigt wurde, ist so nicht möglich. Ein gültiges Zitat ist trotzdem kein Beleg für eine richtige Antwort; darum wird beides getrennt gemessen (siehe Auswertung).
+The model sees only short labels per request. The server maps them to real passage IDs and removes every statement without a valid citation. A citation to something the model was never shown is therefore impossible. A valid citation is still no proof of a correct answer; that is why both are measured separately (see the evaluation).
 
-## Was ich entschieden habe und warum
+## What I decided and why
 
-Entscheidungen mit Zahlen: [Spike-Ergebnisse](docs/SPIKE-ERGEBNISSE.md) (PDF-Parsing, Einbettungen, Chat, Zitat-Format, Hybridsuche), [Plan](docs/PLAN.md) (Anforderungen, Stack, Risiken).
+Decisions with numbers: [Spike results](docs/SPIKE-RESULTS.md) (PDF parsing, embeddings, chat, citation format, hybrid search), [Plan](docs/PLAN.md) (requirements, stack, risks).
 
-## Qualitätssicherung
+## Quality assurance
 
-- `pnpm check`: TypeScript strict, ESLint, Architekturregeln, tote Abhängigkeiten, Duplikate (unter 2 %), Magic-String-Audit.
-- `pnpm test`: Vitest ohne Netzwerk. MSW lehnt jede nicht abgefangene Anfrage ab, kein Test kann Kontingent verbrauchen.
-- `pnpm test:db`: Tests gegen Postgres mit pgvector (`pnpm db:up`), darunter alle Zugriffsregeln: jede Abfrage filtert nach Nutzer, Notebook und gewählten Quellen.
-- `pnpm e2e`: Playwright-Nutzerreisen gegen den Offline-Server (echte App und Datenbank, gefälschte Modelle).
-- `pnpm eval:live`: 34 Golden Questions gegen die echten Modelle (Trefferquote, Fakten, verworfene Aussagen; dazu drei Fragen ohne Antwort in der Quelle für die Verweigerung, ein Quelltext mit eingebetteter Anweisung und rein rechnerische Auffälligkeiten wie wiederholte Aussagen). Kostet Kontingent, läuft von Hand und nicht in CI.
-- `pnpm report:usage [--days 7]`: was die Modellaufrufe verbrauchen, je Zweck (durchschnittliche Tokens je Aufruf) und je Nutzer. Liest nur die Tabelle `usage_events`, kostet nichts.
-- CI (GitHub Actions): Qualität, Unit-Tests, Datenbank-Tests, Browser-Test, Build, Semgrep.
+- `pnpm check`: TypeScript strict, ESLint, architecture rules, dead dependencies, duplicates (under 2 %), magic-string audit.
+- `pnpm test`: Vitest without network. MSW rejects every unmocked request, so no test can use up quota.
+- `pnpm test:db`: tests against Postgres with pgvector (`pnpm db:up`), including all access rules: every query filters by user, notebook and selected sources.
+- `pnpm e2e`: Playwright user journeys against the offline server (real app and database, fake models).
+- `pnpm eval:live`: 34 golden questions against the real models (hit rate, facts, dropped statements; plus three questions with no answer in the source for the refusal, a source text with an embedded instruction, and purely computed anomalies such as repeated statements). Uses quota, runs by hand and not in CI.
+- `pnpm report:usage [--days 7]`: what the model calls consume, per purpose (average tokens per call) and per user. Reads only the `usage_events` table, costs nothing.
+- CI (GitHub Actions): quality, unit tests, database tests, browser test, build, Semgrep.
 
-Weitere Regeln, die im Code geprüft sind: SSRF-Schutz beim Link-Import (nur http und https, DNS-Auflösung, keine privaten Adressen, nach jeder Weiterleitung erneut), Größen- und Seitenlimits, Ratenbegrenzung aller Modellaufrufe, Grenzen für Gäste, keine Dokumentinhalte in Logs.
+Further rules that are checked in code: SSRF protection for link import (only http and https, DNS resolution, no private addresses, again after every redirect), size and page limits, rate limiting of all model calls, limits for guests, no document content in logs.
 
-## Lokal starten
+## Run locally
 
-Voraussetzungen: Node 24, pnpm, Docker.
+Requirements: Node 24, pnpm, Docker.
 
 ```bash
 pnpm install
-pnpm db:up                        # Postgres mit pgvector auf Port 54329
-cp .env.example .env.local        # Werte eintragen, siehe unten
-pnpm dev                          # API auf :3000 und Web auf :5173 zusammen, Web leitet /api an die API weiter
+pnpm db:up                        # Postgres with pgvector on port 54329
+cp .env.example .env.local        # fill in the values, see below
+pnpm dev                          # API on :3000 and web on :5173 together, web forwards /api to the API
 ```
 
-Einzeln geht es auch: `pnpm --filter @nlm/api dev` und `pnpm --filter @nlm/web dev`.
+They can also run separately: `pnpm --filter @nlm/api dev` and `pnpm --filter @nlm/web dev`.
 
-In `.env.local` (Vorlage: [.env.example](.env.example)) sind nötig: `GEMINI_API_KEY`, die drei Modell-IDs `AI_MODEL`, `PARSE_MODEL`, `EMBEDDING_MODEL`, `DATABASE_URL`, `BETTER_AUTH_SECRET` (`openssl rand -base64 32`) und `BETTER_AUTH_URL` (`http://localhost:5173`). Die Modell-IDs stehen nie im Code, ein Wechsel ist eine Umgebungsvariable. Optional ist `PARSE_FALLBACK_MODEL`: ein größeres Modell für PDFs, die `PARSE_MODEL` als Wiedergabe geschützten Textes ablehnt (`RECITATION`). Die im Spike gewählten Modelle stehen in [docs/SPIKE-ERGEBNISSE.md](docs/SPIKE-ERGEBNISSE.md).
+`.env.local` (template: [.env.example](.env.example)) needs: `GEMINI_API_KEY`, the three model IDs `AI_MODEL`, `PARSE_MODEL`, `EMBEDDING_MODEL`, `DATABASE_URL`, `BETTER_AUTH_SECRET` (`openssl rand -base64 32`) and `BETTER_AUTH_URL` (`http://localhost:5173`). Model IDs never appear in code; switching is an environment variable. `PARSE_FALLBACK_MODEL` is optional: a larger model for PDFs that `PARSE_MODEL` rejects as reproduction of protected text (`RECITATION`). The models chosen in the spike are listed in [docs/SPIKE-RESULTS.md](docs/SPIKE-RESULTS.md).
 
-Ohne API-Schlüssel geht es mit dem Offline-Server: die echte App und Datenbank, aber ein Modell, das den ersten Satz der besten Textstellen zitiert (PDFs lassen sich dort nicht lesen).
+Without an API key you can use the offline server: the real app and database, but a model that cites the first sentence of the best passages (PDFs cannot be read there).
 
 ```bash
 DATABASE_URL=postgresql://nlm:nlm@localhost:54329/nlm_e2e \
-BETTER_AUTH_SECRET=lokal-nur-zum-ausprobieren-0123456789 \
+BETTER_AUTH_SECRET=local-only-for-trying-out-0123456789 \
 BETTER_AUTH_URL=http://localhost:5173 \
-pnpm --filter @nlm/api dev:offline   # dazu in einem zweiten Terminal: pnpm --filter @nlm/web dev
+pnpm --filter @nlm/api dev:offline   # plus in a second terminal: pnpm --filter @nlm/web dev
 ```
 
-Suche im Web (optional): `TAVILY_API_KEY` setzen. Ohne Schlüssel zeigt die Oberfläche das Suchfeld nicht.
+Web search (optional): set `TAVILY_API_KEY`. Without a key the UI does not show the search field.
 
-Titelbilder (optional): Ein S3-kompatibler Speicher, dazu `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID` und `S3_SECRET_ACCESS_KEY` setzen (alle vier oder keins). Lokal startet `pnpm db:up` einen (SeaweedFS), der die Bilder nur im Arbeitsspeicher hält.
+Cover images (optional): an S3-compatible store; set `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY` (all four or none). Locally `pnpm db:up` starts one (SeaweedFS) that keeps the images in memory only.
 
-Demo-Notebook anlegen (braucht den Schlüssel, liest drei Beispieldokumente einmal ein): `SEED_DEMO_EMAIL` und `SEED_DEMO_PASSWORD` setzen, dann `pnpm seed:demo`. Der Befehl kann wiederholt werden. Gäste („Demo ausprobieren“) bekommen eine Kopie dieses Notebooks, dafür muss `SEED_DEMO_EMAIL` auch in der Umgebung der App stehen.
+Create the demo notebook (needs the key, ingests three sample documents once): set `SEED_DEMO_EMAIL` and `SEED_DEMO_PASSWORD`, then run `pnpm seed:demo`. The command can be repeated. Guests („Demo ausprobieren“) get a copy of this notebook; for that, `SEED_DEMO_EMAIL` must also be set in the app's environment.
 
 ## Deployment
 
-Hetzner Cloud mit Docker Compose und Caddy (automatisches HTTPS). [deploy.yml](.github/workflows/deploy.yml) baut das Image und startet den Stack per SSH, sobald CI auf `main` grün ist. Einrichtung, Betrieb, Backup und Fehlersuche: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+Hetzner Cloud with Docker Compose and Caddy (automatic HTTPS). [deploy.yml](.github/workflows/deploy.yml) builds the image and starts the stack over SSH as soon as CI on `main` is green. Setup, operation, backup and troubleshooting: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
-## Wo es zuerst brechen würde
+## Where it would break first
 
-- **Kosten beim Anbieter.** Es gibt bewusst kein Limit pro Nutzer. Begrenzt wird über: Inhalts-Hash statt doppelter Verarbeitung, Seitenlimit pro Quelle, Ratenbegrenzer mit Token-Gewichten, Grenzen für Gäste, vorbefülltes Demo-Notebook. Wer die Seite offen ins Netz stellt, zahlt jede Frage und jede Quelle der Nutzer selbst.
-- **Suche bei Fragen in anderer Sprache als die Quelle.** Die Textseite der Hybridsuche liefert dort nur Rauschen, das Gewicht 0,5 ist nicht durch Messung begründet (siehe Nachtrag in den Spike-Ergebnissen). Mit mehr Golden Questions neu bewerten.
-- **PDF-Parsing per Sprachmodell** ist nicht deterministisch und kann Bildunterschriften auslassen. Manche PDFs (gemessen: das NIST-Dokument im Lasttest) lehnt das Modell als Wiedergabe geschützten Textes ab (`RECITATION`), auch das größere Fallback-Modell nicht immer; die Quelle meldet dann einen Fehler. Ein Abgleich mit einem lokalen Parser wäre der nächste Schritt.
-- **Mehrere Instanzen.** Die Ratenbegrenzer liegen im Speicher eines Prozesses. Bei mehr als einer Instanz müssten sie in die Datenbank.
+- **Provider cost.** There is deliberately no per-user limit. Cost is limited by: content hash instead of duplicate processing, page limit per source, rate limiter with token weights, limits for guests, prefilled demo notebook. Whoever puts the site openly on the internet pays for every question and every source of the users.
+- **Search when the question is in a different language than the source.** The text side of the hybrid search yields only noise there, and the weight 0.5 is not backed by measurement (see the addendum in the spike results). Re-evaluate with more golden questions.
+- **PDF parsing by a language model** is not deterministic and can omit image captions. The model rejects some PDFs (measured: the NIST document in the load test) as reproduction of protected text (`RECITATION`), and the larger fallback model does not always accept them either; the source then reports an error. A comparison with a local parser would be the next step.
+- **Multiple instances.** The rate limiters live in the memory of one process. With more than one instance they would have to move into the database.
 
-## Agentischer Workflow
+## Agentic workflow
 
-[AGENTS.md](AGENTS.md) (Regeln, Schichten, Invarianten, Definition of Done), Hooks unter `.claude/` (blockierte Befehle, Geheimnisschutz, Gate vor dem Beenden), Husky-Hooks und ein Thema pro Commit. Tests gehören zur Änderung und entstehen dort, wo der Vertrag klar ist, zuerst (Konvention, kein Gate).
+[AGENTS.md](AGENTS.md) (rules, layers, invariants, Definition of Done), hooks under `.claude/` (blocked commands, secret protection, gate before finishing), Husky hooks and one topic per commit. Tests belong to the change and are written first where the contract is clear (convention, not a gate).

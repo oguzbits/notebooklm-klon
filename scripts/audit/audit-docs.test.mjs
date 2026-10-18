@@ -84,7 +84,7 @@ describe('auditDocs', () => {
   });
 
   it('reports a date or a status word in the stable context document, and only there', () => {
-    const doc = 'Das Limit ist seit 2026-10-03 gebaut.\n';
+    const doc = 'The limit has been built since 2026-10-03.\n';
     expect(audit(doc)).toEqual([]);
     expect(auditDocs(makeRepo({ 'docs/PLAN.md': doc })).map((v) => v.message)).toEqual([
       expect.stringContaining('state in a stable document'),
