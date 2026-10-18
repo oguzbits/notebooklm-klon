@@ -5,7 +5,7 @@ import { createApp } from './app';
 import { createAuth } from './auth/auth';
 import { parseEnv } from './config/env';
 import { LIMITS } from './config/limits';
-import { createDb } from './db/client';
+import { createDb, withUser } from './db/client';
 import { deleteExpiredGuests } from './db/guest-repository';
 import { runMigrations } from './db/migrate';
 import {
@@ -44,9 +44,11 @@ const errors = createErrorReporter(
   Sentry
 );
 
-await runMigrations(env.DATABASE_URL);
+const ownerUrl = env.DATABASE_OWNER_URL ?? env.DATABASE_URL;
+await runMigrations(ownerUrl);
 
 const { db } = createDb(env.DATABASE_URL);
+const systemDb = ownerUrl === env.DATABASE_URL ? db : createDb(ownerUrl).db;
 // Cover images need an S3-compatible store; without one they are not offered.
 const s3Config = s3ConfigFromEnv(env);
 const s3 = s3Config ? createS3ObjectStore(s3Config) : null;
@@ -67,11 +69,13 @@ const queue = await createJobQueue(env.DATABASE_URL, {
 });
 
 // Every provider call goes through the limiter of its role.
-const providers = createProviders(env, (event) => recordUsage(db, event));
+const providers = createProviders(env, (event) =>
+  withUser(db, event.userId, (scoped) => recordUsage(scoped, event))
+);
 
 const ingest: SubmitPorts = {
-  sources: createSourceStorage(db),
-  uploads: createUploadStorage(db),
+  sources: createSourceStorage(systemDb),
+  uploads: createUploadStorage(systemDb),
   queue,
   parse: providers.parse,
   embed: providers.embedDocuments,
@@ -101,6 +105,7 @@ await queue.work(async (payload) => {
 const app = createApp({
   auth,
   db,
+  systemDb,
   ingest,
   demoOwnerEmail: env.SEED_DEMO_EMAIL,
   reportError: errors.report,
@@ -123,7 +128,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const HOUR_MS = 60 * 60 * 1000;
 async function removeExpiredGuests() {
   const deleted = await deleteExpiredGuests(
-    db,
+    systemDb,
     new Date(Date.now() - LIMITS.GUEST_LIFETIME_DAYS * DAY_MS)
   );
   if (objectStore) {
@@ -135,14 +140,14 @@ async function removeExpiredGuests() {
 // A job the process did not finish (restart, crash) is not retried: fail its source so it can be uploaded again.
 async function sweepInterruptedSources() {
   const count = await failInterruptedSources(
-    db,
+    systemDb,
     new Date(Date.now() - LIMITS.INTERRUPTED_JOB_AFTER_MS)
   );
   if (count > 0) log({ level: 'warn', msg: 'interrupted sources failed', count });
 }
 // Usage events only serve the report and the limits; older ones are deleted.
 async function removeOldUsage() {
-  await deleteUsageBefore(db, new Date(Date.now() - LIMITS.USAGE_RETENTION_DAYS * DAY_MS));
+  await deleteUsageBefore(systemDb, new Date(Date.now() - LIMITS.USAGE_RETENTION_DAYS * DAY_MS));
 }
 await removeExpiredGuests();
 await sweepInterruptedSources();

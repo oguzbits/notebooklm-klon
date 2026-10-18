@@ -13,7 +13,7 @@ import { getOrCreateNotebookOverview } from '../chat/notebook-overview';
 import { createNotebookOverviewPorts } from '../chat/notebook-overview-ports';
 import { parseEvalEnv } from '../config/env';
 import { user } from '../db/auth-schema';
-import { createDb } from '../db/client';
+import { createDb, ownerScope } from '../db/client';
 import { runMigrations } from '../db/migrate';
 import { createNotebook, deleteNotebook } from '../db/notebook-repository';
 import { recordUsage } from '../db/usage-repository';
@@ -50,7 +50,7 @@ try {
   const started = performance.now();
   const result = await getOrCreateNotebookOverview(
     { userId: EVAL_USER_ID, notebookId: notebook.id },
-    createNotebookOverviewPorts(db, (input) => providers.stream(input))
+    createNotebookOverviewPorts(ownerScope(db), (input) => providers.stream(input))
   );
   const overview = result?.overview;
   if (!overview) throw new Error('No overview came back for the eval notebook.');

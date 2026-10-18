@@ -20,6 +20,7 @@ import {
 } from '../db/note-repository';
 import { findNotebook } from '../db/notebook-repository';
 import { HTTP_STATUS } from '../http-status';
+import { forUser } from './for-user';
 import { json, notebookParams, notFound, unauthenticated } from './openapi';
 
 const listRoute = createRoute({
@@ -89,30 +90,41 @@ export function noteRoutes(deps: AppDeps) {
     .openapi(listRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
       const { userId } = c.var;
-      if (!(await findNotebook(deps.db, userId, notebookId)))
+      if (!(await forUser(deps, userId, (db) => findNotebook(db, userId, notebookId))))
         return c.json(missing, HTTP_STATUS.NOT_FOUND);
-      return c.json(await listNotes(deps.db, userId, notebookId), HTTP_STATUS.OK);
+      return c.json(
+        await forUser(deps, userId, (db) => listNotes(db, userId, notebookId)),
+        HTTP_STATUS.OK
+      );
     })
     .openapi(createNoteRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
       const body = c.req.valid('json');
       const note =
         body.kind === NOTE_KIND.ANSWER
-          ? await createNoteFromMessage(deps.db, c.var.userId, notebookId, body.messageId)
-          : await createWrittenNote(deps.db, c.var.userId, notebookId, {
-              title: body.title,
-              body: body.body,
-            });
+          ? await forUser(deps, c.var.userId, (db) =>
+              createNoteFromMessage(db, c.var.userId, notebookId, body.messageId)
+            )
+          : await forUser(deps, c.var.userId, (db) =>
+              createWrittenNote(db, c.var.userId, notebookId, {
+                title: body.title,
+                body: body.body,
+              })
+            );
       return note ? c.json(note, HTTP_STATUS.CREATED) : c.json(missing, HTTP_STATUS.NOT_FOUND);
     })
     .openapi(updateRoute, async (c) => {
       const { notebookId, noteId } = c.req.valid('param');
-      const note = await updateNote(deps.db, c.var.userId, notebookId, noteId, c.req.valid('json'));
+      const note = await forUser(deps, c.var.userId, (db) =>
+        updateNote(db, c.var.userId, notebookId, noteId, c.req.valid('json'))
+      );
       return note ? c.json(note, HTTP_STATUS.OK) : c.json(missing, HTTP_STATUS.NOT_FOUND);
     })
     .openapi(deleteRoute, async (c) => {
       const { notebookId, noteId } = c.req.valid('param');
-      const deleted = await deleteNote(deps.db, c.var.userId, notebookId, noteId);
+      const deleted = await forUser(deps, c.var.userId, (db) =>
+        deleteNote(db, c.var.userId, notebookId, noteId)
+      );
       return deleted
         ? c.body(null, HTTP_STATUS.NO_CONTENT)
         : c.json(missing, HTTP_STATUS.NOT_FOUND);

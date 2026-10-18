@@ -8,6 +8,7 @@ import {
   UsageLimitReachedError,
 } from '../core/usage-limit';
 import { user } from '../db/auth-schema';
+import { ownerScope } from '../db/client';
 import { usageEvents } from '../db/schema';
 import { createTestDb } from '../db/testing/test-db';
 import { createUsageGuard } from './usage-guard';
@@ -15,7 +16,7 @@ import { createUsageGuard } from './usage-guard';
 const { db, pool } = createTestDb();
 const HOUR_MS = 3_600_000;
 const NOW = new Date('2026-10-14T12:00:00.000Z');
-let guard = createUsageGuard(db, () => NOW);
+let guard = createUsageGuard(ownerScope(db), db, () => NOW);
 
 const ago = (ms: number) => new Date(NOW.getTime() - ms);
 
@@ -40,7 +41,7 @@ async function use(
 
 beforeEach(async () => {
   // A new guard per test: the running requests of a test must not block the next one.
-  guard = createUsageGuard(db, () => NOW);
+  guard = createUsageGuard(ownerScope(db), db, () => NOW);
   await db.delete(user);
   await db.insert(user).values([
     { id: 'reader', name: 'reader', email: 'reader@example.test' },

@@ -12,6 +12,7 @@ import { findNotebook, setCoverVersion } from '../db/notebook-repository';
 import { HTTP_STATUS } from '../http-status';
 import { coverKey } from '../storage/cover-key';
 import { removeObjectQuietly } from '../storage/remove-quietly';
+import { forUser } from './for-user';
 import { json, notebookParams, notFound, unauthenticated } from './openapi';
 
 const ONE_YEAR_SECONDS = 31_536_000;
@@ -68,7 +69,7 @@ const serveCover =
       return c.json({ code: API_ERROR.COVER_UNAVAILABLE }, HTTP_STATUS.SERVICE_UNAVAILABLE);
     const { userId } = c.var;
     const notebookId = c.req.param('notebookId');
-    const notebook = await findNotebook(deps.db, userId, notebookId);
+    const notebook = await forUser(deps, userId, (db) => findNotebook(db, userId, notebookId));
     if (!notebook?.coverVersion)
       return c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);
 
@@ -107,7 +108,7 @@ export function coverRoutes(deps: AppDeps) {
           return c.json({ code: API_ERROR.COVER_UNAVAILABLE }, HTTP_STATUS.SERVICE_UNAVAILABLE);
         const { userId } = c.var;
         const { notebookId } = c.req.valid('param');
-        if (!(await findNotebook(deps.db, userId, notebookId))) {
+        if (!(await forUser(deps, userId, (db) => findNotebook(db, userId, notebookId)))) {
           return c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);
         }
 
@@ -117,7 +118,9 @@ export function coverRoutes(deps: AppDeps) {
         const { bytes, contentType } = image;
         const version = randomUUID();
         await objectStore.put(coverKey(userId, notebookId, version), { bytes, contentType });
-        const changed = await setCoverVersion(deps.db, userId, notebookId, version);
+        const changed = await forUser(deps, userId, (db) =>
+          setCoverVersion(db, userId, notebookId, version)
+        );
         if (!changed) {
           await removeObjectQuietly(objectStore, coverKey(userId, notebookId, version));
           return c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);
@@ -132,7 +135,9 @@ export function coverRoutes(deps: AppDeps) {
           return c.json({ code: API_ERROR.COVER_UNAVAILABLE }, HTTP_STATUS.SERVICE_UNAVAILABLE);
         const { userId } = c.var;
         const { notebookId } = c.req.valid('param');
-        const changed = await setCoverVersion(deps.db, userId, notebookId, null);
+        const changed = await forUser(deps, userId, (db) =>
+          setCoverVersion(db, userId, notebookId, null)
+        );
         if (!changed) return c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);
         if (changed.previous)
           await removeObjectQuietly(objectStore, coverKey(userId, notebookId, changed.previous));

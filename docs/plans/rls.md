@@ -18,7 +18,7 @@ Wird nach der Umsetzung gelöscht (Git-Historie), offene Reste gehen ins [Backlo
 ## Stufen (je ein Commit, jeweils grün)
 
 - **S1 Grundlage, kein Verhaltenswechsel (erledigt, siehe Git).** Rollen-Migration, Richtlinien, Test-Setup, `withUser`, Richtlinien und `GRANT`s als Migration, Konfiguration (`DATABASE_URL` = App-Rolle, `DATABASE_OWNER_URL`) in `config/env.ts`. Die App verbindet in S1 noch als Besitzer.
-- **S2 Repository für Repository auf `withUser` umstellen.** Reihenfolge: `notebooks`, Quellen und Leser, Notizen, Studio, Nutzung, Chat und Suche, Übersichten. Die Route reicht den Nutzer aus der Sitzung durch; die Signaturen der Repositories nehmen `UserDb` (die Transaktion) statt `Database`.
+- **S2 Routen auf `withUser` umstellen (erledigt, siehe Git; abweichend vom Entwurf).** Statt die Signaturen der Repositories zu ändern, ist `Database` jetzt der gemeinsame Typ von Pool und Transaktion, und `forUser(deps, userId, (db) => ...)` in den Routen öffnet die Transaktion. Die Systempfade nehmen `deps.systemDb` (`DATABASE_OWNER_URL`, sonst `DATABASE_URL`): Gäste, Tagesbremse, `/health`, Aufnahme (Quellen und Uploads, auch beim Einreichen), Sweeps. Die DB-Tests laufen mit der App-Rolle. Ursprünglicher Text: Reihenfolge: `notebooks`, Quellen und Leser, Notizen, Studio, Nutzung, Chat und Suche, Übersichten. Die Route reicht den Nutzer aus der Sitzung durch; die Signaturen der Repositories nehmen `UserDb` (die Transaktion) statt `Database`.
 - **S3 Umschalten.** Produktion verbindet als `nlm_app`; `server.env` bekommt `DATABASE_OWNER_URL`, Rollenpasswort (Secret, vom Nutzer anzulegen), [DEPLOYMENT.md](../DEPLOYMENT.md) und Runbook ergänzen. Rücknahme: `DATABASE_URL` zurück auf den Besitzer.
 
 ## Testfälle (Liste)

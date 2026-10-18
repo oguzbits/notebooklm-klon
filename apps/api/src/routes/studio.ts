@@ -24,6 +24,7 @@ import {
 import { HTTP_STATUS } from '../http-status';
 import { generateStudioOutput } from '../studio/generate';
 import type { UsageGuard } from '../usage/usage-guard';
+import { forUser } from './for-user';
 import { json, notebookParams, notFound, unauthenticated } from './openapi';
 
 const listRoute = createRoute({
@@ -90,17 +91,19 @@ const deleteRoute = createRoute({
 /** The database and model calls the Studio logic runs on. */
 function studioPorts(deps: AppDeps) {
   return {
-    chatConfig: (userId: string, notebookId: string) => getChatConfig(deps.db, userId, notebookId),
+    chatConfig: (userId: string, notebookId: string) =>
+      forUser(deps, userId, (db) => getChatConfig(db, userId, notebookId)),
     listSources: (userId: string, notebookId: string, sourceIds?: readonly string[]) =>
-      listStudioSources(deps.db, userId, notebookId, sourceIds),
+      forUser(deps, userId, (db) => listStudioSources(db, userId, notebookId, sourceIds)),
     loadChunks: (
       userId: string,
       notebookId: string,
       maxChars: number,
       sourceIds: readonly string[]
-    ) => loadStudioChunks(deps.db, userId, notebookId, maxChars, sourceIds),
+    ) =>
+      forUser(deps, userId, (db) => loadStudioChunks(db, userId, notebookId, maxChars, sourceIds)),
     save: (userId: string, notebookId: string, output: Parameters<typeof createStudioOutput>[3]) =>
-      createStudioOutput(deps.db, userId, notebookId, output),
+      forUser(deps, userId, (db) => createStudioOutput(db, userId, notebookId, output)),
     stream: deps.chat.stream,
   };
 }
@@ -115,9 +118,12 @@ export function studioRoutes(deps: AppDeps, guard: UsageGuard) {
     .openapi(listRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
       const { userId } = c.var;
-      if (!(await findNotebook(deps.db, userId, notebookId)))
+      if (!(await forUser(deps, userId, (db) => findNotebook(db, userId, notebookId))))
         return c.json(missing, HTTP_STATUS.NOT_FOUND);
-      return c.json(await listStudioOutputs(deps.db, userId, notebookId), HTTP_STATUS.OK);
+      return c.json(
+        await forUser(deps, userId, (db) => listStudioOutputs(db, userId, notebookId)),
+        HTTP_STATUS.OK
+      );
     })
     .openapi(createStudioRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
@@ -130,18 +136,16 @@ export function studioRoutes(deps: AppDeps, guard: UsageGuard) {
     })
     .openapi(updateRoute, async (c) => {
       const { notebookId, outputId } = c.req.valid('param');
-      const output = await updateStudioOutput(
-        deps.db,
-        c.var.userId,
-        notebookId,
-        outputId,
-        c.req.valid('json')
+      const output = await forUser(deps, c.var.userId, (db) =>
+        updateStudioOutput(db, c.var.userId, notebookId, outputId, c.req.valid('json'))
       );
       return output ? c.json(output, HTTP_STATUS.OK) : c.json(missing, HTTP_STATUS.NOT_FOUND);
     })
     .openapi(deleteRoute, async (c) => {
       const { notebookId, outputId } = c.req.valid('param');
-      const deleted = await deleteStudioOutput(deps.db, c.var.userId, notebookId, outputId);
+      const deleted = await forUser(deps, c.var.userId, (db) =>
+        deleteStudioOutput(db, c.var.userId, notebookId, outputId)
+      );
       return deleted
         ? c.body(null, HTTP_STATUS.NO_CONTENT)
         : c.json(missing, HTTP_STATUS.NOT_FOUND);

@@ -22,6 +22,7 @@ import {
 import { HTTP_STATUS } from '../http-status';
 import { coverKey } from '../storage/cover-key';
 import { removeObjectQuietly } from '../storage/remove-quietly';
+import { forUser } from './for-user';
 import { invalid, json, notebookParams, notFound, unauthenticated } from './openapi';
 
 const listRoute = createRoute({
@@ -94,30 +95,34 @@ export function notebookRoutes(deps: AppDeps) {
 
   return app
     .openapi(listRoute, async (c) =>
-      c.json(await listNotebooks(deps.db, c.var.userId), HTTP_STATUS.OK)
+      c.json(
+        await forUser(deps, c.var.userId, (db) => listNotebooks(db, c.var.userId)),
+        HTTP_STATUS.OK
+      )
     )
     .openapi(createRoute_, async (c) => {
       const { title } = c.req.valid('json');
       return c.json(
-        await createNotebook(deps.db, c.var.userId, title, LIMITS.NOTEBOOKS_PER_USER),
+        await forUser(deps, c.var.userId, (db) =>
+          createNotebook(db, c.var.userId, title, LIMITS.NOTEBOOKS_PER_USER)
+        ),
         HTTP_STATUS.CREATED
       );
     })
     .openapi(updateRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
       const changes = c.req.valid('json');
-      const updated = await updateNotebook(deps.db, c.var.userId, notebookId, changes);
+      const updated = await forUser(deps, c.var.userId, (db) =>
+        updateNotebook(db, c.var.userId, notebookId, changes)
+      );
       return updated
         ? c.json(updated, HTTP_STATUS.OK)
         : c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);
     })
     .openapi(copyRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
-      const copy = await duplicateNotebook(
-        deps.db,
-        c.var.userId,
-        notebookId,
-        LIMITS.NOTEBOOKS_PER_USER
+      const copy = await forUser(deps, c.var.userId, (db) =>
+        duplicateNotebook(db, c.var.userId, notebookId, LIMITS.NOTEBOOKS_PER_USER)
       );
       return copy
         ? c.json(copy, HTTP_STATUS.CREATED)
@@ -126,8 +131,8 @@ export function notebookRoutes(deps: AppDeps) {
     .openapi(deleteRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
       const { userId } = c.var;
-      const existing = await findNotebook(deps.db, userId, notebookId);
-      const deleted = await deleteNotebook(deps.db, userId, notebookId);
+      const existing = await forUser(deps, userId, (db) => findNotebook(db, userId, notebookId));
+      const deleted = await forUser(deps, userId, (db) => deleteNotebook(db, userId, notebookId));
       if (!deleted) return c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);
       // The cover image goes with the notebook.
       if (existing?.coverVersion && deps.objectStore) {

@@ -7,6 +7,7 @@ import { getOrCreateOverview } from '../chat/overview';
 import { createOverviewPorts } from '../chat/overview-ports';
 import { HTTP_STATUS } from '../http-status';
 import type { UsageGuard } from '../usage/usage-guard';
+import { forUser } from './for-user';
 import { json, notFound, sourceParams, unauthenticated } from './openapi';
 
 const overviewRoute = createRoute({
@@ -26,7 +27,10 @@ const overviewRoute = createRoute({
 /** The overview of a source: made by the model on first request, then read from the database. */
 export function overviewRoutes(deps: AppDeps, guard: UsageGuard) {
   const app = new OpenAPIHono<{ Variables: AuthVariables }>();
-  const ports = createOverviewPorts(deps.db, guard.budgeted(deps.chat.stream));
+  const ports = createOverviewPorts(
+    (userId, work) => forUser(deps, userId, work),
+    guard.budgeted(deps.chat.stream)
+  );
 
   return app.openapi(overviewRoute, async (c) => {
     const { notebookId, sourceId } = c.req.valid('param');

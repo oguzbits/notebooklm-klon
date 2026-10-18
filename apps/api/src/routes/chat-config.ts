@@ -5,6 +5,7 @@ import type { AppDeps } from '../app-deps';
 import type { AuthVariables } from '../auth/session';
 import { getChatConfig, setChatConfig } from '../db/chat-config-repository';
 import { HTTP_STATUS } from '../http-status';
+import { forUser } from './for-user';
 import { json, notebookParams, notFound, unauthenticated } from './openapi';
 
 const readRoute = createRoute({
@@ -40,12 +41,16 @@ export function chatConfigRoutes(deps: AppDeps) {
 
   return app
     .openapi(readRoute, async (c) => {
-      const config = await getChatConfig(deps.db, c.var.userId, c.req.valid('param').notebookId);
+      const config = await forUser(deps, c.var.userId, (db) =>
+        getChatConfig(db, c.var.userId, c.req.valid('param').notebookId)
+      );
       return config ? c.json(config, HTTP_STATUS.OK) : c.json(missing, HTTP_STATUS.NOT_FOUND);
     })
     .openapi(writeRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
-      const saved = await setChatConfig(deps.db, c.var.userId, notebookId, c.req.valid('json'));
+      const saved = await forUser(deps, c.var.userId, (db) =>
+        setChatConfig(db, c.var.userId, notebookId, c.req.valid('json'))
+      );
       return saved ? c.json(saved, HTTP_STATUS.OK) : c.json(missing, HTTP_STATUS.NOT_FOUND);
     });
 }

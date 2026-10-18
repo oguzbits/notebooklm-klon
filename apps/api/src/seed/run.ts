@@ -14,7 +14,7 @@ import { createNotebookOverviewPorts } from '../chat/notebook-overview-ports';
 import { createOverviewPorts } from '../chat/overview-ports';
 import { parseEnv } from '../config/env';
 import { user } from '../db/auth-schema';
-import { createDb } from '../db/client';
+import { createDb, ownerScope } from '../db/client';
 import { runMigrations } from '../db/migrate';
 import { recordUsage } from '../db/usage-repository';
 import { toLocalFile } from '../eval/corpus';
@@ -46,8 +46,8 @@ try {
     {
       db,
       importDeps: createLocalImportDeps(db, providers),
-      overview: createOverviewPorts(db, providers.stream),
-      notebookOverview: createNotebookOverviewPorts(db, providers.stream),
+      overview: createOverviewPorts(ownerScope(db), providers.stream),
+      notebookOverview: createNotebookOverviewPorts(ownerScope(db), providers.stream),
       ensureUser: async () => {
         const [existing] = await db.select({ id: user.id }).from(user).where(eq(user.email, email));
         if (existing) return existing.id;

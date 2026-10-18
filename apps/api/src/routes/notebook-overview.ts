@@ -7,6 +7,7 @@ import { getOrCreateNotebookOverview } from '../chat/notebook-overview';
 import { createNotebookOverviewPorts } from '../chat/notebook-overview-ports';
 import { HTTP_STATUS } from '../http-status';
 import type { UsageGuard } from '../usage/usage-guard';
+import { forUser } from './for-user';
 import { json, notebookParams, notFound, unauthenticated } from './openapi';
 
 const overviewRoute = createRoute({
@@ -29,7 +30,10 @@ const overviewRoute = createRoute({
  */
 export function notebookOverviewRoutes(deps: AppDeps, guard: UsageGuard) {
   const app = new OpenAPIHono<{ Variables: AuthVariables }>();
-  const ports = createNotebookOverviewPorts(deps.db, guard.budgeted(deps.chat.stream));
+  const ports = createNotebookOverviewPorts(
+    (userId, work) => forUser(deps, userId, work),
+    guard.budgeted(deps.chat.stream)
+  );
 
   return app.openapi(overviewRoute, async (c) => {
     const { notebookId } = c.req.valid('param');

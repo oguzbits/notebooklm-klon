@@ -26,6 +26,7 @@ import { log } from '../logger';
 import { pageTitle } from '../parsing/parse-web';
 import { countPdfPages } from '../parsing/pdf-pages';
 import type { UsageGuard } from '../usage/usage-guard';
+import { forUser } from './for-user';
 import { json, notebookParams } from './openapi';
 
 // Room for the multipart framing around a file that is exactly at the limit.
@@ -97,7 +98,9 @@ async function addToNotebook(
     bytes: Uint8Array;
   }
 ) {
-  await assertRoomForSource(deps.db, input.userId, input.notebookId, LIMITS.SOURCES_PER_NOTEBOOK);
+  await forUser(deps, input.userId, (db) =>
+    assertRoomForSource(db, input.userId, input.notebookId, LIMITS.SOURCES_PER_NOTEBOOK)
+  );
   const result = await submitSource(
     {
       userId: input.userId,
@@ -109,12 +112,8 @@ async function addToNotebook(
     deps.ingest
   );
   if (
-    !(await linkSource(
-      deps.db,
-      input.userId,
-      input.notebookId,
-      result.sourceId,
-      LIMITS.SOURCES_PER_NOTEBOOK
+    !(await forUser(deps, input.userId, (db) =>
+      linkSource(db, input.userId, input.notebookId, result.sourceId, LIMITS.SOURCES_PER_NOTEBOOK)
     ))
   ) {
     throw new Error('The source could not be linked to the notebook.');
@@ -242,7 +241,7 @@ export function sourceRoutes(deps: AppDeps, guard: UsageGuard) {
     async (c) => {
       const { userId } = c.var;
       const notebookId = c.req.param('notebookId');
-      if (!(await findNotebook(deps.db, userId, notebookId))) {
+      if (!(await forUser(deps, userId, (db) => findNotebook(db, userId, notebookId)))) {
         return c.json(error(API_ERROR.NOT_FOUND), HTTP_STATUS.NOT_FOUND);
       }
 
@@ -276,7 +275,7 @@ export function sourceRoutes(deps: AppDeps, guard: UsageGuard) {
     const { userId } = c.var;
     const { notebookId } = c.req.valid('param');
     const { url } = c.req.valid('json');
-    if (!(await findNotebook(deps.db, userId, notebookId))) {
+    if (!(await forUser(deps, userId, (db) => findNotebook(db, userId, notebookId)))) {
       return c.json(error(API_ERROR.NOT_FOUND), HTTP_STATUS.NOT_FOUND);
     }
     await guard.assertBudget();

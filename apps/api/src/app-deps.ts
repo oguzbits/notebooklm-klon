@@ -10,7 +10,10 @@ import type { ObjectStore } from './storage/object-store';
 /** Everything the routes need from the outside, so tests can swap the network and the queue. */
 export interface AppDeps {
   auth: Auth;
+  /** The app's connection: row-level security applies, so use it through `forUser`. */
   db: Database;
+  /** The owner's connection for work that belongs to nobody: guests, the budget of all users, the health check. */
+  systemDb: Database;
   ingest: SubmitPorts;
   /** Whose example notebook guests get a copy of (SEED_DEMO_EMAIL). Without it there are no guests. */
   demoOwnerEmail: string | undefined;

@@ -11,6 +11,7 @@ import {
   listChatMessages,
 } from '../db/reader-repository';
 import { HTTP_STATUS } from '../http-status';
+import { forUser } from './for-user';
 import { json, notebookParams, notFound, unauthenticated } from './openapi';
 
 const chunkRoute = createRoute({
@@ -65,24 +66,33 @@ export function readerRoutes(deps: AppDeps) {
   return app
     .openapi(chunkRoute, async (c) => {
       const { notebookId, chunkId } = c.req.valid('param');
-      const chunk = await findChunkDetail(deps.db, c.var.userId, notebookId, chunkId);
+      const chunk = await forUser(deps, c.var.userId, (db) =>
+        findChunkDetail(db, c.var.userId, notebookId, chunkId)
+      );
       return chunk ? c.json(chunk, HTTP_STATUS.OK) : c.json(missing, HTTP_STATUS.NOT_FOUND);
     })
     .openapi(sourceTextRoute, async (c) => {
       const { notebookId, sourceId } = c.req.valid('param');
-      const source = await findSourceText(deps.db, c.var.userId, notebookId, sourceId);
+      const source = await forUser(deps, c.var.userId, (db) =>
+        findSourceText(db, c.var.userId, notebookId, sourceId)
+      );
       return source ? c.json(source, HTTP_STATUS.OK) : c.json(missing, HTTP_STATUS.NOT_FOUND);
     })
     .openapi(messagesRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
       const { userId } = c.var;
-      if (!(await findNotebook(deps.db, userId, notebookId)))
+      if (!(await forUser(deps, userId, (db) => findNotebook(db, userId, notebookId))))
         return c.json(missing, HTTP_STATUS.NOT_FOUND);
-      return c.json(await listChatMessages(deps.db, userId, notebookId), HTTP_STATUS.OK);
+      return c.json(
+        await forUser(deps, userId, (db) => listChatMessages(db, userId, notebookId)),
+        HTTP_STATUS.OK
+      );
     })
     .openapi(clearMessagesRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
-      const cleared = await clearChatMessages(deps.db, c.var.userId, notebookId);
+      const cleared = await forUser(deps, c.var.userId, (db) =>
+        clearChatMessages(db, c.var.userId, notebookId)
+      );
       return cleared
         ? c.body(null, HTTP_STATUS.NO_CONTENT)
         : c.json(missing, HTTP_STATUS.NOT_FOUND);

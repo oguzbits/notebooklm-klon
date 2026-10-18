@@ -5,7 +5,7 @@ import type { AppDeps } from '../app-deps';
 import { createAuth } from '../auth/auth';
 import { REWRITE_SYSTEM_PROMPT } from '../core/chat-history';
 import { createSourceStorage, createUploadStorage } from '../db/source-storage';
-import { axisVector, createTestDb } from '../db/testing/test-db';
+import { axisVector, createTestAppDb, createTestDb } from '../db/testing/test-db';
 import type { FetchDeps } from '../import/fetch-url';
 import { runIngestJob } from '../ingestion/submit';
 import type { ErrorTags } from '../observability/error-reporter';
@@ -41,8 +41,11 @@ interface HarnessOptions {
  * network, the job queue (jobs are recorded and run on demand), the embedding and the model.
  */
 export function createHarness(options: HarnessOptions = {}) {
+  // The app connects as the app role, so row-level security applies to every route test; the
+  // owner is for the jobs, the system work and the test's own setup and checks.
   const { db, pool } = createTestDb();
-  const auth = createAuth(db, {
+  const app = createTestAppDb();
+  const auth = createAuth(app.db, {
     secret: SECRET,
     baseURL: BASE_URL,
     objectStore: options.objectStore,
@@ -54,7 +57,8 @@ export function createHarness(options: HarnessOptions = {}) {
 
   const deps: AppDeps = {
     auth,
-    db,
+    db: app.db,
+    systemDb: db,
     ingest: {
       sources: createSourceStorage(db),
       uploads: createUploadStorage(db),
@@ -99,5 +103,16 @@ export function createHarness(options: HarnessOptions = {}) {
     for (const sourceId of ids) await runIngestJob({ sourceId }, deps.ingest);
   }
 
-  return { deps, db, pool, auth, enqueued, modelInputs, errors, reported, runJobs };
+  return {
+    deps,
+    db,
+    pool,
+    appPool: app.pool,
+    auth,
+    enqueued,
+    modelInputs,
+    errors,
+    reported,
+    runJobs,
+  };
 }

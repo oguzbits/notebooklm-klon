@@ -8,7 +8,7 @@ import {
   UsageLimitReachedError,
   windowUsage,
 } from '../core/usage-limit';
-import type { Database } from '../db/client';
+import type { Database, UserScope } from '../db/client';
 import { tokensSince, usageTimesSince } from '../db/usage-repository';
 
 /** The two kinds of request that have a limit per user: answering a question, making a Studio output. */
@@ -25,18 +25,23 @@ const LIMIT_OF: Record<Limited, number> = {
  * the check and the start of the call cannot overlap: that is right for one container, and the
  * limit must move into the database if there are ever several.
  */
-export function createUsageGuard(db: Database, now: () => Date = () => new Date()) {
+export function createUsageGuard(
+  inUser: UserScope,
+  systemDb: Database,
+  now: () => Date = () => new Date()
+) {
   const running = new Set<string>();
 
   const windowStart = (at: Date) => new Date(at.getTime() - LIMITS.USAGE_WINDOW_MS);
 
   async function limitOf(userId: string, purpose: Limited, at: Date) {
-    const times = await usageTimesSince(db, userId, purpose, windowStart(at));
+    const since = windowStart(at);
+    const times = await inUser(userId, (db) => usageTimesSince(db, userId, purpose, since));
     return windowUsage(times, LIMIT_OF[purpose], LIMITS.USAGE_WINDOW_MS, at);
   }
 
   async function budgetReached(at: Date) {
-    return (await tokensSince(db, windowStart(at))) >= LIMITS.DAILY_TOKEN_BUDGET;
+    return (await tokensSince(systemDb, windowStart(at))) >= LIMITS.DAILY_TOKEN_BUDGET;
   }
 
   async function assertBudget(): Promise<void> {

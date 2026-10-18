@@ -14,6 +14,7 @@ import { ERROR_ORIGIN } from './observability/error-origin';
 import { chatRoutes } from './routes/chat';
 import { chatConfigRoutes } from './routes/chat-config';
 import { coverRoutes } from './routes/cover';
+import { forUser } from './routes/for-user';
 import { guestRoutes } from './routes/guest';
 import { notebookOverviewRoutes } from './routes/notebook-overview';
 import { notebookSourceRoutes } from './routes/notebook-sources';
@@ -33,7 +34,7 @@ import { createUsageGuard } from './usage/usage-guard';
  */
 async function checkHealth(deps: AppDeps) {
   const stalledSources = await countStalledSources(
-    deps.db,
+    deps.systemDb,
     new Date(Date.now() - LIMITS.STALLED_JOB_AFTER_MS)
   );
   return HealthSchema.parse({ status: 'ok', stalledSources });
@@ -90,7 +91,7 @@ export function createApp(deps: AppDeps) {
   app.use('/api/usage', requireUser(deps.auth));
 
   // One guard for the whole app: it knows which requests are running.
-  const usage = createUsageGuard(deps.db);
+  const usage = createUsageGuard((userId, work) => forUser(deps, userId, work), deps.systemDb);
 
   return app
     .route('/api/web-search', webSearchRoutes(deps))

@@ -19,16 +19,14 @@ import {
 import { searchChunks } from '../db/retrieval';
 import { HTTP_STATUS } from '../http-status';
 import type { UsageGuard } from '../usage/usage-guard';
+import { forUser } from './for-user';
 
 const error = (code: (typeof API_ERROR)[keyof typeof API_ERROR]) => ({ code });
 
 /** The last answered turns of the conversation, for a follow-up question. */
 async function earlierTurns(deps: AppDeps, userId: string, notebookId: string) {
-  const recent = await listRecentChatMessages(
-    deps.db,
-    userId,
-    notebookId,
-    LIMITS.CHAT_HISTORY_TURNS * 2
+  const recent = await forUser(deps, userId, (db) =>
+    listRecentChatMessages(db, userId, notebookId, LIMITS.CHAT_HISTORY_TURNS * 2)
   );
   return historyTurns(recent, LIMITS.CHAT_HISTORY_TURNS, LIMITS.CHAT_HISTORY_ANSWER_CHARS);
 }
@@ -39,14 +37,15 @@ export function chatRoutes(deps: AppDeps, guard: UsageGuard) {
 
   const ports: ChatPorts = {
     ...deps.chat,
-    selectedSourceIds: (userId, notebookId) => selectedReadySourceIds(deps.db, userId, notebookId),
-    search: (request) => searchChunks(deps.db, request),
+    selectedSourceIds: (userId, notebookId) =>
+      forUser(deps, userId, (db) => selectedReadySourceIds(db, userId, notebookId)),
+    search: (request) => forUser(deps, request.userId, (db) => searchChunks(db, request)),
   };
 
   return app.post('/:notebookId/chat', async (c) => {
     const { userId } = c.var;
     const notebookId = c.req.param('notebookId');
-    if (!(await findNotebook(deps.db, userId, notebookId))) {
+    if (!(await forUser(deps, userId, (db) => findNotebook(db, userId, notebookId)))) {
       return c.json(error(API_ERROR.NOT_FOUND), HTTP_STATUS.NOT_FOUND);
     }
 
@@ -57,7 +56,7 @@ export function chatRoutes(deps: AppDeps, guard: UsageGuard) {
     const slot = await guard.enter(userId, USAGE_PURPOSE.CHAT);
     try {
       // Throws NoSourcesSelectedError before the stream starts: the error handler answers 409.
-      const config = await getChatConfig(deps.db, userId, notebookId);
+      const config = await forUser(deps, userId, (db) => getChatConfig(db, userId, notebookId));
       // Read before the new question is saved, so the history holds only what came before it.
       const history = await earlierTurns(deps, userId, notebookId);
 
@@ -73,11 +72,15 @@ export function chatRoutes(deps: AppDeps, guard: UsageGuard) {
       );
 
       // Saved only now: a rejected question (no source ready, quota) leaves no trace in the history.
-      await saveUserMessage(deps.db, userId, notebookId, parsed.data.question);
+      await forUser(deps, userId, (db) =>
+        saveUserMessage(db, userId, notebookId, parsed.data.question)
+      );
 
       return streamSSE(c, async (stream) => {
         const recorder = new AnswerRecorder((statements, followUps, trace) =>
-          saveAssistantMessage(deps.db, userId, notebookId, { statements, followUps, trace })
+          forUser(deps, userId, (db) =>
+            saveAssistantMessage(db, userId, notebookId, { statements, followUps, trace })
+          )
         );
         // The reader closes the tab: stop the model request, so it neither runs on nor costs quota.
         const reader = new AbortController();

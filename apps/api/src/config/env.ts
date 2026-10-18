@@ -10,6 +10,8 @@ export const DatabaseEnvSchema = z.object({
 });
 
 export const EnvSchema = DatabaseEnvSchema.extend({
+  // The table owner: migrations and the system jobs. Unset: DATABASE_URL does both (no row-level security applies).
+  DATABASE_OWNER_URL: z.url({ protocol: /^postgres(ql)?$/ }).optional(),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(1).max(MAX_PORT).default(DEFAULT_PORT),
   GEMINI_API_KEY: z.string().trim().min(1),

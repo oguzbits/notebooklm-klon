@@ -1,16 +1,17 @@
-import type { Database } from '../db/client';
+import type { UserScope } from '../db/client';
 import { findNotebookForOverview, saveNotebookOverview } from '../db/notebook-overview-repository';
 import type { NotebookOverviewPorts } from './notebook-overview';
 
 /** The notebook overview ports on the database, with the model passed in. */
 export function createNotebookOverviewPorts(
-  db: Database,
+  inUser: UserScope,
   stream: NotebookOverviewPorts['stream']
 ): NotebookOverviewPorts {
   return {
-    find: (userId, notebookId) => findNotebookForOverview(db, userId, notebookId),
+    find: (userId, notebookId) =>
+      inUser(userId, (db) => findNotebookForOverview(db, userId, notebookId)),
     save: (userId, notebookId, overview, key) =>
-      saveNotebookOverview(db, userId, notebookId, overview, key),
+      inUser(userId, (db) => saveNotebookOverview(db, userId, notebookId, overview, key)),
     stream,
   };
 }

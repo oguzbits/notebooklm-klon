@@ -22,6 +22,7 @@ import {
 import { HTTP_STATUS } from '../http-status';
 import { restartSource } from '../ingestion/submit';
 import type { UsageGuard } from '../usage/usage-guard';
+import { forUser } from './for-user';
 import { invalid, json, notebookParams, notFound, sourceParams, unauthenticated } from './openapi';
 
 const listSourcesRoute = createRoute({
@@ -123,9 +124,20 @@ async function retrySource(
   ids: { notebookId: string; sourceId: string }
 ) {
   await guard.assertBudget();
-  const result = await restartFailedSource(deps.db, userId, ids.notebookId, ids.sourceId);
+  const result = await forUser(deps, userId, (db) =>
+    restartFailedSource(db, userId, ids.notebookId, ids.sourceId)
+  );
   if (result === RESTART.STARTED) await restartSource(ids.sourceId, deps.ingest);
   return result;
+}
+
+/** The sources of a notebook, or null when the user has no such notebook. */
+function sourcesOf(deps: AppDeps, userId: string, notebookId: string) {
+  return forUser(deps, userId, async (db) =>
+    (await findNotebook(db, userId, notebookId))
+      ? listNotebookSources(db, userId, notebookId)
+      : null
+  );
 }
 
 /** The sources of a notebook: list them, choose which answers may use, rename one, read a failed one again, take one out. */
@@ -135,16 +147,17 @@ export function notebookSourceRoutes(deps: AppDeps, guard: UsageGuard) {
   return app
     .openapi(listSourcesRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
-      const { userId } = c.var;
-      if (!(await findNotebook(deps.db, userId, notebookId))) {
-        return c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);
-      }
-      return c.json(await listNotebookSources(deps.db, userId, notebookId), HTTP_STATUS.OK);
+      const sources = await sourcesOf(deps, c.var.userId, notebookId);
+      return sources
+        ? c.json(sources, HTTP_STATUS.OK)
+        : c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);
     })
     .openapi(selectAllRoute, async (c) => {
       const { notebookId } = c.req.valid('param');
       const { selected } = c.req.valid('json');
-      const changed = await setReadySourcesSelected(deps.db, c.var.userId, notebookId, selected);
+      const changed = await forUser(deps, c.var.userId, (db) =>
+        setReadySourcesSelected(db, c.var.userId, notebookId, selected)
+      );
       return changed
         ? c.json({ selected }, HTTP_STATUS.OK)
         : c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);
@@ -152,12 +165,8 @@ export function notebookSourceRoutes(deps: AppDeps, guard: UsageGuard) {
     .openapi(selectRoute, async (c) => {
       const { notebookId, sourceId } = c.req.valid('param');
       const { selected } = c.req.valid('json');
-      const changed = await setSourceSelected(
-        deps.db,
-        c.var.userId,
-        notebookId,
-        sourceId,
-        selected
+      const changed = await forUser(deps, c.var.userId, (db) =>
+        setSourceSelected(db, c.var.userId, notebookId, sourceId, selected)
       );
       return changed
         ? c.json({ selected }, HTTP_STATUS.OK)
@@ -166,7 +175,9 @@ export function notebookSourceRoutes(deps: AppDeps, guard: UsageGuard) {
     .openapi(renameSourceRoute, async (c) => {
       const { notebookId, sourceId } = c.req.valid('param');
       const { title } = c.req.valid('json');
-      const renamed = await renameSource(deps.db, c.var.userId, notebookId, sourceId, title);
+      const renamed = await forUser(deps, c.var.userId, (db) =>
+        renameSource(db, c.var.userId, notebookId, sourceId, title)
+      );
       return renamed
         ? c.json({ title }, HTTP_STATUS.OK)
         : c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);
@@ -181,7 +192,9 @@ export function notebookSourceRoutes(deps: AppDeps, guard: UsageGuard) {
     })
     .openapi(removeRoute, async (c) => {
       const { notebookId, sourceId } = c.req.valid('param');
-      const removed = await unlinkSource(deps.db, c.var.userId, notebookId, sourceId);
+      const removed = await forUser(deps, c.var.userId, (db) =>
+        unlinkSource(db, c.var.userId, notebookId, sourceId)
+      );
       return removed
         ? c.body(null, HTTP_STATUS.NO_CONTENT)
         : c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);

@@ -49,8 +49,8 @@ export function guestRoutes(deps: AppDeps) {
 
     const started = ownerEmail
       ? await startGuest({
-          findTemplate: () => findDemoTemplate(deps.db, ownerEmail, DEMO_NOTEBOOK_TITLE),
-          countGuests: (since) => countGuests(deps.db, since),
+          findTemplate: () => findDemoTemplate(deps.systemDb, ownerEmail, DEMO_NOTEBOOK_TITLE),
+          countGuests: (since) => countGuests(deps.systemDb, since),
           signIn: async () => {
             const response = await deps.auth.api.signInAnonymous({
               headers: c.req.raw.headers,
@@ -60,9 +60,9 @@ export function guestRoutes(deps: AppDeps) {
             const { user: guest } = SignedInSchema.parse(await response.clone().json());
             return { userId: guest.id, response };
           },
-          copy: (template, userId) => copyNotebookToUser(deps.db, template, userId),
+          copy: (template, userId) => copyNotebookToUser(deps.systemDb, template, userId),
           remove: async (userId) => {
-            await deps.db.delete(user).where(eq(user.id, userId));
+            await deps.systemDb.delete(user).where(eq(user.id, userId));
           },
         })
       : null;

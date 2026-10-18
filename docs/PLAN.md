@@ -183,6 +183,7 @@ Umgebungsvariablen (`EnvSchema`):
 | Variable | Art |
 | --- | --- |
 | `DATABASE_URL` | Pflicht |
+| `DATABASE_OWNER_URL` | optional |
 | `NODE_ENV` | Standardwert |
 | `PORT` | Standardwert |
 | `GEMINI_API_KEY` | Pflicht |

@@ -23,7 +23,7 @@ import { parseOfflineServerEnv } from '../config/env';
 import { NOTEBOOK_OVERVIEW_SYSTEM_PROMPT } from '../core/notebook-overview-prompt';
 import { OVERVIEW_SYSTEM_PROMPT } from '../core/overview-prompt';
 import { user } from '../db/auth-schema';
-import { createDb } from '../db/client';
+import { createDb, ownerScope } from '../db/client';
 import { runMigrations } from '../db/migrate';
 import { createSourceStorage, createUploadStorage } from '../db/source-storage';
 import { toLocalFile } from '../eval/corpus';
@@ -122,8 +122,8 @@ await seedDemo(
   {
     db,
     importDeps: createLocalImportDeps(db, { parse: ingest.parse, embedDocuments: ingest.embed }),
-    overview: createOverviewPorts(db, stream),
-    notebookOverview: createNotebookOverviewPorts(db, stream),
+    overview: createOverviewPorts(ownerScope(db), stream),
+    notebookOverview: createNotebookOverviewPorts(ownerScope(db), stream),
     ensureUser: async () => {
       const [existing] = await db
         .select({ id: user.id })
@@ -142,6 +142,7 @@ await seedDemo(
 const app = createApp({
   auth,
   db,
+  systemDb: db,
   ingest,
   demoOwnerEmail: DEMO_OWNER_EMAIL,
   // The offline server has no error tracking.
