@@ -1,0 +1,18 @@
+ALTER TABLE "chat_messages" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "chunks" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "notebook_sources" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "notebooks" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "notes" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "source_uploads" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "sources" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "studio_outputs" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "usage_events" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+CREATE POLICY "chat_messages_own_rows" ON "chat_messages" AS PERMISSIVE FOR ALL TO "nlm_app" USING ("chat_messages"."user_id" = current_setting('app.user_id', true)) WITH CHECK ("chat_messages"."user_id" = current_setting('app.user_id', true));--> statement-breakpoint
+CREATE POLICY "chunks_own_rows" ON "chunks" AS PERMISSIVE FOR ALL TO "nlm_app" USING (exists (select 1 from sources where sources.id = "chunks"."source_id" and "sources"."user_id" = current_setting('app.user_id', true))) WITH CHECK (exists (select 1 from sources where sources.id = "chunks"."source_id" and "sources"."user_id" = current_setting('app.user_id', true)));--> statement-breakpoint
+CREATE POLICY "notebook_sources_own_rows" ON "notebook_sources" AS PERMISSIVE FOR ALL TO "nlm_app" USING (exists (select 1 from notebooks where notebooks.id = "notebook_sources"."notebook_id" and "notebooks"."user_id" = current_setting('app.user_id', true))) WITH CHECK (exists (select 1 from notebooks where notebooks.id = "notebook_sources"."notebook_id" and "notebooks"."user_id" = current_setting('app.user_id', true)));--> statement-breakpoint
+CREATE POLICY "notebooks_own_rows" ON "notebooks" AS PERMISSIVE FOR ALL TO "nlm_app" USING ("notebooks"."user_id" = current_setting('app.user_id', true)) WITH CHECK ("notebooks"."user_id" = current_setting('app.user_id', true));--> statement-breakpoint
+CREATE POLICY "notes_own_rows" ON "notes" AS PERMISSIVE FOR ALL TO "nlm_app" USING ("notes"."user_id" = current_setting('app.user_id', true)) WITH CHECK ("notes"."user_id" = current_setting('app.user_id', true));--> statement-breakpoint
+CREATE POLICY "source_uploads_own_rows" ON "source_uploads" AS PERMISSIVE FOR ALL TO "nlm_app" USING (exists (select 1 from sources where sources.id = "source_uploads"."source_id" and "sources"."user_id" = current_setting('app.user_id', true))) WITH CHECK (exists (select 1 from sources where sources.id = "source_uploads"."source_id" and "sources"."user_id" = current_setting('app.user_id', true)));--> statement-breakpoint
+CREATE POLICY "sources_own_rows" ON "sources" AS PERMISSIVE FOR ALL TO "nlm_app" USING ("sources"."user_id" = current_setting('app.user_id', true)) WITH CHECK ("sources"."user_id" = current_setting('app.user_id', true));--> statement-breakpoint
+CREATE POLICY "studio_outputs_own_rows" ON "studio_outputs" AS PERMISSIVE FOR ALL TO "nlm_app" USING ("studio_outputs"."user_id" = current_setting('app.user_id', true)) WITH CHECK ("studio_outputs"."user_id" = current_setting('app.user_id', true));--> statement-breakpoint
+CREATE POLICY "usage_events_own_rows" ON "usage_events" AS PERMISSIVE FOR ALL TO "nlm_app" USING ("usage_events"."user_id" = current_setting('app.user_id', true)) WITH CHECK ("usage_events"."user_id" = current_setting('app.user_id', true));

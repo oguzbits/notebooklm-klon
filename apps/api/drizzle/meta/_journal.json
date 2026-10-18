@@ -176,6 +176,20 @@
       "when": 1792010573782,
       "tag": "0024_whole_genesis",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1792282394092,
+      "tag": "0025_nlm_app_role",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1792282403160,
+      "tag": "0026_row_level_security",
+      "breakpoints": true
     }
   ]
 }

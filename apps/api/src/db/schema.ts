@@ -27,6 +27,7 @@ import {
 } from 'drizzle-orm/pg-core';
 
 import { user } from './auth-schema';
+import { ownRows, rowsOfOwned } from './rls';
 
 const tsvector = customType<{ data: string }>({
   dataType: () => 'tsvector',
@@ -70,7 +71,7 @@ export const notebooks = pgTable(
     coverVersion: uuid('cover_version'),
     createdAt: createdAt(),
   },
-  (table) => [index('notebooks_user_id_idx').on(table.userId)]
+  (table) => [index('notebooks_user_id_idx').on(table.userId), ownRows('notebooks', table.userId)]
 );
 
 // One stored document per user and content hash: the same content is parsed and embedded once.
@@ -97,18 +98,23 @@ export const sources = pgTable(
     unique('sources_user_content_hash_unique').on(table.userId, table.contentHash),
     // The quota counts a user's sources created since a moment.
     index('sources_user_created_at_idx').on(table.userId, table.createdAt),
+    ownRows('sources', table.userId),
   ]
 );
 
 // The raw bytes of an upload live here only until the ingestion job has processed them, then the
 // row is deleted: the product stores extracted text, not original files.
-export const sourceUploads = pgTable('source_uploads', {
-  sourceId: uuid('source_id')
-    .primaryKey()
-    .references(() => sources.id, { onDelete: 'cascade' }),
-  bytes: bytea('bytes').notNull(),
-  createdAt: createdAt(),
-});
+export const sourceUploads = pgTable(
+  'source_uploads',
+  {
+    sourceId: uuid('source_id')
+      .primaryKey()
+      .references(() => sources.id, { onDelete: 'cascade' }),
+    bytes: bytea('bytes').notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [rowsOfOwned('source_uploads', 'sources', table.sourceId, sources.userId)]
+);
 
 export const notebookSources = pgTable(
   'notebook_sources',
@@ -125,6 +131,7 @@ export const notebookSources = pgTable(
   (table) => [
     primaryKey({ columns: [table.notebookId, table.sourceId] }),
     index('notebook_sources_source_id_idx').on(table.sourceId),
+    rowsOfOwned('notebook_sources', 'notebooks', table.notebookId, notebooks.userId),
   ]
 );
 
@@ -151,6 +158,7 @@ export const chunks = pgTable(
     unique('chunks_source_ordinal_unique').on(table.sourceId, table.ordinal),
     index('chunks_embedding_hnsw_idx').using('hnsw', table.embedding.op('vector_cosine_ops')),
     index('chunks_search_vector_gin_idx').using('gin', table.searchVector),
+    rowsOfOwned('chunks', 'sources', table.sourceId, sources.userId),
   ]
 );
 
@@ -179,7 +187,10 @@ export const chatMessages = pgTable(
     trace: jsonb('trace'),
     createdAt: createdAt(),
   },
-  (table) => [index('chat_messages_notebook_seq_idx').on(table.notebookId, table.seq)]
+  (table) => [
+    index('chat_messages_notebook_seq_idx').on(table.notebookId, table.seq),
+    ownRows('chat_messages', table.userId),
+  ]
 );
 
 // A note is a copy of the statements of one saved answer (chat_messages), so its citations were
@@ -206,7 +217,10 @@ export const notes = pgTable(
     body: text('body'),
     createdAt: createdAt(),
   },
-  (table) => [index('notes_notebook_idx').on(table.notebookId, table.createdAt)]
+  (table) => [
+    index('notes_notebook_idx').on(table.notebookId, table.createdAt),
+    ownRows('notes', table.userId),
+  ]
 );
 
 // What the Studio made from the selected sources: a report, flashcards, a quiz or a mind map. The
@@ -233,7 +247,10 @@ export const studioOutputs = pgTable(
     feedback: text('feedback'),
     createdAt: createdAt(),
   },
-  (table) => [index('studio_outputs_notebook_idx').on(table.notebookId, table.createdAt)]
+  (table) => [
+    index('studio_outputs_notebook_idx').on(table.notebookId, table.createdAt),
+    ownRows('studio_outputs', table.userId),
+  ]
 );
 
 // One row per model call: whose, what for, which role and how many tokens, never content. estimated
@@ -256,5 +273,6 @@ export const usageEvents = pgTable(
     index('usage_events_user_idx').on(table.userId, table.createdAt),
     // The budget of the demo adds up all users inside the window.
     index('usage_events_created_idx').on(table.createdAt),
+    ownRows('usage_events', table.userId),
   ]
 );
