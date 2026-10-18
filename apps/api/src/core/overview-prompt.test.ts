@@ -1,9 +1,11 @@
+import { LOCALE } from '@nlm/shared';
 import { describe, expect, it } from 'vitest';
 
 import {
   buildOverviewMessage,
   OVERVIEW_JSON_SCHEMA,
   OVERVIEW_MAX_TEXT_CHARS,
+  overviewSystemPrompt,
   parseOverview,
 } from './overview-prompt';
 
@@ -61,5 +63,12 @@ describe('parseOverview', () => {
   it('throws when the model returned something that is not an overview', () => {
     expect(() => parseOverview('kein json')).toThrow();
     expect(() => parseOverview('{"summary":""}')).toThrow();
+  });
+});
+
+describe('overviewSystemPrompt', () => {
+  it('asks for the language of the interface', () => {
+    expect(overviewSystemPrompt(LOCALE.DE)).toMatch(/write in German/);
+    expect(overviewSystemPrompt(LOCALE.EN)).toMatch(/write in English/);
   });
 });

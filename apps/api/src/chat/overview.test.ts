@@ -1,4 +1,4 @@
-import { type SourceOverview, USAGE_PURPOSE } from '@nlm/shared';
+import { LOCALE, type SourceOverview, USAGE_PURPOSE } from '@nlm/shared';
 import { describe, expect, it } from 'vitest';
 
 import type { ChatInput } from '../ai/gemini-chat';
@@ -9,7 +9,7 @@ const OVERVIEW: SourceOverview = {
   keyTopics: ['Polarlicht'],
   suggestedQuestions: ['Wer leitet es?'],
 };
-const INPUT = { userId: 'u', notebookId: 'n', sourceId: 's' };
+const INPUT = { userId: 'u', notebookId: 'n', sourceId: 's', locale: LOCALE.DE };
 
 function setup(stored: SourceOverview | null, reply = JSON.stringify(OVERVIEW)) {
   const saved: SourceOverview[] = [];

@@ -8,6 +8,7 @@ import { createNotebookOverviewPorts } from '../chat/notebook-overview-ports';
 import { HTTP_STATUS } from '../http-status';
 import type { UsageGuard } from '../usage/usage-guard';
 import { forUser } from './for-user';
+import { requestLocale } from './locale';
 import { json, notebookParams, notFound, unauthenticated } from './openapi';
 
 const overviewRoute = createRoute({
@@ -37,7 +38,10 @@ export function notebookOverviewRoutes(deps: AppDeps, guard: UsageGuard) {
 
   return app.openapi(overviewRoute, async (c) => {
     const { notebookId } = c.req.valid('param');
-    const result = await getOrCreateNotebookOverview({ userId: c.var.userId, notebookId }, ports);
+    const result = await getOrCreateNotebookOverview(
+      { userId: c.var.userId, notebookId, locale: requestLocale(c) },
+      ports
+    );
     return result
       ? c.json(result, HTTP_STATUS.OK)
       : c.json({ code: API_ERROR.NOT_FOUND }, HTTP_STATUS.NOT_FOUND);

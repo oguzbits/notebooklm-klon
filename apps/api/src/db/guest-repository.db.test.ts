@@ -1,4 +1,4 @@
-import { EMBEDDING_DIMENSIONS, SOURCE_KIND, SOURCE_STATUS } from '@nlm/shared';
+import { EMBEDDING_DIMENSIONS, LOCALE, SOURCE_KIND, SOURCE_STATUS } from '@nlm/shared';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
@@ -155,7 +155,9 @@ describe('copyNotebookToUser', () => {
 
     const found = await findNotebookForOverview(db, 'guest', copied);
     expect(found?.stored?.overview).toEqual({ emoji: '🔬', summary: 'Es geht um **Nordlicht**.' });
-    expect(found?.stored?.key).toBe(notebookOverviewKey(found?.sources.map((s) => s.id) ?? []));
+    expect(found?.stored?.key).toBe(
+      notebookOverviewKey(found?.sources.map((s) => s.id) ?? [], LOCALE.DE)
+    );
     expect(found?.sources).toHaveLength(2);
   });
 

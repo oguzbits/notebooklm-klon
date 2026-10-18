@@ -8,6 +8,7 @@ import { createOverviewPorts } from '../chat/overview-ports';
 import { HTTP_STATUS } from '../http-status';
 import type { UsageGuard } from '../usage/usage-guard';
 import { forUser } from './for-user';
+import { requestLocale } from './locale';
 import { json, notFound, sourceParams, unauthenticated } from './openapi';
 
 const overviewRoute = createRoute({
@@ -35,7 +36,7 @@ export function overviewRoutes(deps: AppDeps, guard: UsageGuard) {
   return app.openapi(overviewRoute, async (c) => {
     const { notebookId, sourceId } = c.req.valid('param');
     const overview = await getOrCreateOverview(
-      { userId: c.var.userId, notebookId, sourceId },
+      { userId: c.var.userId, notebookId, sourceId, locale: requestLocale(c) },
       ports
     );
     return overview

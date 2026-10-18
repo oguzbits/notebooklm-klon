@@ -1,11 +1,11 @@
-import { type NotebookOverview, USAGE_PURPOSE } from '@nlm/shared';
+import { LOCALE, type NotebookOverview, USAGE_PURPOSE } from '@nlm/shared';
 import { describe, expect, it } from 'vitest';
 
 import type { ChatInput } from '../ai/gemini-chat';
 import {
   NOTEBOOK_OVERVIEW_JSON_SCHEMA,
-  NOTEBOOK_OVERVIEW_SYSTEM_PROMPT,
   notebookOverviewKey,
+  notebookOverviewSystemPrompt,
 } from '../core/notebook-overview-prompt';
 import type {
   NotebookOverviewSource,
@@ -13,7 +13,7 @@ import type {
 } from '../db/notebook-overview-repository';
 import { getOrCreateNotebookOverview, type NotebookOverviewPorts } from './notebook-overview';
 
-const INPUT = { userId: 'u', notebookId: 'n' };
+const INPUT = { userId: 'u', notebookId: 'n', locale: LOCALE.DE };
 const OVERVIEW: NotebookOverview = { emoji: '🔬', summary: 'Es geht um **Nordlicht**.' };
 const REPLY = JSON.stringify(OVERVIEW);
 const projekt: NotebookOverviewSource = {
@@ -69,9 +69,11 @@ describe('getOrCreateNotebookOverview', () => {
 
     expect(await getOrCreateNotebookOverview(INPUT, ports)).toEqual({ overview: OVERVIEW });
 
-    expect(saved).toEqual([{ overview: OVERVIEW, key: notebookOverviewKey([projekt.id]) }]);
+    expect(saved).toEqual([
+      { overview: OVERVIEW, key: notebookOverviewKey([projekt.id], LOCALE.DE) },
+    ]);
     expect(modelInputs).toHaveLength(1);
-    expect(modelInputs[0]?.system).toBe(NOTEBOOK_OVERVIEW_SYSTEM_PROMPT);
+    expect(modelInputs[0]?.system).toBe(notebookOverviewSystemPrompt(LOCALE.DE));
     expect(modelInputs[0]?.schema).toBe(NOTEBOOK_OVERVIEW_JSON_SCHEMA);
     expect(modelInputs[0]?.usage).toEqual({
       userId: INPUT.userId,
@@ -83,7 +85,7 @@ describe('getOrCreateNotebookOverview', () => {
 
   describe('with a summary the user wrote', () => {
     const MINE = 'Meine eigene **Zusammenfassung**.';
-    const key = notebookOverviewKey([projekt.id]);
+    const key = notebookOverviewKey([projekt.id], LOCALE.DE);
 
     it('shows it instead of the summary of the model, with the symbol that was chosen, and asks no model', async () => {
       const stored = { overview: OVERVIEW, key };
@@ -120,13 +122,16 @@ describe('getOrCreateNotebookOverview', () => {
   it('reads the notebook of the user from the session, never from the request', async () => {
     const { ports, asked } = setup();
 
-    await getOrCreateNotebookOverview({ userId: 'alice', notebookId: 'nb-1' }, ports);
+    await getOrCreateNotebookOverview(
+      { userId: 'alice', notebookId: 'nb-1', locale: LOCALE.DE },
+      ports
+    );
 
     expect(asked).toEqual([{ userId: 'alice', notebookId: 'nb-1' }]);
   });
 
   it('returns the stored overview without the model while the sources are the same', async () => {
-    const stored = { overview: OVERVIEW, key: notebookOverviewKey([projekt.id]) };
+    const stored = { overview: OVERVIEW, key: notebookOverviewKey([projekt.id], LOCALE.DE) };
     const { ports, saved, modelInputs } = setup({ stored });
 
     expect(await getOrCreateNotebookOverview(INPUT, ports)).toEqual({ overview: OVERVIEW });
@@ -136,7 +141,7 @@ describe('getOrCreateNotebookOverview', () => {
   });
 
   it('makes the overview again when a source was added, and keeps the symbol it had', async () => {
-    const stored = { overview: OVERVIEW, key: notebookOverviewKey([projekt.id]) };
+    const stored = { overview: OVERVIEW, key: notebookOverviewKey([projekt.id], LOCALE.DE) };
     const newer = { emoji: '🧠', summary: 'Jetzt mit **Budget**.' };
     const { ports, saved, modelInputs } = setup({
       sources: [projekt, budget],
@@ -150,12 +155,15 @@ describe('getOrCreateNotebookOverview', () => {
     expect(modelInputs[0]?.user).toContain('budget.txt');
     expect(result).toEqual({ overview: { emoji: '🔬', summary: 'Jetzt mit **Budget**.' } });
     expect(saved).toEqual([
-      { overview: result?.overview, key: notebookOverviewKey([projekt.id, budget.id]) },
+      { overview: result?.overview, key: notebookOverviewKey([projekt.id, budget.id], LOCALE.DE) },
     ]);
   });
 
   it('makes the overview again when a source was removed', async () => {
-    const stored = { overview: OVERVIEW, key: notebookOverviewKey([projekt.id, budget.id]) };
+    const stored = {
+      overview: OVERVIEW,
+      key: notebookOverviewKey([projekt.id, budget.id], LOCALE.DE),
+    };
     const { ports, modelInputs } = setup({ sources: [budget], stored });
 
     await getOrCreateNotebookOverview(INPUT, ports);
@@ -165,7 +173,7 @@ describe('getOrCreateNotebookOverview', () => {
   });
 
   it('says there is nothing to describe while no source is ready, and does not call the model', async () => {
-    const stored = { overview: OVERVIEW, key: notebookOverviewKey([projekt.id]) };
+    const stored = { overview: OVERVIEW, key: notebookOverviewKey([projekt.id], LOCALE.DE) };
     const { ports, saved, modelInputs } = setup({ sources: [], stored });
 
     expect(await getOrCreateNotebookOverview(INPUT, ports)).toEqual({ overview: null });

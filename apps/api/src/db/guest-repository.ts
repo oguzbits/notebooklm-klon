@@ -1,4 +1,4 @@
-import { SOURCE_STATUS } from '@nlm/shared';
+import { LOCALE, SOURCE_STATUS } from '@nlm/shared';
 import { and, asc, count, eq, gte, isNotNull, lt, sql } from 'drizzle-orm';
 
 import { notebookOverviewKey } from '../core/notebook-overview-prompt';
@@ -117,7 +117,10 @@ export async function copyNotebookToUser(
     if (original.overview !== null) {
       await tx
         .update(notebooks)
-        .set({ overview: original.overview, overviewKey: notebookOverviewKey(copiedIds) })
+        .set({
+          overview: original.overview,
+          overviewKey: notebookOverviewKey(copiedIds, LOCALE.DE),
+        })
         .where(eq(notebooks.id, copy.id));
     }
     return copy.id;

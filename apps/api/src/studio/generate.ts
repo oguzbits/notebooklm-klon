@@ -1,6 +1,7 @@
 import {
   type ChatConfig,
   type CreateStudioBody,
+  type Locale,
   type NewStudioOutput,
   type StudioOutput,
   USAGE_PURPOSE,
@@ -42,7 +43,7 @@ export interface StudioPorts {
  * support no part of the output.
  */
 export async function generateStudioOutput(
-  input: { userId: string; notebookId: string; body: CreateStudioBody },
+  input: { userId: string; notebookId: string; body: CreateStudioBody; locale: Locale },
   ports: StudioPorts
 ): Promise<StudioOutput | null> {
   const config = await ports.chatConfig(input.userId, input.notebookId);
@@ -60,7 +61,7 @@ export async function generateStudioOutput(
         );
   if (chunks.length === 0) throw new NoSourcesSelectedError();
 
-  const request = studioRequest(input.body, chunks, config.language);
+  const request = studioRequest(input.body, chunks, config.language, input.locale);
   let reply = '';
   for await (const piece of ports.stream({
     system: request.system,
@@ -74,6 +75,6 @@ export async function generateStudioOutput(
   const { output } = readStudioReply(input.body, reply, request.context);
   return ports.save(input.userId, input.notebookId, {
     ...output,
-    request: { prompt: studioPrompt(input.body), sources },
+    request: { prompt: studioPrompt(input.body, input.locale), sources },
   });
 }

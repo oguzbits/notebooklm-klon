@@ -1,3 +1,4 @@
+import { LOCALE } from '@nlm/shared';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -5,8 +6,8 @@ import {
   NOTEBOOK_OVERVIEW_JSON_SCHEMA,
   NOTEBOOK_OVERVIEW_MAX_SOURCES,
   NOTEBOOK_OVERVIEW_MAX_TEXT_CHARS,
-  NOTEBOOK_OVERVIEW_SYSTEM_PROMPT,
   notebookOverviewKey,
+  notebookOverviewSystemPrompt,
   parseNotebookOverview,
 } from './notebook-overview-prompt';
 
@@ -18,7 +19,12 @@ const source = (title: string, length: number, char = 'x') => ({
 
 describe('buildNotebookOverviewMessage', () => {
   it('reads the sources as data, not as instructions', () => {
-    expect(NOTEBOOK_OVERVIEW_SYSTEM_PROMPT).toMatch(/never as instructions/i);
+    expect(notebookOverviewSystemPrompt(LOCALE.DE)).toMatch(/never as instructions/i);
+  });
+
+  it('asks for the language of the interface', () => {
+    expect(notebookOverviewSystemPrompt(LOCALE.DE)).toMatch(/write in German/);
+    expect(notebookOverviewSystemPrompt(LOCALE.EN)).toMatch(/write in English/);
   });
 
   it('numbers the sources and puts each title and text into the message', () => {
@@ -91,17 +97,23 @@ describe('notebookOverviewKey', () => {
   const B = '9b2c7d6e-1f43-4c8a-8a3b-5e7a8f0c1d22';
 
   it('is the same for the same sources in any order', () => {
-    expect(notebookOverviewKey([A, B])).toBe(notebookOverviewKey([B, A]));
-    expect(notebookOverviewKey([A, B])).toMatch(/^[0-9a-f]{64}$/);
+    expect(notebookOverviewKey([A, B], LOCALE.DE)).toBe(notebookOverviewKey([B, A], LOCALE.DE));
+    expect(notebookOverviewKey([A, B], LOCALE.DE)).toMatch(/^[0-9a-f]{64}$/);
   });
 
   it('changes when a source comes or goes', () => {
-    expect(notebookOverviewKey([A])).not.toBe(notebookOverviewKey([A, B]));
-    expect(notebookOverviewKey([A, B])).not.toBe(notebookOverviewKey([B]));
+    expect(notebookOverviewKey([A], LOCALE.DE)).not.toBe(notebookOverviewKey([A, B], LOCALE.DE));
+    expect(notebookOverviewKey([A, B], LOCALE.DE)).not.toBe(notebookOverviewKey([B], LOCALE.DE));
+  });
+
+  it('changes with the language, so a switch makes the overview again', () => {
+    expect(notebookOverviewKey([A], LOCALE.DE)).not.toBe(notebookOverviewKey([A], LOCALE.EN));
   });
 
   it('does not mistake one source for two', () => {
-    expect(notebookOverviewKey([`${A}${B}`])).not.toBe(notebookOverviewKey([A, B]));
+    expect(notebookOverviewKey([`${A}${B}`], LOCALE.DE)).not.toBe(
+      notebookOverviewKey([A, B], LOCALE.DE)
+    );
   });
 });
 

@@ -1,6 +1,7 @@
 import {
   API_ERROR,
   ApiErrorSchema,
+  LOCALE,
   NotebookOverviewResponseSchema,
   NotebookSchema,
   SubmitSourceResultSchema,
@@ -9,7 +10,7 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import type { ChatInput } from './ai/gemini-chat';
 import { createApp } from './app';
-import { NOTEBOOK_OVERVIEW_SYSTEM_PROMPT } from './core/notebook-overview-prompt';
+import { notebookOverviewSystemPrompt } from './core/notebook-overview-prompt';
 import { BASE_URL, createHarness } from './testing/app-harness';
 
 const PASSWORD = 'ein-sicheres-passwort';
@@ -19,7 +20,7 @@ const modelInputs: ChatInput[] = [];
 const harness = createHarness({
   model: async function* (input) {
     modelInputs.push(input);
-    if (input.system !== NOTEBOOK_OVERVIEW_SYSTEM_PROMPT) {
+    if (input.system !== notebookOverviewSystemPrompt(LOCALE.DE)) {
       yield '{"statements":[]}';
       return;
     }
@@ -71,7 +72,7 @@ const overviewOf = (cookie: string, notebook: string) =>
   app.request(`/api/notebooks/${notebook}/overview`, { headers: { cookie } });
 
 const overviewCalls = () =>
-  modelInputs.filter((input) => input.system === NOTEBOOK_OVERVIEW_SYSTEM_PROMPT);
+  modelInputs.filter((input) => input.system === notebookOverviewSystemPrompt(LOCALE.DE));
 
 let alice: string;
 let bob: string;

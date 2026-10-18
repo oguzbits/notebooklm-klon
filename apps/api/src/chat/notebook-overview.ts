@@ -1,11 +1,11 @@
-import { type NotebookOverview, USAGE_PURPOSE } from '@nlm/shared';
+import { type Locale, type NotebookOverview, USAGE_PURPOSE } from '@nlm/shared';
 
 import type { ChatInput } from '../ai/gemini-chat';
 import {
   buildNotebookOverviewMessage,
   NOTEBOOK_OVERVIEW_JSON_SCHEMA,
-  NOTEBOOK_OVERVIEW_SYSTEM_PROMPT,
   notebookOverviewKey,
+  notebookOverviewSystemPrompt,
   parseNotebookOverview,
 } from '../core/notebook-overview-prompt';
 import type {
@@ -45,14 +45,17 @@ export interface NotebookOverviewPorts {
  * Null when the notebook is not the user's; `{ overview: null }` while no source is ready.
  */
 export async function getOrCreateNotebookOverview(
-  input: { userId: string; notebookId: string },
+  input: { userId: string; notebookId: string; locale: Locale },
   ports: NotebookOverviewPorts
 ): Promise<{ overview: NotebookOverview | null } | null> {
   const found = await ports.find(input.userId, input.notebookId);
   if (!found) return null;
   if (found.sources.length === 0) return { overview: null };
 
-  const key = notebookOverviewKey(found.sources.map((source) => source.id));
+  const key = notebookOverviewKey(
+    found.sources.map((source) => source.id),
+    input.locale
+  );
   const withOwnSummary = (made: NotebookOverview): NotebookOverview =>
     found.customSummary === null ? made : { ...made, summary: found.customSummary };
   if (found.stored && (found.customSummary !== null || found.stored.key === key)) {
@@ -61,7 +64,7 @@ export async function getOrCreateNotebookOverview(
 
   let reply = '';
   for await (const piece of ports.stream({
-    system: NOTEBOOK_OVERVIEW_SYSTEM_PROMPT,
+    system: notebookOverviewSystemPrompt(input.locale),
     user: buildNotebookOverviewMessage(found.sources),
     schema: NOTEBOOK_OVERVIEW_JSON_SCHEMA,
     usage: { userId: input.userId, purpose: USAGE_PURPOSE.OVERVIEW },

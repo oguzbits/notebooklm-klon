@@ -1,3 +1,5 @@
+import { LOCALE } from '@nlm/shared';
+
 import { getOrCreateNotebookOverview, type NotebookOverviewPorts } from '../chat/notebook-overview';
 import { getOrCreateOverview, type OverviewPorts } from '../chat/overview';
 import { DEMO_NOTEBOOK_TITLE } from '../config/demo';
@@ -37,8 +39,11 @@ export async function seedDemo(
     deps.importDeps
   );
   for (const sourceId of sourceIds.values()) {
-    await getOrCreateOverview({ userId, notebookId, sourceId }, deps.overview);
+    await getOrCreateOverview({ userId, notebookId, sourceId, locale: LOCALE.DE }, deps.overview);
   }
-  await getOrCreateNotebookOverview({ userId, notebookId }, deps.notebookOverview);
+  await getOrCreateNotebookOverview(
+    { userId, notebookId, locale: LOCALE.DE },
+    deps.notebookOverview
+  );
   return { userId, notebookId };
 }

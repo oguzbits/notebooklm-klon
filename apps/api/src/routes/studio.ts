@@ -25,6 +25,7 @@ import { HTTP_STATUS } from '../http-status';
 import { generateStudioOutput } from '../studio/generate';
 import type { UsageGuard } from '../usage/usage-guard';
 import { forUser } from './for-user';
+import { requestLocale } from './locale';
 import { json, notebookParams, notFound, unauthenticated } from './openapi';
 
 const listRoute = createRoute({
@@ -129,7 +130,7 @@ export function studioRoutes(deps: AppDeps, guard: UsageGuard) {
       const { notebookId } = c.req.valid('param');
       const slot = await guard.enter(c.var.userId, USAGE_PURPOSE.STUDIO);
       const output = await generateStudioOutput(
-        { userId: c.var.userId, notebookId, body: c.req.valid('json') },
+        { userId: c.var.userId, notebookId, body: c.req.valid('json'), locale: requestLocale(c) },
         ports
       ).finally(slot.release);
       return output ? c.json(output, HTTP_STATUS.CREATED) : c.json(missing, HTTP_STATUS.NOT_FOUND);

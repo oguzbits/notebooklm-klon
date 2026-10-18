@@ -4,6 +4,8 @@ import {
   type CreateStudioBody,
   DataTableSchema,
   FlashcardsReplySchema,
+  LOCALE,
+  type Locale,
   MindmapSchema,
   type NewStudioOutput,
   QuizReplySchema,
@@ -32,6 +34,7 @@ import {
   checkQuiz,
   checkReport,
 } from './studio-check';
+import { STUDIO_TEXTS } from './studio-texts';
 
 /** The reply had content, but none of it was supported by a passage the model was shown. */
 export class EmptyStudioOutputError extends Error {
@@ -134,7 +137,10 @@ const SCHEMA = {
   [STUDIO_KIND.DATA_TABLE]: toJsonSchema(DataTableSchema),
 } as const;
 
-function systemPrompt(body: CreateStudioBody, language: ChatLanguage): string {
+/** AUTO follows the language of the interface. */
+function systemPrompt(body: CreateStudioBody, language: ChatLanguage, locale: Locale): string {
+  const english =
+    language === CHAT_LANGUAGE.EN || (language === CHAT_LANGUAGE.AUTO && locale === LOCALE.EN);
   const focus = body.focus?.trim();
   // The words of the reader come last and cannot lift the rules above them: the server checks every
   // citation whatever the prompt says.
@@ -144,7 +150,7 @@ function systemPrompt(body: CreateStudioBody, language: ChatLanguage): string {
       : ` Follow this request of the user about the topic or the shape, but never break the rules above: ${focus}`;
   return (
     'You make study material from the numbered passages of the user documents. Use only those ' +
-    `passages. Always write in ${language === CHAT_LANGUAGE.EN ? 'English' : 'German'}, whatever ` +
+    `passages. Always write in ${english ? 'English' : 'German'}, whatever ` +
     'language the passages have. Every statement, card, question and mind map label must cite one ' +
     'or more passage IDs (for example "c2") in chunkIds and must be supported by the cited ' +
     'passages. Never cite an ID that is not in the context. State a number, date or name only if ' +
@@ -155,67 +161,32 @@ function systemPrompt(body: CreateStudioBody, language: ChatLanguage): string {
   );
 }
 
-const SIZE_LABEL: Record<StudioSize, string> = {
-  [STUDIO_SIZE.FEWER]: 'Weniger',
-  [STUDIO_SIZE.DEFAULT]: 'Standard',
-  [STUDIO_SIZE.MORE]: 'Mehr',
-};
-
-const DIFFICULTY_LABEL: Record<StudioDifficulty, string> = {
-  [STUDIO_DIFFICULTY.EASY]: 'Einfach',
-  [STUDIO_DIFFICULTY.MEDIUM]: 'Mittel',
-  [STUDIO_DIFFICULTY.HARD]: 'Schwer',
-};
-
-const REPORT_PROMPT = {
-  [REPORT_FORMAT.BRIEFING]:
-    'Erstelle ein ausführliches Briefing-Dokument, das die wichtigsten Themen, Belege und ' +
-    'Schlussfolgerungen der Quellen zusammenfasst. Beginne mit einer kurzen Zusammenfassung, ' +
-    'gliedere den Text logisch mit Überschriften und halte den Ton sachlich und prägnant.',
-  [REPORT_FORMAT.FAQ]:
-    'Erstelle einen Katalog häufiger Fragen zu den Quellen. Jede Überschrift ist eine Frage, die ' +
-    'ein Leser stellen würde, und der Text darunter beantwortet sie aus den Quellen.',
-  [REPORT_FORMAT.STUDY_GUIDE]:
-    'Erstelle einen Lernplan mit Fragen und kurzen Antworten, vorgeschlagenen Essay-Fragestellungen ' +
-    'und einem Glossar der wichtigsten Begriffe.',
-  [REPORT_FORMAT.BLOG]:
-    'Schreibe einen leicht verständlichen Blogpost, der die Kernpunkte der Quellen zusammenfasst.',
-} as const;
-
-function reportPrompt(format: ReportFormat, focus: string): string {
+function reportPrompt(format: ReportFormat, focus: string, locale: Locale): string {
   if (format === REPORT_FORMAT.CUSTOM) return focus;
-  return `${REPORT_PROMPT[format]}${focus === '' ? '' : ` Schwerpunkt: ${focus}`}`;
+  const texts = STUDIO_TEXTS[locale];
+  return `${texts.report[format]}${focus === '' ? '' : ` ${texts.focus}: ${focus}`}`;
 }
-
-const SHAPE_PROMPT = {
-  [STUDIO_KIND.MINDMAP]: 'Erstelle eine Mindmap, die die Quellen übersichtlich gliedert.',
-  [STUDIO_KIND.DATA_TABLE]:
-    'Erstelle eine Tabelle, die die wichtigsten Angaben der Quellen vergleichbar nebeneinanderstellt.',
-} as const;
 
 /**
  * The request in words, the way the reader could have written it. It is kept with the output and
  * shown behind "Prompt und Quellen ansehen"; the model gets the English instructions above.
  */
-export function studioPrompt(body: CreateStudioBody): string {
+export function studioPrompt(body: CreateStudioBody, locale: Locale): string {
+  const texts = STUDIO_TEXTS[locale];
   const focus = body.focus?.trim() ?? '';
-  const topic = focus === '' ? '' : ` Thema: ${focus}`;
+  const topic = focus === '' ? '' : ` ${texts.topic}: ${focus}`;
+  const options = (b: { size: StudioSize; difficulty: StudioDifficulty }) =>
+    `${texts.scope}: ${texts.size[b.size]}, ${texts.level}: ${texts.difficulty[b.difficulty]}.${topic}`;
   switch (body.kind) {
     case STUDIO_KIND.REPORT:
-      return reportPrompt(body.format, focus);
+      return reportPrompt(body.format, focus, locale);
     case STUDIO_KIND.FLASHCARDS:
-      return (
-        'Erstelle Karteikarten zu den Quellen. ' +
-        `Umfang: ${SIZE_LABEL[body.size]}, Schwierigkeit: ${DIFFICULTY_LABEL[body.difficulty]}.${topic}`
-      );
+      return `${texts.flashcards} ${options(body)}`;
     case STUDIO_KIND.QUIZ:
-      return (
-        'Erstelle ein Quiz mit Multiple-Choice-Fragen zu den Quellen. ' +
-        `Umfang: ${SIZE_LABEL[body.size]}, Schwierigkeit: ${DIFFICULTY_LABEL[body.difficulty]}.${topic}`
-      );
+      return `${texts.quiz} ${options(body)}`;
     case STUDIO_KIND.MINDMAP:
     case STUDIO_KIND.DATA_TABLE:
-      return `${SHAPE_PROMPT[body.kind]}${topic}`;
+      return `${texts.shape[body.kind]}${topic}`;
   }
 }
 
@@ -223,11 +194,12 @@ export function studioPrompt(body: CreateStudioBody): string {
 export function studioRequest(
   body: CreateStudioBody,
   chunks: readonly ContextChunk[],
-  language: ChatLanguage
+  language: ChatLanguage,
+  locale: Locale
 ) {
   const context = buildChatContext(chunks);
   return {
-    system: systemPrompt(body, language),
+    system: systemPrompt(body, language, locale),
     user: `${passagesBlock(context)}\n\nMake the requested output now.`,
     schema: SCHEMA[body.kind],
     context,

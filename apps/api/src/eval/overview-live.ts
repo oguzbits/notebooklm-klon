@@ -9,6 +9,8 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
+import { LOCALE } from '@nlm/shared';
+
 import { getOrCreateNotebookOverview } from '../chat/notebook-overview';
 import { createNotebookOverviewPorts } from '../chat/notebook-overview-ports';
 import { parseEvalEnv } from '../config/env';
@@ -49,7 +51,7 @@ try {
 
   const started = performance.now();
   const result = await getOrCreateNotebookOverview(
-    { userId: EVAL_USER_ID, notebookId: notebook.id },
+    { userId: EVAL_USER_ID, notebookId: notebook.id, locale: LOCALE.DE },
     createNotebookOverviewPorts(ownerScope(db), (input) => providers.stream(input))
   );
   const overview = result?.overview;

@@ -10,6 +10,7 @@ import path from 'node:path';
 
 import {
   type CreateStudioBody,
+  LOCALE,
   REPORT_FORMAT,
   STUDIO_DIFFICULTY,
   STUDIO_KIND,
@@ -70,7 +71,7 @@ try {
   log({ level: 'info', msg: 'studio eval: context', chunks: chunks.length });
 
   for (const body of REQUESTS) {
-    const request = studioRequest(body, chunks, config.language);
+    const request = studioRequest(body, chunks, config.language, LOCALE.DE);
     const started = performance.now();
     let reply = '';
     for await (const piece of providers.stream({

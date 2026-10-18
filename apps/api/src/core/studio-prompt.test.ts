@@ -1,6 +1,7 @@
 import {
   CHAT_LANGUAGE,
   type CreateStudioBody,
+  LOCALE,
   REPORT_FORMAT,
   STUDIO_DIFFICULTY,
   STUDIO_KIND,
@@ -40,7 +41,8 @@ describe('studioRequest', () => {
     const request = studioRequest(
       { kind: STUDIO_KIND.REPORT, format: REPORT_FORMAT.FAQ },
       chunks,
-      CHAT_LANGUAGE.AUTO
+      CHAT_LANGUAGE.AUTO,
+      LOCALE.DE
     );
 
     expect(request.user).toContain('<passages>\n[c1]\nDr. Brandt leitet das Projekt.');
@@ -61,14 +63,19 @@ describe('studioRequest', () => {
     ] as const;
 
     for (const [body, key] of schemaKeys) {
-      const request = studioRequest(body, chunks, CHAT_LANGUAGE.AUTO);
+      const request = studioRequest(body, chunks, CHAT_LANGUAGE.AUTO, LOCALE.DE);
       expect(request.schema).toHaveProperty(`properties.${key}`);
     }
   });
 
+  it('lets AUTO follow the language of the interface, and an explicit choice win', () => {
+    expect(studioRequest(QUIZ, chunks, CHAT_LANGUAGE.AUTO, LOCALE.EN).system).toMatch(/English/);
+    expect(studioRequest(QUIZ, chunks, CHAT_LANGUAGE.DE, LOCALE.EN).system).toMatch(/German/);
+  });
+
   it('writes in German unless the notebook asks for English', () => {
-    const german = studioRequest(QUIZ, chunks, CHAT_LANGUAGE.AUTO);
-    const english = studioRequest(QUIZ, chunks, CHAT_LANGUAGE.EN);
+    const german = studioRequest(QUIZ, chunks, CHAT_LANGUAGE.AUTO, LOCALE.DE);
+    const english = studioRequest(QUIZ, chunks, CHAT_LANGUAGE.EN, LOCALE.DE);
 
     expect(german.system).toMatch(/German/);
     expect(english.system).toMatch(/English/);
@@ -76,7 +83,7 @@ describe('studioRequest', () => {
 
   it('asks for as many cards or questions as the size says', () => {
     const count = (body: CreateStudioBody) =>
-      studioRequest(body, chunks, CHAT_LANGUAGE.AUTO).system.match(
+      studioRequest(body, chunks, CHAT_LANGUAGE.AUTO, LOCALE.DE).system.match(
         /Make (\w+(?:-\w+)? to \w+(?:-\w+)?) /
       )?.[1];
 
@@ -89,7 +96,7 @@ describe('studioRequest', () => {
 
   it('tells the model how hard to make it, and says nothing for the usual level', () => {
     const system = (difficulty: (typeof STUDIO_DIFFICULTY)[keyof typeof STUDIO_DIFFICULTY]) =>
-      studioRequest({ ...QUIZ, difficulty }, chunks, CHAT_LANGUAGE.AUTO).system;
+      studioRequest({ ...QUIZ, difficulty }, chunks, CHAT_LANGUAGE.AUTO, LOCALE.DE).system;
 
     expect(system(STUDIO_DIFFICULTY.EASY)).toMatch(/easy/i);
     expect(system(STUDIO_DIFFICULTY.HARD)).toMatch(/hard/i);
@@ -100,7 +107,8 @@ describe('studioRequest', () => {
     const { system } = studioRequest(
       { ...MINDMAP, focus: 'Nur die Architektur' },
       chunks,
-      CHAT_LANGUAGE.AUTO
+      CHAT_LANGUAGE.AUTO,
+      LOCALE.DE
     );
 
     expect(system.indexOf('Nur die Architektur')).toBeGreaterThan(
@@ -110,8 +118,8 @@ describe('studioRequest', () => {
   });
 
   it('asks for a title next to the questions or the cards', () => {
-    const quiz = studioRequest(QUIZ, chunks, CHAT_LANGUAGE.AUTO);
-    const cards = studioRequest(FLASHCARDS, chunks, CHAT_LANGUAGE.AUTO);
+    const quiz = studioRequest(QUIZ, chunks, CHAT_LANGUAGE.AUTO, LOCALE.DE);
+    const cards = studioRequest(FLASHCARDS, chunks, CHAT_LANGUAGE.AUTO, LOCALE.DE);
 
     expect(quiz.schema).toHaveProperty('required', ['title', 'questions']);
     expect(cards.schema).toHaveProperty('required', ['title', 'cards']);
@@ -119,7 +127,7 @@ describe('studioRequest', () => {
 
   it('takes the instruction of a custom report from what the reader describes', () => {
     const system = (body: CreateStudioBody) =>
-      studioRequest(body, chunks, CHAT_LANGUAGE.AUTO).system;
+      studioRequest(body, chunks, CHAT_LANGUAGE.AUTO, LOCALE.DE).system;
 
     expect(
       system({
@@ -132,13 +140,27 @@ describe('studioRequest', () => {
 });
 
 describe('studioPrompt', () => {
+  it('words the request in English for the English interface', () => {
+    const prompt = studioPrompt(
+      { ...QUIZ, size: STUDIO_SIZE.MORE, difficulty: STUDIO_DIFFICULTY.HARD },
+      LOCALE.EN
+    );
+
+    expect(prompt).toMatch(/quiz/);
+    expect(prompt).toMatch(/More/);
+    expect(prompt).toMatch(/Hard/);
+  });
+
   it('names the size, the difficulty and the topic of cards and questions', () => {
-    const prompt = studioPrompt({
-      ...QUIZ,
-      size: STUDIO_SIZE.MORE,
-      difficulty: STUDIO_DIFFICULTY.HARD,
-      focus: 'Das Budget',
-    });
+    const prompt = studioPrompt(
+      {
+        ...QUIZ,
+        size: STUDIO_SIZE.MORE,
+        difficulty: STUDIO_DIFFICULTY.HARD,
+        focus: 'Das Budget',
+      },
+      LOCALE.DE
+    );
 
     expect(prompt).toMatch(/Quiz/);
     expect(prompt).toMatch(/Mehr/);
@@ -148,11 +170,14 @@ describe('studioPrompt', () => {
 
   it('is the instruction itself for a report the reader writes', () => {
     expect(
-      studioPrompt({
-        kind: STUDIO_KIND.REPORT,
-        format: REPORT_FORMAT.CUSTOM,
-        focus: 'Schreibe einen Brief.',
-      })
+      studioPrompt(
+        {
+          kind: STUDIO_KIND.REPORT,
+          format: REPORT_FORMAT.CUSTOM,
+          focus: 'Schreibe einen Brief.',
+        },
+        LOCALE.DE
+      )
     ).toBe('Schreibe einen Brief.');
   });
 });

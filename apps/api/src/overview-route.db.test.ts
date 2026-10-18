@@ -1,9 +1,14 @@
-import { NotebookSchema, SourceOverviewSchema, SubmitSourceResultSchema } from '@nlm/shared';
+import {
+  LOCALE,
+  NotebookSchema,
+  SourceOverviewSchema,
+  SubmitSourceResultSchema,
+} from '@nlm/shared';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
 import type { ChatInput } from './ai/gemini-chat';
 import { createApp } from './app';
-import { OVERVIEW_SYSTEM_PROMPT } from './core/overview-prompt';
+import { overviewSystemPrompt } from './core/overview-prompt';
 import { BASE_URL, createHarness } from './testing/app-harness';
 
 const PASSWORD = 'ein-sicheres-passwort';
@@ -17,7 +22,9 @@ const overviewInputs: ChatInput[] = [];
 const harness = createHarness({
   model: async function* (input) {
     overviewInputs.push(input);
-    yield input.system === OVERVIEW_SYSTEM_PROMPT ? JSON.stringify(OVERVIEW) : '{"statements":[]}';
+    yield input.system === overviewSystemPrompt(LOCALE.DE)
+      ? JSON.stringify(OVERVIEW)
+      : '{"statements":[]}';
   },
 });
 const app = createApp(harness.deps);

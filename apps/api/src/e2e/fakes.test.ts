@@ -3,6 +3,7 @@ import {
   CHAT_LANGUAGE,
   DataTableSchema,
   FlashcardsReplySchema,
+  LOCALE,
   MindmapSchema,
   NotebookOverviewSchema,
   QuizReplySchema,
@@ -110,7 +111,7 @@ describe('fakeStudio', () => {
   it.each(kinds)(
     'makes %j in the shape the real model must deliver, citing the labels',
     (body, schema) => {
-      const request = studioRequest(body, chunks, CHAT_LANGUAGE.AUTO);
+      const request = studioRequest(body, chunks, CHAT_LANGUAGE.AUTO, LOCALE.DE);
 
       const made = schema.parse(JSON.parse(fakeStudio(request.schema, request.user)));
 

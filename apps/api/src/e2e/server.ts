@@ -11,7 +11,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { serve } from '@hono/node-server';
-import { EMBEDDING_DIMENSIONS } from '@nlm/shared';
+import { EMBEDDING_DIMENSIONS, LOCALE } from '@nlm/shared';
 import { eq } from 'drizzle-orm';
 
 import type { ChatInput } from '../ai/gemini-chat';
@@ -20,8 +20,8 @@ import { createAuth } from '../auth/auth';
 import { createNotebookOverviewPorts } from '../chat/notebook-overview-ports';
 import { createOverviewPorts } from '../chat/overview-ports';
 import { parseOfflineServerEnv } from '../config/env';
-import { NOTEBOOK_OVERVIEW_SYSTEM_PROMPT } from '../core/notebook-overview-prompt';
-import { OVERVIEW_SYSTEM_PROMPT } from '../core/overview-prompt';
+import { notebookOverviewSystemPrompt } from '../core/notebook-overview-prompt';
+import { overviewSystemPrompt } from '../core/overview-prompt';
 import { user } from '../db/auth-schema';
 import { createDb, ownerScope } from '../db/client';
 import { runMigrations } from '../db/migrate';
@@ -49,8 +49,12 @@ const STUDIO_PROPERTIES = ['sections', 'cards', 'questions', 'branches', 'rows']
 
 /** Picks the stand-in by what is asked: the overview, a Studio output or a chat answer. */
 function fakeReply(input: ChatInput): string {
-  if (input.system === OVERVIEW_SYSTEM_PROMPT) return fakeOverview(input.user);
-  if (input.system === NOTEBOOK_OVERVIEW_SYSTEM_PROMPT) return fakeNotebookOverview(input.user);
+  const locales = Object.values(LOCALE);
+  if (locales.some((l) => input.system === overviewSystemPrompt(l)))
+    return fakeOverview(input.user);
+  if (locales.some((l) => input.system === notebookOverviewSystemPrompt(l))) {
+    return fakeNotebookOverview(input.user);
+  }
   const properties = Object.keys((input.schema.properties ?? {}) as Record<string, unknown>);
   if (STUDIO_PROPERTIES.some((name) => properties.includes(name))) {
     return fakeStudio(input.schema, input.user);
