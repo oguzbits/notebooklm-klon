@@ -1,3 +1,4 @@
+import { LOCALE } from '@nlm/shared';
 import { Settings } from 'lucide-react';
 import { useState } from 'react';
 
@@ -8,8 +9,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { locale, setLocale, tr } from '@/lib/i18n';
 import {
   readThemePreference,
   setThemePreference,
@@ -18,9 +21,9 @@ import {
 } from '@/lib/theme';
 
 const THEME_LABEL: Record<ThemePreference, string> = {
-  [THEME_PREFERENCE.DEVICE]: 'Gerätestandard',
-  [THEME_PREFERENCE.LIGHT]: 'Hell',
-  [THEME_PREFERENCE.DARK]: 'Dunkel',
+  [THEME_PREFERENCE.DEVICE]: tr('Gerätestandard', 'Device default'),
+  [THEME_PREFERENCE.LIGHT]: tr('Hell', 'Light'),
+  [THEME_PREFERENCE.DARK]: tr('Dunkel', 'Dark'),
 };
 const THEME_ORDER = [
   THEME_PREFERENCE.DEVICE,
@@ -42,14 +45,14 @@ export function SettingsMenu() {
           variant="ghost"
           size="icon-sm"
           className="size-9"
-          aria-label="Einstellungen"
-          tooltip="Einstellungen"
+          aria-label={tr('Einstellungen', 'Settings')}
+          tooltip={tr('Einstellungen', 'Settings')}
         >
           <Settings />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60">
-        <DropdownMenuLabel>Darstellung</DropdownMenuLabel>
+        <DropdownMenuLabel>{tr('Darstellung', 'Appearance')}</DropdownMenuLabel>
         <DropdownMenuRadioGroup
           value={theme}
           onValueChange={(value) => {
@@ -64,6 +67,18 @@ export function SettingsMenu() {
               {THEME_LABEL[entry]}
             </DropdownMenuRadioItem>
           ))}
+        </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel>{tr('Sprache', 'Language')}</DropdownMenuLabel>
+        <DropdownMenuRadioGroup
+          value={locale}
+          onValueChange={(value) => {
+            const chosen = Object.values(LOCALE).find((entry) => entry === value);
+            if (chosen && chosen !== locale) setLocale(chosen);
+          }}
+        >
+          <DropdownMenuRadioItem value={LOCALE.DE}>Deutsch</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value={LOCALE.EN}>English</DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
       </DropdownMenuContent>
     </DropdownMenu>

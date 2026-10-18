@@ -1,10 +1,12 @@
 import type { AppType } from '@nlm/api/app';
-import { API_ERROR, type ApiErrorCode, ApiErrorSchema } from '@nlm/shared';
+import { API_ERROR, type ApiErrorCode, ApiErrorSchema, LOCALE_HEADER } from '@nlm/shared';
 import { hc } from 'hono/client';
 import type { z } from 'zod';
 
+import { locale } from './i18n';
+
 /** The typed client for the API. The base is empty: the browser talks to its own origin. */
-export const api = hc<AppType>('');
+export const api = hc<AppType>('', { headers: { [LOCALE_HEADER]: locale } });
 
 /** An error the API answered with. `code` is one of the shared codes, the UI maps it to German. */
 export class ApiRequestError extends Error {

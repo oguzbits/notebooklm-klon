@@ -3,6 +3,9 @@ import { afterEach, beforeEach, vi } from 'vitest';
 
 afterEach(cleanup);
 
+// The tests read German texts; jsdom's browser language is English.
+document.cookie = 'nlm-locale=de';
+
 // jsdom has no layout engine. The pieces below are what Radix UI reads from the browser.
 class ResizeObserverStub {
   observe() {}

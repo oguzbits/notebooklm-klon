@@ -33,6 +33,7 @@ export {
 export { type Answer, AnswerSchema, type AnswerStatement, AnswerStatementSchema } from './citation';
 export { GUEST_LIMITS, type GuestStart, GuestStartSchema, USER_LIMITS } from './guest';
 export { type Health, HealthSchema } from './health';
+export { LOCALE, type Locale, LOCALE_HEADER, LocaleSchema } from './locale';
 export {
   type AnswerNote,
   type CreateNoteBody,

@@ -8,6 +8,7 @@ import { BrowserRouter } from 'react-router';
 
 import { App } from './App';
 import { startErrorReporting } from './lib/error-reporting';
+import { locale } from './lib/i18n';
 import { initTheme } from './lib/theme';
 
 const root = document.getElementById('root');
@@ -15,6 +16,7 @@ if (!root) {
   throw new Error('Root-Element #root fehlt in index.html');
 }
 
+document.documentElement.lang = locale;
 initTheme(document.documentElement);
 
 startErrorReporting(
