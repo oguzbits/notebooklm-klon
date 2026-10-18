@@ -54,7 +54,7 @@ Project context and stack: [docs/PLAN.md](docs/PLAN.md). Use `pnpm`, never `npm`
    command, not the script: a spike never prints environment values.
 9. **UI states.** Every async view handles empty, loading, error (with retry) and pending
    (disabled controls, no double submit). One canonical trigger per user intent.
-10. **UI language is German** and free of technical terms (no "RAG", "Embedding", "Chunk" for
+10. **UI language is German and English** (`tr(de, en)` from `apps/web/src/lib/i18n.ts`; every user-visible text has both versions; the API reads `x-locale`) and free of technical terms (no "RAG", "Embedding", "Chunk" for
     users). Use shadcn primitives and semantic tokens, no ad-hoc HTML controls or raw palette colors.
 11. **Migrations** are generated with `drizzle-kit`. Never hand-edit generated SQL or snapshots.
 12. **Verify before deciding.** Never rely on memory for model IDs, prices, limits or library APIs.
