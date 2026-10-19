@@ -8,6 +8,7 @@ import {
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
+import { TEST_EMBEDDING_MODEL } from '../testing/embedding-model';
 import { chunks, sources } from './schema';
 import {
   countStalledSources,
@@ -31,6 +32,7 @@ const newSource = (contentHash = 'hash-1', userId = USER) => ({
 });
 
 const readyResult = () => ({
+  embeddingModel: TEST_EMBEDDING_MODEL,
   canonicalText: 'Erster Teil. Zweiter Teil.',
   pageCount: 3,
   chunks: [
@@ -142,6 +144,10 @@ describe('source storage', () => {
       [1, 'Zweiter Teil.', 13, 26],
     ]);
     expect(stored[0]?.embedding).toHaveLength(EMBEDDING_DIMENSIONS);
+    expect(stored.map((c) => c.embeddingModel)).toEqual([
+      TEST_EMBEDDING_MODEL,
+      TEST_EMBEDDING_MODEL,
+    ]);
   });
 
   it('replaces the chunks of an earlier attempt instead of adding to them', async () => {

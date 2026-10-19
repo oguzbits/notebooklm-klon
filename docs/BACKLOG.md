@@ -84,6 +84,10 @@ The plans are finished and deleted (git history, the commit before this one). St
   (ai.google.dev/gemini-api/docs/thinking, read by an agent); the reference of `generationConfig.maxOutputTokens` was not read; when it is reached the output can be cut or empty. Measure with one call before reducing it.
 - **Docs:** add a date comparison of `Stand` (as-of) against the last change of an assigned path (layer 3 of the former plan 2) if docs go stale despite `docs-map.json`.
 
+## Embedding model change
+
+Every new chunk stores `embedding_model`; a search throws if a selected source was embedded with another model than the question ([db/retrieval.ts](../apps/api/src/db/retrieval.ts)). Chunks from before the column (null) pass unchecked. Changing `EMBEDDING_MODEL` or the dimension still needs a re-embedding run of all sources; there is no script for it yet. Build it together with the first real model change, not before.
+
 ## Measurement pending
 
 The weight 0.5 of the full-text search in the hybrid search is justified only by the language difference, not by a measurement:

@@ -23,6 +23,9 @@ function hashWord(word: string): number {
   return hash;
 }
 
+/** The id the offline server stores with its hash vectors. */
+export const HASH_EMBEDDING_MODEL = 'hash-embedding';
+
 /** A bag-of-words vector: each word adds one to a slot chosen by its hash. Unit length. */
 export function hashEmbedding(text: string, dimensions: number): number[] {
   const vector = new Array<number>(dimensions).fill(0);

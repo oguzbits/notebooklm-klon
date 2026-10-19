@@ -25,6 +25,8 @@ export interface SearchParams {
   queryEmbeddings: number[][];
   /** The words of all versions of the question. */
   queryText: string;
+  /** The model that embedded the question; chunks embedded by another model are not comparable. */
+  embeddingModel: string;
   limit: number;
 }
 
@@ -67,7 +69,7 @@ function scopedChunks(params: SearchParams) {
     sql`, `
   );
   return sql`
-    SELECT c.id, c.embedding, c.search_vector
+    SELECT c.id, c.embedding, c.embedding_model, c.search_vector
     FROM chunks c
     JOIN sources s ON s.id = c.source_id AND s.user_id = ${params.userId}
     JOIN notebook_sources ns ON ns.source_id = s.id AND ns.notebook_id = ${params.notebookId}
@@ -118,6 +120,15 @@ function textRanked(queryText: string) {
  */
 export async function searchChunks(db: Database, params: SearchParams): Promise<RetrievedChunk[]> {
   if (params.sourceIds.length === 0) return [];
+
+  // Vectors of two models live in different spaces: mixing them ranks without any error to show it.
+  // Chunks from before the column existed (null) are let through.
+  const foreign = await db.execute(sql`
+    WITH scoped AS (${scopedChunks(params)})
+    SELECT 1 FROM scoped WHERE embedding_model <> ${params.embeddingModel} LIMIT 1`);
+  if (foreign.rows.length > 0) {
+    throw new Error('selected sources were embedded with another model than the question');
+  }
 
   // Each version of the question is its own ranking; a chunk that several versions find adds up.
   const vectorCtes = sql.join(

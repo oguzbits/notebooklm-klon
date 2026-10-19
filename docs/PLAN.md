@@ -86,7 +86,7 @@ a re-creation. In addition:
 
 ## Architecture and data flow
 
-Ingestion writes chunks and vectors to Postgres, the chat reads only the matching chunks of the selected sources, the Studio loads the selected sources in full.
+Ingestion writes chunks and vectors (tagged with the embedding model) to Postgres, the chat reads only the matching chunks of the selected sources, the Studio loads the selected sources in full.
 
 ## Tech stack v3
 

@@ -197,6 +197,13 @@
       "when": 1792402450748,
       "tag": "0027_purple_gamora",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1792402723422,
+      "tag": "0028_lonely_bloodstorm",
+      "breakpoints": true
     }
   ]
 }

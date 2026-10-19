@@ -41,6 +41,7 @@ import {
   fakeNotebookOverview,
   fakeOverview,
   fakeStudio,
+  HASH_EMBEDDING_MODEL,
   hashEmbedding,
   trickle,
 } from './fakes';
@@ -110,6 +111,7 @@ const ingest: SubmitPorts = {
     },
   }),
   embed: async (texts) => texts.map((text) => hashEmbedding(text, EMBEDDING_DIMENSIONS)),
+  embeddingModel: HASH_EMBEDDING_MODEL,
 };
 
 const stream = (input: ChatInput) => trickle(fakeReply(input));
@@ -125,7 +127,11 @@ await seedDemo(
   },
   {
     db,
-    importDeps: createLocalImportDeps(db, { parse: ingest.parse, embedDocuments: ingest.embed }),
+    importDeps: createLocalImportDeps(db, {
+      parse: ingest.parse,
+      embedDocuments: ingest.embed,
+      embeddingModel: ingest.embeddingModel,
+    }),
     overview: createOverviewPorts(ownerScope(db), stream),
     notebookOverview: createNotebookOverviewPorts(ownerScope(db), stream),
     ensureUser: async () => {
@@ -157,6 +163,7 @@ const app = createApp({
   objectStore,
   chat: {
     embedQuery: async (text) => hashEmbedding(text, EMBEDDING_DIMENSIONS),
+    embeddingModel: HASH_EMBEDDING_MODEL,
     // The offline server has no model to translate with: it searches the question as it is.
     translateQuery: async () => [],
     stream,

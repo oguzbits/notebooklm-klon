@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest';
 
 import { LIMITS } from '../config/limits';
 import { hashContent } from '../core/content-hash';
+import { TEST_EMBEDDING_MODEL } from '../testing/embedding-model';
 import {
   INGEST_ERROR,
   INGEST_STAGE,
@@ -34,6 +35,7 @@ function fakePorts(overrides: Partial<IngestPorts> = {}) {
     failed: [] as string[],
   };
   const ports: IngestPorts = {
+    embeddingModel: TEST_EMBEDDING_MODEL,
     sources: {
       findOrCreate: async (data) => {
         const existing = rows.find((r) => r.userId === data.userId && r.hash === data.contentHash);
@@ -165,6 +167,7 @@ describe('processSource', () => {
     expect(rows[0]?.status).toBe(SOURCE_STATUS.READY);
     expect(calls.ready).toHaveLength(1);
     expect(calls.ready[0]).toMatchObject({
+      embeddingModel: TEST_EMBEDDING_MODEL,
       canonicalText: 'Erster Satz.\n\nZweiter Satz.',
       pageCount: 2,
       chunks: [

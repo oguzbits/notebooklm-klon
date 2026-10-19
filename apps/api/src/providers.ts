@@ -62,6 +62,7 @@ export function createProviders(
   };
 
   return {
+    embeddingModel: env.EMBEDDING_MODEL,
     parse: createParseSource(documentParser),
     embedDocuments: (texts: string[], userId: string) => embedder.embedDocuments(texts, userId),
     embedQuery: (text: string, userId: string) => embedder.embedQuery(text, userId),

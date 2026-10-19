@@ -9,6 +9,7 @@ import {
 import { describe, expect, it } from 'vitest';
 
 import { LIMITS } from '../config/limits';
+import { TEST_EMBEDDING_MODEL } from '../testing/embedding-model';
 import { INGEST_ERROR, INGEST_STAGE, IngestError } from './ingest';
 import { restartSource, runIngestJob, type SubmitPorts, submitSource } from './submit';
 
@@ -53,6 +54,7 @@ function fakePorts(overrides: Partial<SubmitPorts> = {}) {
       },
     },
     parse: async () => ({ text: 'Text', pageCount: null }),
+    embeddingModel: TEST_EMBEDDING_MODEL,
     embed: async (texts) => texts.map(() => new Array<number>(EMBEDDING_DIMENSIONS).fill(0.1)),
     uploads: {
       put: async (id, bytes) => {

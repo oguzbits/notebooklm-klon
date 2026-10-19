@@ -25,5 +25,5 @@ export interface AppDeps {
   /** The provider side of the chat: the rest of the chat ports comes from the database. */
   /** Tells the error tracking about a failure nobody expected. Does nothing when none is set up. */
   reportError: ErrorReporter['report'];
-  chat: Pick<ChatPorts, 'embedQuery' | 'translateQuery' | 'stream' | 'onError'>;
+  chat: Pick<ChatPorts, 'embedQuery' | 'embeddingModel' | 'translateQuery' | 'stream' | 'onError'>;
 }

@@ -51,6 +51,7 @@ export function createSourceStorage(db: Database): IngestPorts['sources'] {
             startOffset: chunk.startOffset,
             endOffset: chunk.endOffset,
             embedding: chunk.embedding,
+            embeddingModel: result.embeddingModel,
           }))
         );
         await tx

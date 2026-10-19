@@ -9,6 +9,7 @@ export function createLocalImportDeps(
   providers: {
     parse: LocalImportDeps['ports']['parse'];
     embedDocuments: LocalImportDeps['ports']['embed'];
+    embeddingModel: string;
   }
 ): LocalImportDeps {
   return {
@@ -17,6 +18,7 @@ export function createLocalImportDeps(
       uploads: createUploadStorage(db),
       parse: providers.parse,
       embed: providers.embedDocuments,
+      embeddingModel: providers.embeddingModel,
     },
     link: (userId, notebookId, sourceId) => linkSource(db, userId, notebookId, sourceId),
   };

@@ -79,6 +79,7 @@ const ingest: SubmitPorts = {
   queue,
   parse: providers.parse,
   embed: providers.embedDocuments,
+  embeddingModel: providers.embeddingModel,
 };
 
 await queue.work(async (payload) => {
@@ -114,6 +115,7 @@ const app = createApp({
   objectStore,
   chat: {
     embedQuery: providers.embedQuery,
+    embeddingModel: providers.embeddingModel,
     translateQuery: providers.translateQuery,
     stream: providers.stream,
     onError: (error) => {

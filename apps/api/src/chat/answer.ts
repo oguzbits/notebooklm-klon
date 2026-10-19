@@ -58,6 +58,7 @@ export interface SearchRequest {
   queryEmbeddings: number[][];
   /** The words of all versions of the question. */
   queryText: string;
+  embeddingModel: string;
   limit: number;
 }
 
@@ -69,6 +70,8 @@ export interface ChatPorts {
   embedQuery: (text: string, userId: string) => Promise<number[]>;
   /** The question in the other languages of the documents (German and English), for the search. */
   translateQuery: (text: string, userId: string) => Promise<string[]>;
+  /** The model `embedQuery` uses; stored chunks must have been embedded by the same one. */
+  embeddingModel: string;
   search: (request: SearchRequest) => Promise<{ id: string; text: string }[]>;
   stream: (input: ChatInput) => AsyncIterable<string>;
   /** Called with an error that ended an answer. It is then also reported as an ERROR event. */
@@ -148,6 +151,7 @@ export async function prepareAnswer(
     sourceIds,
     queryEmbeddings,
     queryText: versions.join(' '),
+    embeddingModel: ports.embeddingModel,
     limit: LIMITS.CHAT_CONTEXT_CHUNKS,
   });
   return {

@@ -1,6 +1,7 @@
 import { EMBEDDING_DIMENSIONS, SOURCE_KIND } from '@nlm/shared';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
+import { TEST_EMBEDDING_MODEL } from '../testing/embedding-model';
 import { searchChunks } from './retrieval';
 import { chunks, notebooks, notebookSources, sources } from './schema';
 import { axisVector, createTestDb, ensureUsers } from './testing/test-db';
@@ -26,7 +27,13 @@ async function insertSource(userId: string, notebookId: string, contentHash: str
   return source;
 }
 
-async function insertChunk(sourceId: string, ordinal: number, text: string, axis?: number) {
+async function insertChunk(
+  sourceId: string,
+  ordinal: number,
+  text: string,
+  axis?: number,
+  embeddingModel: string | null = TEST_EMBEDDING_MODEL
+) {
   const [chunk] = await db
     .insert(chunks)
     .values({
@@ -36,6 +43,7 @@ async function insertChunk(sourceId: string, ordinal: number, text: string, axis
       startOffset: 0,
       endOffset: text.length,
       embedding: axis === undefined ? null : axisVector(axis, EMBEDDING_DIMENSIONS),
+      embeddingModel,
     })
     .returning();
   if (!chunk) throw new Error('insert returned no row');
@@ -52,6 +60,7 @@ const search = (
     ...scope,
     queryEmbeddings: [axisVector(queryAxis, EMBEDDING_DIMENSIONS)],
     queryText,
+    embeddingModel: TEST_EMBEDDING_MODEL,
     limit,
   });
 
@@ -62,6 +71,26 @@ beforeEach(async () => {
 
 afterAll(async () => {
   await pool.end();
+});
+
+describe('searchChunks embedding model', () => {
+  it('throws when a selected source was embedded with another model', async () => {
+    const notebook = await insertNotebook(USER);
+    const source = await insertSource(USER, notebook.id, 'old-model');
+    await insertChunk(source.id, 0, 'alt', 0, 'another-embedding-model');
+    const scope = { userId: USER, notebookId: notebook.id, sourceIds: [source.id] };
+
+    await expect(search(scope, 0, 'alt')).rejects.toThrow(/another model/);
+  });
+
+  it('does not stop at chunks from before the model was stored', async () => {
+    const notebook = await insertNotebook(USER);
+    const source = await insertSource(USER, notebook.id, 'legacy');
+    await insertChunk(source.id, 0, 'alt', 0, null);
+    const scope = { userId: USER, notebookId: notebook.id, sourceIds: [source.id] };
+
+    expect(await search(scope, 0, 'alt')).toHaveLength(1);
+  });
 });
 
 describe('searchChunks scope', () => {
@@ -167,6 +196,7 @@ describe('searchChunks ranking', () => {
     await insertChunk(source.id, 2, 'passt zur zweiten Fassung', 1);
 
     const results = await searchChunks(db, {
+      embeddingModel: TEST_EMBEDDING_MODEL,
       userId: USER,
       notebookId: notebook.id,
       sourceIds: [source.id],

@@ -150,6 +150,8 @@ export const chunks = pgTable(
     endOffset: integer('end_offset').notNull(),
     tokenCount: integer('token_count'),
     embedding: vector('embedding', { dimensions: EMBEDDING_DIMENSIONS }),
+    // The model that made `embedding`. Null for chunks from before the column existed.
+    embeddingModel: text('embedding_model'),
     searchVector: tsvector('search_vector').generatedAlwaysAs(
       (): SQL => sql`to_tsvector('simple', ${chunks.text})`
     ),

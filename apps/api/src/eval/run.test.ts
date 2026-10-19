@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { ChatInput } from '../ai/gemini-chat';
 import { OMISSION_REASON } from '../chat/answer';
+import { TEST_EMBEDDING_MODEL } from '../testing/embedding-model';
 import type { EvalQuestion } from './dataset';
 import { type EvalPorts, type QuestionResult, runQuestion, summarize } from './run';
 
@@ -36,6 +37,7 @@ const CHUNKS = [
 function ports(reply: string, options: { fail?: boolean } = {}): EvalPorts {
   return {
     embedQuery: async () => [1],
+    embeddingModel: TEST_EMBEDDING_MODEL,
     translateQuery: async () => [],
     search: async () => CHUNKS,
     stream: async function* (_input: ChatInput) {

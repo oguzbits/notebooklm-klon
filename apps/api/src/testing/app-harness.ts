@@ -11,6 +11,7 @@ import { runIngestJob } from '../ingestion/submit';
 import type { ErrorTags } from '../observability/error-reporter';
 import type { WebSearch } from '../search/tavily-search';
 import type { ObjectStore } from '../storage/object-store';
+import { TEST_EMBEDDING_MODEL } from './embedding-model';
 
 export const BASE_URL = 'http://localhost:3000';
 export const DEMO_OWNER_EMAIL = 'demo@example.test';
@@ -70,6 +71,7 @@ export function createHarness(options: HarnessOptions = {}) {
       // Text files only: the job decodes the bytes. Every chunk gets the same test vector.
       parse: async (_kind, bytes) => ({ text: new TextDecoder().decode(bytes), pageCount: null }),
       embed: async (texts) => texts.map(() => axisVector(0, EMBEDDING_DIMENSIONS)),
+      embeddingModel: TEST_EMBEDDING_MODEL,
     },
     demoOwnerEmail: DEMO_OWNER_EMAIL,
     reportError: (error, tags) => {
@@ -80,6 +82,7 @@ export function createHarness(options: HarnessOptions = {}) {
     objectStore: options.objectStore ?? null,
     chat: {
       embedQuery: options.embedQuery ?? (async () => axisVector(0, EMBEDDING_DIMENSIONS)),
+      embeddingModel: TEST_EMBEDDING_MODEL,
       translateQuery: async () => [],
       stream:
         options.model ??

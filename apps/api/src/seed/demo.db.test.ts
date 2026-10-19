@@ -10,6 +10,7 @@ import { findSourceForOverview, saveOverview } from '../db/overview-repository';
 import { createSourceStorage, createUploadStorage } from '../db/source-storage';
 import { axisVector, createTestDb, ensureUsers } from '../db/testing/test-db';
 import type { LocalFile } from '../ingestion/local-import';
+import { TEST_EMBEDDING_MODEL } from '../testing/embedding-model';
 import { seedDemo } from './demo';
 
 const { db, pool } = createTestDb();
@@ -34,6 +35,7 @@ const deps = {
         pageCount: null,
       }),
       embed: async (texts: string[]) => texts.map(() => axisVector(0, EMBEDDING_DIMENSIONS)),
+      embeddingModel: TEST_EMBEDDING_MODEL,
     },
     link: (userId: string, notebookId: string, sourceId: string) =>
       linkSource(db, userId, notebookId, sourceId),

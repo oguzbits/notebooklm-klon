@@ -68,13 +68,20 @@ export interface IngestPorts {
     markProcessing: (sourceId: string) => Promise<void>;
     markReady: (
       sourceId: string,
-      result: { canonicalText: string; pageCount: number | null; chunks: StoredChunk[] }
+      result: {
+        canonicalText: string;
+        pageCount: number | null;
+        chunks: StoredChunk[];
+        embeddingModel: string;
+      }
     ) => Promise<void>;
     markFailed: (sourceId: string, failure: SourceFailure) => Promise<void>;
   };
   /** `userId` is whose quota the model call is counted under. */
   parse: (kind: SourceKind, bytes: Uint8Array, userId: string) => Promise<ParsedDocument>;
   embed: (texts: string[], userId: string) => Promise<number[][]>;
+  /** The model `embed` uses; stored with the chunks so a search can tell vectors of other models. */
+  embeddingModel: string;
 }
 
 export interface RegisterInput {
@@ -198,6 +205,7 @@ export async function processSource(
       canonicalText,
       pageCount: parsed.pageCount,
       chunks: chunks.map((chunk, index) => ({ ...chunk, embedding: vectors[index] ?? [] })),
+      embeddingModel: ports.embeddingModel,
     });
   } catch (error) {
     // Not marked FAILED: the database may be gone. The sweep for interrupted sources deals with it.

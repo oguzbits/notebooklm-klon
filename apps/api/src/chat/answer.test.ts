@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest';
 
 import { GeminiError } from '../ai/gemini-error';
 import { LIMITS } from '../config/limits';
+import { TEST_EMBEDDING_MODEL } from '../testing/embedding-model';
 import {
   answerQuestion,
   type ChatPorts,
@@ -64,6 +65,7 @@ function fakePorts(overrides: Partial<ChatPorts> = {}) {
   };
   const ports: ChatPorts = {
     selectedSourceIds: async () => ['s1'],
+    embeddingModel: TEST_EMBEDDING_MODEL,
     embedQuery: async (text) => {
       calls.embedded.push(text);
       return [0.1, 0.2];
@@ -109,6 +111,7 @@ describe('prepareAnswer', () => {
         sourceIds: ['s1', 's2'],
         queryEmbeddings: [[0.1, 0.2]],
         queryText: 'Wer leitet das Projekt?',
+        embeddingModel: TEST_EMBEDDING_MODEL,
         limit: LIMITS.CHAT_CONTEXT_CHUNKS,
       },
     ]);

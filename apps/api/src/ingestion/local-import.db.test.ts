@@ -5,6 +5,7 @@ import { createNotebook } from '../db/notebook-repository';
 import { linkSource, listNotebookSources } from '../db/notebook-source-repository';
 import { createSourceStorage, createUploadStorage } from '../db/source-storage';
 import { axisVector, createTestDb, ensureUsers } from '../db/testing/test-db';
+import { TEST_EMBEDDING_MODEL } from '../testing/embedding-model';
 import { importLocalFiles, type LocalFile } from './local-import';
 
 const { db, pool } = createTestDb();
@@ -20,6 +21,7 @@ const deps = {
       text: new TextDecoder().decode(bytes),
       pageCount: null,
     }),
+    embeddingModel: TEST_EMBEDDING_MODEL,
     embed: async (texts: string[]) => {
       embedded += texts.length;
       return texts.map(() => axisVector(0, EMBEDDING_DIMENSIONS));
