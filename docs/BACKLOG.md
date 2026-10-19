@@ -24,7 +24,7 @@ Not checked: screen readers on real devices, real mobile devices, Semgrep locall
 | #   | Topic | Finding | Fix |
 | --- | ----- | ------- | --- |
 
-M4 (HNSW index with filter) does not apply: the search orders by distance over the CTE `scoped`, which is filtered through joins on user, notebook and sources ([db/retrieval.ts](../apps/api/src/db/retrieval.ts)). The HNSW index cannot be applied over that, the scan is exact and loses no hits to a downstream filter. Concluded from the shape of the query, not measured with `EXPLAIN`. Re-evaluate if the search is ever aligned to the index.
+M4 (HNSW index with filter) does not apply: the search orders by distance over the CTE `scoped`, which is filtered through joins on user, notebook and sources ([db/retrieval.ts](../apps/api/src/db/retrieval.ts)). The HNSW index could not be applied over that (0 scans in `pg_stat_user_indexes` on the dev database) and only cost memory and insert time, so it was dropped. The scan is exact and loses no hits to a downstream filter. Re-add it if the search is ever aligned to an index.
 
 Until 2026-10-15 not built as "demo" (see "Operations, security, scaling" below, re-evaluated since 2026-10-18): persistent logs (Sentry reports errors; Docker logs are lost on deploy) and the server hardening M10 (fail2ban, `deploy` out of the Docker group, Trivy; the dependency audit runs in CI, a moderate gap in esbuild via drizzle-kit affects only the dev server). sslip.io shares certificate limits; an own domain only on request.
 

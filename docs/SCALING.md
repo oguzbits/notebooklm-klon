@@ -8,17 +8,17 @@ Stages: **A** one server (today), **B** a team runs it, two instances, **C** man
 
 ## Runtime and data
 
-| Area                          | Bottleneck                                                | Measure                                                                                                                   | Stage |
-| ----------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ----- |
-| API and worker in one process | A heavy ingestion slows the chat, a crash takes both down | Worker as its own container with the same image (pg-boss needs no rework), its own memory and CPU frame                   | B     |
-| Rate limiter                  | Counts in process memory, two instances count separately  | State in Postgres (table, window by SQL); Redis/Valkey only when Postgres is the bottleneck                               | B     |
-| Guest limit per address       | Same problem, in process memory                           | Move to Postgres together with the rate limiter                                                                           | B     |
-| Chat stream (SSE)             | Open connections tie up processes                         | More instances behind the load balancer, connection limit per instance, sticky sessions not needed (state is in the DB)   | B     |
-| Studio runs in one request    | Long material keeps the request open                      | As a job in the queue, result by polling (as with sources)                                                                | B     |
-| Postgres                      | One instance, connections, vector search                  | Connection pool (PgBouncer), read replica for search, partitioning of `usage_events`, measure HNSW parameters (`EXPLAIN`) | C     |
-| Object store                  | Cover images are not in the backup                        | Include in the backup (stage A is enough); at C a managed S3 service with versioning                                      | A, C  |
-| Queue (pg-boss)               | `retryLimit 0`, because the job deletes the upload bytes  | Delete the bytes only after success, then retry with backoff and a dead-letter state                                      | B     |
-| Model provider                | One provider, one quota                                   | Second provider behind the same interface (`ai/`), fallback and cost comparison, batch calls for embeddings               | C     |
+| Area                          | Bottleneck                                                | Measure                                                                                                                                               | Stage |
+| ----------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| API and worker in one process | A heavy ingestion slows the chat, a crash takes both down | Worker as its own container with the same image (pg-boss needs no rework), its own memory and CPU frame                                               | B     |
+| Rate limiter                  | Counts in process memory, two instances count separately  | State in Postgres (table, window by SQL); Redis/Valkey only when Postgres is the bottleneck                                                           | B     |
+| Guest limit per address       | Same problem, in process memory                           | Move to Postgres together with the rate limiter                                                                                                       | B     |
+| Chat stream (SSE)             | Open connections tie up processes                         | More instances behind the load balancer, connection limit per instance, sticky sessions not needed (state is in the DB)                               | B     |
+| Studio runs in one request    | Long material keeps the request open                      | As a job in the queue, result by polling (as with sources)                                                                                            | B     |
+| Postgres                      | One instance, connections, vector search                  | Connection pool (PgBouncer), read replica for search, partitioning of `usage_events`, an HNSW index only once the search is aligned to it (`EXPLAIN`) | C     |
+| Object store                  | Cover images are not in the backup                        | Include in the backup (stage A is enough); at C a managed S3 service with versioning                                                                  | A, C  |
+| Queue (pg-boss)               | `retryLimit 0`, because the job deletes the upload bytes  | Delete the bytes only after success, then retry with backoff and a dead-letter state                                                                  | B     |
+| Model provider                | One provider, one quota                                   | Second provider behind the same interface (`ai/`), fallback and cost comparison, batch calls for embeddings                                           | C     |
 
 ## Reliability and operations
 

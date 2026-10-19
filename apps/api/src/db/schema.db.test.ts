@@ -73,27 +73,4 @@ describe('chunks', () => {
       UNIQUE_VIOLATION_ERROR
     );
   });
-
-  it('can use the HNSW index for the vector search', async () => {
-    const source = await insertSource(USER, 'hash-1');
-    await insertChunk(source.id, 0, 'eins', 1);
-    const query = `[${axisVector(1, EMBEDDING_DIMENSIONS).join(',')}]`;
-
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-      await client.query('SET LOCAL enable_seqscan = off');
-      const plan = await client.query(
-        'EXPLAIN SELECT id FROM chunks ORDER BY embedding <=> $1::vector LIMIT 1',
-        [query]
-      );
-      await client.query('ROLLBACK');
-
-      expect(plan.rows.map((row) => row['QUERY PLAN']).join('\n')).toContain(
-        'chunks_embedding_hnsw_idx'
-      );
-    } finally {
-      client.release();
-    }
-  });
 });

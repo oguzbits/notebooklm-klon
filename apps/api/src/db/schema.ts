@@ -156,7 +156,6 @@ export const chunks = pgTable(
   },
   (table) => [
     unique('chunks_source_ordinal_unique').on(table.sourceId, table.ordinal),
-    index('chunks_embedding_hnsw_idx').using('hnsw', table.embedding.op('vector_cosine_ops')),
     index('chunks_search_vector_gin_idx').using('gin', table.searchVector),
     rowsOfOwned('chunks', 'sources', table.sourceId, sources.userId),
   ]
