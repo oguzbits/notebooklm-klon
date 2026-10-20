@@ -1,5 +1,11 @@
 # NotebookLM Clone
 
+[![React](https://img.shields.io/badge/React-19-blue?logo=react)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Hono](https://img.shields.io/badge/Hono-4-orange?logo=hono)](https://hono.dev/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-336791?logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
+[![Node](https://img.shields.io/badge/Node-24-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+
 A notebook that answers only from your own sources and backs every statement with a number. Clicking the number opens the source text at the cited passage.
 
 A re-build of NotebookLM. The focus is the path from source to verifiable citation: ingestion, search, answer with checked citations, evaluation. The UI is German or English (switch in the settings menu); sources and questions may be either.
@@ -19,6 +25,18 @@ A re-build of NotebookLM. The focus is the path from source to verifiable citati
 - **Customize a notebook:** title, summary, cover image, copy, pin.
 
 Not built: audio and video overview, presentation and infographic in the Studio (audio and video exist only as a source), agentic search, Deep Research, Drive integration, rating of answers. Reasons: [docs/PLAN.md](docs/PLAN.md).
+
+## Tech stack
+
+**Frontend:** [React 19](https://react.dev/), [Vite](https://vite.dev/), [TanStack Query](https://tanstack.com/query), [Tailwind CSS](https://tailwindcss.com/), [shadcn/ui](https://ui.shadcn.com/)
+
+**Backend:** [Hono](https://hono.dev/) (API and RPC types for the web), [Drizzle ORM](https://orm.drizzle.team/), [pg-boss](https://github.com/timgit/pg-boss) (job queue in Postgres), [Better Auth](https://www.better-auth.com/) (sessions)
+
+**Data and AI:** PostgreSQL with pgvector and full-text search, S3-compatible object store (SeaweedFS), Gemini API (PDF reading, embeddings, answers), Tavily (optional web search)
+
+**Contracts and quality:** [Zod](https://zod.dev/) in `packages/shared`, Vitest, MSW, Playwright, ESLint, dependency-cruiser, knip
+
+Why this stack: [docs/PLAN.md](docs/PLAN.md).
 
 ## Architecture
 
@@ -58,6 +76,26 @@ The rules are in [AGENTS.md](AGENTS.md) and enforced by `pnpm check` (dependency
 - `packages/shared`: only Zod schemas, derived types and `as const` dictionaries. Single source of truth for every contract between API and web, including the citation schema.
 - `apps/api/src/core`: pure logic without I/O (chunking, citation check, context building, SSRF rules). Routes are thin adapters; database, jobs and providers sit behind them.
 - `apps/web`: React, server state only through TanStack Query. The web code imports only the `AppType` type from the API, for the Hono RPC client.
+
+### Project structure
+
+```
+.
+├── apps/
+│   ├── api/src/
+│   │   ├── core/        # pure logic: chunking, citation check, context, SSRF rules
+│   │   ├── routes/      # thin Hono adapters
+│   │   ├── ingestion/   # worker: parse, chunk, embed
+│   │   ├── search/      # hybrid search (vector + full text)
+│   │   ├── ai/          # Gemini adapters
+│   │   ├── db/          # Drizzle schema, migrations, queries
+│   │   └── config/      # env and limits (the only place for model IDs)
+│   └── web/src/         # React app: components, hooks, lib
+├── packages/shared/     # Zod schemas, types, dictionaries (SSOT)
+├── docs/                # plan, spike results, deployment, runbook, backlog
+├── deploy/ docker/      # Compose, Caddy, Dockerfile pieces
+└── scripts/             # audits, doc generation, usage report
+```
 
 ### Ingesting a source
 
