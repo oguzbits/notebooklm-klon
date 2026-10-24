@@ -12,7 +12,7 @@ x-logging: &logging
 services:
   caddy:
     # Newest version of the official image on Docker Hub when pinned (the release on GitHub can be ahead).
-    image: caddy:2.11.4
+    image: caddy:2.11.6
     restart: unless-stopped
     logging: *logging
     mem_limit: 256m
