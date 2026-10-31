@@ -90,7 +90,7 @@ services:
 
   s3:
     # Same version the tests run against (docker-compose.yml).
-    image: chrislusf/seaweedfs:4.48
+    image: chrislusf/seaweedfs:4.50
     restart: unless-stopped
     logging: *logging
     command: server -dir=/data -volume.max=20 -master.volumeSizeLimitMB=256 -s3 -s3.port=8333 -s3.config=/etc/seaweedfs/s3.json
