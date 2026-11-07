@@ -1,6 +1,6 @@
 # One image: the API serves the built web app (WEB_DIST_DIR). The build stage needs the whole
 # workspace; the final stage holds only the bundle, the migrations and the web build.
-FROM node:24.21.0-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 AS build
+FROM node:26.12.1-slim@sha256:94816674c62774da0d099a947bf4613b9e1972a2733abd0d0cd80e795f8411d0 AS build
 WORKDIR /app
 RUN corepack enable
 # The slim image has no root certificates, so the upload of the source maps could not reach Sentry (TLS).
@@ -16,7 +16,7 @@ COPY . .
 RUN --mount=type=secret,id=sentry_auth_token,env=SENTRY_AUTH_TOKEN \
     pnpm install --frozen-lockfile && pnpm build
 
-FROM node:24.21.0-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+FROM node:26.12.1-slim@sha256:94816674c62774da0d099a947bf4613b9e1972a2733abd0d0cd80e795f8411d0
 WORKDIR /app
 ARG GIT_SHA=unknown
 ENV NODE_ENV=production
