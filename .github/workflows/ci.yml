@@ -30,6 +30,11 @@ jobs:
           require-lockfile: true
       - run: pnpm format:check
       - run: pnpm check
+      # drizzle-kit has no drift flag: generating again must not write a new migration.
+      - name: Migrations match the schema
+        run: |
+          pnpm --filter @nlm/api db:generate
+          test -z "$(git status --porcelain apps/api/drizzle)"
       # A change to a path in docs/docs-map.json needs its document or "Docs: n/a, <reason>".
       - name: Docs map
         env:
