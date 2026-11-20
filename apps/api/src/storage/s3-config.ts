@@ -17,17 +17,26 @@ const REQUIRED = ['S3_ENDPOINT', 'S3_BUCKET', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACC
  * only some are. The values come from `config/env.ts`, the only place that reads the environment.
  */
 export function s3ConfigFromEnv(raw: S3Env): S3Config | null {
-  const given = REQUIRED.filter((name) => (raw[name] ?? '').trim() !== '');
-  if (given.length === 0) return null;
-  const missing = REQUIRED.filter((name) => !given.includes(name));
-  if (missing.length > 0) {
-    throw new Error(`Incomplete object store configuration, missing: ${missing.join(', ')}.`);
+  const {
+    S3_ENDPOINT: endpoint,
+    S3_BUCKET: bucket,
+    S3_ACCESS_KEY_ID: accessKeyId,
+    S3_SECRET_ACCESS_KEY: secretAccessKey,
+  } = raw;
+  if (isSet(endpoint) && isSet(bucket) && isSet(accessKeyId) && isSet(secretAccessKey)) {
+    return {
+      endpoint,
+      region: raw.S3_REGION?.trim() || DEFAULT_REGION,
+      bucket,
+      accessKeyId,
+      secretAccessKey,
+    };
   }
-  return {
-    endpoint: raw.S3_ENDPOINT as string,
-    region: raw.S3_REGION?.trim() || DEFAULT_REGION,
-    bucket: raw.S3_BUCKET as string,
-    accessKeyId: raw.S3_ACCESS_KEY_ID as string,
-    secretAccessKey: raw.S3_SECRET_ACCESS_KEY as string,
-  };
+  const missing = REQUIRED.filter((name) => !isSet(raw[name]));
+  if (missing.length === REQUIRED.length) return null;
+  throw new Error(`Incomplete object store configuration, missing: ${missing.join(', ')}.`);
+}
+
+function isSet(value: string | undefined): value is string {
+  return (value ?? '').trim() !== '';
 }

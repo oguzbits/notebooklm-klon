@@ -22,8 +22,12 @@ export const RESTART = {
 export type Restart = (typeof RESTART)[keyof typeof RESTART];
 const FAILURES = new Set<string>(Object.values(SOURCE_FAILURE));
 
+function isFailure(message: string): message is SourceFailure {
+  return FAILURES.has(message);
+}
+
 function toFailure(message: string | null): SourceFailure | null {
-  return message !== null && FAILURES.has(message) ? (message as SourceFailure) : null;
+  return message !== null && isFailure(message) ? message : null;
 }
 
 /** Every function below takes the user ID from the session and filters by it in SQL. */
