@@ -16,7 +16,7 @@ import type { AuthVariables } from '../auth/session';
 import { LIMITS } from '../config/limits';
 import { detectSourceKind } from '../core/file-kind';
 import { youtubeVideoUrl } from '../core/youtube-url';
-import { zipUncompressedBytes } from '../core/zip-size';
+import { zipUnpackedBytes } from '../core/zip-size';
 import { findNotebook } from '../db/notebook-repository';
 import { assertRoomForSource, linkSource } from '../db/notebook-source-repository';
 import { HTTP_STATUS } from '../http-status';
@@ -161,7 +161,7 @@ const TOO_LARGE_UNPACKED: Checked = {
 
 /** Why a DOCX or PPTX is refused: it unpacks to more than the limit, or its directory is damaged. */
 function zipRefusal(kind: SourceKind, bytes: Uint8Array): Checked | null {
-  const unpacked = zipUncompressedBytes(bytes);
+  const unpacked = zipUnpackedBytes(bytes, LIMITS.UPLOAD_MAX_UNPACKED_BYTES);
   if (unpacked === null) return { ...UNREADABLE, kind };
   return unpacked > LIMITS.UPLOAD_MAX_UNPACKED_BYTES ? { ...TOO_LARGE_UNPACKED, kind } : null;
 }
