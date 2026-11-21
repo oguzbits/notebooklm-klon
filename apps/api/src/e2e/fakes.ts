@@ -139,12 +139,17 @@ function firstWords(text: string, count: number): string {
  * A stand-in for the Studio: the first sentence of each passage as the content, cited with its
  * label. The kind is read from the schema the real model would get, like the real model does.
  */
+export function propertyNames(schema: Record<string, unknown>): string[] {
+  const { properties } = schema;
+  return typeof properties === 'object' && properties !== null ? Object.keys(properties) : [];
+}
+
 export function fakeStudio(schema: Record<string, unknown>, userMessage: string): string {
   const passages = [...userMessage.matchAll(PASSAGE)].map(([, label, text]) => ({
     label: label ?? '',
     sentence: (text ?? '').trim().split(SENTENCE_END)[0] ?? '',
   }));
-  const properties = Object.keys((schema.properties ?? {}) as Record<string, unknown>);
+  const properties = propertyNames(schema);
   const title = firstWords(passages[0]?.sentence ?? 'Zusammenfassung', STUDIO_TITLE_WORDS);
 
   if (properties.includes('cards')) {

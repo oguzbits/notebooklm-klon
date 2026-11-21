@@ -43,6 +43,7 @@ import {
   fakeStudio,
   HASH_EMBEDDING_MODEL,
   hashEmbedding,
+  propertyNames,
   trickle,
 } from './fakes';
 
@@ -56,7 +57,7 @@ function fakeReply(input: ChatInput): string {
   if (locales.some((l) => input.system === notebookOverviewSystemPrompt(l))) {
     return fakeNotebookOverview(input.user);
   }
-  const properties = Object.keys((input.schema.properties ?? {}) as Record<string, unknown>);
+  const properties = propertyNames(input.schema);
   if (STUDIO_PROPERTIES.some((name) => properties.includes(name))) {
     return fakeStudio(input.schema, input.user);
   }

@@ -10,7 +10,8 @@ export function captureDownloads() {
   const { createObjectURL, revokeObjectURL } = URL;
   URL.createObjectURL = (blob) => {
     const url = `blob:test-${blobs.size}`;
-    blobs.set(url, blob as Blob);
+    if (!(blob instanceof Blob)) throw new Error('captureDownloads expects a Blob');
+    blobs.set(url, blob);
     return url;
   };
   URL.revokeObjectURL = () => {};

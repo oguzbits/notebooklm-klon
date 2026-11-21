@@ -40,7 +40,7 @@ function walk(parent: Root | Element, start: number, end: number): void {
     if (child.type === 'text') return splitText(child, start, end);
     if (child.type === 'element') walk(child, start, end);
     return child.type === 'element' || child.type === 'comment' ? [child] : [];
-  }) as typeof parent.children;
+  });
 }
 
 /**

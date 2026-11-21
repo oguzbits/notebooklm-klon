@@ -1,6 +1,8 @@
 import { type MockInstance, vi } from 'vitest';
+import { z } from 'zod';
 
-export type LogLine = Record<string, unknown>;
+const LogLineSchema = z.record(z.string(), z.unknown());
+export type LogLine = z.infer<typeof LogLineSchema>;
 
 /** Collects what `log` writes to stdout, so a test can look at the lines. Call `restore` after. */
 export function captureLog() {
@@ -16,7 +18,7 @@ export function captureLog() {
         .join('')
         .split('\n')
         .filter((line) => line.startsWith('{'))
-        .map((line) => JSON.parse(line) as LogLine),
+        .map((line) => LogLineSchema.parse(JSON.parse(line))),
     /** Everything written, as one text: to prove that something does not appear. */
     text: () => written.join(''),
     restore: () => spy.mockRestore(),
