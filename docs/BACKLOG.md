@@ -21,8 +21,9 @@ Not checked: screen readers on real devices, real mobile devices, Semgrep locall
 
 ## Open
 
-| #   | Topic | Finding | Fix |
-| --- | ----- | ------- | --- |
+| #   | Topic                     | Finding                                                                                                                                                                                                                                                                                                                      | Fix                                                                                                                                           |
+| --- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | ZIP size of DOCX and PPTX | The size check reads the sizes the file declares. A file that declares less than it unpacks to is not stopped there; DOCX then goes to `mammoth` without a limit on the unpacked bytes ([threat model](security/threat-model.md#residual-risks)). Not measured: whether such a file can make the parser use too much memory. | Build a test file with false sizes, measure the memory of both parsers; if it grows, unpack with a byte cap (fflate streaming) before parsing |
 
 M4 (HNSW index with filter) does not apply: the search orders by distance over the CTE `scoped`, which is filtered through joins on user, notebook and sources ([db/retrieval.ts](../apps/api/src/db/retrieval.ts)). The HNSW index could not be applied over that (0 scans in `pg_stat_user_indexes` on the dev database) and only cost memory and insert time, so it was dropped. The scan is exact and loses no hits to a downstream filter. Re-add it if the search is ever aligned to an index.
 

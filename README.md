@@ -92,7 +92,7 @@ The rules are in [AGENTS.md](AGENTS.md) and enforced by `pnpm check` (dependency
 │   │   └── config/      # env and limits (the only place for model IDs)
 │   └── web/src/         # React app: components, hooks, lib
 ├── packages/shared/     # Zod schemas, types, dictionaries (SSOT)
-├── docs/                # plan, spike results, deployment, runbook, backlog
+├── docs/                # plan, spike results, deployment, runbook, backlog, threat model
 ├── deploy/ docker/      # Compose, Caddy, Dockerfile pieces
 └── scripts/             # audits, doc generation, usage report
 ```
